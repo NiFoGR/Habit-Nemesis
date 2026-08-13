@@ -1,0 +1,52 @@
+name: Build Android APK
+
+# Produces an installable debug APK and attaches it to the run as an artifact.
+# Run it from the Actions tab, or let it run on every push to a branch.
+on:
+  push:
+    branches: ['**']
+    paths-ignore: ['docs/**', '**/*.md']
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install Capacitor
+        run: npm install
+
+      - name: Generate the Android project
+        # android/ is not committed — Capacitor regenerates it from www/ each build.
+        run: |
+          npx cap add android
+          node tools/gen-icons.mjs --android
+          npx cap sync android
+
+      - name: Build the debug APK
+        run: |
+          chmod +x android/gradlew
+          cd android
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Name the APK after the run
+        run: |
+          mkdir -p out
+          cp android/app/build/outputs/apk/debug/app-debug.apk "out/nifo-${GITHUB_SHA::7}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nifo-apk
+          path: out/*.apk
+          if-no-files-found: error
+          retention-days: 90

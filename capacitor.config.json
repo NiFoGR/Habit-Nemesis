@@ -1,0 +1,11 @@
+{
+  "appId": "gr.nifo.app",
+  "appName": "NiFo",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#0b0f14"
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}
