@@ -258,6 +258,13 @@ export function startSession(mount, opts, onFinish) {
   function press(ev) {
     ev.preventDefault();
     if (phase !== 'await') return;
+    // Capture the pointer so a thumb drifting off the pad mid-contraction does
+    // not end the rep early — only lifting off does.
+    try {
+      el.pad.setPointerCapture(ev.pointerId);
+    } catch {
+      /* capture is a nicety; the pad still works without it */
+    }
     phase = 'active';
     pressStart = performance.now();
     buzz('press');
@@ -430,7 +437,6 @@ export function startSession(mount, opts, onFinish) {
   el.pad.addEventListener('pointerdown', press);
   el.pad.addEventListener('pointerup', release);
   el.pad.addEventListener('pointercancel', release);
-  el.pad.addEventListener('pointerleave', release);
   el.pad.addEventListener('contextmenu', (e) => e.preventDefault());
   $('pause').addEventListener('click', togglePause);
   $('quit').addEventListener('click', onQuit);
