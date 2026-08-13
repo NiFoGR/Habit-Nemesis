@@ -1,8 +1,10 @@
 name: Deploy to GitHub Pages
 
 # Publishes www/ so the app can be installed straight to a phone home screen
-# as a PWA. configure-pages tries to turn Pages on itself; if the token is not
-# allowed to, switch it on once under Settings → Pages → Source: GitHub Actions.
+# as a PWA. Needs Pages switched on once, under
+# Settings → Pages → Source: GitHub Actions. The workflow token cannot do it
+# itself (configure-pages with enablement: true returns "Resource not
+# accessible by integration"), so this run fails until that box is ticked.
 on:
   push:
     branches: [main]
@@ -26,8 +28,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: www

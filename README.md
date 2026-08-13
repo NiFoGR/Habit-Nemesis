@@ -16,11 +16,12 @@ Two ways. The first takes about thirty seconds.
 
 The app is a PWA, so Chrome on Android will install it to your home screen with its own icon, its own window (no browser bar) and full offline support. It behaves like any other installed app.
 
-1. Push to `main`. The `Deploy to GitHub Pages` workflow publishes the app to
-   `https://nifogr.github.io/NiFo-App/`. It tries to switch Pages on by itself;
-   if the run fails with "Get Pages site failed", enable it once under
-   **Settings → Pages → Source: GitHub Actions** and re-run.
-2. Open that link in **Chrome on your phone** → menu (⋮) → **Add to Home screen** / **Install app**.
+1. Turn Pages on once: **Settings → Pages → Source: GitHub Actions**. (The
+   workflow cannot do this for you — its token is not allowed to create a Pages
+   site, so the deploy fails until this is ticked.)
+2. Re-run **Actions → Deploy to GitHub Pages**, or push anything to `main`. It
+   publishes to `https://nifogr.github.io/NiFo-App/`.
+3. Open that link in **Chrome on your phone** → menu (⋮) → **Add to Home screen** / **Install app**.
 
 That is a real installed app: it opens fullscreen, works with no signal, and keeps your data between launches.
 
