@@ -1,4 +1,6 @@
-# Kegel feature — design notes and backlog
+# Feature design notes and backlog
+
+## Kegels
 
 Where the ideas came from, which ones got built, and which ones are parked. Kept so future-me does not re-solve solved problems or rebuild something that was deliberately rejected.
 
@@ -73,3 +75,46 @@ NiFo's answer is **press-and-hold input**. You hold the screen for exactly as lo
 ## Notes for adding NiFo feature #2
 
 The hub renders from `FEATURES` in `www/js/app.js`; placeholders come from `SOON`. A feature needs: an entry in `FEATURES`, a render function, a route in `ROUTES`, and its own slice of the store. Keep the store schema additive — `hydrate()` in `store.js` merges saved state over the blank shape, so new fields appear on old saves instead of coming back `undefined`.
+
+
+---
+
+# PE
+
+## The design decisions worth remembering
+
+**Safety is a pre-flight check, not a disclaimer.** Every other app puts the warnings in a document nobody opens. `planWarnings()` runs against the actual planned session — this pressure, this duration, your experience level, whether you warmed up, how many days since a rest day — and objects on the setup screen, before the timer starts. A warning you see while choosing 25 kPa is worth fifty pages of general advice.
+
+**Enforced set breaks.** Pump damage comes from unbroken duration more than from peak pressure, so the timer stops every ~10 minutes by itself and tells you to release and inspect. Making the safe thing automatic beats hoping you remember.
+
+**No fabricated precision.** A Hydromax has no gauge. Logging "8.0 kPa" from a water pump would be a made-up number that then pollutes every average and chart. Water pumps get a 1–5 intensity by feel, clearly labelled as a diary entry.
+
+**BPFSL before/after is the real feedback loop.** Erect length moves too slowly to motivate anyone. Stretched flaccid length moves *within a session*, so every stretch session can end with an actual read on whether the tissue responded. The ~5% rule gives it a target.
+
+**The gallery is encrypted, not hidden.** A PIN screen over an unencrypted photo store is decoration. AES-GCM with a PBKDF2-derived key means the bytes in IndexedDB are unreadable without the PIN — verified in the test suite by asserting the stored blob has no JPEG header. The cost is that there is no recovery, and the UI says so before you commit.
+
+**Locks on backgrounding, not just on a timer.** The app-switcher preview is the obvious leak, so the key is dropped the moment the app loses visibility.
+
+**Projections with error bars.** A single projected number would be a lie. The blend of own-data regression and a volume-based prior, weighted by how much data exists, produces a range plus an explicit confidence figure — and it is anchored to trial results (~1.5 cm over 3-6 months) rather than to what would be nice to hear.
+
+**Cross-feature honesty.** Kegels done during a pump session count toward the Kegels streak and lifetime totals but are flagged `countsForPromotion: false`. Following a cadence is not measured reps, and letting it level you up would corrupt the one metric in that feature worth having.
+
+## Deliberately rejected
+
+- **Girth/length "gain calculators" with confident single numbers.** Every PE app has one, and they are all fiction.
+- **Photo-based measurement estimation.** Angle, distance and lens distortion swamp the signal. Photos are for morale; the ruler is for measurement, and the compare view says exactly that.
+- **Cloud backup of photos.** Obviously not.
+- **Gamifying volume.** Achievements deliberately reward warm-ups, consistency, taking a decon break and BPFSL response — not "most hours pumped this week", which would push exactly the wrong behaviour.
+- **A "routine builder" with preset programmes.** Considered; the honest version of a PE routine is "traction most days, warm up first, rest weekly", which is already what the app nudges you toward.
+
+## Backlog
+
+1. **Local notifications from the APK build** (Capacitor LocalNotifications) so reminders fire without the app open — the web notification only fires while the page is alive.
+2. **Routines**: chain warm-up → stretch → pump → cool-down into one flow with automatic transitions, rather than three separate timers.
+3. **Rest-day scheduling and decon planning** — a proper calendar rather than a running counter of consecutive days.
+4. **Correlation view**: weekly volume plotted against the following month's measured gain, once there are enough months to say anything. This is the question the whole feature exists to answer.
+5. **Photo alignment guides** — a faint outline of the previous photo while framing the new one, so the monthly series is actually comparable.
+6. **Export of the encrypted gallery** as a single re-importable file, for phone changes.
+7. **EQ (erection quality) tracking** — a weekly 1-10, plotted against training volume. Overtraining shows up here first, before it shows up as injury.
+8. **Session presets** per device (extender vs manual vs pump) with their own defaults.
+9. **Girth measurement at multiple points** (base, mid, glans) rather than one number.

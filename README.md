@@ -6,6 +6,8 @@ Runs entirely on the phone. No account, no server, no analytics, nothing leaves 
 
 **Feature 1 — Kegels:** a progressive 12-week pelvic floor training program that measures every single rep, scores the quality of your holds, adapts the difficulty to your performance, and tells you what actually happened at the end of each session.
 
+**Feature 2 — PE:** stretching, pumping and jelqing sessions with safety limits that object *before* you start, monthly measurements with an encrypted photo gallery, before/after BPFSL per session, and a growth projection built from your own data rather than wishful thinking.
+
 ---
 
 ## Getting it on your phone
@@ -82,6 +84,28 @@ Hold `Space` instead of pressing the screen when testing on a desktop.
 
 ---
 
+## What is in the PE feature
+
+**Sessions.** Warm-up, stretching, pumping, jelqing and clamping, each with its own intensity unit, technique cue and safety envelope. The timer keeps the screen awake, vibrates on phase changes, and notifies you when the planned time is up even if the app is in the background.
+
+**Limits that speak up first.** A planned session is checked before it starts: pressure against the beginner/intermediate/advanced bands, duration against the session guidance, tension, missing warm-up, and how many days you have gone without a rest day. Pump sessions get enforced set breaks — the timer stops every ~10 minutes and tells you to release and check the skin.
+
+**Your Hydromax has no gauge**, so with a water pump selected the app records a 1–5 intensity by feel rather than inventing a pressure reading. Gauged air pumps get the real kPa/inHg slider.
+
+**BPFSL before and after.** Bone-pressed flaccid stretched length taken either side of a stretch session is the fastest feedback loop available — it moves within one session, months before erect length does. About +5% means the tissue took the load, and the app tells you which side of that you landed on.
+
+**Kegels while pumping.** Optional cadence during a pump session, using the hold length from whatever Kegels level you are on. Completed cycles are logged to both features, so the day counts for your Kegels streak too — but they cannot level you up there, because following a cadence is not the same as measured reps.
+
+**Monthly check-in.** BPEL, girth, and optionally BPFSL, NBPEL and base girth, plus a progress photo. The form warns you when a reading jumps more than 1.5 cm, because that is a typo or a changed method, not a month of growth.
+
+**The gallery is encrypted, not hidden.** Photos are AES-GCM encrypted with a key derived from your PIN, stored as ciphertext, and decrypted only in memory while you are looking at them. It re-locks after two minutes idle and instantly when you background the app. There is no recovery — losing the PIN means losing the photos, which is the point.
+
+**Projection.** A growth estimate blending your own measured trend with what your training volume would typically produce, shown as a range with a confidence figure that narrows as your own data accumulates. Traction trials average roughly 1.5 cm over 3–6 months, and the app says so rather than flattering you.
+
+**Everything tracked forever**, with 7d / 30d / 90d / 6m / 1y / all-time selectors across the charts, plus achievements, insights drawn from your actual numbers, and a full session log.
+
+Reasoning, safety numbers and sources: [`docs/PE_PROGRAM.md`](docs/PE_PROGRAM.md).
+
 ## Layout
 
 ```
@@ -95,13 +119,25 @@ www/                 the entire app — plain ES modules, no build
     report.js        the end-of-session debrief
     tracking.js      heatmap, charts, log, backups
     store.js         localStorage persistence
-    ui.js            formatting, haptics, SVG charts
+    ui.js            formatting, haptics, notifications, SVG charts
+    pe/
+      program.js     session types, safety limits, projection, achievements
+      home.js        PE home and the one-time safety gate
+      timer.js       session runner, set breaks, kegel-during-pump
+      measure.js     monthly check-in and photo capture
+      gallery.js     encrypted gallery, viewer, compare
+      stats.js       charts, period selector, projection, log
+      guide.js       technique and safety reference
+      vault.js       PIN-derived AES-GCM encryption
+      db.js          IndexedDB photo storage + image downscaling
+      pin.js         PIN keypad and unlock flow
   sw.js              offline service worker
 tools/
   gen-icons.mjs      draws all app and launcher icons from code
   serve.mjs          dev server
 docs/
-  KEGEL_PROGRAM.md   the training protocol and where it comes from
+  KEGEL_PROGRAM.md   the kegel protocol and where it comes from
+  PE_PROGRAM.md      PE safety limits, projection maths and sources
   BRAINSTORM.md      feature design notes and the backlog
 ```
 
@@ -111,4 +147,4 @@ docs/
 
 ---
 
-**This is not medical advice.** It is a training tracker. Pain, urinary or bowel symptoms, or a history of pelvic surgery are reasons to see a doctor or a pelvic health physiotherapist rather than to train harder.
+**This is not medical advice.** It is a training tracker. Pain, urinary or bowel symptoms, a new bend or lump, a change in erection quality, or a history of pelvic surgery are reasons to see a doctor or a pelvic health physiotherapist rather than to train harder.

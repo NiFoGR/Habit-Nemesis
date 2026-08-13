@@ -27,6 +27,31 @@ function blank() {
     sessions: [],
     prs: { maxHoldMs: 0, tutMs: 0, score: 0, streak: 0 },
     badges: [],
+
+    // Second feature: PE training. Kept in its own slice so the two features
+    // never tread on each other's data.
+    pe: {
+      settings: {
+        units: 'cm',
+        pressureUnit: 'kPa',
+        pumpStyle: 'hydro', // 'hydro' (water pump, no gauge) or 'air' (gauged)
+        tensionKg: 10,
+        pressure: 8,
+        hydroLevel: 3, // perceived intensity 1-5 for gauge-less water pumps
+        stretchMin: 30,
+        pumpMin: 15,
+        kegelDuringPump: true,
+        reminder: '',
+        measureDay: 1, // day of the month the monthly check-in is due
+        autoLockMin: 2, // gallery re-locks after this long
+        safetyAck: false,
+      },
+      sessions: [],
+      measurements: [],
+      achievements: [],
+      prs: { sessionMs: 0, weekMs: 0, bpel: 0, eg: 0, bpfsl: 0, streak: 0 },
+      vault: null, // { salt, iv, check } once a gallery PIN is set
+    },
   };
 }
 
@@ -35,6 +60,7 @@ function blank() {
 function hydrate(saved) {
   const base = blank();
   if (!saved || typeof saved !== 'object') return base;
+  const savedPe = saved.pe || {};
   return {
     ...base,
     ...saved,
@@ -43,6 +69,15 @@ function hydrate(saved) {
     prs: { ...base.prs, ...(saved.prs || {}) },
     sessions: Array.isArray(saved.sessions) ? saved.sessions : [],
     badges: Array.isArray(saved.badges) ? saved.badges : [],
+    pe: {
+      ...base.pe,
+      ...savedPe,
+      settings: { ...base.pe.settings, ...(savedPe.settings || {}) },
+      prs: { ...base.pe.prs, ...(savedPe.prs || {}) },
+      sessions: Array.isArray(savedPe.sessions) ? savedPe.sessions : [],
+      measurements: Array.isArray(savedPe.measurements) ? savedPe.measurements : [],
+      achievements: Array.isArray(savedPe.achievements) ? savedPe.achievements : [],
+    },
     v: SCHEMA,
   };
 }
@@ -128,6 +163,21 @@ export function todaysSessions() {
 
 export function lastSession() {
   return state.sessions.length ? state.sessions[state.sessions.length - 1] : null;
+}
+
+/** Consecutive days ending today (or yesterday, if today is not done yet)
+ *  that have at least one entry in `dates`. */
+export function streakOver(dates) {
+  const done = dates instanceof Set ? dates : new Set(dates);
+  if (!done.size) return 0;
+  let cursor = dayKey();
+  if (!done.has(cursor)) cursor = addDays(cursor, -1);
+  let n = 0;
+  while (done.has(cursor)) {
+    n++;
+    cursor = addDays(cursor, -1);
+  }
+  return n;
 }
 
 /** A day counts toward the streak if it has any session, or if it is a

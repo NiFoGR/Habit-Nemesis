@@ -49,6 +49,93 @@ export function fmtDuration(sec) {
   return sec < 90 ? `${Math.round(sec)}s` : `${Math.round(sec / 60)} min`;
 }
 
+/** mm:ss, or h:mm:ss once it runs past an hour. */
+export function fmtClock(ms) {
+  const total = Math.max(0, Math.round(ms / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const p = (n) => String(n).padStart(2, '0');
+  return h ? `${h}:${p(m)}:${p(s)}` : `${m}:${p(s)}`;
+}
+
+export function fmtHours(ms) {
+  const h = ms / 3600000;
+  if (h >= 10) return `${Math.round(h)}h`;
+  if (h >= 1) return `${h.toFixed(1)}h`;
+  return `${Math.round(ms / 60000)}m`;
+}
+
+/* ---------------- notifications ---------------- */
+
+export async function askNotifyPermission() {
+  if (!('Notification' in window)) return false;
+  if (Notification.permission === 'granted') return true;
+  if (Notification.permission === 'denied') return false;
+  try {
+    return (await Notification.requestPermission()) === 'granted';
+  } catch {
+    return false;
+  }
+}
+
+/** Fires through the service worker when possible, so the notification still
+ *  appears when the app is in the background. */
+export async function notify(title, body) {
+  haptic('hit');
+  if (!('Notification' in window) || Notification.permission !== 'granted') return false;
+  try {
+    const reg = await navigator.serviceWorker?.getRegistration();
+    const opts = { body, icon: './icons/icon-192.png', badge: './icons/icon-192.png', vibrate: [200, 100, 200], tag: 'nifo-timer', renotify: true };
+    if (reg?.showNotification) await reg.showNotification(title, opts);
+    else new Notification(title, opts);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/* ---------------- small components ---------------- */
+
+/** Segmented control. Returns markup; wire it up with `onSegment`. */
+export function segmented(name, options, active) {
+  return `<div class="segmented" data-seg="${escapeHtml(name)}">${options
+    .map((o) => `<button type="button" data-val="${escapeHtml(o.id)}" class="${o.id === active ? 'on' : ''}">${escapeHtml(o.label)}</button>`)
+    .join('')}</div>`;
+}
+
+export function onSegment(root, name, fn) {
+  const el = root.querySelector(`[data-seg="${name}"]`);
+  if (!el) return;
+  el.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-val]');
+    if (!b) return;
+    el.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+    fn(b.dataset.val);
+  });
+}
+
+/** Vertical bars with labels — used for volume by day. */
+export function barChart(bars, { h = 120, unit = '' } = {}) {
+  if (!bars.length) return '<div class="chart-empty">Nothing logged in this period</div>';
+  const max = Math.max(...bars.map((b) => b.value), 1);
+  return `<div class="barchart" style="--h:${h}px">${bars
+    .map((b) => {
+      const pctH = Math.max(b.value > 0 ? 3 : 0, (b.value / max) * 100);
+      const stack = b.parts
+        ? b.parts
+            .filter((p) => p.value > 0)
+            .map((p) => `<i style="height:${(p.value / b.value) * 100}%;background:${p.colour}" title="${escapeHtml(p.label)}"></i>`)
+            .join('')
+        : '<i style="height:100%"></i>';
+      return `<div class="bar" title="${escapeHtml(b.label)}: ${escapeHtml(b.text || String(b.value) + unit)}">
+        <div class="bar-stack" style="height:${pctH}%">${stack}</div>
+        <span>${escapeHtml(b.short || b.label)}</span>
+      </div>`;
+    })
+    .join('')}</div>`;
+}
+
 export function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }

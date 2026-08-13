@@ -6,6 +6,14 @@ import { startSession } from './session.js';
 import { renderReport } from './report.js';
 import { renderTracking } from './tracking.js';
 import { fmtMs, ringSvg, escapeHtml, toast, haptic } from './ui.js';
+import * as peProgram from './pe/program.js';
+import { renderPeHome } from './pe/home.js';
+import { renderTimer } from './pe/timer.js';
+import { renderMeasure } from './pe/measure.js';
+import { renderStats } from './pe/stats.js';
+import { renderGallery, leaveGallery } from './pe/gallery.js';
+import { renderPeGuide } from './pe/guide.js';
+import * as vault from './pe/vault.js';
 
 const app = document.getElementById('app');
 let activeSession = null;
@@ -15,16 +23,50 @@ const kegelName = () => (store.get().settings.discreet ? 'Core Training' : 'Kege
 
 /* ---------------- the NiFo hub ---------------- */
 // Features are registered here so adding the next one is a single entry.
-const FEATURES = [
-  { id: 'kegels', icon: '◎', route: '#/kegels', ready: true, blurb: 'Progressive pelvic floor training with real per-rep tracking' },
-];
-
 const SOON = ['Sleep', 'Reading', 'Workouts', 'Money', 'Habits'];
 
+/** Each feature supplies its own hub tile status, so the hub does not need to
+ *  know anything about how a feature works. */
+const FEATURES = [
+  {
+    id: 'kegels',
+    icon: '◎',
+    route: '#/kegels',
+    name: () => kegelName(),
+    blurb: 'Progressive pelvic floor training with real per-rep tracking',
+    pills() {
+      const state = store.get();
+      const plan = program.planForToday(state);
+      const st = store.streak();
+      return [
+        { text: plan.complete ? 'Done today' : `${plan.doneToday}/${plan.target} today`, done: plan.complete },
+        { text: `Level ${state.program.level}`, ghost: true },
+        st ? { text: `${st}d streak`, ghost: true } : null,
+      ];
+    },
+  },
+  {
+    id: 'pe',
+    icon: '◈',
+    route: '#/pe',
+    name: () => (store.get().settings.discreet ? 'Length Training' : 'PE'),
+    blurb: 'Stretching, pumping and monthly measurements with a private gallery',
+    pills() {
+      const pe = store.get().pe;
+      const st = peProgram.peStreak();
+      const latest = pe.measurements[pe.measurements.length - 1];
+      const week = peProgram.weeklyVolumeMs(null, 1);
+      const due = peProgram.measurementDue();
+      return [
+        { text: week ? `${(week / 3600000).toFixed(1)}h this week` : 'Nothing this week', done: week > 0 },
+        latest ? { text: peProgram.fmtLength(latest.bpel), ghost: true } : null,
+        due.due ? { text: 'Check-in due', ghost: true } : st ? { text: `${st}d streak`, ghost: true } : null,
+      ];
+    },
+  },
+];
+
 function renderHub() {
-  const state = store.get();
-  const st = store.streak();
-  const plan = program.planForToday(state);
   app.innerHTML = `
     <div class="screen">
       <header class="hub-head">
@@ -36,18 +78,22 @@ function renderHub() {
       </header>
 
       <div class="feature-grid">
-        ${FEATURES.map(
-          (f) => `<a class="feature" href="${f.route}">
+        ${FEATURES.map((f) => {
+          let pills = [];
+          try {
+            pills = f.pills().filter(Boolean);
+          } catch {
+            pills = [];
+          }
+          return `<a class="feature" href="${f.route}">
             <div class="feature-icon">${f.icon}</div>
-            <h2>${escapeHtml(f.id === 'kegels' ? kegelName() : f.id)}</h2>
+            <h2>${escapeHtml(f.name())}</h2>
             <p>${escapeHtml(f.blurb)}</p>
             <div class="feature-foot">
-              <span class="pill ${plan.complete ? 'done' : ''}">${plan.complete ? 'Done today' : `${plan.doneToday}/${plan.target} today`}</span>
-              <span class="pill ghost">Level ${state.program.level}</span>
-              ${st ? `<span class="pill ghost">${st}d streak</span>` : ''}
+              ${pills.map((p) => `<span class="pill ${p.done ? 'done' : ''} ${p.ghost ? 'ghost' : ''}">${escapeHtml(p.text)}</span>`).join('')}
             </div>
-          </a>`
-        ).join('')}
+          </a>`;
+        }).join('')}
         ${SOON.map((n) => `<div class="feature soon"><div class="feature-icon">＋</div><h2>${n}</h2><p>Coming soon</p></div>`).join('')}
       </div>
 
@@ -234,6 +280,7 @@ function renderGuide() {
 
 function renderSettings() {
   const s = store.get().settings;
+  const pe = store.get().pe.settings;
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   app.innerHTML = `
     <div class="screen">
@@ -277,6 +324,43 @@ function renderSettings() {
         <label class="setting toggle"><span><b>Discreet mode</b><i>Renames the section to "Core Training" everywhere in the app.</i></span><input type="checkbox" id="discreet" ${s.discreet ? 'checked' : ''}></label>
       </section>
 
+      <section class="card">
+        <h2>PE</h2>
+        <label class="setting">
+          <span><b>Units</b><i>Applies to every length and girth in the app.</i></span>
+          <select id="peUnits">
+            <option value="cm" ${pe.units === 'cm' ? 'selected' : ''}>cm</option>
+            <option value="in" ${pe.units === 'in' ? 'selected' : ''}>inches</option>
+          </select>
+        </label>
+        <label class="setting">
+          <span><b>Pump type</b><i>Water pumps have no gauge, so intensity is logged by feel instead of as a fake pressure reading.</i></span>
+          <select id="pumpStyle">
+            <option value="hydro" ${pe.pumpStyle === 'hydro' ? 'selected' : ''}>Water (Hydromax/Bathmate)</option>
+            <option value="air" ${pe.pumpStyle === 'air' ? 'selected' : ''}>Air, with a gauge</option>
+          </select>
+        </label>
+        <label class="setting">
+          <span><b>Pressure unit</b><i>For gauged pumps.</i></span>
+          <select id="pressureUnit">
+            <option value="kPa" ${pe.pressureUnit === 'kPa' ? 'selected' : ''}>kPa</option>
+            <option value="inHg" ${pe.pressureUnit === 'inHg' ? 'selected' : ''}>inHg</option>
+          </select>
+        </label>
+        <label class="setting">
+          <span><b>Check-in day</b><i>Which day of the month the measurement reminder appears.</i></span>
+          <select id="measureDay">
+            ${[1, 5, 10, 15, 20, 25, 28].map((d) => `<option value="${d}" ${pe.measureDay === d ? 'selected' : ''}>${d}</option>`).join('')}
+          </select>
+        </label>
+        <label class="setting">
+          <span><b>Gallery auto-lock</b><i>How long the gallery stays open without you touching it.</i></span>
+          <select id="autoLockMin">
+            ${[1, 2, 5, 10].map((m) => `<option value="${m}" ${pe.autoLockMin === m ? 'selected' : ''}>${m} min</option>`).join('')}
+          </select>
+        </label>
+      </section>
+
       <section class="card danger">
         <h2>Reset</h2>
         <p class="small muted">Deletes every session, badge and level. There is no undo — export a backup from the tracking screen first.</p>
@@ -299,6 +383,19 @@ function renderSettings() {
   bind('haptics', 'haptics', (e) => e.checked);
   bind('sound', 'sound', (e) => e.checked);
   bind('discreet', 'discreet', (e) => e.checked);
+
+  const bindPe = (id, key, get = (e) => e.value) =>
+    app.querySelector('#' + id).addEventListener('change', (e) => {
+      store.update((st) => {
+        st.pe.settings[key] = get(e.target);
+      });
+      toast('Saved');
+    });
+  bindPe('peUnits', 'units');
+  bindPe('pumpStyle', 'pumpStyle');
+  bindPe('pressureUnit', 'pressureUnit');
+  bindPe('measureDay', 'measureDay', (e) => Number(e.value));
+  bindPe('autoLockMin', 'autoLockMin', (e) => Number(e.value));
 
   app.querySelector('#reset').addEventListener('click', () => {
     if (confirm('Erase every session and start from level 1? This cannot be undone.')) {
@@ -338,7 +435,21 @@ const ROUTES = {
   '#/track': () => renderTracking(app),
   '#/guide': renderGuide,
   '#/settings': renderSettings,
+  '#/pe': () => renderPeHome(app),
+  '#/pe/timer': (params) => renderTimer(app, { type: params.get('type') || 'stretch' }),
+  '#/pe/measure': () => renderMeasure(app),
+  '#/pe/stats': () => renderStats(app),
+  '#/pe/gallery': () => renderGallery(app),
+  '#/pe/guide': () => renderPeGuide(app),
 };
+
+const NAV = {
+  hub: '#/hub', kegels: '#/kegels', track: '#/track', settings: '#/settings', guide: '#/guide',
+  pe: '#/pe', 'pe-timer': '#/pe/timer', 'pe-measure': '#/pe/measure', 'pe-stats': '#/pe/stats',
+  'pe-gallery': '#/pe/gallery', 'pe-guide': '#/pe/guide',
+};
+
+let lastHash = '';
 
 function route() {
   if (activeSession) {
@@ -346,16 +457,31 @@ function route() {
     activeSession = null;
     document.body.classList.remove('in-session');
   }
-  const fn = ROUTES[location.hash] || renderHub;
-  fn();
-  if (location.hash !== '#/session') window.scrollTo(0, 0);
+  // Leaving the gallery frees the decrypted object URLs it handed to <img>.
+  if (lastHash.startsWith('#/pe/gallery') && !location.hash.startsWith('#/pe/gallery')) leaveGallery();
+  lastHash = location.hash;
+
+  const [path, query] = location.hash.split('?');
+  const fn = ROUTES[path] || renderHub;
+  fn(new URLSearchParams(query || ''));
+  if (path !== '#/session') window.scrollTo(0, 0);
 }
 
 document.addEventListener('click', (e) => {
   const nav = e.target.closest('[data-nav]');
   if (!nav) return;
   e.preventDefault();
-  location.hash = { hub: '#/hub', kegels: '#/kegels', track: '#/track', settings: '#/settings', guide: '#/guide' }[nav.dataset.nav] || '#/hub';
+  location.hash = NAV[nav.dataset.nav] || '#/hub';
+});
+
+// Locking the vault the moment the app is backgrounded keeps decrypted photos
+// off the app switcher preview and out of a phone handed to someone else.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' && vault.isUnlocked()) {
+    vault.lock();
+    leaveGallery();
+    if (location.hash.startsWith('#/pe/gallery')) location.hash = '#/pe';
+  }
 });
 
 window.addEventListener('hashchange', route);
