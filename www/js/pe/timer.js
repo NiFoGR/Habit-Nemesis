@@ -11,6 +11,7 @@ import * as pe from './program.js';
 import * as kegel from '../program.js';
 import { haptic, beep, fmtClock, fmtMs, notify, askNotifyPermission, escapeHtml, toast } from '../ui.js';
 import { scheduleAlarm, cancelAlarm, ensureAlarmPermission, ALARM_SESSION } from '../native.js';
+import { icon } from '../icons.js';
 
 const R = 132;
 const CIRC = 2 * Math.PI * R;
@@ -76,15 +77,15 @@ export function renderTimer(mount, opts = {}) {
     mount.innerHTML = `
       <div class="screen">
         <header class="screen-head">
-          <button class="icon-btn" data-nav="pe" aria-label="Back">←</button>
+          <button class="icon-btn" data-nav="pe" aria-label="Back">${icon('back')}</button>
           <h1>${escapeHtml(d.label)}</h1>
-          <button class="icon-btn" data-nav="pe-guide" aria-label="Safety guide">?</button>
+          <button class="icon-btn" data-nav="pe-guide" aria-label="Safety guide">${icon('help')}</button>
         </header>
 
         <div class="type-grid">
           ${pe.TYPE_LIST.map(
             (t) => `<button class="type-chip ${t.id === cfg.type ? 'on' : ''}" data-type="${t.id}" style="--c:${t.colour}">
-              <span>${escapeHtml(t.label)}</span>
+              ${icon(t.icon, 17)}<span>${escapeHtml(t.label)}</span>
             </button>`
           ).join('')}
         </div>
@@ -127,7 +128,7 @@ export function renderTimer(mount, opts = {}) {
           .map((w) => `<div class="notice ${w.level === 'info' ? '' : 'warn'}">${escapeHtml(w.text)}</div>`)
           .join('')}</div>` : ''}
 
-        <button class="btn primary big" id="start">Start</button>
+        <button class="btn primary big" id="start">${icon('play', 18)}<span>Start</span></button>
       </div>`;
 
     mount.querySelectorAll('[data-type]').forEach((b) =>
@@ -214,9 +215,9 @@ export function renderTimer(mount, opts = {}) {
     mount.innerHTML = `
       <div class="player pe-player" id="player">
         <div class="player-top">
-          <button class="icon-btn" id="stop" aria-label="Finish">✕</button>
+          <button class="icon-btn" id="stop" aria-label="Finish">${icon('close')}</button>
           <div class="player-progress"><i id="prog"></i></div>
-          <button class="icon-btn" id="pause" aria-label="Pause">❚❚</button>
+          <button class="icon-btn" id="pause" aria-label="Pause">${icon('pause')}</button>
         </div>
 
         <div class="player-phase">
@@ -596,7 +597,7 @@ export function renderTimer(mount, opts = {}) {
         ${kegelLogged ? `<p class="small muted">${kegelLogged} kegel cycles counted toward your Kegels streak too.</p>` : ''}
 
         ${earned.length ? `<section class="card">
-          ${earned.map((a) => `<div class="pr-row"><b>🏅 ${escapeHtml(a.name)}</b><span>${escapeHtml(a.desc)}</span></div>`).join('')}
+          ${earned.map((a) => `<div class="pr-row"><b>${icon('medal', 16)} ${escapeHtml(a.name)}</b><span>${escapeHtml(a.desc)}</span></div>`).join('')}
         </section>` : ''}
 
         <button class="btn primary big" data-nav="pe">Done</button>

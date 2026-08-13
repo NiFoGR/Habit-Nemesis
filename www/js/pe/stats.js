@@ -4,6 +4,7 @@
 import * as store from '../store.js';
 import * as pe from './program.js';
 import { escapeHtml, fmtHours, fmtClock, segmented, onSegment, barChart, relDay, lineChart } from '../ui.js';
+import { icon } from '../icons.js';
 
 let period = '30d';
 
@@ -139,9 +140,9 @@ export function renderStats(mount) {
   mount.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="pe" aria-label="Back">←</button>
+        <button class="icon-btn" data-nav="pe" aria-label="Back">${icon('back')}</button>
         <h1>Progress</h1>
-        <button class="icon-btn" data-nav="pe-gallery" aria-label="Gallery">▤</button>
+        <button class="icon-btn" data-nav="pe-gallery" aria-label="Gallery">${icon('images')}</button>
       </header>
 
       ${segmented('period', pe.PERIODS, period)}
@@ -158,17 +159,17 @@ export function renderStats(mount) {
       </div>
 
       <section class="card">
-        <h2>Length</h2>
+        <div class="h-row">${icon('stretch', 16)}<h2>Length</h2></div>
         ${sizeChart(ms.filter((m) => m.bpel).map((m) => ({ ts: m.ts, value: m.bpel })), proj, 'var(--accent)', 'bpel')}
       </section>
 
       <section class="card">
-        <h2>Girth</h2>
+        <div class="h-row">${icon('pump', 16)}<h2>Girth</h2></div>
         ${sizeChart(ms.filter((m) => m.eg).map((m) => ({ ts: m.ts, value: m.eg })), proj, 'var(--violet)', 'eg')}
       </section>
 
       ${proj ? `<section class="card projection">
-        <h2>Projected growth</h2>
+        <div class="h-row">${icon('trend', 16)}<h2>Projected growth</h2></div>
         <div class="proj-rows">
           ${proj.points.map((p) => `<div class="proj-row">
             <span>${p.months}m</span>
@@ -181,13 +182,13 @@ export function renderStats(mount) {
       </section>` : ''}
 
       <section class="card">
-        <h2>Training volume</h2>
+        <div class="h-row">${icon('chart', 16)}<h2>Training volume</h2></div>
         <div class="legend">${Object.entries(vol).map(([t, v]) => `<i style="background:${pe.typeDef(t).colour}"></i> ${escapeHtml(pe.typeDef(t).label)} ${fmtHours(v)}`).join(' ')}</div>
         ${volumeBars(inPeriod, period)}
       </section>
 
       <section class="card">
-        <h2>Pumping</h2>
+        <div class="h-row">${icon('pump', 16)}<h2>Pumping</h2></div>
         <div class="kv"><span>Sessions</span><b>${pumps.length}</b></div>
         <div class="kv"><span>Total time</span><b>${fmtHours(vol.pump || 0)}</b></div>
         ${avgPressure ? `<div class="kv"><span>Average pressure</span><b>${pe.fmtPressure(avgPressure)} · ${escapeHtml(pe.pressureBand(avgPressure).label)}</b></div>` : ''}
@@ -196,7 +197,7 @@ export function renderStats(mount) {
       </section>
 
       <section class="card">
-        <h2>Before / after BPFSL</h2>
+        <div class="h-row">${icon('ruler', 16)}<h2>Before / after BPFSL</h2></div>
         ${paired.length ? `<div class="paired">${paired
           .map((x) => {
             const max = Math.max(...paired.map((p) => p.bpfslAfter)) * 1.05;
@@ -211,38 +212,38 @@ export function renderStats(mount) {
       </section>
 
       ${paired.length > 1 ? `<section class="card">
-        <h2>Session response over time</h2>
+        <div class="h-row">${icon('trend', 16)}<h2>Session response over time</h2></div>
         ${lineChart(paired.map((x) => ((x.bpfslAfter - x.bpfslBefore) / x.bpfslBefore) * 100), { color: 'var(--good)' })}
       </section>` : ''}
 
       ${s.eq.length > 1 ? `<section class="card">
-        <h2>Erection quality</h2>
+        <div class="h-row">${icon('droplet', 16)}<h2>Erection quality</h2></div>
         ${lineChart(pe.inPeriod(s.eq, period).map((e) => e.v), { color: 'var(--good)' })}
         <p class="fineprint">Weekly self-rating, 1–10. The outcome that actually matters — watch it against volume.</p>
       </section>` : ''}
 
       ${insights.length ? `<section class="card">
-        <h2>What the data says</h2>
+        <div class="h-row">${icon('help', 16)}<h2>What the data says</h2></div>
         ${insights.map((i) => `<div class="insight ${i.level}">${escapeHtml(i.text)}</div>`).join('')}
       </section>` : ''}
 
       <section class="card">
-        <h2>Achievements</h2>
+        <div class="h-row">${icon('medal', 16)}<h2>Achievements</h2></div>
         <div class="badges">
           ${pe.ACHIEVEMENTS.map((a) => {
             const has = s.achievements.includes(a.id);
-            return `<div class="badge ${has ? 'has' : ''}" title="${escapeHtml(a.desc)}"><b>${has ? '🏅' : '🔒'}</b><span>${escapeHtml(a.name)}</span></div>`;
+            return `<div class="badge ${has ? 'has' : ''}" title="${escapeHtml(a.desc)}"><b>${has ? icon('medal', 20) : icon('lock', 20)}</b><span>${escapeHtml(a.name)}</span></div>`;
           }).join('')}
         </div>
       </section>
 
       <section class="card">
-        <h2>Session log</h2>
+        <div class="h-row">${icon('calendar', 16)}<h2>Session log</h2></div>
         ${sessions.length ? sessions.slice().reverse().slice(0, 80).map(logRow).join('') : '<p class="muted small">Nothing logged yet.</p>'}
       </section>
 
       <section class="card">
-        <h2>Measurement history</h2>
+        <div class="h-row">${icon('ruler', 16)}<h2>Measurement history</h2></div>
         ${ms.length ? ms.slice().reverse().map((m) => `<div class="kv">
           <span>${new Date(m.ts).toLocaleDateString()}</span>
           <b>${pe.fmtLength(m.bpel)} × ${pe.fmtLength(m.eg)}${m.photoId ? ' 🔒' : ''}</b>

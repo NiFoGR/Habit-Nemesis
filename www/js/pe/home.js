@@ -2,7 +2,8 @@
 
 import * as store from '../store.js';
 import * as pe from './program.js';
-import { escapeHtml, fmtHours, ringSvg, toast, haptic } from '../ui.js';
+import { escapeHtml, fmtHours, ringSvg, toast, haptic, sparkline, donut } from '../ui.js';
+import { icon } from '../icons.js';
 
 export function renderPeHome(mount) {
   const state = store.get();
@@ -28,9 +29,9 @@ export function renderPeHome(mount) {
   mount.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="hub" aria-label="Back">←</button>
+        <button class="icon-btn" data-nav="hub" aria-label="Back">${icon('back')}</button>
         <h1>${store.get().settings.discreet ? 'Length Training' : 'PE'}</h1>
-        <button class="icon-btn" data-nav="pe-stats" aria-label="Progress">▤</button>
+        <button class="icon-btn" data-nav="pe-stats" aria-label="Progress">${icon('chart')}</button>
       </header>
 
       <div class="today pe-today">
@@ -40,33 +41,44 @@ export function renderPeHome(mount) {
             ? `${gain > 0.01 ? `+${pe.fmtLength(gain, undefined, 2)} since start · ` : ''}${pe.peStreak()}d streak`
             : 'Measure once and everything else starts working.'}</p>
         </div>
-        ${ringSvg(Math.min(weekStretch / targetWeekMs, 1), fmtHours(weekStretch), 'this week', { size: 96 })}
+        ${donut(
+          [
+            { value: weekStretch, colour: 'var(--accent)' },
+            { value: pe.weeklyVolumeMs('pump', 1), colour: 'var(--violet)' },
+            { value: pe.weeklyVolumeMs('warmup', 1), colour: 'var(--warn)' },
+          ],
+          { size: 96, centre: fmtHours(weekStretch + pe.weeklyVolumeMs('pump', 1) + pe.weeklyVolumeMs('warmup', 1)) }
+        )}
       </div>
 
-      ${due.due ? '<a class="notice action" href="#/pe/measure">Monthly check-in due — tap to measure.</a>' : ''}
+      ${s.measurements.length > 1 ? `<div class="spark-card">
+        <div class="cap"><span>Length trend</span><b>${gain >= 0 ? '+' : '−'}${pe.fmtLength(Math.abs(gain), undefined, 2)}</b></div>
+        ${sparkline(s.measurements.map((m) => m.bpel), { color: 'var(--violet)', h: 40 })}
+      </div>` : ''}
+      ${due.due ? `<a class="notice action" href="#/pe/measure">${icon('ruler', 16)} Monthly check-in due — tap to measure.</a>` : ''}
       ${dec.due ? `<div class="notice warn">${dec.consecutive} days without a rest day. Take a few off.</div>` : ''}
 
-      ${repeatLabel ? `<a class="btn primary big linkbtn" href="#/pe/timer?type=${lastWork.type}&repeat=1">Repeat last — ${escapeHtml(repeatLabel)}</a>` : ''}
+      ${repeatLabel ? `<a class="btn primary big linkbtn" href="#/pe/timer?type=${lastWork.type}&repeat=1">${icon('repeat', 18)}<span>Repeat — ${escapeHtml(repeatLabel)}</span></a>` : ''}
 
       <div class="start-grid">
-        <a class="start-card" href="#/pe/timer?type=stretch&routine=1" style="--c:var(--accent)"><span>Routine</span><i>warm-up → stretch</i></a>
-        <a class="start-card" href="#/pe/timer?type=stretch" style="--c:var(--accent)"><span>Stretch</span><i>${s.settings.stretchMin} min</i></a>
-        <a class="start-card" href="#/pe/timer?type=pump" style="--c:var(--violet)"><span>Pump</span><i>${s.settings.pumpMin} min</i></a>
-        <a class="start-card" href="#/pe/timer?type=warmup" style="--c:var(--warn)"><span>Warm-up</span><i>8 min</i></a>
+        <a class="start-card" href="#/pe/timer?type=stretch&routine=1" style="--c:var(--accent)">${icon('flash')}<span class="sc-text"><span>Routine</span><i>warm-up + stretch</i></span></a>
+        <a class="start-card" href="#/pe/timer?type=stretch" style="--c:var(--accent)">${icon('stretch')}<span class="sc-text"><span>Stretch</span><i>${s.settings.stretchMin} min</i></span></a>
+        <a class="start-card" href="#/pe/timer?type=pump" style="--c:var(--violet)">${icon('pump')}<span class="sc-text"><span>Pump</span><i>${s.settings.pumpMin} min</i></span></a>
+        <a class="start-card" href="#/pe/timer?type=warmup" style="--c:var(--warn)">${icon('flame')}<span class="sc-text"><span>Warm-up</span><i>8 min</i></span></a>
       </div>
 
       ${eqDue ? `<section class="card" id="eqCard">
-        <label class="slider-row"><span>Erection quality this week</span><span class="tag">1–10</span></label>
+        <div class="h-row">${icon('droplet', 16)}<h2>Erection quality this week</h2></div>
         <div class="eq-row">${Array.from({ length: 10 }, (_, i) => `<button data-eq="${i + 1}">${i + 1}</button>`).join('')}</div>
       </section>` : ''}
 
       ${!latest ? '<a class="btn primary big linkbtn" href="#/pe/measure">Take first measurement</a>' : ''}
 
       <div class="linkrow">
-        <a href="#/pe/stats">Progress</a>
-        <a href="#/pe/gallery">Gallery</a>
-        <a href="#/pe/measure">Check-in${due.due ? '' : ` · ${due.next}d`}</a>
-        <a href="#/pe/guide">Safety</a>
+        <a href="#/pe/stats">${icon('chart')} Progress</a>
+        <a href="#/pe/gallery">${icon('lock')} Gallery</a>
+        <a href="#/pe/measure">${icon('ruler')} Check-in${due.due ? '' : ` · ${due.next}d`}</a>
+        <a href="#/pe/guide">${icon('shield')} Safety</a>
       </div>
     </div>`;
 
@@ -88,7 +100,7 @@ function renderSafetyGate(mount) {
   mount.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="hub" aria-label="Back">←</button>
+        <button class="icon-btn" data-nav="hub" aria-label="Back">${icon('back')}</button>
         <h1>Before you start</h1>
         <span class="icon-btn ghost"></span>
       </header>

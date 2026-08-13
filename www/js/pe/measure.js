@@ -9,6 +9,7 @@ import * as pe from './program.js';
 import * as db from './db.js';
 import * as vault from './vault.js';
 import { withVault } from './pin.js';
+import { icon } from '../icons.js';
 import { escapeHtml, toast, haptic } from '../ui.js';
 
 const FIELDS = [
@@ -51,7 +52,7 @@ export function renderMeasure(mount) {
     mount.innerHTML = `
       <div class="screen">
         <header class="screen-head">
-          <button class="icon-btn" data-nav="pe" aria-label="Back">←</button>
+          <button class="icon-btn" data-nav="pe" aria-label="Back">${icon('back')}</button>
           <h1>Monthly check-in</h1>
           <span class="icon-btn ghost"></span>
         </header>
@@ -252,7 +253,7 @@ export function renderMeasure(mount) {
         </section>` : ''}
 
         ${earned.length ? `<section class="card">
-          ${earned.map((a) => `<div class="pr-row"><b>🏅 ${escapeHtml(a.name)}</b><span>${escapeHtml(a.desc)}</span></div>`).join('')}
+          ${earned.map((a) => `<div class="pr-row"><b>${icon('medal', 16)} ${escapeHtml(a.name)}</b><span>${escapeHtml(a.desc)}</span></div>`).join('')}
         </section>` : ''}
 
         <button class="btn primary big" data-nav="pe-stats">Progress</button>

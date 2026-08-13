@@ -2,6 +2,7 @@
 
 import * as store from './store.js';
 import * as program from './program.js';
+import { icon } from './icons.js';
 import { fmtMs, fmtDuration, repBars, ringSvg, escapeHtml } from './ui.js';
 
 function delta(now, before, fmt = (v) => String(Math.round(v))) {
@@ -80,7 +81,7 @@ export function renderReport(mount, result, onDone) {
       </section>` : ''}
 
       ${badges.length ? `<section class="card">
-        ${badges.map((b) => `<div class="pr-row"><b>🏅 ${escapeHtml(b.name)}</b><span>${escapeHtml(b.desc)}</span></div>`).join('')}
+        ${badges.map((b) => `<div class="pr-row"><b>${icon('medal', 16)} ${escapeHtml(b.name)}</b><span>${escapeHtml(b.desc)}</span></div>`).join('')}
       </section>` : ''}
 
       ${!isRelease && record.type !== 'quick' ? `<div class="prog-line">

@@ -23,7 +23,7 @@ export const TYPES = {
   warmup: {
     id: 'warmup',
     label: 'Warm-up',
-    icon: '♨',
+    icon: 'flame',
     colour: 'var(--warn)',
     defaultMin: 8,
     intensity: null,
@@ -33,7 +33,7 @@ export const TYPES = {
   stretch: {
     id: 'stretch',
     label: 'Stretching',
-    icon: '↕',
+    icon: 'stretch',
     colour: 'var(--accent)',
     defaultMin: 30,
     intensity: { key: 'tensionKg', label: 'Tension', unit: 'kg', min: 1, max: 20, step: 0.5, safe: 12 },
@@ -44,7 +44,7 @@ export const TYPES = {
   pump: {
     id: 'pump',
     label: 'Pumping',
-    icon: '◍',
+    icon: 'pump',
     colour: 'var(--violet)',
     defaultMin: 15,
     intensity: { key: 'pressure', label: 'Pressure', unit: 'kPa', min: 2, max: 34, step: 0.5, safe: 17 },
@@ -57,8 +57,8 @@ export const TYPES = {
  *  against them, but old entries still have to render with their own name
  *  rather than being silently relabelled as something the user never did. */
 const RETIRED = {
-  jelq: { id: 'jelq', label: 'Jelqing', icon: '⤓', colour: 'var(--calm)', retired: true, defaultMin: 10, intensity: null, blurb: '', cue: '' },
-  clamp: { id: 'clamp', label: 'Clamping', icon: '⊟', colour: 'var(--danger)', retired: true, defaultMin: 5, intensity: null, blurb: '', cue: '' },
+  jelq: { id: 'jelq', label: 'Jelqing', icon: 'stretch', colour: 'var(--calm)', retired: true, defaultMin: 10, intensity: null, blurb: '', cue: '' },
+  clamp: { id: 'clamp', label: 'Clamping', icon: 'warn', colour: 'var(--danger)', retired: true, defaultMin: 5, intensity: null, blurb: '', cue: '' },
 };
 
 export const TYPE_LIST = Object.values(TYPES);

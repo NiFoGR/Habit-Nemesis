@@ -6,6 +6,7 @@ import * as pe from './program.js';
 import * as db from './db.js';
 import * as vault from './vault.js';
 import { withVault } from './pin.js';
+import { icon } from '../icons.js';
 import { escapeHtml, toast } from '../ui.js';
 
 let urls = []; // object URLs to revoke when leaving
@@ -57,9 +58,9 @@ async function grid(mount) {
   mount.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="pe" aria-label="Back">←</button>
+        <button class="icon-btn" data-nav="pe" aria-label="Back">${icon('back')}</button>
         <h1>Gallery</h1>
-        <button class="icon-btn" id="lock" aria-label="Lock now">🔒</button>
+        <button class="icon-btn" id="lock" aria-label="Lock now">${icon('lock')}</button>
       </header>
 
       ${items.length ? `
@@ -70,7 +71,7 @@ async function grid(mount) {
         <div class="gal-grid" id="grid">${items.map(card).join('')}</div>
       ` : `
         <div class="empty-state">
-          <div class="hero-icon">🔒</div>
+          <div class="hero-icon">${icon('lock', 40)}</div>
           <h2>No photos yet</h2>
           <p class="muted small">Photos are added as part of the monthly check-in, so each one is stored alongside the measurements from the same day.</p>
           <button class="btn primary" data-nav="pe-measure">Do a check-in</button>
@@ -135,9 +136,9 @@ async function viewer(mount, id, items) {
   mount.innerHTML = `
     <div class="screen viewer">
       <header class="screen-head">
-        <button class="icon-btn" id="back" aria-label="Back">←</button>
+        <button class="icon-btn" id="back" aria-label="Back">${icon('back')}</button>
         <h1>${date.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}</h1>
-        <button class="icon-btn" id="del" aria-label="Delete">🗑</button>
+        <button class="icon-btn" id="del" aria-label="Delete">${icon('close')}</button>
       </header>
       <img class="viewer-img" src="${url}" alt="">
       ${m ? `<div class="stat-grid">
@@ -183,7 +184,7 @@ async function compareView(mount, ids, items) {
   mount.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" id="back" aria-label="Back">←</button>
+        <button class="icon-btn" id="back" aria-label="Back">${icon('back')}</button>
         <h1>Compare</h1>
         <span class="icon-btn ghost"></span>
       </header>

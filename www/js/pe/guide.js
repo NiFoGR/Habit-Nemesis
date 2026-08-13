@@ -3,6 +3,7 @@
 
 import * as store from '../store.js';
 import * as pe from './program.js';
+import { icon } from '../icons.js';
 import { escapeHtml } from '../ui.js';
 
 export function renderPeGuide(mount) {
@@ -10,7 +11,7 @@ export function renderPeGuide(mount) {
   mount.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="pe" aria-label="Back">←</button>
+        <button class="icon-btn" data-nav="pe" aria-label="Back">${icon('back')}</button>
         <h1>Doing this safely</h1>
         <span class="icon-btn ghost"></span>
       </header>

@@ -5,7 +5,8 @@ import * as program from './program.js';
 import { startSession } from './session.js';
 import { renderReport } from './report.js';
 import { renderTracking } from './tracking.js';
-import { fmtMs, ringSvg, escapeHtml, toast, haptic } from './ui.js';
+import { fmtMs, ringSvg, escapeHtml, toast, haptic, sparkline } from './ui.js';
+import { icon, logoMark } from './icons.js';
 import * as peProgram from './pe/program.js';
 import { renderPeHome } from './pe/home.js';
 import { renderTimer } from './pe/timer.js';
@@ -31,7 +32,7 @@ const SOON = ['Sleep', 'Reading', 'Workouts', 'Money', 'Habits'];
 const FEATURES = [
   {
     id: 'kegels',
-    icon: '◎',
+    icon: 'target',
     route: '#/kegels',
     name: () => kegelName(),
     blurb: 'Progressive pelvic floor training with real per-rep tracking',
@@ -45,10 +46,14 @@ const FEATURES = [
         st ? { text: `${st}d streak`, ghost: true } : null,
       ];
     },
+    spark() {
+      const scored = store.get().sessions.filter((x) => x.countsForPromotion !== false && x.type !== 'release').slice(-14);
+      return sparkline(scored.map((x) => x.score), { color: 'var(--accent)' });
+    },
   },
   {
     id: 'pe',
-    icon: '◈',
+    icon: 'trend',
     route: '#/pe',
     name: () => (store.get().settings.discreet ? 'Length Training' : 'PE'),
     blurb: 'Stretching, pumping and monthly measurements with a private gallery',
@@ -64,6 +69,9 @@ const FEATURES = [
         due.due ? { text: 'Check-in due', ghost: true } : st ? { text: `${st}d streak`, ghost: true } : null,
       ];
     },
+    spark() {
+      return sparkline(store.get().pe.measurements.map((m) => m.bpel), { color: 'var(--violet)' });
+    },
   },
 ];
 
@@ -71,8 +79,8 @@ function renderHub() {
   app.innerHTML = `
     <div class="screen">
       <header class="hub-head">
-        <h1>NiFo</h1>
-        <button class="icon-btn" data-nav="settings" aria-label="Settings">⚙</button>
+        <div class="brand-row">${logoMark(28)}<h1>NiFo</h1></div>
+        <button class="icon-btn" data-nav="settings" aria-label="Settings">${icon('settings')}</button>
       </header>
 
       <div class="feature-grid">
@@ -83,14 +91,21 @@ function renderHub() {
           } catch {
             pills = [];
           }
-          return `<a class="feature" href="${f.route}">
-            <h2>${escapeHtml(f.name())}</h2>
+          let spark = '';
+          try {
+            spark = f.spark();
+          } catch {
+            spark = '';
+          }
+          return `<a class="feature ${f.id}" href="${f.route}">
+            <div class="feature-head">${icon(f.icon, 22)}<h2>${escapeHtml(f.name())}</h2></div>
             <div class="feature-foot">
               ${pills.map((p) => `<span class="pill ${p.done ? 'done' : ''} ${p.ghost ? 'ghost' : ''}">${escapeHtml(p.text)}</span>`).join('')}
             </div>
+            ${spark ? `<div class="feature-spark">${spark}</div>` : ''}
           </a>`;
         }).join('')}
-        ${SOON.map((n) => `<div class="feature soon"><div class="feature-icon">＋</div><h2>${n}</h2><p>Coming soon</p></div>`).join('')}
+        ${SOON.map((n) => `<div class="feature soon"><div class="feature-head">${icon('plus', 18)}<h2>${n}</h2></div></div>`).join('')}
       </div>
 
       <div id="installSlot"></div>
@@ -128,13 +143,17 @@ function renderKegels() {
   }
   const weekScored = state.sessions.filter((x) => x.ts >= Date.now() - 7 * 864e5 && x.countsForPromotion !== false && x.type !== 'release');
   const weekAvg = weekScored.length ? Math.round(weekScored.reduce((a, x) => a + x.score, 0) / weekScored.length) : null;
+  const recentScores = state.sessions
+    .filter((x) => x.countsForPromotion !== false && x.type !== 'release')
+    .slice(-20)
+    .map((x) => x.score);
 
   app.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="hub" aria-label="Back">←</button>
+        <button class="icon-btn" data-nav="hub" aria-label="Back">${icon('back')}</button>
         <h1>${escapeHtml(kegelName())}</h1>
-        <button class="icon-btn" data-nav="track" aria-label="Tracking">▤</button>
+        <button class="icon-btn" data-nav="track" aria-label="Tracking">${icon('chart')}</button>
       </header>
 
       <div class="today ${plan.type}">
@@ -149,19 +168,24 @@ function renderKegels() {
       ${plan.deload ? '<div class="notice warn">Reduced targets active — ease through these.</div>' : ''}
       ${plan.complete ? '<div class="notice good">Done for today.</div>' : ''}
 
-      <button class="btn primary big" id="start">${plan.complete ? 'Bonus session' : 'Start'}</button>
+      <button class="btn primary big" id="start">${icon('play', 18)}<span>${plan.complete ? 'Bonus session' : 'Start'}</span></button>
       ${plan.type === 'training' ? '<button class="btn ghost" id="quick">Quick session · 90s</button>' : ''}
 
       <div class="week-strip">${days.map((d) => `<i class="${d.cls}" title="${d.key}"></i>`).join('')}</div>
 
       <div class="stat-grid">
-        <div class="stat"><b>${state.program.qualifying}/${program.PROMOTION_TARGET}</b><span>to level ${Math.min(state.program.level + 1, program.MAX_LEVEL)}</span></div>
-        <div class="stat"><b>${fmtMs(state.prs.maxHoldMs)}</b><span>best hold</span></div>
+        <div class="stat">${icon('target', 16)}<b>${state.program.qualifying}/${program.PROMOTION_TARGET}</b><span>to level ${Math.min(state.program.level + 1, program.MAX_LEVEL)}</span></div>
+        <div class="stat">${icon('timer', 16)}<b>${fmtMs(state.prs.maxHoldMs)}</b><span>best hold</span></div>
       </div>
 
+      ${recentScores.length > 1 ? `<section class="card">
+        <div class="h-row">${icon('trend', 16)}<h2>Recent scores</h2></div>
+        ${sparkline(recentScores, { color: 'var(--accent)', h: 44 })}
+      </section>` : ''}
+
       <div class="linkrow">
-        <a href="#/track">Tracking</a>
-        <a href="#/guide">How to</a>
+        <a href="#/track">${icon('chart')} Tracking</a>
+        <a href="#/guide">${icon('help')} How to</a>
       </div>
     </div>`;
 
@@ -216,7 +240,7 @@ function renderGuide() {
   app.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="kegels" aria-label="Back">←</button>
+        <button class="icon-btn" data-nav="kegels" aria-label="Back">${icon('back')}</button>
         <h1>How to</h1>
         <span class="icon-btn ghost"></span>
       </header>
@@ -259,7 +283,7 @@ function renderSettings() {
   app.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="hub" aria-label="Back">←</button>
+        <button class="icon-btn" data-nav="hub" aria-label="Back">${icon('back')}</button>
         <h1>Settings</h1>
         <span class="icon-btn ghost"></span>
       </header>

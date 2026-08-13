@@ -115,6 +115,59 @@ export function onSegment(root, name, fn) {
   });
 }
 
+/** Tiny inline trend line for a headline number. No axes, no labels — it is
+ *  there to show shape at a glance, not to be read off. */
+export function sparkline(values, { color = 'var(--accent)', w = 120, h = 34, fill = true } = {}) {
+  const vals = values.filter((v) => Number.isFinite(v));
+  if (vals.length < 2) return '';
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  const flat = max - min < 1e-9;
+  const span = flat ? 1 : max - min;
+  const x = (i) => (i * w) / (vals.length - 1);
+  // A flat series sits on the mid-line rather than pinned to the floor, which
+  // would read as "zero" instead of "unchanged".
+  const y = (v) => (flat ? h / 2 : h - 3 - ((v - min) / span) * (h - 6));
+  const pts = vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const area = fill
+    ? `<polygon points="0,${h} ${pts} ${w},${h}" fill="${color}" opacity="0.13"/>`
+    : '';
+  const last = vals[vals.length - 1];
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
+    ${area}<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${w}" cy="${y(last).toFixed(1)}" r="2.5" fill="${color}"/>
+  </svg>`;
+}
+
+/** Donut for a small set of parts — weekly volume by session type. */
+export function donut(parts, { size = 104, thickness = 13, centre = '' } = {}) {
+  const total = parts.reduce((a, p) => a + p.value, 0);
+  const r = (size - thickness) / 2;
+  const c = 2 * Math.PI * r;
+  let offset = 0;
+  const arcs = total
+    ? parts
+        .filter((p) => p.value > 0)
+        .map((p) => {
+          const len = (p.value / total) * c;
+          const seg = `<circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none"
+            stroke="${p.colour}" stroke-width="${thickness}"
+            stroke-dasharray="${Math.max(0, len - 2).toFixed(1)} ${(c - len + 2).toFixed(1)}"
+            stroke-dashoffset="${(-offset).toFixed(1)}"/>`;
+          offset += len;
+          return seg;
+        })
+        .join('')
+    : '';
+  return `<div class="ringwrap" style="--size:${size}px">
+    <svg viewBox="0 0 ${size} ${size}">
+      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="var(--line)" stroke-width="${thickness}"/>
+      ${arcs}
+    </svg>
+    ${centre ? `<div class="ringwrap-core"><b>${escapeHtml(centre)}</b></div>` : ''}
+  </div>`;
+}
+
 /** Vertical bars with labels — used for volume by day. */
 export function barChart(bars, { h = 120, unit = '' } = {}) {
   if (!bars.length) return '<div class="chart-empty">Nothing logged in this period</div>';
@@ -206,14 +259,21 @@ export function repBars(reps, { h = 54 } = {}) {
 }
 
 /** Progress ring used on the report and the hub. */
-export function ringSvg(fraction, label, sub, { size = 168, color = 'var(--accent)' } = {}) {
+export function ringSvg(fraction, label, sub, { size = 168, color = null } = {}) {
   const r = 70;
   const c = 2 * Math.PI * r;
   const off = c * (1 - Math.max(0, Math.min(fraction, 1)));
+  // Unless a specific colour is asked for, the ring uses the logo's teal-to-
+  // violet sweep, which is where the app gets its identity from.
+  const gid = `rg${Math.random().toString(36).slice(2, 8)}`;
+  const stroke = color || `url(#${gid})`;
   return `<div class="ringwrap" style="--size:${size}px">
     <svg viewBox="0 0 160 160">
+      <defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#22d3c5"/><stop offset="100%" stop-color="#a78bfa"/>
+      </linearGradient></defs>
       <circle cx="80" cy="80" r="${r}" class="rw-track"/>
-      <circle cx="80" cy="80" r="${r}" class="rw-fill" stroke="${color}"
+      <circle cx="80" cy="80" r="${r}" class="rw-fill" stroke="${stroke}"
         stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/>
     </svg>
     <div class="ringwrap-core"><b>${label}</b><span>${sub}</span></div>

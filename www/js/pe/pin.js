@@ -3,6 +3,7 @@
 
 import * as vault from './vault.js';
 import * as db from './db.js';
+import { icon } from '../icons.js';
 import { escapeHtml, haptic, toast } from '../ui.js';
 
 const PIN_LEN = 6;
@@ -13,12 +14,12 @@ export function renderPinGate(mount, { onReady, onCancel, title }) {
     mount.innerHTML = `
       <div class="screen">
         <header class="screen-head">
-          <button class="icon-btn" id="cancel" aria-label="Back">←</button>
+          <button class="icon-btn" id="cancel" aria-label="Back">${icon('back')}</button>
           <h1>${escapeHtml(title || 'Private gallery')}</h1>
           <span class="icon-btn ghost"></span>
         </header>
         <div class="empty-state">
-          <div class="hero-icon">⚠</div>
+          <div class="hero-icon">${icon('warn', 40)}</div>
           <h2>Encryption unavailable here</h2>
           <p class="muted small">The browser only exposes the crypto it needs for this over HTTPS. Open the app from its installed icon, or over https, and the gallery will work. It deliberately will not store photos without encrypting them.</p>
         </div>
@@ -36,13 +37,13 @@ export function renderPinGate(mount, { onReady, onCancel, title }) {
     mount.innerHTML = `
       <div class="screen pin-screen">
         <header class="screen-head">
-          <button class="icon-btn" id="cancel" aria-label="Back">←</button>
+          <button class="icon-btn" id="cancel" aria-label="Back">${icon('back')}</button>
           <h1>${escapeHtml(title || 'Private gallery')}</h1>
           <span class="icon-btn ghost"></span>
         </header>
 
         <div class="pin-body">
-          <div class="pin-lock">🔒</div>
+          <div class="pin-lock">${icon('lock', 34)}</div>
           <h2>${stage}</h2>
           <p class="small muted centre">${setting
             ? 'Photos are encrypted with this PIN. It is not a screen lock — the files themselves are unreadable without it, including to anything else on the phone.'

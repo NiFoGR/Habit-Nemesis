@@ -5,6 +5,7 @@ import * as store from './store.js';
 import * as program from './program.js';
 import { fmtMs, fmtDuration, lineChart, repBars, escapeHtml, relDay, toast, ringSvg } from './ui.js';
 import { usage as photoUsage } from './pe/db.js';
+import { icon } from './icons.js';
 
 const WEEKS = 13; // a full 12-week block plus the current week
 
@@ -107,15 +108,15 @@ export function renderTracking(mount) {
   mount.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="kegels" aria-label="Back">←</button>
+        <button class="icon-btn" data-nav="kegels" aria-label="Back">${icon('back')}</button>
         <h1>Tracking</h1>
-        <button class="icon-btn" data-nav="settings" aria-label="Settings">⚙</button>
+        <button class="icon-btn" data-nav="settings" aria-label="Settings">${icon('settings')}</button>
       </header>
 
       <div class="pfi-hero">
         ${ringSvg(Math.min(idx / 1000, 1), String(idx), program.pfiBand(idx), { size: 150 })}
         <div>
-          <h2>Pelvic Floor Index</h2>
+          <div class="h-row">${icon('target', 16)}<h2>Pelvic Floor Index</h2></div>
           <p class="small muted">One number out of 1000, combining your best hold, your weekly volume, your level and how consistently you have shown up over the last two weeks.</p>
         </div>
       </div>
@@ -132,30 +133,30 @@ export function renderTracking(mount) {
       </div>
 
       <section class="card">
-        <h2>Consistency</h2>
+        <div class="h-row">${icon('calendar', 16)}<h2>Consistency</h2></div>
         <p class="small muted">Last 13 weeks. Brighter is a better session; teal marks a programmed release day.</p>
         ${heatmap(state)}
       </section>
 
       <section class="card">
-        <h2>Hold quality over time</h2>
+        <div class="h-row">${icon('trend', 16)}<h2>Hold quality over time</h2></div>
         <p class="small muted">Average hold length per session, in seconds. This is the line that matters most.</p>
         ${avgHolds.length > 1 ? lineChart(avgHolds, { color: 'var(--accent)' }) : '<div class="chart-empty">Two sessions and this starts drawing</div>'}
       </section>
 
       <section class="card">
-        <h2>Personal best hold</h2>
+        <div class="h-row">${icon('medal', 16)}<h2>Personal best hold</h2></div>
         <p class="small muted">Your ceiling, in seconds — it only ever steps up.</p>
         ${bestHoldSeries.length > 1 ? lineChart(bestHoldSeries, { color: 'var(--good)' }) : '<div class="chart-empty">Not enough sessions yet</div>'}
       </section>
 
       <section class="card">
-        <h2>Session scores</h2>
+        <div class="h-row">${icon('chart', 16)}<h2>Session scores</h2></div>
         ${scores.length > 1 ? lineChart(scores, { color: 'var(--violet)' }) : '<div class="chart-empty">Not enough sessions yet</div>'}
       </section>
 
       <section class="card">
-        <h2>Level history</h2>
+        <div class="h-row">${icon('target', 16)}<h2>Level history</h2></div>
         <ol class="timeline">
           ${state.program.history
             .map((h) => `<li><b>Level ${h.level}</b><span>${escapeHtml(program.levelDef(h.level).name)}</span><i>${new Date(h.at).toLocaleDateString()}</i></li>`)
@@ -165,19 +166,19 @@ export function renderTracking(mount) {
       </section>
 
       <section class="card">
-        <h2>Badges</h2>
+        <div class="h-row">${icon('medal', 16)}<h2>Badges</h2></div>
         <div class="badges">
-          ${earned.map((b) => `<div class="badge ${b.has ? 'has' : ''}" title="${escapeHtml(b.desc)}"><b>${b.has ? '🏅' : '🔒'}</b><span>${escapeHtml(b.name)}</span></div>`).join('')}
+          ${earned.map((b) => `<div class="badge ${b.has ? 'has' : ''}" title="${escapeHtml(b.desc)}"><b>${b.has ? icon('medal', 20) : icon('lock', 20)}</b><span>${escapeHtml(b.name)}</span></div>`).join('')}
         </div>
       </section>
 
       <section class="card">
-        <h2>Session log</h2>
+        <div class="h-row">${icon('calendar', 16)}<h2>Session log</h2></div>
         ${sessions.length ? sessions.slice().reverse().slice(0, 60).map(sessionRow).join('') : '<p class="muted">Nothing logged yet.</p>'}
       </section>
 
       <section class="card">
-        <h2>Your data</h2>
+        <div class="h-row">${icon('shield', 16)}<h2>Your data</h2></div>
         <p class="small muted">Everything is stored on this device only. Nothing is uploaded anywhere. Back it up before you clear your browser data or move phones.</p>
         <div class="row-btns">
           <button class="btn" id="exportBtn">Export backup</button>
