@@ -15,11 +15,20 @@ import { haptic, beep, fmtClock, fmtMs, notify, askNotifyPermission, escapeHtml,
 const R = 132;
 const CIRC = 2 * Math.PI * R;
 
+/** Numbers arriving from text fields: reject anything that is not a sane
+ *  positive measurement rather than letting NaN through into stored data. */
+function parseNum(raw) {
+  if (raw == null || raw === '') return null;
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 && n < 1000 ? n : null;
+}
+
 export function renderTimer(mount, opts = {}) {
   const state = store.get();
   const s = state.pe.settings;
   const cfg = {
-    type: opts.type || 'stretch',
+    // The type comes from the URL, so it is validated rather than trusted.
+    type: pe.isValidType(opts.type) ? opts.type : 'stretch',
     minutes: null,
     intensity: null,
     hydroLevel: s.hydroLevel,
@@ -70,7 +79,7 @@ export function renderTimer(mount, opts = {}) {
           <label class="slider-row">
             <span>Duration</span><b id="durOut">${cfg.minutes} min</b>
           </label>
-          <input type="range" id="dur" min="1" max="${cfg.type === 'clamp' ? 15 : 120}" step="1" value="${cfg.minutes}">
+          <input type="range" id="dur" min="1" max="120" step="1" value="${cfg.minutes}">
 
           ${d.intensity && !isHydro ? `
           <label class="slider-row">
@@ -145,8 +154,8 @@ export function renderTimer(mount, opts = {}) {
 
     mount.querySelector('#keg')?.addEventListener('change', (e) => (cfg.kegels = e.target.checked));
     mount.querySelector('#start').addEventListener('click', async () => {
-      const raw = mount.querySelector('#bpfsl')?.value;
-      cfg.bpfslBefore = raw ? pe.fromDisplayLength(Number(raw), s.units) : null;
+      const raw = parseNum(mount.querySelector('#bpfsl')?.value);
+      cfg.bpfslBefore = raw == null ? null : pe.fromDisplayLength(raw, s.units);
       await askNotifyPermission();
       run();
     });
@@ -415,7 +424,8 @@ export function renderTimer(mount, opts = {}) {
 
     const after = mount.querySelector('#after');
     after?.addEventListener('input', () => {
-      const v = after.value ? pe.fromDisplayLength(Number(after.value), s.units) : null;
+      const raw = parseNum(after.value);
+      const v = raw == null ? null : pe.fromDisplayLength(raw, s.units);
       const verdict = pe.bpfslVerdict(cfg.bpfslBefore, v);
       mount.querySelector('#verdict').innerHTML = verdict
         ? `<div class="notice ${verdict.level === 'good' ? 'good' : 'warn'}">${verdict.pct.toFixed(1)}% — ${escapeHtml(verdict.text)}</div>`
@@ -423,7 +433,8 @@ export function renderTimer(mount, opts = {}) {
     });
 
     mount.querySelector('#save').addEventListener('click', () => {
-      const bpfslAfter = after?.value ? pe.fromDisplayLength(Number(after.value), s.units) : null;
+      const rawAfter = parseNum(after?.value);
+      const bpfslAfter = rawAfter == null ? null : pe.fromDisplayLength(rawAfter, s.units);
       save({
         durationSec,
         quality,
@@ -447,7 +458,6 @@ export function renderTimer(mount, opts = {}) {
       tensionKg: cfg.type === 'stretch' ? cfg.intensity : null,
       pressure: cfg.type === 'pump' && s.pumpStyle !== 'hydro' ? cfg.intensity : null,
       hydroLevel: cfg.type === 'pump' && s.pumpStyle === 'hydro' ? cfg.hydroLevel : null,
-      strokes: cfg.type === 'jelq' ? cfg.intensity : null,
       bpfslBefore: cfg.bpfslBefore,
       bpfslAfter,
       kegelCycles: cfg.kegels && cfg.type === 'pump' ? kegelCycles : 0,

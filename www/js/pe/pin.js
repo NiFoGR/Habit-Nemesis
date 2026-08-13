@@ -9,6 +9,23 @@ const PIN_LEN = 6;
 
 /** Renders a keypad. Resolves once the vault is unlocked, or calls onCancel. */
 export function renderPinGate(mount, { onReady, onCancel, title }) {
+  if (!vault.isAvailable()) {
+    mount.innerHTML = `
+      <div class="screen">
+        <header class="screen-head">
+          <button class="icon-btn" id="cancel" aria-label="Back">←</button>
+          <h1>${escapeHtml(title || 'Private gallery')}</h1>
+          <span class="icon-btn ghost"></span>
+        </header>
+        <div class="empty-state">
+          <div class="hero-icon">⚠</div>
+          <h2>Encryption unavailable here</h2>
+          <p class="muted small">The browser only exposes the crypto it needs for this over HTTPS. Open the app from its installed icon, or over https, and the gallery will work. It deliberately will not store photos without encrypting them.</p>
+        </div>
+      </div>`;
+    mount.querySelector('#cancel').addEventListener('click', () => onCancel?.());
+    return;
+  }
   const setting = !vault.isSet();
   let entry = '';
   let confirmEntry = null; // holds the first entry while confirming a new PIN
@@ -62,9 +79,7 @@ export function renderPinGate(mount, { onReady, onCancel, title }) {
     entry += digit;
     haptic('tick');
     draw();
-    if (entry.length < 4) return;
-    // 4 is the minimum; submit automatically at full length.
-    if (entry.length === PIN_LEN) await submit();
+    if (entry.length === PIN_LEN) await submit(); // fixed length, so no confirm key
   }
 
   async function submit() {

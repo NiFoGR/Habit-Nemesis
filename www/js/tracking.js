@@ -4,11 +4,12 @@
 import * as store from './store.js';
 import * as program from './program.js';
 import { fmtMs, fmtDuration, lineChart, repBars, escapeHtml, relDay, toast, ringSvg } from './ui.js';
+import { usage as photoUsage } from './pe/db.js';
 
 const WEEKS = 13; // a full 12-week block plus the current week
 
-function heatLevel(score, type) {
-  if (type === 'release') return 'rest';
+function heatLevel(score, type, scored = true) {
+  if (type === 'release' || !scored) return 'rest';
   if (score >= 90) return 'l4';
   if (score >= 75) return 'l3';
   if (score >= 55) return 'l2';
@@ -37,11 +38,11 @@ function heatmap(state) {
       const rec = byDay.get(key);
       const future = key > store.dayKey(today);
       const n = counts.get(key) || 0;
-      const cls = future ? 'future' : rec ? heatLevel(rec.score, rec.type) : 'none';
+      const cls = future ? 'future' : rec ? heatLevel(rec.score, rec.type, rec.countsForPromotion !== false) : 'none';
       const title = future
         ? key
         : rec
-        ? `${relDay(key)} · ${n} session${n > 1 ? 's' : ''} · ${rec.type === 'release' ? 'release day' : `best score ${rec.score}`}`
+        ? `${relDay(key)} · ${n} session${n > 1 ? 's' : ''} · ${rec.type === 'release' ? 'release day' : rec.countsForPromotion === false ? 'logged during a pump session' : `best score ${rec.score}`}`
         : `${relDay(key)} · nothing logged`;
       cells += `<i class="${cls}" title="${escapeHtml(title)}"></i>`;
     }
@@ -53,16 +54,19 @@ function heatmap(state) {
 
 function sessionRow(s, idx) {
   const g = program.grade(s.score);
-  const label = s.type === 'release' ? 'Release day' : s.type === 'test' ? 'Max hold test' : `Level ${s.level}`;
+  const label = s.type === 'release' ? 'Release day'
+    : s.type === 'test' ? 'Max hold test'
+    : s.source === 'pe-pump' ? 'During a pump session'
+    : `Level ${s.level}`;
   const work = s.reps ? s.reps.filter((r) => r.kind !== 'flick') : [];
   return `<details class="log-row" ${idx === 0 ? 'open' : ''}>
     <summary>
       <span class="log-date">${relDay(s.date)}</span>
       <span class="log-label">${label}</span>
-      <span class="log-score ${s.type === 'release' ? 'rest' : ''}">${s.type === 'release' ? '✓' : s.score}</span>
+      <span class="log-score ${s.type === 'release' || s.countsForPromotion === false ? 'rest' : ''}">${s.type === 'release' || s.countsForPromotion === false ? '✓' : s.score}</span>
     </summary>
     <div class="log-body">
-      <div class="kv"><span>Grade</span><b>${s.type === 'release' ? 'Restored' : `${g.letter} · ${g.label}`}${s.estimated ? ' (estimated)' : ''}</b></div>
+      <div class="kv"><span>Grade</span><b>${s.type === 'release' ? 'Restored' : s.countsForPromotion === false ? 'Not scored' : `${g.letter} · ${g.label}`}${s.estimated && s.countsForPromotion !== false ? ' (estimated)' : ''}</b></div>
       <div class="kv"><span>Contractions</span><b>${s.totals?.contractions ?? 0}</b></div>
       <div class="kv"><span>Time under tension</span><b>${fmtMs(s.totals?.tutMs || 0)}</b></div>
       <div class="kv"><span>Longest hold</span><b>${fmtMs(s.totals?.longestHoldMs || 0)}</b></div>
@@ -79,17 +83,21 @@ export function renderTracking(mount) {
   const state = store.get();
   const sessions = state.sessions;
   const trained = sessions.filter((s) => s.type !== 'release');
+  // Cadence-following logged from a pump session has no measured reps behind
+  // it, so it counts for volume and streaks but is kept out of the quality
+  // trends, where a placeholder score would read as a bad session.
+  const scored = trained.filter((s) => s.countsForPromotion !== false);
   const totals = store.totals();
   const st = store.streak();
   const idx = program.pfi(state);
 
-  const recent = trained.slice(-30);
+  const recent = scored.slice(-30);
   const avgHolds = recent.map((s) => (s.totals?.avgHoldMs || 0) / 1000).filter((v) => v > 0);
   const scores = recent.map((s) => s.score);
 
   const bestHoldSeries = [];
   let running = 0;
-  for (const s of trained) {
+  for (const s of scored) {
     running = Math.max(running, s.totals?.longestHoldMs || 0);
     bestHoldSeries.push(running / 1000);
   }
@@ -195,8 +203,21 @@ export function renderTracking(mount) {
     const f = file.files?.[0];
     if (!f) return;
     try {
-      store.importJson(await f.text());
-      toast('Backup restored');
+      const text = await f.text();
+      let keepVault = false;
+      // Photos live in IndexedDB, encrypted; the key material lives in the
+      // backup. Restoring a backup from another device would leave the photos
+      // on this one permanently unreadable, so it is asked about first.
+      const { count } = await photoUsage();
+      if (count > 0 && store.backupChangesVault(text)) {
+        keepVault = !confirm(
+          `This backup was made with a different gallery PIN, and there ${count === 1 ? 'is 1 photo' : `are ${count} photos`} stored on this device.\n\n` +
+            'OK: use the backup\'s PIN — the photos already here become permanently unreadable.\n' +
+            'Cancel: keep this device\'s PIN, and restore everything else.'
+        );
+      }
+      const res = store.importJson(text, { keepVault });
+      toast(keepVault ? 'Backup restored, gallery PIN kept' : res.vaultChanged ? 'Backup restored, gallery PIN replaced' : 'Backup restored');
       renderTracking(mount);
     } catch (err) {
       toast(`Could not read that file: ${err.message}`);

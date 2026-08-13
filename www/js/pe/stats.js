@@ -260,7 +260,6 @@ function logRow(x) {
     x.tensionKg ? `${x.tensionKg} kg` : null,
     x.pressure ? pe.fmtPressure(x.pressure) : null,
     x.hydroLevel ? `level ${x.hydroLevel}` : null,
-    x.strokes ? `${x.strokes} strokes` : null,
     x.kegelCycles ? `${x.kegelCycles} kegels` : null,
   ].filter(Boolean).join(' · ');
 

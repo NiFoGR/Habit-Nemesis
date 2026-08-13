@@ -10,8 +10,8 @@ Notes behind `www/js/pe/`. Written down so the safety limits and the growth proj
 |---|---|---|
 | Traction (extender / manual stretching) | RCTs and open-label trials | The length driver |
 | Pumping | No comparable length evidence; well documented risks | Girth and conditioning |
-| Jelqing | Anecdotal only | Girth work, logged for volume |
-| Clamping | Anecdotal, highest injury risk | Advanced, warned about heavily |
+
+Jelqing and clamping were offered in the first version and have been removed: both rest on anecdote alone, and clamping in particular carries the highest injury risk of anything in common use. Sessions already logged against them still display under their own names rather than being relabelled.
 
 ### What traction actually produced
 
@@ -36,7 +36,7 @@ Session guidance: beginners **10–20 minutes total**, split into **~10 minute s
 
 Stop signals coded into the guide and the discomfort flag: numbness, cold skin, dark discolouration that does not fade, petechiae, blisters, fluid ring, sharp pain, or an ache that lasts into the next day.
 
-`planWarnings()` checks a planned session before it starts and objects to: pressure over the bands (harder if you have fewer than 12 logged sessions), pump sessions over 20 minutes for beginners or 40 for anyone, tension over 12 kg, stretch sessions over 2 hours, clamping over 10 minutes, missing warm-up, and training with no rest day in 12+ days.
+`planWarnings()` checks a planned session before it starts and objects to: pressure over the bands (harder if you have fewer than 12 logged sessions), pump sessions over 20 minutes for beginners or 40 for anyone, tension over 12 kg, stretch sessions over 2 hours, missing warm-up, and training with no rest day in 12+ days.
 
 ### Hydromax and other water pumps
 
@@ -82,6 +82,14 @@ Photos are downscaled to 1600 px and re-encoded at JPEG q0.85 before encryption 
 ## Kegels during pumping
 
 Pump sessions can run a kegel cadence at the hold length from the Kegels feature's current level. Completed cycles are logged to **both** features: they count toward the Kegels streak and lifetime totals, but are marked `countsForPromotion: false` and `estimated: true`, so they cannot level you up there. Levelling requires the measured press-and-hold reps, and cadence-following is not measurement.
+
+## Data handling
+
+State read from storage or from a backup file is untrusted. `store.js` coerces every field before use: enums against a whitelist, numbers into range, ids and dates against a pattern, arrays capped, unknown keys dropped. Settings are clamped into range; measurements outside a plausible 1-60 cm are dropped instead, because a clamped 500 cm reading would become a fabricated point in the middle of a chart. If what was read differs from what would be written, the cleaned version is written straight back.
+
+Free text (notes) is stored as typed and escaped at render, since escaping on the way in would corrupt legitimate text. The app also ships a strict CSP with `script-src 'self'`, so an injected string cannot execute even if one ever slipped through.
+
+Importing a backup made on a different device would leave photos here encrypted under a key nothing knows any more, so that case is detected and the user chooses which PIN survives.
 
 ## Sources
 

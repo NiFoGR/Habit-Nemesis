@@ -133,19 +133,34 @@ export function renderMeasure(mount) {
     });
   }
 
+  // Anything outside this is a typo or the wrong unit, and it would clamp
+  // strangely once stored rather than being caught here.
+  const MIN_CM = 1;
+  const MAX_CM = 60;
+
   function readFields() {
     syncFromDom();
     const out = {};
     for (const f of FIELDS) {
       const raw = entered[f.key];
       const n = raw === '' || raw == null ? NaN : Number(raw);
-      out[f.key] = Number.isFinite(n) && n > 0 ? pe.fromDisplayLength(n, units) : null;
+      if (!Number.isFinite(n) || n <= 0) {
+        out[f.key] = null;
+        continue;
+      }
+      const cm = pe.fromDisplayLength(n, units);
+      out[f.key] = cm >= MIN_CM && cm <= MAX_CM ? cm : NaN; // NaN marks "out of range"
     }
     return out;
   }
 
   async function save() {
     const values = readFields();
+    const badField = Object.entries(values).find(([, v]) => Number.isNaN(v));
+    if (badField) {
+      toast(`That ${badField[0].toUpperCase()} value is out of range — check the number and the units.`);
+      return;
+    }
     if (!values.bpel || !values.eg) {
       toast('Length and girth are both needed');
       return;
@@ -192,6 +207,7 @@ export function renderMeasure(mount) {
       onReady: async () => {
         try {
           const id = `p_${Date.now()}`;
+          await db.requestPersistence();
           const full = await vault.encryptBlob(photo.full);
           const thumb = await vault.encryptBlob(photo.thumb);
           await db.put({ id, ts: Date.now(), full, thumb, width: photo.width, height: photo.height });

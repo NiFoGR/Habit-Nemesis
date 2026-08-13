@@ -107,6 +107,10 @@ The hub renders from `FEATURES` in `www/js/app.js`; placeholders come from `SOON
 - **Gamifying volume.** Achievements deliberately reward warm-ups, consistency, taking a decon break and BPFSL response — not "most hours pumped this week", which would push exactly the wrong behaviour.
 - **A "routine builder" with preset programmes.** Considered; the honest version of a PE routine is "traction most days, warm up first, rest weekly", which is already what the app nudges you toward.
 
+## Removed after the first version
+
+**Jelqing and clamping.** Both are anecdote-only, and clamping is the easiest way to injure yourself of anything in common use. Cutting them leaves stretching (the only method with trial evidence) and pumping (girth and conditioning), which is what the feature is actually for. Retired types still render under their own names so old logs are not silently relabelled as something the user never did.
+
 ## Backlog
 
 1. **Local notifications from the APK build** (Capacitor LocalNotifications) so reminders fire without the app open — the web notification only fires while the page is alive.

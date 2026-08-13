@@ -6,7 +6,7 @@ Runs entirely on the phone. No account, no server, no analytics, nothing leaves 
 
 **Feature 1 — Kegels:** a progressive 12-week pelvic floor training program that measures every single rep, scores the quality of your holds, adapts the difficulty to your performance, and tells you what actually happened at the end of each session.
 
-**Feature 2 — PE:** stretching, pumping and jelqing sessions with safety limits that object *before* you start, monthly measurements with an encrypted photo gallery, before/after BPFSL per session, and a growth projection built from your own data rather than wishful thinking.
+**Feature 2 — PE:** stretching and pumping sessions with safety limits that object *before* you start, monthly measurements with an encrypted photo gallery, before/after BPFSL per session, and a growth projection built from your own data rather than wishful thinking.
 
 ---
 
@@ -86,7 +86,7 @@ Hold `Space` instead of pressing the screen when testing on a desktop.
 
 ## What is in the PE feature
 
-**Sessions.** Warm-up, stretching, pumping, jelqing and clamping, each with its own intensity unit, technique cue and safety envelope. The timer keeps the screen awake, vibrates on phase changes, and notifies you when the planned time is up even if the app is in the background.
+**Sessions.** Warm-up, stretching and pumping, each with its own intensity unit, technique cue and safety envelope. The timer keeps the screen awake, vibrates on phase changes, and notifies you when the planned time is up even if the app is in the background.
 
 **Limits that speak up first.** A planned session is checked before it starts: pressure against the beginner/intermediate/advanced bands, duration against the session guidance, tension, missing warm-up, and how many days you have gone without a rest day. Pump sessions get enforced set breaks — the timer stops every ~10 minutes and tells you to release and check the skin.
 

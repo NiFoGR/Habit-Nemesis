@@ -51,31 +51,19 @@ export const TYPES = {
     blurb: 'Vacuum expansion. Mostly a girth and conditioning tool.',
     cue: 'Work in ~10 minute sets with a full release between them. Release at once for numbness, cold skin or dark discolouration.',
   },
-  jelq: {
-    id: 'jelq',
-    label: 'Jelqing',
-    icon: '⤓',
-    colour: 'var(--calm)',
-    defaultMin: 10,
-    intensity: { key: 'strokes', label: 'Strokes', unit: '', min: 20, max: 400, step: 10, safe: 300 },
-    blurb: 'Manual girth work at partial erection.',
-    cue: 'Plenty of lubricant, 50-70% erection, slow strokes. Redness or spotting means stop.',
-  },
-  clamp: {
-    id: 'clamp',
-    label: 'Clamping',
-    icon: '⊟',
-    colour: 'var(--danger)',
-    defaultMin: 5,
-    intensity: null,
-    advanced: true,
-    blurb: 'Advanced and the easiest way to hurt yourself. Short sets only.',
-    cue: 'Never past 10 minutes in one set, never without a long conditioning base behind you.',
-  },
+};
+
+/** Types that were offered in an earlier build. Nothing new can be logged
+ *  against them, but old entries still have to render with their own name
+ *  rather than being silently relabelled as something the user never did. */
+const RETIRED = {
+  jelq: { id: 'jelq', label: 'Jelqing', icon: '⤓', colour: 'var(--calm)', retired: true, defaultMin: 10, intensity: null, blurb: '', cue: '' },
+  clamp: { id: 'clamp', label: 'Clamping', icon: '⊟', colour: 'var(--danger)', retired: true, defaultMin: 5, intensity: null, blurb: '', cue: '' },
 };
 
 export const TYPE_LIST = Object.values(TYPES);
-export const typeDef = (id) => TYPES[id] || TYPES.stretch;
+export const isValidType = (id) => Object.prototype.hasOwnProperty.call(TYPES, id);
+export const typeDef = (id) => TYPES[id] || RETIRED[id] || TYPES.stretch;
 
 /* ---------------- units ---------------- */
 
@@ -114,7 +102,6 @@ export function pressureBand(kpa) {
  *  before the timer starts, rather than after something has gone wrong. */
 export function planWarnings({ type, minutes, intensity }) {
   const out = [];
-  const def = typeDef(type);
   const history = store.get().pe.sessions.filter((s) => s.type === type);
   const experienced = history.length >= 12;
 
@@ -131,21 +118,13 @@ export function planWarnings({ type, minutes, intensity }) {
     if (minutes > 120) out.push({ level: 'warn', text: 'Trials that worked used 30-90 minutes a day. Longer sessions are not what produced the results.' });
   }
 
-  if (type === 'clamp') {
-    out.push({ level: 'warn', text: 'Clamping restricts blood flow completely. Short sets, and stop at the first sign of numbness or colour change.' });
-    if (minutes > 10) out.push({ level: 'stop', text: 'Over 10 minutes clamped in one set is genuinely dangerous. Shorten it.' });
-  }
-
-  if (!didWarmupToday() && ['stretch', 'pump', 'jelq', 'clamp'].includes(type)) {
+  if (!didWarmupToday() && type !== 'warmup') {
     out.push({ level: 'info', text: 'No warm-up logged today. Five minutes of heat first makes the tissue stretch further and tear less.' });
   }
 
   const dec = deconStatus();
   if (dec.due) out.push({ level: 'warn', text: `${dec.consecutive} days straight without a rest day. Tissue remodels during time off — a few days down will do more than another session.` });
 
-  if (def.advanced && history.length === 0) {
-    out.push({ level: 'warn', text: `${def.label} is an advanced method. It belongs after months of conditioning, not at the start.` });
-  }
   return out;
 }
 
@@ -339,10 +318,13 @@ export function measurementDue() {
   const day = s.settings.measureDay || 1;
   if (!last) return { due: true, reason: 'No measurements logged yet — this is your baseline.' };
   const daysSince = Math.floor((Date.now() - last.ts) / 864e5);
-  if (daysSince >= 28 && now.getDate() >= day) {
+  // Overdue is overdue: the preferred day of the month brings a check-in
+  // forward a little, it must never hold an overdue one back.
+  const onChosenDay = now.getDate() >= day && daysSince >= 25;
+  if (daysSince >= 28 || onChosenDay) {
     return { due: true, daysSince, reason: `${daysSince} days since your last check-in.` };
   }
-  return { due: false, daysSince, next: Math.max(0, 28 - daysSince) };
+  return { due: false, daysSince, next: Math.max(1, 28 - daysSince) };
 }
 
 /* ---------------- achievements ---------------- */

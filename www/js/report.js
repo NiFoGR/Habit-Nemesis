@@ -98,7 +98,11 @@ function motivation({ record, outcome, prs, badges }, state) {
 export function renderReport(mount, result, onDone) {
   const { record, outcome, prs, badges, plan } = result;
   const state = store.get();
-  const priorSessions = state.sessions.filter((x) => x.id !== record.id && x.type === record.type);
+  // Comparisons are only meaningful against sessions that were actually
+  // measured — not against a cadence logged from a pump session.
+  const priorSessions = state.sessions.filter(
+    (x) => x.id !== record.id && x.type === record.type && x.countsForPromotion !== false
+  );
   const prior = priorSessions.length ? priorSessions[priorSessions.length - 1] : null;
   const g = program.grade(record.score);
   const st = store.streak();

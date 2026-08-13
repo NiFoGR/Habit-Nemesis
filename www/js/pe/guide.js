@@ -25,7 +25,7 @@ export function renderPeGuide(mount) {
         <h2>Every session, in order</h2>
         <ol class="rules">
           <li><b>Heat first, 5–10 minutes.</b> Warm flannel or a rice sock until the tissue is warm through. This is the cheapest injury insurance available.</li>
-          <li><b>Work.</b> Stretching, pumping or jelqing — one focus per session rather than all three stacked.</li>
+          <li><b>Work.</b> Stretching or pumping — one focus per session rather than both stacked.</li>
           <li><b>Measure BPFSL before and after</b> on stretch days. Roughly +5% afterwards means the tissue took the load.</li>
           <li><b>Cool down.</b> Light massage, let everything return to normal colour and sensation before you get dressed.</li>
           <li><b>Log it.</b> An unlogged session is one you cannot learn anything from.</li>

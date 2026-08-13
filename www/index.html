@@ -2,7 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <!-- No inline scripts and no remote anything: the whole app is local, so the
+       policy can be strict. This is the main structural defence against an
+       injected string ever executing. Inline styles are allowed because the
+       UI sets element styles directly; blob: and data: images are needed for
+       decrypted gallery photos and the icons.
+       Capacitor injects its bridge with addDocumentStartJavaScript, which runs
+       before this tag is parsed, so the APK build is unaffected. If a native
+       build ever comes up blank, this meta is the first thing to check. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <!-- Pinch-zoom stays available; blocking it is an accessibility problem, not
+       a polish detail. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b0f14">
   <meta name="description" content="NiFo — personal app. Progressive pelvic floor training with real per-rep tracking.">
   <title>NiFo</title>

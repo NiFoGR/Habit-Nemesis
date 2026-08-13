@@ -175,7 +175,10 @@ function renderKegels() {
 
       ${last ? `<section class="card">
         <h2>Last session</h2>
-        <div class="kv"><span>${escapeHtml(relLabel(last))}</span><b>${last.type === 'release' ? 'Release day' : `${last.score}/100 · ${program.grade(last.score).letter}`}</b></div>
+        <div class="kv"><span>${escapeHtml(relLabel(last))}</span><b>${
+          last.type === 'release' ? 'Release day'
+          : last.countsForPromotion === false ? 'Logged during a pump session'
+          : `${last.score}/100 · ${program.grade(last.score).letter}`}</b></div>
         <div class="kv"><span>Longest hold</span><b>${fmtMs(last.totals?.longestHoldMs || 0)}</b></div>
         <div class="kv"><span>Time under tension</span><b>${fmtMs(last.totals?.tutMs || 0)}</b></div>
       </section>` : ''}

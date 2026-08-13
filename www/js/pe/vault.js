@@ -27,6 +27,11 @@ const b64 = {
 export const isSet = () => !!store.get().pe.vault;
 export const isUnlocked = () => !!key;
 
+/** WebCrypto only exists in a secure context. Served over plain http on a LAN
+ *  it is simply absent, and the gallery would otherwise fail with something
+ *  cryptic at the first keypress. */
+export const isAvailable = () => typeof crypto !== 'undefined' && !!crypto.subtle;
+
 export function onLockChange(fn) {
   listeners.add(fn);
   return () => listeners.delete(fn);
@@ -103,19 +108,48 @@ export async function decryptBlob({ iv, data, type }) {
   return new Blob([plain], { type: type || 'image/jpeg' });
 }
 
-/** Changing the PIN has to re-encrypt every photo, since the key changes. */
+/** Changing the PIN re-encrypts every photo under the new key.
+ *
+ *  Order matters: everything is decrypted and re-encrypted under the new key
+ *  in memory *before* anything is written, and the stored vault material is
+ *  swapped last. A failure at any point therefore leaves the old PIN and the
+ *  old files intact, instead of half a gallery encrypted under a key that is
+ *  no longer recorded anywhere. */
 export async function changePin(oldPin, newPin, reencrypt) {
   if (!(await unlock(oldPin))) return false;
+
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const newKey = await deriveKey(newPin, salt);
+  const check = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, newKey, enc.encode(CHECK_TEXT));
+
   const items = await reencrypt.read();
-  const plains = [];
+  const rewritten = [];
   for (const it of items) {
-    plains.push({ id: it.id, full: await decryptBlob(it.full), thumb: await decryptBlob(it.thumb) });
+    const full = await decryptBlob(it.full);
+    const thumb = await decryptBlob(it.thumb);
+    rewritten.push({
+      id: it.id,
+      full: await encryptWith(newKey, full),
+      thumb: await encryptWith(newKey, thumb),
+    });
   }
-  await setPin(newPin);
-  for (const p of plains) {
-    await reencrypt.write(p.id, await encryptBlob(p.full), await encryptBlob(p.thumb));
-  }
+
+  for (const r of rewritten) await reencrypt.write(r.id, r.full, r.thumb);
+
+  store.update((s) => {
+    s.pe.vault = { salt: b64.to(salt), iv: b64.to(iv), check: b64.to(check) };
+  });
+  key = newKey;
+  armAutoLock();
+  emit();
   return true;
+}
+
+async function encryptWith(k, blob) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const data = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, k, await blob.arrayBuffer());
+  return { iv, data, type: blob.type || 'image/jpeg' };
 }
 
 /** Wipes the vault and everything it protects. Used by "forgot PIN", which

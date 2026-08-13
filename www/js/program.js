@@ -387,8 +387,9 @@ export function applyProgression(state, session) {
   } else if (session.score < 55) {
     p.qualifying = 0;
     // The session being scored is not in state.sessions yet, so "the previous
-    // one was also bad" means two in a row counting this one.
-    const previous = state.sessions.filter((s) => s.type !== 'release').slice(-1)[0];
+    // one was also bad" means two in a row counting this one. Sessions logged
+    // from a pump cadence carry no score and must not trigger a deload.
+    const previous = state.sessions.filter((s) => s.type !== 'release' && s.countsForPromotion !== false).slice(-1)[0];
     if (previous && previous.score < 55) {
       p.deload = 2;
       outcome.deloaded = true;
