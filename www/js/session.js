@@ -314,20 +314,18 @@ export function startSession(mount, opts, onFinish) {
     wakeLock?.release?.().catch(() => {});
     detach();
 
-    if (plan.type === 'release') return commit(quit, null, false);
+    if (plan.type === 'release' || plan.type === 'quick') return commit(quit, null, false);
 
     mount.innerHTML = `
       <div class="rating-gate">
         <h2>How did that feel?</h2>
-        <p class="muted">${isAuto ? 'This sets your score in hands-free mode — be honest.' : 'Context for your log. Your score is already measured from your holds.'}</p>
         <div class="rating-grid">
-          <button data-r="easy"><b>Easy</b><span>could have done more</span></button>
-          <button data-r="solid"><b>Solid</b><span>right at the edge</span></button>
-          <button data-r="hard"><b>Hard</b><span>a real grind</span></button>
-          <button data-r="failed"><b>Struggled</b><span>could not hold them</span></button>
+          <button data-r="easy"><b>Easy</b></button>
+          <button data-r="solid"><b>Solid</b></button>
+          <button data-r="hard"><b>Hard</b></button>
+          <button data-r="failed"><b>Struggled</b></button>
         </div>
-        <label class="check"><input type="checkbox" id="pain"> I felt pain, aching or heaviness</label>
-        <p class="fineprint">Pain means the program backs off automatically. It is not a failure — a pelvic floor that is too tight is a real thing, and grinding through it makes it worse.</p>
+        <label class="check"><input type="checkbox" id="pain"> Pain, aching or heaviness</label>
       </div>`;
     const pain = mount.querySelector('#pain');
     mount.querySelectorAll('.rating-grid button').forEach((b) =>
@@ -451,7 +449,7 @@ export function startSession(mount, opts, onFinish) {
   // Short countdown so the first rep is not a scramble.
   el.phaseLabel.textContent = plan.type === 'release' ? 'Release day' : plan.type === 'test' ? 'Max hold test' : `Level ${plan.level} · ${plan.def.name}`;
   el.phaseSub.textContent = plan.def.position;
-  el.cue.textContent = isAuto ? 'Hands-free mode: just follow the ring.' : 'Press and hold the circle for exactly as long as you hold the squeeze.';
+  el.cue.textContent = isAuto ? 'Follow the ring.' : 'Press and hold while you squeeze.';
   let countdown = 3;
   el.coreBig.textContent = String(countdown);
   el.coreSmall.textContent = 'get into position';

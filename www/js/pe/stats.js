@@ -159,7 +159,6 @@ export function renderStats(mount) {
 
       <section class="card">
         <h2>Length</h2>
-        <p class="small muted">Bone-pressed erect length. Solid is measured; dashed is projected, and the shaded band is how uncertain that projection is.</p>
         ${sizeChart(ms.filter((m) => m.bpel).map((m) => ({ ts: m.ts, value: m.bpel })), proj, 'var(--accent)', 'bpel')}
       </section>
 
@@ -178,8 +177,7 @@ export function renderStats(mount) {
           </div>`).join('')}
         </div>
         <div class="conf"><span>Confidence</span><div class="conf-bar"><i style="width:${(proj.confidence * 100).toFixed(0)}%"></i></div><span>${(proj.confidence * 100).toFixed(0)}%</span></div>
-        <p class="small muted">Based on ${escapeHtml(proj.basis)}, at your current ${proj.weeklyStretch.toFixed(0)} min/week of stretching and ${proj.weeklyPump.toFixed(0)} min/week of pumping. Change the volume and this changes with it.</p>
-        <p class="fineprint">Rate used: ${(proj.lengthRate * 10).toFixed(1)} mm/month length, ${(proj.girthRate * 10).toFixed(1)} mm/month girth. Published traction trials average roughly 1.5 cm over 3-6 months, and gains front-load into the early months — a projection that promised a straight line forever would be lying.</p>
+        <p class="fineprint">${(proj.lengthRate * 10).toFixed(1)} mm/month, from ${escapeHtml(proj.basis)}. Trials average ~1.5 cm over 3–6 months.</p>
       </section>` : ''}
 
       <section class="card">
@@ -199,7 +197,6 @@ export function renderStats(mount) {
 
       <section class="card">
         <h2>Before / after BPFSL</h2>
-        <p class="small muted">Each pair is one session. The gap between the bars is the tissue's response to that session — around 5% is what you are after.</p>
         ${paired.length ? `<div class="paired">${paired
           .map((x) => {
             const max = Math.max(...paired.map((p) => p.bpfslAfter)) * 1.05;
@@ -215,8 +212,13 @@ export function renderStats(mount) {
 
       ${paired.length > 1 ? `<section class="card">
         <h2>Session response over time</h2>
-        <p class="small muted">Percentage stretch gained per session. A falling line means the tissue is adapting, or that you are tired.</p>
         ${lineChart(paired.map((x) => ((x.bpfslAfter - x.bpfslBefore) / x.bpfslBefore) * 100), { color: 'var(--good)' })}
+      </section>` : ''}
+
+      ${s.eq.length > 1 ? `<section class="card">
+        <h2>Erection quality</h2>
+        ${lineChart(pe.inPeriod(s.eq, period).map((e) => e.v), { color: 'var(--good)' })}
+        <p class="fineprint">Weekly self-rating, 1–10. The outcome that actually matters — watch it against volume.</p>
       </section>` : ''}
 
       ${insights.length ? `<section class="card">

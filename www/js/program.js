@@ -202,6 +202,22 @@ export function buildSession({ level, type = 'training', deload = false }) {
     return { level, type, steps, def };
   }
 
+  if (type === 'quick') {
+    // The 90-second fallback for days that are falling apart. Keeps the streak
+    // honest without pretending it was a full session.
+    steps.push({ kind: 'title', label: 'Quick session', sub: def.position });
+    for (let i = 0; i < 5; i++) {
+      steps.push({ kind: 'flick', label: 'Squeeze', targetMs: 1000, rep: i + 1, of: 5, cue: 'Sharp on, sharp off.' });
+      steps.push({ kind: 'rest', label: 'Let go', targetMs: 1500 });
+    }
+    for (let i = 0; i < 5; i++) {
+      steps.push({ kind: 'hold', label: 'Hold', targetMs: 3000, rep: i + 1, of: 5, cue: def.cue });
+      steps.push({ kind: 'rest', label: 'Full release', targetMs: 3000 });
+    }
+    steps.push({ kind: 'reverse', label: 'Reverse kegel', targetMs: 5000, cue: 'Gently push down and out. Never strain.' });
+    return { level, type, steps, def };
+  }
+
   if (type === 'test') {
     steps.push({ kind: 'title', label: 'Max hold test', sub: 'Hold as long as you honestly can' });
     steps.push(breathStep('Settle the breath', 5000, 'Slow and low.'));
@@ -223,7 +239,12 @@ export function buildSession({ level, type = 'training', deload = false }) {
     steps.push({ kind: 'rest', label: 'Let go', targetMs: def.flicks.restMs });
   }
 
-  const holdMs = Math.round((def.holds.holdMs * scale) / 500) * 500;
+  // Adaptive target: a prescribed hold longer than ~60% of your tested max is
+  // a target you cannot actually hold, so it gets capped. The level ladder
+  // still controls progression; this only stops the table outrunning you.
+  const tested = store.get().prs.maxHoldMs;
+  const ceiling = tested ? Math.max(3000, Math.round(tested * 0.6)) : Infinity;
+  const holdMs = Math.min(Math.round((def.holds.holdMs * scale) / 500) * 500, ceiling);
   const restMs = Math.max(holdMs, Math.round(def.holds.restMs * scale));
   steps.push({
     kind: 'title',
@@ -373,6 +394,8 @@ export function applyProgression(state, session) {
     outcome.qualifying = 0;
     return outcome;
   }
+
+  if (session.type === 'quick') return outcome; // keeps the day, never promotes
 
   const qualified = session.score >= 80 && session.completion >= 0.99;
   if (qualified) {

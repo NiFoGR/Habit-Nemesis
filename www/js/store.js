@@ -51,6 +51,7 @@ function blank() {
       sessions: [],
       measurements: [],
       achievements: [],
+      eq: [], // weekly erection-quality self-ratings, 1-10
       prs: { sessionMs: 0, weekMs: 0, bpel: 0, eg: 0, bpfsl: 0, streak: 0 },
       vault: null, // { salt, iv, check } once a gallery PIN is set
     },
@@ -104,7 +105,7 @@ function cleanKegelSession(s) {
     ts,
     date: dateKey(s.date),
     level: int(s.level, 1, 12, 1),
-    type: oneOf(s.type, ['training', 'release', 'test'], 'training'),
+    type: oneOf(s.type, ['training', 'release', 'test', 'quick'], 'training'),
     mode: oneOf(s.mode, ['hold', 'auto'], 'hold'),
     source: s.source === 'pe-pump' ? 'pe-pump' : null,
     countsForPromotion: s.countsForPromotion !== false,
@@ -230,6 +231,9 @@ function hydrate(saved) {
       },
       sessions: arr(savedPe.sessions, MAX_SESSIONS).map(cleanPeSession).filter(Boolean),
       measurements: arr(savedPe.measurements, MAX_SESSIONS).map(cleanMeasurement).filter(Boolean),
+      eq: arr(savedPe.eq, 2000)
+        .map((e) => ({ ts: num(e?.ts, 0, 4e12) ?? Date.now(), date: dateKey(e?.date), v: int(e?.v, 1, 10, 0) }))
+        .filter((e) => e.v >= 1),
       achievements: arr(savedPe.achievements, 100).filter((a) => typeof a === 'string' && a.length < 40),
       prs: {
         sessionMs: int(savedPe.prs?.sessionMs, 0, 1e9, 0),

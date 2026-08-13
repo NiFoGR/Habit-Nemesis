@@ -14,6 +14,7 @@ import { renderStats } from './pe/stats.js';
 import { renderGallery, leaveGallery } from './pe/gallery.js';
 import { renderPeGuide } from './pe/guide.js';
 import * as vault from './pe/vault.js';
+import { scheduleDaily, cancelAlarm, ALARM_KEGEL_REMINDER } from './native.js';
 
 const app = document.getElementById('app');
 let activeSession = null;
@@ -70,10 +71,7 @@ function renderHub() {
   app.innerHTML = `
     <div class="screen">
       <header class="hub-head">
-        <div>
-          <p class="eyebrow">NiFo</p>
-          <h1>${greeting()}</h1>
-        </div>
+        <h1>NiFo</h1>
         <button class="icon-btn" data-nav="settings" aria-label="Settings">⚙</button>
       </header>
 
@@ -86,9 +84,7 @@ function renderHub() {
             pills = [];
           }
           return `<a class="feature" href="${f.route}">
-            <div class="feature-icon">${f.icon}</div>
             <h2>${escapeHtml(f.name())}</h2>
-            <p>${escapeHtml(f.blurb)}</p>
             <div class="feature-foot">
               ${pills.map((p) => `<span class="pill ${p.done ? 'done' : ''} ${p.ghost ? 'ghost' : ''}">${escapeHtml(p.text)}</span>`).join('')}
             </div>
@@ -97,18 +93,9 @@ function renderHub() {
         ${SOON.map((n) => `<div class="feature soon"><div class="feature-icon">＋</div><h2>${n}</h2><p>Coming soon</p></div>`).join('')}
       </div>
 
-      <p class="fineprint centre">Everything stays on this device.</p>
       <div id="installSlot"></div>
     </div>`;
   mountInstall();
-}
-
-function greeting() {
-  const h = new Date().getHours();
-  if (h < 5) return 'Still up?';
-  if (h < 12) return 'Morning';
-  if (h < 18) return 'Afternoon';
-  return 'Evening';
 }
 
 /* ---------------- Kegels home ---------------- */
@@ -131,10 +118,16 @@ function renderKegels() {
   const plan = program.planForToday(state);
   const def = program.levelDef(plan.level);
   const st = store.streak();
-  const preview = program.buildSession({ level: plan.level, type: plan.type, deload: plan.deload });
-  const mins = Math.max(1, Math.round(program.estimateDurationMs(preview) / 60000));
-  const idx = program.pfi(state);
-  const last = store.lastSession();
+
+  // Last 7 days as dots: done / release / missed.
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const key = store.addDays(store.dayKey(), -i);
+    const on = store.sessionsOn(key);
+    days.push({ key, cls: on.some((x) => x.type !== 'release') ? 'good' : on.length ? 'rest' : i === 0 ? 'today' : 'none' });
+  }
+  const weekScored = state.sessions.filter((x) => x.ts >= Date.now() - 7 * 864e5 && x.countsForPromotion !== false && x.type !== 'release');
+  const weekAvg = weekScored.length ? Math.round(weekScored.reduce((a, x) => a + x.score, 0) / weekScored.length) : null;
 
   app.innerHTML = `
     <div class="screen">
@@ -146,55 +139,41 @@ function renderKegels() {
 
       <div class="today ${plan.type}">
         <div class="today-left">
-          <p class="eyebrow">${plan.type === 'release' ? 'Programmed release day' : plan.type === 'test' ? 'Benchmark day' : `Level ${plan.level} · ${escapeHtml(def.weekHint)}`}</p>
-          <h2>${escapeHtml(plan.type === 'release' ? 'Down-training' : plan.type === 'test' ? 'Max hold test' : def.name)}</h2>
-          <p class="muted small">${escapeHtml(plan.type === 'training' ? def.focus : plan.type === 'release' ? 'Teaching the muscle to let go. This is part of the program, not a day off.' : 'No prescribed target. Hold until it genuinely fades.')}</p>
+          <h2>${escapeHtml(plan.type === 'release' ? 'Release day' : plan.type === 'test' ? 'Max hold test' : `Level ${plan.level} — ${def.name}`)}</h2>
+          <p class="muted small">${st ? `${st}d streak` : 'No streak yet'}${weekAvg != null ? ` · avg ${weekAvg} this week` : ''}</p>
         </div>
-        ${ringSvg(plan.target ? Math.min(plan.doneToday / plan.target, 1) : 0, `${plan.doneToday}/${plan.target}`, 'today', { size: 104 })}
+        ${ringSvg(plan.target ? Math.min(plan.doneToday / plan.target, 1) : 0, `${plan.doneToday}/${plan.target}`, 'today', { size: 96 })}
       </div>
 
       ${reminderNotice(state, plan)}
-      ${plan.deload ? '<div class="notice warn">Reduced targets are active — you flagged discomfort or had two hard sessions. Ease through these.</div>' : ''}
-      ${plan.complete ? `<div class="notice good">Today is done. Extra sessions are logged as bonus work but will not push you up a level any faster.</div>` : ''}
+      ${plan.deload ? '<div class="notice warn">Reduced targets active — ease through these.</div>' : ''}
+      ${plan.complete ? '<div class="notice good">Done for today.</div>' : ''}
 
-      <section class="card">
-        <h2>Today's session <span class="tag">${mins} min</span></h2>
-        <ul class="outline">${sessionOutline(plan.level, plan.type).map((l) => `<li>${escapeHtml(l)}</li>`).join('')}</ul>
-        <p class="cue"><b>Position:</b> ${escapeHtml(def.position)}</p>
-        <p class="cue"><b>Cue:</b> ${escapeHtml(def.cue)}</p>
-        <button class="btn primary big" id="start">${plan.complete ? 'Do a bonus session' : 'Start session'}</button>
-        <button class="btn ghost" data-nav="guide">How to do this properly</button>
-      </section>
+      <button class="btn primary big" id="start">${plan.complete ? 'Bonus session' : 'Start'}</button>
+      ${plan.type === 'training' ? '<button class="btn ghost" id="quick">Quick session · 90s</button>' : ''}
+
+      <div class="week-strip">${days.map((d) => `<i class="${d.cls}" title="${d.key}"></i>`).join('')}</div>
 
       <div class="stat-grid">
-        <div class="stat"><b>${st}</b><span>day streak</span></div>
         <div class="stat"><b>${state.program.qualifying}/${program.PROMOTION_TARGET}</b><span>to level ${Math.min(state.program.level + 1, program.MAX_LEVEL)}</span></div>
-        <div class="stat"><b>${fmtMs(state.prs.maxHoldMs)}</b><span>longest hold</span></div>
-        <div class="stat"><b>${idx}</b><span>PF Index</span></div>
+        <div class="stat"><b>${fmtMs(state.prs.maxHoldMs)}</b><span>best hold</span></div>
       </div>
 
-      ${last ? `<section class="card">
-        <h2>Last session</h2>
-        <div class="kv"><span>${escapeHtml(relLabel(last))}</span><b>${
-          last.type === 'release' ? 'Release day'
-          : last.countsForPromotion === false ? 'Logged during a pump session'
-          : `${last.score}/100 · ${program.grade(last.score).letter}`}</b></div>
-        <div class="kv"><span>Longest hold</span><b>${fmtMs(last.totals?.longestHoldMs || 0)}</b></div>
-        <div class="kv"><span>Time under tension</span><b>${fmtMs(last.totals?.tutMs || 0)}</b></div>
-      </section>` : ''}
-
-      <button class="btn ghost wide" data-nav="track">Open tracking</button>
-      <div id="installSlot"></div>
+      <div class="linkrow">
+        <a href="#/track">Tracking</a>
+        <a href="#/guide">How to</a>
+      </div>
     </div>`;
 
   app.querySelector('#start').addEventListener('click', () => {
     location.hash = '#/session';
   });
-  mountInstall();
+  app.querySelector('#quick')?.addEventListener('click', () => {
+    location.hash = '#/session?quick=1';
+  });
 }
 
-/** Deliberately not a push notification: no permission prompt, no background
- *  service, just a nudge on the screen once you are past your chosen time. */
+/** In-app nudge past your chosen time. The real alarm is scheduled natively. */
 function reminderNotice(state, plan) {
   const t = state.settings.reminder;
   if (!t || plan.complete) return '';
@@ -202,7 +181,7 @@ function reminderNotice(state, plan) {
   const now = new Date();
   if (now.getHours() * 60 + now.getMinutes() < h * 60 + m) return '';
   const left = plan.target - plan.doneToday;
-  return `<div class="notice">It is past ${escapeHtml(t)} and you have ${left} session${left === 1 ? '' : 's'} left today. It takes about as long as scrolling this screen.</div>`;
+  return `<div class="notice">${left} session${left === 1 ? '' : 's'} left today.</div>`;
 }
 
 function relLabel(s) {
@@ -212,11 +191,12 @@ function relLabel(s) {
 
 /* ---------------- session + report ---------------- */
 
-function runSession() {
+function runSession(params) {
   const state = store.get();
   const plan = program.planForToday(state);
+  const quick = params?.get?.('quick') === '1';
   document.body.classList.add('in-session');
-  activeSession = startSession(app, { level: plan.level, type: plan.type, deload: plan.deload }, (result) => {
+  activeSession = startSession(app, { level: plan.level, type: quick ? 'quick' : plan.type, deload: plan.deload }, (result) => {
     document.body.classList.remove('in-session');
     activeSession = null;
     if (!result) {
@@ -237,44 +217,35 @@ function renderGuide() {
     <div class="screen">
       <header class="screen-head">
         <button class="icon-btn" data-nav="kegels" aria-label="Back">←</button>
-        <h1>Doing this properly</h1>
+        <h1>How to</h1>
         <span class="icon-btn ghost"></span>
       </header>
 
       <section class="card">
-        <h2>Finding the right muscle</h2>
-        <p>Two reliable cues: the muscles you would use to <b>stop yourself passing wind</b>, and the ones that make the base of the penis lift slightly. A correct contraction feels like a <b>lift up and in</b>, not a downward push.</p>
-        <p>Check yourself in a mirror the first few times. If your buttocks, thighs or abdomen visibly tighten, or you hold your breath, you are recruiting the wrong things and the pelvic floor is getting a fraction of the work.</p>
-        <p class="warn-inline">Do not practise by stopping your urine mid-stream. It is a one-off way to identify the muscle at most — done repeatedly it can interfere with normal bladder emptying.</p>
+        <h2>Finding it</h2>
+        <p class="small muted">The muscles you would use to stop yourself passing wind. A correct contraction is a <b>lift up and in</b> — belly, thighs and buttocks stay still, breathing continues.</p>
+        <p class="warn-inline">Don't practise by stopping your urine mid-stream.</p>
       </section>
 
       <section class="card">
-        <h2>The five rules this program runs on</h2>
-        <ol class="rules">
-          <li><b>Train both fibre types.</b> Quick flicks build the fast-twitch response that fires when you cough or lift. Long holds build the slow-twitch endurance that holds tone all day. Doing only one leaves half the muscle untrained.</li>
-          <li><b>Rest as long as you hold.</b> A 10-second hold gets 10 seconds of full release. Under-resting is the most common reason people plateau — the next rep is then just a fatigued version of the last.</li>
-          <li><b>Full release matters as much as the squeeze.</b> Every session ends with reverse kegels and breathing. A pelvic floor stuck in permanent low-level tension causes the same symptoms as a weak one.</li>
-          <li><b>Progress by seconds, then by reps, then by position.</b> Lying is easiest, standing is harder, standing under load is hardest. The levels move you along all three.</li>
-          <li><b>Do not do more than the program asks.</b> Extra volume does not speed anything up and reliably causes aching. Total contraction work stays well under fifteen minutes a day for a reason.</li>
-        </ol>
+        <h2>The rules</h2>
+        <ul class="rules">
+          <li><b>Both fibre types.</b> Quick flicks for the fast response, long holds for endurance.</li>
+          <li><b>Rest as long as you hold.</b> Under-resting is why people plateau.</li>
+          <li><b>Full release matters.</b> A floor stuck tight causes the same symptoms as a weak one.</li>
+          <li><b>Progress by seconds, then reps, then position.</b> Lying → sitting → standing → under load.</li>
+          <li><b>Don't do extra.</b> More volume doesn't speed it up; it just aches.</li>
+        </ul>
       </section>
 
       <section class="card">
-        <h2>How long until anything changes</h2>
-        <p>Pelvic floor muscle behaves like any other skeletal muscle. Most people feel the first changes somewhere around <b>weeks 4 to 6</b>, with the bulk of the improvement landing between <b>weeks 8 and 12</b> of consistent daily practice. Studies that show real effect sizes generally run 12 weeks or longer.</p>
-        <p>Nothing you do in one session is visible. The point of the streak, the score and the index in this app is to make the invisible middle stretch feel like it is going somewhere.</p>
+        <h2>Timeline</h2>
+        <p class="small muted">First changes around weeks 4–6, most of it between 8 and 12. Nothing you do in one session is visible — that's what the streak is for.</p>
       </section>
 
       <section class="card">
-        <h2>When to back off</h2>
-        <p>Aching in the pelvis or lower back, a feeling of heaviness, worse urinary symptoms, or pain during or after training all mean stop and reduce. Flag "I felt pain" at the end of a session and the program automatically drops your targets for the next few sessions.</p>
-        <p>If symptoms persist, an over-tight (hypertonic) pelvic floor is a real and reasonably common thing, and it gets <b>worse</b> with more kegels. That is a conversation for a doctor or a pelvic health physiotherapist, not something to train through.</p>
-        <p class="fineprint">This app is a training tracker, not medical advice. It is not a substitute for assessment by a clinician, particularly if you have pain, urinary or bowel symptoms, or a history of pelvic surgery.</p>
-      </section>
-
-      <section class="card">
-        <h2>Where the program comes from</h2>
-        <p class="small muted">The structure follows the common ground across pelvic floor muscle training protocols: sets of 8-15 contractions held 3-10+ seconds with equal rest, performed daily, combining fast and slow contractions, progressed over 12+ weeks, with explicit down-training. Full notes and sources are in <code>docs/KEGEL_PROGRAM.md</code> in the repository.</p>
+        <h2>Back off if</h2>
+        <p class="small muted">Aching in the pelvis or lower back, heaviness, worse urinary symptoms, or pain during or after. Flag it at the end of a session and the program drops your targets automatically. Persistent symptoms → doctor or pelvic health physio. An over-tight floor gets <b>worse</b> with more kegels.</p>
       </section>
     </div>`;
 }
@@ -382,7 +353,17 @@ function renderSettings() {
   bind('inputMode', 'inputMode');
   bind('dailyTarget', 'dailyTarget', (e) => Number(e.value));
   bind('restDay', 'restDay', (e) => Number(e.value));
-  bind('reminder', 'reminder');
+  app.querySelector('#reminder').addEventListener('change', (e) => {
+    const v = e.target.value;
+    store.setSetting('reminder', v);
+    if (v) {
+      const [h, m] = v.split(':').map(Number);
+      scheduleDaily(ALARM_KEGEL_REMINDER, h, m, 'Kegels', 'Today\u2019s session is waiting.');
+    } else {
+      cancelAlarm(ALARM_KEGEL_REMINDER);
+    }
+    toast('Saved');
+  });
   bind('haptics', 'haptics', (e) => e.checked);
   bind('sound', 'sound', (e) => e.checked);
   bind('discreet', 'discreet', (e) => e.checked);
@@ -439,7 +420,7 @@ const ROUTES = {
   '#/guide': renderGuide,
   '#/settings': renderSettings,
   '#/pe': () => renderPeHome(app),
-  '#/pe/timer': (params) => renderTimer(app, { type: params.get('type') || 'stretch' }),
+  '#/pe/timer': (params) => renderTimer(app, { type: params.get('type') || 'stretch', repeat: params.get('repeat') === '1', routine: params.get('routine') === '1' }),
   '#/pe/measure': () => renderMeasure(app),
   '#/pe/stats': () => renderStats(app),
   '#/pe/gallery': () => renderGallery(app),

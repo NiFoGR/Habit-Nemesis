@@ -12,11 +12,11 @@ import { withVault } from './pin.js';
 import { escapeHtml, toast, haptic } from '../ui.js';
 
 const FIELDS = [
-  { key: 'bpel', label: 'Bone-pressed erect length', short: 'BPEL', required: true, help: 'Ruler pressed firmly into the pubic bone, along the top of the shaft, fully erect. This is the measurement everything else is judged against.' },
-  { key: 'eg', label: 'Erect girth', short: 'EG', required: true, help: 'Circumference at mid-shaft, tape snug but not compressing. Use the same spot every month.' },
-  { key: 'bpfsl', label: 'Bone-pressed flaccid stretched length', short: 'BPFSL', help: 'Flaccid, pulled to a firm stretch. Often moves before erect length does — an early indicator.' },
-  { key: 'nbpel', label: 'Non-bone-pressed length', short: 'NBPEL', help: 'From the skin surface. Changes with fat pad, so it is the least reliable number here.' },
-  { key: 'baseGirth', label: 'Base girth', short: 'Base', help: 'Optional. Pumping tends to show up here first.' },
+  { key: 'bpel', label: 'Erect length, bone-pressed', short: 'BPEL', required: true, help: 'Ruler hard into the pubic bone, along the top.' },
+  { key: 'eg', label: 'Erect girth', short: 'EG', required: true, help: 'Mid-shaft, same spot every month.' },
+  { key: 'bpfsl', label: 'Flaccid stretched, bone-pressed', short: 'BPFSL', help: 'Optional. Moves before erect length does.' },
+  { key: 'nbpel', label: 'Non-bone-pressed length', short: 'NBPEL', help: 'Optional. Moves with body fat.' },
+  { key: 'baseGirth', label: 'Base girth', short: 'Base', help: 'Optional.' },
 ];
 
 export function renderMeasure(mount) {
@@ -56,8 +56,8 @@ export function renderMeasure(mount) {
           <span class="icon-btn ghost"></span>
         </header>
 
-        ${last ? `<div class="notice">Last check-in ${new Date(last.ts).toLocaleDateString()} — ${pe.fmtLength(last.bpel)} × ${pe.fmtLength(last.eg)}. Measure in the same conditions: same time of day, same erection quality, same ruler.</div>`
-          : `<div class="notice">This is your baseline. Everything the app tells you later is measured from these numbers, so take your time and be honest with them.</div>`}
+        ${last ? `<div class="notice">Last: ${pe.fmtLength(last.bpel)} × ${pe.fmtLength(last.eg)} on ${new Date(last.ts).toLocaleDateString()}. Same time of day, same method.</div>`
+          : '<div class="notice">Your baseline. Everything else is measured from this.</div>'}
 
         <section class="card">
           <h2>Measurements <span class="tag">${escapeHtml(units)}</span></h2>
@@ -75,7 +75,7 @@ export function renderMeasure(mount) {
 
         <section class="card">
           <h2>Progress photo <span class="tag">optional</span></h2>
-          <p class="small muted">Erect, same angle, same distance, same lighting each month — ideally with a ruler in frame. Photos are encrypted on this device with your gallery PIN and never leave it.</p>
+          <p class="small muted">Same angle and distance each month. Encrypted on this device.</p>
           <div id="photoSlot">${photoSlot()}</div>
           <input type="file" id="file" accept="image/*" capture="environment" hidden>
         </section>
@@ -169,7 +169,7 @@ export function renderMeasure(mount) {
     // month of growth. Worth one question before it poisons every chart.
     if (last && last.bpel && Math.abs(values.bpel - last.bpel) > 1.5) {
       const dir = values.bpel > last.bpel ? 'more' : 'less';
-      if (!confirm(`That is over 1.5 cm ${dir} than last month. Real change is a few millimetres a month — this usually means a different measuring method or a typo.\n\nSave it anyway?`)) return;
+      if (!confirm(`Over 1.5 cm ${dir} than last month — usually a typo or a different method. Save anyway?`)) return;
     }
 
     const notes = notesRef.value.trim().slice(0, 500);
@@ -227,53 +227,36 @@ export function renderMeasure(mount) {
     const dFirst = first ? { bpel: record.bpel - first.bpel, eg: record.eg - first.eg } : null;
     const proj = pe.projection();
     const months = first ? Math.max(1, Math.round((record.ts - first.ts) / (30.44 * 864e5))) : 0;
-
     const delta = (v) => `${v >= 0 ? '+' : '−'}${pe.fmtLength(Math.abs(v), store.get().pe.settings.units, 2)}`;
 
     mount.innerHTML = `
       <div class="report">
         <div class="report-hero">
-          <div class="hero-icon">📏</div>
-          <h1>Check-in saved</h1>
-          <p class="muted">${new Date(record.ts).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+          <h1>${pe.fmtLength(record.bpel)} × ${pe.fmtLength(record.eg)}</h1>
+          <p class="muted">${new Date(record.ts).toLocaleDateString()}${record.photoId ? ' · photo encrypted' : ''}</p>
         </div>
 
-        <div class="stat-grid">
-          <div class="stat"><b>${pe.fmtLength(record.bpel)}</b><span>BPEL</span>${dLast ? `<i class="d ${dLast.bpel > 0.01 ? 'up' : dLast.bpel < -0.01 ? 'down' : 'flat'}">${delta(dLast.bpel)} since last</i>` : ''}</div>
-          <div class="stat"><b>${pe.fmtLength(record.eg)}</b><span>Girth</span>${dLast ? `<i class="d ${dLast.eg > 0.01 ? 'up' : dLast.eg < -0.01 ? 'down' : 'flat'}">${delta(dLast.eg)} since last</i>` : ''}</div>
-          ${record.bpfsl ? `<div class="stat"><b>${pe.fmtLength(record.bpfsl)}</b><span>BPFSL</span></div>` : ''}
-          ${record.photoId ? '<div class="stat"><b>🔒</b><span>photo encrypted</span></div>' : ''}
-        </div>
+        ${dLast ? `<div class="stat-grid">
+          <div class="stat"><b>${delta(dLast.bpel)}</b><span>length vs last</span></div>
+          <div class="stat"><b>${delta(dLast.eg)}</b><span>girth vs last</span></div>
+        </div>` : ''}
 
         ${dFirst && months >= 1 ? `<section class="card">
-          <h2>Since you started</h2>
-          <div class="kv"><span>Length</span><b>${delta(dFirst.bpel)} over ${months} month${months === 1 ? '' : 's'}</b></div>
-          <div class="kv"><span>Girth</span><b>${delta(dFirst.eg)}</b></div>
-          <p class="small muted">${dFirst.bpel > 0
-            ? `That works out at ${((dFirst.bpel / months) * 10).toFixed(1)} mm a month. For context, the traction trials that produced measurable results averaged roughly 1.5 cm over 3-6 months.`
-            : 'Flat so far. Over a couple of months that is expected — measurement noise is larger than real monthly change, which is why the trend line matters more than any single reading.'}</p>
+          <div class="kv"><span>Since start (${months}mo)</span><b>${delta(dFirst.bpel)} · ${delta(dFirst.eg)}</b></div>
+          ${dFirst.bpel > 0 ? `<div class="kv"><span>Rate</span><b>${((dFirst.bpel / months) * 10).toFixed(1)} mm/month</b></div>` : ''}
         </section>` : ''}
 
         ${proj && proj.points.length ? `<section class="card">
-          <h2>Where this points</h2>
-          ${proj.points.map((p) => `<div class="kv"><span>In ${p.months} months</span><b>${pe.fmtLength(p.bpelLow, undefined, 1)} – ${pe.fmtLength(p.bpelHigh, undefined, 1)}</b></div>`).join('')}
-          <p class="small muted">A projection from ${escapeHtml(proj.basis)}, not a promise. It moves every time you log a session or a measurement.</p>
+          ${proj.points.slice(0, 2).map((p) => `<div class="kv"><span>In ${p.months} months</span><b>${pe.fmtLength(p.bpelLow, undefined, 1)} – ${pe.fmtLength(p.bpelHigh, undefined, 1)}</b></div>`).join('')}
+          <p class="fineprint">Estimate from ${escapeHtml(proj.basis)}.</p>
         </section>` : ''}
 
         ${earned.length ? `<section class="card">
-          <h2>Unlocked</h2>
           ${earned.map((a) => `<div class="pr-row"><b>🏅 ${escapeHtml(a.name)}</b><span>${escapeHtml(a.desc)}</span></div>`).join('')}
         </section>` : ''}
 
-        <div class="motivation">${escapeHtml(
-          dFirst && dFirst.bpel > 0.2
-            ? `${delta(dFirst.bpel)} of bone-pressed length since your first entry. That is not noise — that is the thing you have been putting the hours in for.`
-            : 'One data point is a number; twelve is a trend line. The value of this check-in is that it makes next month\'s mean something.'
-        )}</div>
-
-        <button class="btn primary big" data-nav="pe-stats">See the graphs</button>
-        ${record.photoId ? '<button class="btn ghost" data-nav="pe-gallery">Open the gallery</button>' : ''}
-        <button class="btn ghost" data-nav="pe">Back</button>
+        <button class="btn primary big" data-nav="pe-stats">Progress</button>
+        <button class="btn ghost" data-nav="pe">Done</button>
       </div>`;
   }
 

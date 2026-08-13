@@ -86,7 +86,7 @@ Hold `Space` instead of pressing the screen when testing on a desktop.
 
 ## What is in the PE feature
 
-**Sessions.** Warm-up, stretching and pumping, each with its own intensity unit, technique cue and safety envelope. The timer keeps the screen awake, vibrates on phase changes, and notifies you when the planned time is up even if the app is in the background.
+**Sessions.** Warm-up, stretching and pumping, each with its own intensity unit, technique cue and safety envelope. The countdown runs on wall-clock time, so it keeps counting with the screen off or the app closed, and on the APK the end is scheduled as a real Android alarm that rings even if the app has been killed.
 
 **Limits that speak up first.** A planned session is checked before it starts: pressure against the beginner/intermediate/advanced bands, duration against the session guidance, tension, missing warm-up, and how many days you have gone without a rest day. Pump sessions get enforced set breaks — the timer stops every ~10 minutes and tells you to release and check the skin.
 
