@@ -3,7 +3,7 @@
 
 import * as store from '../store.js';
 import * as pe from './program.js';
-import { escapeHtml, fmtHours, fmtClock, segmented, onSegment, barChart, relDay, lineChart } from '../ui.js';
+import { escapeHtml, fmtHours, fmtClock, segmented, onSegment, barChart, relDay, lineChart, multiLine, scatter } from '../ui.js';
 import { icon } from '../icons.js';
 
 let period = '30d';
@@ -128,12 +128,8 @@ export function renderStats(mount) {
 
   const lifetime = sessions.reduce((a, x) => a + x.durationSec * 1000, 0);
   const pumps = inPeriod.filter((x) => x.type === 'pump');
-  const avgPressure = pumps.filter((x) => x.pressure).length
-    ? pumps.filter((x) => x.pressure).reduce((a, x) => a + x.pressure, 0) / pumps.filter((x) => x.pressure).length
-    : null;
-  const avgHydro = pumps.filter((x) => x.hydroLevel).length
-    ? pumps.filter((x) => x.hydroLevel).reduce((a, x) => a + x.hydroLevel, 0) / pumps.filter((x) => x.hydroLevel).length
-    : null;
+  const corr = pe.volumeVsGain('bpel');
+  const girth = pe.girthMap();
 
   const paired = sessions.filter((x) => x.bpfslBefore && x.bpfslAfter).slice(-12);
 
@@ -188,11 +184,38 @@ export function renderStats(mount) {
       </section>
 
       <section class="card">
+        <div class="h-row">${icon('trend', 16)}<h2>Do the hours pay?</h2></div>
+        ${corr.points.length >= 2
+          ? `${scatter(corr.points, { xLabel: 'min/day', yLabel: 'mm/month', color: 'var(--accent)' })}
+             <p class="fineprint">${escapeHtml(corr.verdict)}${corr.r != null ? ` (r = ${corr.r.toFixed(2)}, ${corr.points.length} gaps between check-ins)` : ''}</p>`
+          : '<div class="chart-empty">Three check-ins a month apart fill this in</div>'}
+      </section>
+
+      ${girth ? `<section class="card">
+        <div class="h-row">${icon('pump', 16)}<h2>Girth map</h2></div>
+        <div class="stat-grid three">
+          <div class="stat"><b>${pe.fmtLength(girth.thick)}</b><span>thickest</span></div>
+          <div class="stat"><b>${pe.fmtLength(girth.base)}</b><span>base</span></div>
+          <div class="stat"><b>${girth.taper >= 0 ? '+' : '−'}${pe.fmtLength(Math.abs(girth.taper), undefined, 2)}</b><span>thickest − base</span></div>
+        </div>
+        ${girth.entries.length > 1 ? `${multiLine([
+          { colour: 'var(--violet)', points: girth.entries.map((m) => ({ ts: m.ts, value: m.eg })) },
+          { colour: 'var(--calm)', dashed: true, points: girth.entries.map((m) => ({ ts: m.ts, value: m.baseGirth })) },
+        ])}
+        <div class="legend"><i style="background:var(--violet)"></i> thickest <i style="background:var(--calm)"></i> base</div>
+        <p class="fineprint">Thickest ${girth.thickGain >= 0 ? '+' : '−'}${pe.fmtLength(Math.abs(girth.thickGain), undefined, 2)}, base ${girth.baseGain >= 0 ? '+' : '−'}${pe.fmtLength(Math.abs(girth.baseGain), undefined, 2)}. ${
+          girth.taper > girth.taperFirst + 0.15
+            ? 'The middle is growing faster than the base — normal with pumping, and worth watching if the gap keeps widening.'
+            : girth.taper < girth.taperFirst - 0.15
+              ? 'The base is catching up with the middle. That is the more even shape.'
+              : 'The two are moving together, which is the shape you want.'
+        }</p>` : ''}
+      </section>` : ''}
+
+      <section class="card">
         <div class="h-row">${icon('pump', 16)}<h2>Pumping</h2></div>
         <div class="kv"><span>Sessions</span><b>${pumps.length}</b></div>
         <div class="kv"><span>Total time</span><b>${fmtHours(vol.pump || 0)}</b></div>
-        ${avgPressure ? `<div class="kv"><span>Average pressure</span><b>${pe.fmtPressure(avgPressure)} · ${escapeHtml(pe.pressureBand(avgPressure).label)}</b></div>` : ''}
-        ${avgHydro ? `<div class="kv"><span>Average intensity</span><b>Level ${avgHydro.toFixed(1)} / 5</b></div>` : ''}
         <div class="kv"><span>Kegel cycles logged</span><b>${inPeriod.reduce((a, x) => a + (x.kegelCycles || 0), 0)}</b></div>
       </section>
 
@@ -259,9 +282,11 @@ export function renderStats(mount) {
 
 function logRow(x) {
   const d = pe.typeDef(x.type);
+  // pressure/hydroLevel only ever appear on sessions logged by an older build;
+  // nothing records them now, but the log should still show what was saved.
   const detail = [
     x.tensionKg ? `${x.tensionKg} kg` : null,
-    x.pressure ? pe.fmtPressure(x.pressure) : null,
+    x.pressure ? `${x.pressure.toFixed(1)} inHg` : null,
     x.hydroLevel ? `level ${x.hydroLevel}` : null,
     x.kegelCycles ? `${x.kegelCycles} kegels` : null,
   ].filter(Boolean).join(' · ');
@@ -269,7 +294,7 @@ function logRow(x) {
   return `<details class="log-row">
     <summary>
       <span class="log-date">${relDay(x.date)}</span>
-      <span class="log-label" style="color:${d.colour}">${d.icon} ${escapeHtml(d.label)}</span>
+      <span class="log-label" style="color:${d.colour}">${icon(d.icon, 14)} ${escapeHtml(d.label)}</span>
       <span class="log-score">${fmtClock(x.durationSec * 1000)}</span>
     </summary>
     <div class="log-body">

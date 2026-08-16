@@ -40,6 +40,12 @@ const PATHS = {
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.2 2.4c-.6.2-.7.7-.7 1.3M12 16.5v.01"/>',
   repeat: '<path d="M4 10a6 6 0 0 1 6-6h9"/><path d="M16 1l3 3-3 3"/><path d="M20 14a6 6 0 0 1-6 6H5"/><path d="M8 23l-3-3 3-3"/>',
   droplet: '<path d="M12 3s6 6.5 6 10.5A6 6 0 0 1 6 13.5C6 9.5 12 3 12 3z"/>',
+  // The two-year ladder, pocket mode and the app lock.
+  route: '<circle cx="6" cy="5" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M6 7.5v4a4 4 0 0 0 4 4h4a4 4 0 0 1 4 4"/>',
+  vibrate: '<rect x="8" y="4" width="8" height="16" rx="2"/><path d="M4 9v6M20 9v6"/>',
+  home: '<path d="M4 11l8-7 8 7"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/>',
+  key: '<circle cx="8" cy="14" r="4"/><path d="M11 11l9-9M17 5l2 2M14 8l2 2"/>',
+  book: '<path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H19v16H5.5A1.5 1.5 0 0 0 4 20.5z"/><path d="M4 17.5A1.5 1.5 0 0 1 5.5 16H19"/>',
 };
 
 /** icon('back') → inline SVG string. */

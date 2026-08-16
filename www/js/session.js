@@ -447,7 +447,7 @@ export function startSession(mount, opts, onFinish) {
   }
 
   // Short countdown so the first rep is not a scramble.
-  el.phaseLabel.textContent = plan.type === 'release' ? 'Release day' : plan.type === 'test' ? 'Max hold test' : `Level ${plan.level} · ${plan.def.name}`;
+  el.phaseLabel.textContent = plan.type === 'release' ? 'Release day' : plan.type === 'test' ? 'Max hold test' : `Week ${plan.level} · ${plan.def.name}`;
   el.phaseSub.textContent = plan.def.position;
   el.cue.textContent = isAuto ? 'Follow the ring.' : 'Press and hold while you squeeze.';
   let countdown = 3;

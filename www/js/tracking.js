@@ -58,7 +58,7 @@ function sessionRow(s, idx) {
   const label = s.type === 'release' ? 'Release day'
     : s.type === 'test' ? 'Max hold test'
     : s.source === 'pe-pump' ? 'During a pump session'
-    : `Level ${s.level}`;
+    : `Week ${s.level}`;
   const work = s.reps ? s.reps.filter((r) => r.kind !== 'flick') : [];
   return `<details class="log-row" ${idx === 0 ? 'open' : ''}>
     <summary>
@@ -128,7 +128,7 @@ export function renderTracking(mount) {
         <div class="stat"><b>${totals.contractions.toLocaleString()}</b><span>contractions</span></div>
         <div class="stat"><b>${fmtMs(state.prs.maxHoldMs)}</b><span>longest hold</span></div>
         <div class="stat"><b>${Math.round(totals.tutMs / 60000)}m</b><span>lifetime tension</span></div>
-        <div class="stat"><b>${state.program.level}</b><span>current level</span></div>
+        <div class="stat"><b>${state.program.level}</b><span>week of the plan</span></div>
         <div class="stat"><b>${state.prs.score || 0}</b><span>best score</span></div>
       </div>
 
@@ -156,10 +156,10 @@ export function renderTracking(mount) {
       </section>
 
       <section class="card">
-        <div class="h-row">${icon('target', 16)}<h2>Level history</h2></div>
+        <div class="h-row">${icon('target', 16)}<h2>Progress through the plan</h2></div>
         <ol class="timeline">
           ${state.program.history
-            .map((h) => `<li><b>Level ${h.level}</b><span>${escapeHtml(program.levelDef(h.level).name)}</span><i>${new Date(h.at).toLocaleDateString()}</i></li>`)
+            .map((h) => `<li><b>Week ${h.level}</b><span>${escapeHtml(program.levelDef(h.level).name)}</span><i>${new Date(h.at).toLocaleDateString()}</i></li>`)
             .reverse()
             .join('')}
         </ol>

@@ -245,6 +245,101 @@ export function lineChart(values, { w = 320, h = 110, pad = 10, color = 'var(--a
   </svg>`;
 }
 
+/** Two or more series on shared axes, plotted against real timestamps so
+ *  irregular check-ins are not stretched into an even rhythm. */
+export function multiLine(series, { w = 320, h = 150, padL = 34, padR = 8, padT = 10, padB = 22 } = {}) {
+  const all = series.flatMap((s) => s.points);
+  if (all.length < 2) return '<div class="chart-empty">Two check-ins fill this in</div>';
+  const t0 = Math.min(...all.map((p) => p.ts));
+  const t1 = Math.max(...all.map((p) => p.ts));
+  const span = Math.max(t1 - t0, 864e5);
+  let min = Math.min(...all.map((p) => p.value));
+  let max = Math.max(...all.map((p) => p.value));
+  const pad = Math.max((max - min) * 0.2, 0.3);
+  min -= pad;
+  max += pad;
+
+  const x = (ts) => padL + ((ts - t0) / span) * (w - padL - padR);
+  const y = (v) => h - padB - ((v - min) / (max - min)) * (h - padT - padB);
+
+  const grid = [min + (max - min) * 0.15, (min + max) / 2, max - (max - min) * 0.15]
+    .map((v) => `<text x="2" y="${(y(v) + 3).toFixed(1)}" class="ct">${v.toFixed(1)}</text>
+                 <line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${w - padR}" y2="${y(v).toFixed(1)}" class="grid"/>`)
+    .join('');
+
+  const lines = series
+    .map((s) => {
+      const pts = s.points.map((p) => `${x(p.ts).toFixed(1)},${y(p.value).toFixed(1)}`).join(' ');
+      const dots = s.points.map((p) => `<circle cx="${x(p.ts).toFixed(1)}" cy="${y(p.value).toFixed(1)}" r="2.5" fill="${s.colour}"/>`).join('');
+      return `<polyline points="${pts}" fill="none" stroke="${s.colour}" stroke-width="2.5"
+        stroke-linejoin="round" stroke-linecap="round" ${s.dashed ? 'stroke-dasharray="4 4"' : ''}/>${dots}`;
+    })
+    .join('');
+
+  return `<svg class="chart tall" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img">
+    ${grid}${lines}
+    <text x="${padL}" y="${h - 5}" class="ct">${new Date(t0).toLocaleDateString(undefined, { month: 'short', year: '2-digit' })}</text>
+    <text x="${w - padR}" y="${h - 5}" text-anchor="end" class="ct">${new Date(t1).toLocaleDateString(undefined, { month: 'short', year: '2-digit' })}</text>
+  </svg>`;
+}
+
+/** Scatter with an optional least-squares trend line. Used for "did the hours
+ *  actually buy anything" — the one chart that can talk you out of a habit. */
+export function scatter(points, { w = 320, h = 160, xLabel = '', yLabel = '', color = 'var(--accent)', trend = true } = {}) {
+  if (points.length < 2) return '<div class="chart-empty">Three check-ins fill this in</div>';
+  const padL = 34;
+  const padR = 10;
+  const padT = 10;
+  const padB = 26;
+  const xs = points.map((p) => p.x);
+  const ys = points.map((p) => p.y);
+  const x0 = Math.min(...xs, 0);
+  const x1 = Math.max(...xs) * 1.08 || 1;
+  let y0 = Math.min(...ys, 0);
+  let y1 = Math.max(...ys, 0);
+  if (y1 - y0 < 1e-6) y1 = y0 + 1;
+  const padY = (y1 - y0) * 0.15;
+  y0 -= padY;
+  y1 += padY;
+
+  const X = (v) => padL + ((v - x0) / (x1 - x0 || 1)) * (w - padL - padR);
+  const Y = (v) => h - padB - ((v - y0) / (y1 - y0)) * (h - padT - padB);
+
+  const zero = y0 <= 0 && y1 >= 0 ? `<line x1="${padL}" y1="${Y(0).toFixed(1)}" x2="${w - padR}" y2="${Y(0).toFixed(1)}" class="grid zero"/>` : '';
+  const ticks = [y0 + (y1 - y0) * 0.2, y1 - (y1 - y0) * 0.2]
+    .map((v) => `<text x="2" y="${(Y(v) + 3).toFixed(1)}" class="ct">${v.toFixed(1)}</text>`)
+    .join('');
+
+  let line = '';
+  if (trend && points.length >= 3) {
+    const n = points.length;
+    const mx = xs.reduce((a, b) => a + b, 0) / n;
+    const my = ys.reduce((a, b) => a + b, 0) / n;
+    const sxx = xs.reduce((a, v) => a + (v - mx) ** 2, 0);
+    if (sxx > 0) {
+      const slope = points.reduce((a, p) => a + (p.x - mx) * (p.y - my), 0) / sxx;
+      const b = my - slope * mx;
+      line = `<line x1="${X(x0).toFixed(1)}" y1="${Y(b + slope * x0).toFixed(1)}"
+        x2="${X(x1).toFixed(1)}" y2="${Y(b + slope * x1).toFixed(1)}"
+        stroke="${color}" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.6"/>`;
+    }
+  }
+
+  const dots = points
+    .map((p) => `<circle cx="${X(p.x).toFixed(1)}" cy="${Y(p.y).toFixed(1)}" r="4" fill="${color}" opacity="0.85">
+      <title>${escapeHtml(p.label || `${p.x.toFixed(0)} → ${p.y.toFixed(2)}`)}</title></circle>`)
+    .join('');
+
+  // Axis captions sit at the far end of the axis they name — y at the top of
+  // the vertical, x at the right of the horizontal — so neither is mistaken
+  // for the other, which is exactly what happens with both in the same corner.
+  return `<svg class="chart tall" viewBox="0 0 ${w} ${h}" role="img">
+    ${ticks}${zero}${line}${dots}
+    <text x="2" y="${padT}" class="ct">${escapeHtml(yLabel)}</text>
+    <text x="${w - padR}" y="${h - 4}" text-anchor="end" class="ct">${escapeHtml(xLabel)}</text>
+  </svg>`;
+}
+
 /** Per-rep bars — the fatigue curve for a single session. */
 export function repBars(reps, { h = 54 } = {}) {
   if (!reps.length) return '';

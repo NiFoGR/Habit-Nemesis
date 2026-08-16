@@ -21,26 +21,22 @@ Jelqing and clamping were offered in the first version and have been removed: bo
 
 That is the ceiling this app is built around. It says so on the safety gate, in the guide, and in the projection copy, because the single biggest cause of quitting is expecting a different number.
 
+## The target, and the two numbers that define it
+
+- **Two hours of stretching a day** (`DAILY_STRETCH_GOAL_MS`) — as much as can be managed up to that. Everything on the PE home screen, the Today hub and the warnings is measured against it.
+- **10 kg of tension, hard ceiling** — the tension slider stops there, `store.js` refuses anything outside 0.5–10 on the way in, and the safety gate says why: length comes from time under tension, not from more load.
+
 ## Safety numbers used in the code
 
-Pressure bands in `program.js` (`PRESSURE_BANDS`), from consumer and vendor safety guidance:
-
-| Band | Range | Note |
-|---|---|---|
-| Beginner | ≤ 10 kPa (2–3 inHg) | Where everyone starts |
-| Intermediate | ≤ 17 kPa (3–5 inHg) | After weeks of comfortable sessions |
-| Advanced | ≤ 24 kPa (5–7 inHg) | More marking; watch the skin |
-| Hard ceiling | 34 kPa (10 inHg) | Never exceed, at any experience level |
-
-Session guidance: beginners **10–20 minutes total**, split into **~10 minute sets** with a full release between them, 2–3 times a week. The app enforces the set breaks itself — at each boundary the timer pauses for 60 seconds and tells you to release and check the skin.
+Session guidance for pumping: beginners **10–20 minutes total**, split into **~10 minute sets** with a full release between them, 2–3 times a week. The app enforces the set breaks itself — at each boundary the timer pauses for 60 seconds and tells you to release and check the skin.
 
 Stop signals coded into the guide and the discomfort flag: numbness, cold skin, dark discolouration that does not fade, petechiae, blisters, fluid ring, sharp pain, or an ache that lasts into the next day.
 
-`planWarnings()` checks a planned session before it starts and objects to: pressure over the bands (harder if you have fewer than 12 logged sessions), pump sessions over 20 minutes for beginners or 40 for anyone, tension over 12 kg, stretch sessions over 2 hours, missing warm-up, and training with no rest day in 12+ days.
+`planWarnings()` checks a planned session before it starts and objects to: pump sessions over 20 minutes for beginners or 40 for anyone, a planned stretch that would put the day past 1.5× the two-hour target, and training with no rest day in 12+ days. It also notes when tension is at the 10 kg ceiling.
 
-### Hydromax and other water pumps
+### No intensity on pumping
 
-A Hydromax has no gauge, so recording "8.0 kPa" would be a fabricated number. With **Pump type: Water** set, the app records a **1–5 intensity by feel** instead and never presents it as a pressure. Gauged air pumps get the real kPa/inHg slider.
+Pumping records **duration only**. A water pump has no gauge, so any pressure number would be invented, and a 1–5 "by feel" scale is the same invention with extra steps — it charts like data and is not. What is real is the clock and the enforced set breaks, so that is all that is stored. Pressure bands, the pressure/intensity settings and the pump-intensity stats were all removed; sessions logged by the older build still display whatever they recorded, read-only.
 
 ## BPFSL as the session-level signal
 
@@ -65,11 +61,34 @@ Reference rates in the prior: **0.42 cm/month** length at an hour a day of tract
 
 ## Measurement discipline
 
+Every check-in records **five measurements, all required**:
+
+| Key | What | Why it is in the set |
+|---|---|---|
+| `bpfsl` | BP flaccid stretched length | Moves first — the earliest signal there is |
+| `bpel` | BP erect length | The headline number everything else is judged against |
+| `nbpel` | NBP erect length | The gap to BPEL is your fat pad; moves with body weight, not growth |
+| `eg` | Erect girth at the **thickest point** | Where pumping shows up first |
+| `baseGirth` | Erect girth at the **very base** | Often moves independently of mid-shaft |
+
+The check-in is one measurement per screen (`pe/measure.js`), each with a schematic diagram, the exact method, and why it is being asked for. Next stays disabled until the field holds a plausible number — none of them is optional, so none of them gets a skip button.
+
 Method inconsistency swamps real change, so:
 
 - Check-ins are **monthly**, not weekly — weekly measuring produces noise to worry about.
-- The form warns and asks for confirmation on any change over **1.5 cm** from the previous entry, because that is a typo or a different method, not a month of growth.
+- The form warns on any change over **1.5 cm** from the previous entry, because that is a typo or a different method, not a month of growth. Anything outside 1–60 cm is refused outright.
 - Bone-pressed is the headline number; NBPEL is recorded but flagged as fat-pad dependent.
+
+### Progress photos
+
+Photos are shot against a translucent **ghost of last month's photo** (`pe/camera.js`), then aligned: drag to pan, slider to zoom, with the ghost opacity adjustable through both stages. The transform is **baked into the saved image** rather than stored alongside it, so the gallery and the compare view need no extra state and what you aligned is what is stored. Angle and distance drift ruin a photo series faster than any real change appears, which is the whole reason the ghost exists.
+
+## Reading the training back
+
+Two charts on the stats screen exist to answer questions the totals cannot:
+
+- **"Do the hours pay?"** (`volumeVsGain()`) pairs each gap between check-ins with the stretching that happened inside it, and plots average minutes a day against millimetres a month, with a trend line and Pearson's r. Gaps under a week are dropped — too short to separate growth from measuring noise. It is the one chart in the app that can argue *against* more volume, and it says so when r goes negative: bigger blocks with less gain usually means too much, too often.
+- **Girth map** (`girthMap()`) plots thickest-point girth against base girth over time, with the difference between them called out. Pumping tends to move the middle before the base, so a widening gap is a real training signal rather than a curiosity.
 
 ## The gallery
 

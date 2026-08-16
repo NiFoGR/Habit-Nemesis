@@ -1,13 +1,9 @@
 // Technique and safety reference. Kept blunt and specific — vague warnings get
 // ignored, and the failure modes here are avoidable and well documented.
 
-import * as store from '../store.js';
-import * as pe from './program.js';
 import { icon } from '../icons.js';
-import { escapeHtml } from '../ui.js';
 
 export function renderPeGuide(mount) {
-  const s = store.get().pe.settings;
   mount.innerHTML = `
     <div class="screen">
       <header class="screen-head">
@@ -22,9 +18,14 @@ export function renderPeGuide(mount) {
       </section>
 
       <section class="card">
+        <h2>The target</h2>
+        <p class="small muted">As much stretching as you can manage, up to <b>two hours a day</b>, at no more than <b>10 kg</b>. Time under tension is the thing that grows tissue; more load past 10 kg buys injuries, not length.</p>
+      </section>
+
+      <section class="card">
         <h2>Every session, in order</h2>
         <ol class="rules">
-          <li><b>Heat first, 5–10 min.</b> Warm flannel or rice sock.</li>
+          <li><b>Heat first, 5–10 min.</b> Warm flannel or rice sock. Warm tissue stretches, cold tissue tears.</li>
           <li><b>Work.</b> Stretching or pumping — one focus per session rather than both stacked.</li>
           <li><b>BPFSL before and after</b> on stretch days. ~+5% means it took the load.</li>
           <li><b>Cool down.</b> Normal colour and sensation before you dress.</li>
@@ -32,15 +33,13 @@ export function renderPeGuide(mount) {
       </section>
 
       <section class="card">
-        <h2>Pressure, in numbers</h2>
-        <div class="band-table">
-          ${pe.PRESSURE_BANDS.map((b) => `<div class="band-row">
-            <b>${escapeHtml(b.label)}</b>
-            <span>up to ${pe.fmtPressure(b.max)}</span>
-            <i>${escapeHtml(b.note)}</i>
-          </div>`).join('')}
-        </div>
-        <p class="small muted">Beginners: 10–20 min total in ~10 min sets, 2–3x a week.</p>
+        <h2>Pumping</h2>
+        <p class="small muted">Beginners: 10–20 min total, in ~10 minute sets with a full release between them, 2–3× a week. There is deliberately no intensity setting to log — a water pump has no gauge, so any number would be invented. What is real is the clock and the breaks.</p>
+        <ul class="rules">
+          <li><b>Never pump to pain.</b> Firm pressure, not a squeeze.</li>
+          <li><b>Release fully between sets</b> and let colour return before the next one.</li>
+          <li><b>Fluid-filled swelling</b> means you went too long or too hard — take days off.</li>
+        </ul>
       </section>
 
       <section class="card">
@@ -62,10 +61,11 @@ export function renderPeGuide(mount) {
 
       <section class="card">
         <h2>Measuring so the numbers mean something</h2>
+        <p class="small muted">Five numbers, every check-in: BP flaccid stretched, BP erect, NBP erect, girth at the thickest point, girth at the very base. The check-in walks you through each one.</p>
         <ul class="rules">
           <li><b>Same time of day</b>, same erection quality.</li>
-          <li><b>Bone-pressed</b>, every time.</li>
-          <li><b>Same girth spot</b>, mid-shaft.</li>
+          <li><b>Bone-pressed</b> means the ruler is pushed into the pubic bone — same pressure every time, or the number moves on its own.</li>
+          <li><b>Same two girth spots</b>: the thickest point, and hard against the base.</li>
           <li><b>Once a month.</b> Weekly is just noise.</li>
         </ul>
       </section>

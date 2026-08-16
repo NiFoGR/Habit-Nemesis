@@ -18,12 +18,16 @@ function blank() {
       restDay: 0, // 0 = Sunday
       dailyTarget: 2, // sessions per day the program asks for
       reminder: '', // 'HH:MM' or '' for off
+      appLock: false, // require the PIN to open the whole app, not just the gallery
+      tutorialDone: false, // the one-off technique walkthrough
+      weeklyReviewSeen: '', // dayKey of the last weekly review dismissed
     },
     program: {
       level: 1,
       qualifying: 0, // consecutive level-standard sessions banked toward promotion
       deload: 0, // sessions remaining at reduced targets
       startedAt: Date.now(),
+      levelStartedAt: Date.now(),
       history: [{ level: 1, at: Date.now() }],
     },
     sessions: [],
@@ -35,12 +39,8 @@ function blank() {
     pe: {
       settings: {
         units: 'cm',
-        pressureUnit: 'kPa',
-        pumpStyle: 'hydro', // 'hydro' (water pump, no gauge) or 'air' (gauged)
-        tensionKg: 10,
-        pressure: 8,
-        hydroLevel: 3, // perceived intensity 1-5 for gauge-less water pumps
-        stretchMin: 30,
+        tensionKg: 5,
+        stretchMin: 60,
         pumpMin: 15,
         kegelDuringPump: true,
         reminder: '',
@@ -104,7 +104,7 @@ function cleanKegelSession(s) {
     id: id(s.id, 'k_'),
     ts,
     date: dateKey(s.date),
-    level: int(s.level, 1, 12, 1),
+    level: int(s.level, 1, 104, 1),
     type: oneOf(s.type, ['training', 'release', 'test', 'quick'], 'training'),
     mode: oneOf(s.mode, ['hold', 'auto'], 'hold'),
     source: s.source === 'pe-pump' ? 'pe-pump' : null,
@@ -143,7 +143,9 @@ function cleanPeSession(s) {
     type: oneOf(s.type, ['warmup', 'stretch', 'pump', 'jelq', 'clamp'], 'stretch'),
     durationSec: int(s.durationSec, 0, 86400, 0),
     plannedSec: int(s.plannedSec, 0, 86400, 0),
-    tensionKg: numIn(s.tensionKg, 0.5, 50),
+    tensionKg: numIn(s.tensionKg, 0.5, 10),
+    // Legacy fields from when pumping recorded an intensity. Kept so old logs
+    // still read correctly; nothing writes them any more.
     pressure: numIn(s.pressure, 0.5, 100),
     hydroLevel: numIn(s.hydroLevel, 1, 5),
     bpfslBefore: numIn(s.bpfslBefore, MIN_CM, MAX_CM),
@@ -164,10 +166,10 @@ function cleanMeasurement(m) {
     ts: num(m.ts, 0, 4e12) ?? Date.now(),
     date: dateKey(m.date),
     bpel,
-    eg: numIn(m.eg, MIN_CM, MAX_CM),
+    eg: numIn(m.eg, MIN_CM, MAX_CM), // girth at the thickest point
     bpfsl: numIn(m.bpfsl, MIN_CM, MAX_CM),
     nbpel: numIn(m.nbpel, MIN_CM, MAX_CM),
-    baseGirth: numIn(m.baseGirth, MIN_CM, MAX_CM),
+    baseGirth: numIn(m.baseGirth, MIN_CM, MAX_CM), // girth at the very base
     photoId: typeof m.photoId === 'string' && /^p_[0-9]{1,20}$/.test(m.photoId) ? m.photoId : null,
     notes: str(m.notes, 500),
   };
@@ -195,14 +197,18 @@ function hydrate(saved) {
       restDay: int(ss.restDay, 0, 6, base.settings.restDay),
       dailyTarget: int(ss.dailyTarget, 1, 3, base.settings.dailyTarget),
       reminder: /^\d{2}:\d{2}$/.test(ss.reminder) ? ss.reminder : '',
+      appLock: bool(ss.appLock),
+      tutorialDone: bool(ss.tutorialDone),
+      weeklyReviewSeen: /^\d{4}-\d{2}-\d{2}$/.test(ss.weeklyReviewSeen) ? ss.weeklyReviewSeen : '',
     },
     program: {
-      level: int(sp.level, 1, 12, 1),
+      level: int(sp.level, 1, 104, 1),
       qualifying: int(sp.qualifying, 0, 10, 0),
       deload: int(sp.deload, 0, 20, 0),
       startedAt: num(sp.startedAt, 0, 4e12) ?? Date.now(),
+      levelStartedAt: num(sp.levelStartedAt, 0, 4e12) ?? num(sp.startedAt, 0, 4e12) ?? Date.now(),
       history: arr(sp.history, 200)
-        .map((h) => ({ level: int(h?.level, 1, 12, 1), at: num(h?.at, 0, 4e12) ?? Date.now() }))
+        .map((h) => ({ level: int(h?.level, 1, 104, 1), at: num(h?.at, 0, 4e12) ?? Date.now() }))
         .filter(Boolean),
     },
     sessions: arr(saved.sessions, MAX_SESSIONS).map(cleanKegelSession).filter(Boolean),
@@ -216,12 +222,8 @@ function hydrate(saved) {
     pe: {
       settings: {
         units: oneOf(ps.units, ['cm', 'in'], 'cm'),
-        pressureUnit: oneOf(ps.pressureUnit, ['kPa', 'inHg'], 'kPa'),
-        pumpStyle: oneOf(ps.pumpStyle, ['hydro', 'air'], 'hydro'),
-        tensionKg: num(ps.tensionKg, 1, 20) ?? base.pe.settings.tensionKg,
-        pressure: num(ps.pressure, 2, 34) ?? base.pe.settings.pressure,
-        hydroLevel: int(ps.hydroLevel, 1, 5, base.pe.settings.hydroLevel),
-        stretchMin: int(ps.stretchMin, 1, 120, base.pe.settings.stretchMin),
+        tensionKg: num(ps.tensionKg, 0.5, 10) ?? base.pe.settings.tensionKg,
+        stretchMin: int(ps.stretchMin, 1, 180, base.pe.settings.stretchMin),
         pumpMin: int(ps.pumpMin, 1, 120, base.pe.settings.pumpMin),
         kegelDuringPump: ps.kegelDuringPump !== false,
         reminder: /^\d{2}:\d{2}$/.test(ps.reminder) ? ps.reminder : '',

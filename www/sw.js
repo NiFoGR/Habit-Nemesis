@@ -1,7 +1,7 @@
 // Offline-first service worker. The app is fully usable with no connection —
 // which matters, because you should be able to train anywhere.
 // Bump CACHE when shipping changes so old assets are dropped.
-const CACHE = 'nifo-v4';
+const CACHE = 'nifo-v5';
 
 const ASSETS = [
   './',
@@ -15,11 +15,17 @@ const ASSETS = [
   './js/report.js',
   './js/tracking.js',
   './js/ui.js',
+  './js/icons.js',
   './js/native.js',
+  './js/tutorial.js',
+  './js/roadmap.js',
+  './js/pocket.js',
+  './js/review.js',
   './js/pe/program.js',
   './js/pe/home.js',
   './js/pe/timer.js',
   './js/pe/measure.js',
+  './js/pe/camera.js',
   './js/pe/stats.js',
   './js/pe/gallery.js',
   './js/pe/guide.js',

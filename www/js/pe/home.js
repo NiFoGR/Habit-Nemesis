@@ -1,8 +1,9 @@
-// PE home. One glance, one tap.
+// PE home. One glance, one tap. Everything measured against the two-hour
+// daily stretching target.
 
 import * as store from '../store.js';
 import * as pe from './program.js';
-import { escapeHtml, fmtHours, ringSvg, toast, haptic, sparkline, donut } from '../ui.js';
+import { escapeHtml, fmtHours, ringSvg, toast, haptic, sparkline } from '../ui.js';
 import { icon } from '../icons.js';
 
 export function renderPeHome(mount) {
@@ -14,15 +15,15 @@ export function renderPeHome(mount) {
   const due = pe.measurementDue();
   const latest = s.measurements[s.measurements.length - 1];
   const first = s.measurements[0];
-  const weekStretch = pe.weeklyVolumeMs('stretch', 1);
   const gain = first && latest && first !== latest ? latest.bpel - first.bpel : 0;
-  const targetWeekMs = 30 * 60000 * 7;
 
-  const lastWork = s.sessions.filter((x) => x.type !== 'warmup').slice(-1)[0];
-  const repeatLabel = lastWork
-    ? `${pe.typeDef(lastWork.type).label} · ${Math.max(1, Math.round((lastWork.plannedSec || lastWork.durationSec) / 60))} min`
-    : null;
+  const todayStretch = s.sessions
+    .filter((x) => x.date === store.dayKey() && x.type === 'stretch')
+    .reduce((a, x) => a + x.durationSec * 1000, 0);
+  const goal = pe.DAILY_STRETCH_GOAL_MS;
+  const left = Math.max(0, goal - todayStretch);
 
+  const lastStretch = s.sessions.filter((x) => x.type === 'stretch').slice(-1)[0];
   const lastEq = s.eq[s.eq.length - 1];
   const eqDue = !lastEq || Date.now() - lastEq.ts > 6.5 * 864e5;
 
@@ -36,35 +37,25 @@ export function renderPeHome(mount) {
 
       <div class="today pe-today">
         <div class="today-left">
-          <h2>${latest ? `${pe.fmtLength(latest.bpel)} × ${pe.fmtLength(latest.eg)}` : 'No baseline yet'}</h2>
-          <p class="muted small">${latest
-            ? `${gain > 0.01 ? `+${pe.fmtLength(gain, undefined, 2)} since start · ` : ''}${pe.peStreak()}d streak`
-            : 'Measure once and everything else starts working.'}</p>
+          <h2>${fmtHours(todayStretch)} <span class="of-goal">of 2h</span></h2>
+          <p class="muted small">${left > 0 ? `${fmtHours(left)} left today` : 'Target hit today'}${pe.peStreak() ? ` · ${pe.peStreak()}d streak` : ''}</p>
         </div>
-        ${donut(
-          [
-            { value: weekStretch, colour: 'var(--accent)' },
-            { value: pe.weeklyVolumeMs('pump', 1), colour: 'var(--violet)' },
-            { value: pe.weeklyVolumeMs('warmup', 1), colour: 'var(--warn)' },
-          ],
-          { size: 96, centre: fmtHours(weekStretch + pe.weeklyVolumeMs('pump', 1) + pe.weeklyVolumeMs('warmup', 1)) }
-        )}
+        ${ringSvg(Math.min(todayStretch / goal, 1), `${Math.round((todayStretch / goal) * 100)}%`, 'today', { size: 96 })}
       </div>
 
-      ${s.measurements.length > 1 ? `<div class="spark-card">
-        <div class="cap"><span>Length trend</span><b>${gain >= 0 ? '+' : '−'}${pe.fmtLength(Math.abs(gain), undefined, 2)}</b></div>
-        ${sparkline(s.measurements.map((m) => m.bpel), { color: 'var(--violet)', h: 40 })}
+      ${latest ? `<div class="spark-card">
+        <div class="cap"><span>${pe.fmtLength(latest.bpel)} × ${pe.fmtLength(latest.eg)}</span><b>${gain >= 0 ? '+' : '−'}${pe.fmtLength(Math.abs(gain), undefined, 2)}</b></div>
+        ${s.measurements.length > 1 ? sparkline(s.measurements.map((m) => m.bpel), { color: 'var(--violet)', h: 40 }) : ''}
       </div>` : ''}
+
       ${due.due ? `<a class="notice action" href="#/pe/measure">${icon('ruler', 16)} Monthly check-in due — tap to measure.</a>` : ''}
       ${dec.due ? `<div class="notice warn">${dec.consecutive} days without a rest day. Take a few off.</div>` : ''}
 
-      ${repeatLabel ? `<a class="btn primary big linkbtn" href="#/pe/timer?type=${lastWork.type}&repeat=1">${icon('repeat', 18)}<span>Repeat — ${escapeHtml(repeatLabel)}</span></a>` : ''}
+      ${lastStretch ? `<a class="btn primary big linkbtn" href="#/pe/timer?type=stretch&repeat=1">${icon('repeat', 18)}<span>Repeat — ${Math.max(1, Math.round((lastStretch.plannedSec || lastStretch.durationSec) / 60))} min @ ${lastStretch.tensionKg ?? s.settings.tensionKg} kg</span></a>` : ''}
 
       <div class="start-grid">
-        <a class="start-card" href="#/pe/timer?type=stretch&routine=1" style="--c:var(--accent)">${icon('flash')}<span class="sc-text"><span>Routine</span><i>warm-up + stretch</i></span></a>
-        <a class="start-card" href="#/pe/timer?type=stretch" style="--c:var(--accent)">${icon('stretch')}<span class="sc-text"><span>Stretch</span><i>${s.settings.stretchMin} min</i></span></a>
+        <a class="start-card" href="#/pe/timer?type=stretch" style="--c:var(--accent)">${icon('stretch')}<span class="sc-text"><span>Stretch</span><i>${s.settings.stretchMin} min · ${s.settings.tensionKg} kg</i></span></a>
         <a class="start-card" href="#/pe/timer?type=pump" style="--c:var(--violet)">${icon('pump')}<span class="sc-text"><span>Pump</span><i>${s.settings.pumpMin} min</i></span></a>
-        <a class="start-card" href="#/pe/timer?type=warmup" style="--c:var(--warn)">${icon('flame')}<span class="sc-text"><span>Warm-up</span><i>8 min</i></span></a>
       </div>
 
       ${eqDue ? `<section class="card" id="eqCard">
@@ -107,14 +98,13 @@ function renderSafetyGate(mount) {
 
       <section class="card">
         <ul class="rules">
-          <li><b>Realistic ceiling:</b> trials show ~1.5 cm over 3–6 months from 30–90 min/day of traction. Millimetres per month.</li>
-          <li><b>Pressure:</b> never past 10 inHg (34 kPa). Beginners stay under 3 inHg.</li>
-          <li><b>Duration:</b> pump in ~10 min sets, 10–20 min total to start.</li>
-          <li><b>Warm up first.</b> Cold tissue tears; warm tissue stretches.</li>
+          <li><b>The target:</b> as much stretching as you can manage, up to two hours a day, at no more than 10 kg.</li>
+          <li><b>Realistic gains:</b> trials show ~1.5 cm over 3–6 months. Millimetres per month, not centimetres.</li>
+          <li><b>Pumping</b> is for girth and conditioning. Short sets, ~10 minutes at a time.</li>
           <li><b>Stop at once</b> for numbness, dark colour, spots, blisters or sharp pain.</li>
           <li><b>Rest days matter.</b> Tissue adapts between sessions, not during.</li>
         </ul>
-        <p class="fineprint">Not medical advice. Persistent pain, a new bend, or worse erections → urologist. Full guide inside.</p>
+        <p class="fineprint">Not medical advice. Persistent pain, a new bend, or worse erections → urologist.</p>
         <label class="check"><input type="checkbox" id="ack"> Understood</label>
       </section>
 

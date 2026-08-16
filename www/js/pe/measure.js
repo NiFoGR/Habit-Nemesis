@@ -1,24 +1,104 @@
-// The monthly check-in: measurements plus an optional progress photo.
+// The monthly check-in, one measurement per screen.
 //
-// Measurement technique matters more than anything else on this screen. A
-// half-centimetre of inconsistent bone-pressing swamps a month of real change,
-// so the form nags about method rather than assuming it.
+// Five measurements, all required. Method inconsistency swamps real change, so
+// each step shows a diagram and the exact method rather than putting five bare
+// inputs on one page and hoping.
 
 import * as store from '../store.js';
 import * as pe from './program.js';
 import * as db from './db.js';
 import * as vault from './vault.js';
 import { withVault } from './pin.js';
+import { captureWithGhost } from './camera.js';
 import { icon } from '../icons.js';
 import { escapeHtml, toast, haptic } from '../ui.js';
 
-const FIELDS = [
-  { key: 'bpel', label: 'Erect length, bone-pressed', short: 'BPEL', required: true, help: 'Ruler hard into the pubic bone, along the top.' },
-  { key: 'eg', label: 'Erect girth', short: 'EG', required: true, help: 'Mid-shaft, same spot every month.' },
-  { key: 'bpfsl', label: 'Flaccid stretched, bone-pressed', short: 'BPFSL', help: 'Optional. Moves before erect length does.' },
-  { key: 'nbpel', label: 'Non-bone-pressed length', short: 'NBPEL', help: 'Optional. Moves with body fat.' },
-  { key: 'baseGirth', label: 'Base girth', short: 'Base', help: 'Optional.' },
+/* Schematic diagrams. Deliberately abstract — a shaft as a rounded bar, the
+   pubic bone as a wall, a tape as a ring — so they read instantly at phone
+   size and are unambiguous about *where* to measure. */
+const DIAGRAMS = {
+  lengthFromBone: (label) => `
+    <svg viewBox="0 0 220 90" class="diag" aria-hidden="true">
+      <rect x="6" y="18" width="10" height="54" rx="3" class="d-bone"/>
+      <text x="11" y="86" class="d-lab" text-anchor="middle">bone</text>
+      <rect x="16" y="34" width="150" height="22" rx="11" class="d-shaft"/>
+      <path d="M16 24h150" class="d-dim"/>
+      <path d="M16 20v8M166 20v8" class="d-dim"/>
+      <text x="91" y="16" class="d-lab" text-anchor="middle">${label}</text>
+    </svg>`,
+  lengthFromSkin: (label) => `
+    <svg viewBox="0 0 220 90" class="diag" aria-hidden="true">
+      <rect x="6" y="18" width="10" height="54" rx="3" class="d-bone"/>
+      <rect x="16" y="30" width="26" height="30" rx="6" class="d-fat"/>
+      <text x="29" y="86" class="d-lab" text-anchor="middle">fat pad</text>
+      <rect x="42" y="34" width="124" height="22" rx="11" class="d-shaft"/>
+      <path d="M42 24h124" class="d-dim"/>
+      <path d="M42 20v8M166 20v8" class="d-dim"/>
+      <text x="104" y="16" class="d-lab" text-anchor="middle">${label}</text>
+    </svg>`,
+  girth: (where) => `
+    <svg viewBox="0 0 220 90" class="diag" aria-hidden="true">
+      <rect x="6" y="18" width="10" height="54" rx="3" class="d-bone"/>
+      <rect x="16" y="34" width="150" height="22" rx="11" class="d-shaft"/>
+      <ellipse cx="${where === 'base' ? 30 : 100}" cy="45" rx="9" ry="19" class="d-tape"/>
+      <text x="${where === 'base' ? 30 : 100}" y="82" class="d-lab" text-anchor="middle">${where === 'base' ? 'at the base' : 'thickest point'}</text>
+    </svg>`,
+  stretched: () => `
+    <svg viewBox="0 0 220 90" class="diag" aria-hidden="true">
+      <rect x="6" y="18" width="10" height="54" rx="3" class="d-bone"/>
+      <rect x="16" y="34" width="170" height="22" rx="11" class="d-shaft"/>
+      <path d="M186 45h22M198 38l10 7-10 7" class="d-pull"/>
+      <path d="M16 24h170" class="d-dim"/>
+      <path d="M16 20v8M186 20v8" class="d-dim"/>
+      <text x="101" y="16" class="d-lab" text-anchor="middle">pulled to a firm stretch</text>
+    </svg>`,
+};
+
+const STEPS = [
+  {
+    key: 'bpfsl',
+    short: 'BPFSL',
+    title: 'Flaccid stretched length',
+    diagram: DIAGRAMS.stretched(),
+    how: 'Flaccid. Ruler pressed hard into the pubic bone, pull to a firm stretch along the top, measure to the tip.',
+    why: 'Moves before erect length does, so it is your earliest signal.',
+  },
+  {
+    key: 'bpel',
+    short: 'BPEL',
+    title: 'Erect length, bone-pressed',
+    diagram: DIAGRAMS.lengthFromBone('bone to tip'),
+    how: 'Fully erect. Ruler pressed hard into the pubic bone until it stops, along the top of the shaft, measure to the tip.',
+    why: 'The headline number. Everything else is judged against this.',
+  },
+  {
+    key: 'nbpel',
+    short: 'NBPEL',
+    title: 'Erect length, non-bone-pressed',
+    diagram: DIAGRAMS.lengthFromSkin('skin to tip'),
+    how: 'Same erection, but rest the ruler on the skin without pressing in.',
+    why: 'The difference between this and BPEL is your fat pad. Useful, but it moves with body weight rather than growth.',
+  },
+  {
+    key: 'eg',
+    short: 'Girth, thickest',
+    title: 'Erect girth at the thickest point',
+    diagram: DIAGRAMS.girth('thick'),
+    how: 'Tape around the thickest part of the shaft. Snug, not compressing. Note where it is so you use the same spot next month.',
+    why: 'Where pumping and jelq-style work shows up first.',
+  },
+  {
+    key: 'baseGirth',
+    short: 'Girth, base',
+    title: 'Erect girth at the base',
+    diagram: DIAGRAMS.girth('base'),
+    how: 'Tape right at the very bottom, against the body.',
+    why: 'The base often changes independently of mid-shaft, so tracking both shows the shape of the change.',
+  },
 ];
+
+const MIN_CM = 1;
+const MAX_CM = 60;
 
 export function renderMeasure(mount) {
   const state = store.get();
@@ -27,169 +107,230 @@ export function renderMeasure(mount) {
   const history = state.pe.measurements;
   const last = history[history.length - 1];
   const first = history[0];
-  let photo = null; // { full, thumb, previewUrl }
 
-  // Typed values are cached outside the DOM, so a re-render (adding a photo,
-  // for instance) never throws away numbers the user has already entered.
-  const entered = {};
-  const notesRef = { value: '' };
+  const values = {}; // display units, as typed
+  let photo = null;
+  let notes = '';
+  let step = 0; // 0..STEPS.length-1, then photo, then review
 
-  function syncFromDom() {
-    for (const f of FIELDS) {
-      const el = mount.querySelector('#f_' + f.key);
-      if (el) entered[f.key] = el.value;
-    }
-    const n = mount.querySelector('#notes');
-    if (n) notesRef.value = n.value;
-  }
+  const PHOTO_STEP = STEPS.length;
+  const REVIEW_STEP = STEPS.length + 1;
 
-  function fieldValue(key) {
-    if (entered[key] != null) return entered[key];
-    return last && last[key] ? pe.toDisplayLength(last[key], units).toFixed(1) : '';
-  }
+  const toCm = (v) => pe.fromDisplayLength(Number(v), units);
+  const valid = (k) => {
+    const raw = values[k];
+    if (raw === '' || raw == null) return false;
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n <= 0) return false;
+    const cm = toCm(raw);
+    return cm >= MIN_CM && cm <= MAX_CM;
+  };
 
-  function draw() {
+  /* ---------------- measurement steps ---------------- */
+
+  function drawStep() {
+    const def = STEPS[step];
+    const prev = last && last[def.key] != null ? pe.toDisplayLength(last[def.key], units).toFixed(1) : null;
+    const ok = valid(def.key);
+
     mount.innerHTML = `
       <div class="screen">
         <header class="screen-head">
-          <button class="icon-btn" data-nav="pe" aria-label="Back">${icon('back')}</button>
-          <h1>Monthly check-in</h1>
+          <button class="icon-btn" id="back" aria-label="Back">${icon('back')}</button>
+          <h1>${step + 1} of ${STEPS.length + 1}</h1>
           <span class="icon-btn ghost"></span>
         </header>
 
-        ${last ? `<div class="notice">Last: ${pe.fmtLength(last.bpel)} × ${pe.fmtLength(last.eg)} on ${new Date(last.ts).toLocaleDateString()}. Same time of day, same method.</div>`
-          : '<div class="notice">Your baseline. Everything else is measured from this.</div>'}
+        <div class="step-bar">${STEPS.concat([{}]).map((_, i) => `<i class="${i < step ? 'done' : i === step ? 'now' : ''}"></i>`).join('')}</div>
+
+        <h2 class="step-title">${escapeHtml(def.title)}</h2>
+        <div class="diag-wrap">${def.diagram}</div>
 
         <section class="card">
-          <h2>Measurements <span class="tag">${escapeHtml(units)}</span></h2>
-          ${FIELDS.map(
-            (f) => `<div class="field">
-              <label for="f_${f.key}"><b>${escapeHtml(f.short)}</b> — ${escapeHtml(f.label)}${f.required ? '' : ' <em>(optional)</em>'}</label>
-              <div class="measure-row">
-                <input type="number" inputmode="decimal" step="0.1" id="f_${f.key}" value="${escapeHtml(fieldValue(f.key))}" placeholder="${last && last[f.key] ? pe.toDisplayLength(last[f.key], units).toFixed(1) : '0.0'}">
-                <span>${escapeHtml(units)}</span>
-              </div>
-              <p class="fineprint">${escapeHtml(f.help)}</p>
-            </div>`
-          ).join('')}
+          <p class="small"><b>How:</b> ${escapeHtml(def.how)}</p>
+          <p class="small muted"><b>Why:</b> ${escapeHtml(def.why)}</p>
         </section>
 
-        <section class="card">
-          <h2>Progress photo <span class="tag">optional</span></h2>
-          <p class="small muted">Same angle and distance each month. Encrypted on this device.</p>
-          <div id="photoSlot">${photoSlot()}</div>
-          <input type="file" id="file" accept="image/*" capture="environment" hidden>
-        </section>
+        <div class="measure-row big-input">
+          <input type="number" inputmode="decimal" step="0.1" id="val"
+                 value="${escapeHtml(values[def.key] ?? '')}" placeholder="${prev ?? '0.0'}" autofocus>
+          <span>${escapeHtml(units)}</span>
+        </div>
+        ${prev ? `<p class="small muted centre">Last month: ${prev} ${escapeHtml(units)}</p>` : ''}
+        <p class="err-line" id="err"></p>
 
-        <section class="card">
-          <h2>Notes</h2>
-          <textarea id="notes" class="notes" rows="2" placeholder="Anything worth remembering about this month">${escapeHtml(notesRef.value)}</textarea>
-        </section>
-
-        <button class="btn primary big" id="save">Save check-in</button>
-        <button class="btn ghost" data-nav="pe">Cancel</button>
+        <button class="btn primary big" id="next" ${ok ? '' : 'disabled'}>
+          ${step === STEPS.length - 1 ? 'Photo' : 'Next'}
+        </button>
       </div>`;
 
-    wirePhoto();
-    mount.querySelector('#save').addEventListener('click', save);
+    const input = mount.querySelector('#val');
+    const next = mount.querySelector('#next');
+    const err = mount.querySelector('#err');
+
+    input.addEventListener('input', () => {
+      values[def.key] = input.value;
+      const n = Number(input.value);
+      let msg = '';
+      if (input.value !== '' && Number.isFinite(n) && n > 0) {
+        const cm = toCm(input.value);
+        if (cm < MIN_CM || cm > MAX_CM) msg = `That is outside a plausible range — check the number and that you are in ${units}.`;
+        else if (last && last[def.key] && Math.abs(cm - last[def.key]) > 1.5) msg = 'Over 1.5 cm from last month. Real change is millimetres — double-check the method.';
+      }
+      err.textContent = msg;
+      err.className = msg.startsWith('That is outside') ? 'err-line bad' : 'err-line warn';
+      next.disabled = !valid(def.key);
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && valid(def.key)) next.click();
+    });
+
+    mount.querySelector('#back').addEventListener('click', () => {
+      if (step === 0) return (location.hash = '#/pe');
+      step--;
+      drawStep();
+    });
+    next.addEventListener('click', () => {
+      if (!valid(def.key)) return;
+      haptic('tick');
+      step++;
+      if (step === PHOTO_STEP) drawPhoto();
+      else drawStep();
+    });
   }
 
-  function photoSlot() {
-    return photo
-      ? `<div class="photo-preview"><img src="${photo.previewUrl}" alt="Selected photo"><button class="btn ghost" id="removePhoto">Remove photo</button></div>`
-      : '<button class="btn" id="pick">Take or choose a photo</button>';
-  }
+  /* ---------------- photo step ---------------- */
 
-  /** Only the photo slot is redrawn when a picture is added or removed — the
-   *  rest of the form, and anything typed into it, is left alone. */
-  function wirePhoto() {
-    const file = mount.querySelector('#file');
-    const slot = mount.querySelector('#photoSlot');
-    const refresh = () => {
-      slot.innerHTML = photoSlot();
-      wirePhotoButtons();
-    };
-
-    function wirePhotoButtons() {
-      slot.querySelector('#pick')?.addEventListener('click', () => file.click());
-      slot.querySelector('#removePhoto')?.addEventListener('click', () => {
-        URL.revokeObjectURL(photo.previewUrl);
-        photo = null;
-        refresh();
-      });
+  async function lastPhotoBlob() {
+    const withPhoto = [...history].reverse().find((m) => m.photoId);
+    if (!withPhoto || !vault.isUnlocked()) return null;
+    try {
+      const rec = await db.get(withPhoto.photoId);
+      return rec ? await vault.decryptBlob(rec.full) : null;
+    } catch {
+      return null;
     }
-    wirePhotoButtons();
+  }
 
-    file.addEventListener('change', async () => {
-      const f = file.files?.[0];
-      if (!f) return;
-      try {
-        toast('Processing photo…');
-        const out = await db.processImage(f);
-        photo = { ...out, previewUrl: URL.createObjectURL(out.thumb) };
-        refresh();
-      } catch (err) {
-        toast(err.message);
+  function drawPhoto() {
+    mount.innerHTML = `
+      <div class="screen">
+        <header class="screen-head">
+          <button class="icon-btn" id="back" aria-label="Back">${icon('back')}</button>
+          <h1>${STEPS.length + 1} of ${STEPS.length + 1}</h1>
+          <span class="icon-btn ghost"></span>
+        </header>
+
+        <div class="step-bar">${STEPS.concat([{}]).map((_, i) => `<i class="${i < PHOTO_STEP ? 'done' : 'now'}"></i>`).join('')}</div>
+
+        <h2 class="step-title">Progress photo</h2>
+        <section class="card">
+          <p class="small muted">Optional, but it is the only record that shows shape rather than numbers. Shot against a ghost of last month's photo so the series stays comparable, and encrypted on this device.</p>
+        </section>
+
+        <div id="slot">${photo ? `<div class="photo-preview"><img src="${photo.previewUrl}" alt=""><button class="btn ghost" id="remove">Remove</button></div>` : ''}</div>
+
+        <button class="btn ${photo ? '' : 'primary'} big" id="shoot">${icon('camera', 18)}<span>${photo ? 'Retake' : 'Take photo'}</span></button>
+        <button class="btn ${photo ? 'primary big' : 'ghost'}" id="next">${photo ? 'Review' : 'Skip photo'}</button>
+      </div>`;
+
+    mount.querySelector('#back').addEventListener('click', () => {
+      step = STEPS.length - 1;
+      drawStep();
+    });
+    mount.querySelector('#remove')?.addEventListener('click', () => {
+      URL.revokeObjectURL(photo.previewUrl);
+      photo = null;
+      drawPhoto();
+    });
+    mount.querySelector('#next').addEventListener('click', () => {
+      step = REVIEW_STEP;
+      drawReview();
+    });
+
+    mount.querySelector('#shoot').addEventListener('click', () => {
+      // The ghost needs the vault open, since last month's photo is encrypted.
+      const go = async () => {
+        const ghost = await lastPhotoBlob();
+        captureWithGhost(
+          mount,
+          ghost,
+          (out) => {
+            photo = { ...out, previewUrl: URL.createObjectURL(out.thumb) };
+            drawPhoto();
+          },
+          () => drawPhoto()
+        );
+      };
+      if (vault.isSet() && !vault.isUnlocked()) {
+        withVault(mount, { title: 'Unlock to overlay', onReady: go, onCancel: () => drawPhoto() });
+      } else {
+        go();
       }
     });
   }
 
-  // Anything outside this is a typo or the wrong unit, and it would clamp
-  // strangely once stored rather than being caught here.
-  const MIN_CM = 1;
-  const MAX_CM = 60;
+  /* ---------------- review + save ---------------- */
 
-  function readFields() {
-    syncFromDom();
-    const out = {};
-    for (const f of FIELDS) {
-      const raw = entered[f.key];
-      const n = raw === '' || raw == null ? NaN : Number(raw);
-      if (!Number.isFinite(n) || n <= 0) {
-        out[f.key] = null;
-        continue;
-      }
-      const cm = pe.fromDisplayLength(n, units);
-      out[f.key] = cm >= MIN_CM && cm <= MAX_CM ? cm : NaN; // NaN marks "out of range"
-    }
-    return out;
+  function drawReview() {
+    const rows = STEPS.map((d) => {
+      const cm = toCm(values[d.key]);
+      const prev = last && last[d.key] != null ? last[d.key] : null;
+      const delta = prev != null ? cm - prev : null;
+      return `<div class="kv">
+        <span>${escapeHtml(d.short)}</span>
+        <b>${pe.fmtLength(cm)}${delta != null ? ` <em class="${delta > 0.01 ? 'up' : delta < -0.01 ? 'down' : ''}">${delta >= 0 ? '+' : '−'}${Math.abs(delta).toFixed(2)}</em>` : ''}</b>
+      </div>`;
+    }).join('');
+
+    mount.innerHTML = `
+      <div class="screen">
+        <header class="screen-head">
+          <button class="icon-btn" id="back" aria-label="Back">${icon('back')}</button>
+          <h1>Review</h1>
+          <span class="icon-btn ghost"></span>
+        </header>
+
+        <section class="card">${rows}</section>
+
+        ${photo ? `<div class="photo-preview small-pv"><img src="${photo.previewUrl}" alt=""></div>` : ''}
+
+        <section class="card">
+          <textarea id="notes" class="notes" rows="2" placeholder="Notes (optional)">${escapeHtml(notes)}</textarea>
+        </section>
+
+        <button class="btn primary big" id="save">Save check-in</button>
+      </div>`;
+
+    mount.querySelector('#back').addEventListener('click', () => {
+      step = PHOTO_STEP;
+      drawPhoto();
+    });
+    mount.querySelector('#save').addEventListener('click', () => {
+      notes = mount.querySelector('#notes').value.trim().slice(0, 500);
+      save();
+    });
   }
 
-  async function save() {
-    const values = readFields();
-    const badField = Object.entries(values).find(([, v]) => Number.isNaN(v));
-    if (badField) {
-      toast(`That ${badField[0].toUpperCase()} value is out of range — check the number and the units.`);
-      return;
-    }
-    if (!values.bpel || !values.eg) {
-      toast('Length and girth are both needed');
-      return;
-    }
-    // A jump this big is almost always a typo or a different method, not a
-    // month of growth. Worth one question before it poisons every chart.
-    if (last && last.bpel && Math.abs(values.bpel - last.bpel) > 1.5) {
-      const dir = values.bpel > last.bpel ? 'more' : 'less';
-      if (!confirm(`Over 1.5 cm ${dir} than last month — usually a typo or a different method. Save anyway?`)) return;
-    }
-
-    const notes = notesRef.value.trim().slice(0, 500);
+  function save() {
+    const cmValues = {};
+    for (const d of STEPS) cmValues[d.key] = toCm(values[d.key]);
 
     const commit = async (photoId) => {
       const record = {
         id: `m_${Date.now()}`,
         ts: Date.now(),
         date: store.dayKey(),
-        ...values,
+        ...cmValues,
         photoId,
         notes,
       };
       const st = store.get();
       st.pe.measurements.push(record);
       st.pe.measurements.sort((a, b) => a.ts - b.ts);
-      if (values.bpel > st.pe.prs.bpel) st.pe.prs.bpel = values.bpel;
-      if (values.eg > st.pe.prs.eg) st.pe.prs.eg = values.eg;
-      if (values.bpfsl && values.bpfsl > st.pe.prs.bpfsl) st.pe.prs.bpfsl = values.bpfsl;
+      if (cmValues.bpel > st.pe.prs.bpel) st.pe.prs.bpel = cmValues.bpel;
+      if (cmValues.eg > st.pe.prs.eg) st.pe.prs.eg = cmValues.eg;
+      if (cmValues.bpfsl > st.pe.prs.bpfsl) st.pe.prs.bpfsl = cmValues.bpfsl;
       const earned = pe.checkAchievements(st);
       store.save();
       haptic('level');
@@ -198,13 +339,9 @@ export function renderMeasure(mount) {
 
     if (!photo) return commit(null);
 
-    // Photos need the vault open; measurements alone do not.
     withVault(mount, {
       title: 'Secure the photo',
-      onCancel: () => {
-        draw();
-        toast('Saved without the photo? Tap save again to store just the numbers.');
-      },
+      onCancel: () => drawReview(),
       onReady: async () => {
         try {
           const id = `p_${Date.now()}`;
@@ -215,13 +352,11 @@ export function renderMeasure(mount) {
           await commit(id);
         } catch (err) {
           toast(`Could not save the photo: ${err.message}`);
-          draw();
+          drawReview();
         }
       },
     });
   }
-
-  /* ---------------- result ---------------- */
 
   function renderResult(record, earned) {
     const dLast = last ? { bpel: record.bpel - last.bpel, eg: record.eg - last.eg } : null;
@@ -261,5 +396,5 @@ export function renderMeasure(mount) {
       </div>`;
   }
 
-  draw();
+  drawStep();
 }

@@ -15,143 +15,134 @@
 
 import * as store from './store.js';
 
-export const LEVELS = [
+/* ---------------- the 2-year ladder ----------------
+   Twelve hand-written weeks ran out of progression in three months. This is a
+   104-week periodised plan generated from a model, so overload continues for
+   two years: six phases, each four-week block ending in a deload week, and
+   five separate things that grow — hold length, hold reps, flick reps, ramps
+   and (later) pulse sets. Position and load progress across the phases. */
+
+const PHASES = [
   {
-    n: 1,
-    name: 'Find the muscle',
-    weekHint: 'Week 1',
+    id: 'foundation', name: 'Foundation', from: 1, to: 8,
     position: 'Lying on your back, knees bent',
-    flicks: { reps: 10, holdMs: 1000, restMs: 2000 },
-    holds: { reps: 8, holdMs: 3000, restMs: 3000 },
-    ramps: null,
-    cue: 'Imagine stopping yourself from passing wind, then lifting that spot up and in. Belly, thighs and buttocks stay completely still.',
-    focus: 'Isolation. Getting the right muscle is the whole job this week.',
+    focus: 'Isolate the right muscle. Nothing else should move.',
+    cues: [
+      'Imagine stopping yourself from passing wind, then lifting that spot up and in.',
+      'Belly, thighs and buttocks stay completely still. Only the floor moves.',
+      'Breathe normally through every hold. Holding your breath means you are bracing, not contracting.',
+      'Put a hand on your belly. If it tightens, you are using the wrong muscles.',
+    ],
   },
   {
-    n: 2,
-    name: 'Build the base',
-    weekHint: 'Week 2',
-    position: 'Lying on your back, knees bent',
-    flicks: { reps: 10, holdMs: 1000, restMs: 2000 },
-    holds: { reps: 10, holdMs: 4000, restMs: 4000 },
-    ramps: null,
-    cue: 'Breathe normally through every hold. If you are holding your breath, you are recruiting the wrong things.',
-    focus: 'Breathing through contractions instead of bracing.',
-  },
-  {
-    n: 3,
-    name: 'Sitting up',
-    weekHint: 'Week 3',
+    id: 'control', name: 'Control', from: 9, to: 20,
     position: 'Seated, feet flat, spine tall',
-    flicks: { reps: 12, holdMs: 1000, restMs: 2000 },
-    holds: { reps: 10, holdMs: 5000, restMs: 5000 },
-    ramps: null,
-    cue: 'Gravity is working against you now. Expect it to feel harder than lying down — that is the point.',
-    focus: 'Same quality, harder position.',
+    focus: 'Same quality sitting up, and graded control rather than on/off.',
+    cues: [
+      'Gravity works against you sitting. Expect it to feel harder than lying down.',
+      'Climb in steps rather than snapping to full power, then come down the same staircase.',
+      'A slow release is as much a skill as the squeeze. Do not just let go.',
+      'Aim for a flat hold, not a fade.',
+    ],
   },
   {
-    n: 4,
-    name: 'Adding control',
-    weekHint: 'Week 4',
-    position: 'Seated, feet flat, spine tall',
-    flicks: { reps: 12, holdMs: 1000, restMs: 2000 },
-    holds: { reps: 10, holdMs: 6000, restMs: 6000 },
-    ramps: { reps: 2, holdMs: 5000, restMs: 8000 },
-    cue: 'On ramps, climb in five steps instead of snapping to full power, then come down the same staircase.',
-    focus: 'Graded control — the difference between a switch and a dial.',
-  },
-  {
-    n: 5,
-    name: 'Endurance I',
-    weekHint: 'Week 5',
-    position: 'Seated or standing',
-    flicks: { reps: 15, holdMs: 1000, restMs: 2000 },
-    holds: { reps: 10, holdMs: 7000, restMs: 7000 },
-    ramps: { reps: 3, holdMs: 5000, restMs: 8000 },
-    cue: 'Aim for a flat hold, not a fade. A 7s hold that sags at second 4 scores worse than an honest 5s.',
-    focus: 'Holding the line instead of leaking power.',
-  },
-  {
-    n: 6,
-    name: 'Endurance II',
-    weekHint: 'Week 6',
+    id: 'strength', name: 'Strength', from: 21, to: 40,
     position: 'Standing, feet hip-width',
-    flicks: { reps: 15, holdMs: 1000, restMs: 2000 },
-    holds: { reps: 12, holdMs: 8000, restMs: 8000 },
-    ramps: { reps: 3, holdMs: 6000, restMs: 8000 },
-    cue: 'Standing recruits more of the deep system. Keep the glutes quiet.',
-    focus: 'Upright strength.',
+    focus: 'Upright strength. This is where the numbers start moving properly.',
+    cues: [
+      'Standing recruits more of the deep system. Keep the glutes quiet.',
+      'Full effort on the squeeze, full release between. Half-rest gives you half the adaptation.',
+      'If rep ten is much weaker than rep one, take longer rests rather than pushing through.',
+      'Lift up and in — not down and out. Down is the reverse kegel.',
+    ],
   },
   {
-    n: 7,
-    name: 'Power and length',
-    weekHint: 'Week 7',
-    position: 'Standing, feet hip-width',
-    flicks: { reps: 18, holdMs: 1000, restMs: 2000 },
-    holds: { reps: 12, holdMs: 9000, restMs: 9000 },
-    ramps: { reps: 4, holdMs: 6000, restMs: 8000 },
-    cue: 'Snap the flicks. Fast fibres only get trained if the contraction is genuinely sharp.',
-    focus: 'Fast-twitch sharpness alongside endurance.',
+    id: 'endurance', name: 'Endurance', from: 41, to: 64,
+    position: 'Standing, or walking on the spot',
+    focus: 'Holding tone for longer, which is what shows up in daily life.',
+    cues: [
+      'Long holds need slow, low breathing. Set the breath first, then contract.',
+      'The last three seconds of a long hold are the ones that count.',
+      'Keep the jaw and shoulders loose. Tension there leaks into everything else.',
+      'Consistency beats intensity now. Every session is a deposit.',
+    ],
   },
   {
-    n: 8,
-    name: 'The ten',
-    weekHint: 'Week 8',
-    position: 'Standing, feet hip-width',
-    flicks: { reps: 20, holdMs: 1000, restMs: 2000 },
-    holds: { reps: 12, holdMs: 10000, restMs: 10000 },
-    ramps: { reps: 4, holdMs: 8000, restMs: 8000 },
-    cue: 'Ten seconds is the benchmark most clinical protocols aim for. You are there.',
-    focus: 'Hitting the clinical target hold.',
+    id: 'power', name: 'Power', from: 65, to: 84,
+    position: 'Standing; brace before a cough, lift or step',
+    focus: 'Fast, automatic response under pressure — the reflex that matters.',
+    cues: [
+      'Pre-brace: contract just before you would cough, lift or sneeze.',
+      'Snap the flicks. Fast fibres only train if the contraction is genuinely sharp.',
+      'Pulses are about speed, not force. Light and quick.',
+      'Power is the ability to switch on instantly, then switch fully off.',
+    ],
   },
   {
-    n: 9,
-    name: 'Under load',
-    weekHint: 'Week 9',
-    position: 'Standing; brace before a cough or a step',
-    flicks: { reps: 20, holdMs: 1000, restMs: 2000 },
-    holds: { reps: 14, holdMs: 10000, restMs: 10000 },
-    ramps: { reps: 5, holdMs: 8000, restMs: 8000 },
-    cue: 'Pre-brace: contract just before you would cough, lift or sneeze. This is the reflex you are actually building.',
-    focus: 'Making the contraction automatic under pressure.',
-  },
-  {
-    n: 10,
-    name: 'Volume',
-    weekHint: 'Week 10',
-    position: 'Standing or walking on the spot',
-    flicks: { reps: 25, holdMs: 1000, restMs: 2000 },
-    holds: { reps: 14, holdMs: 12000, restMs: 12000 },
-    ramps: { reps: 5, holdMs: 10000, restMs: 10000 },
-    cue: 'Long holds need slow, low breathing. Set the breath first, then contract.',
-    focus: 'Capacity.',
-  },
-  {
-    n: 11,
-    name: 'Peak',
-    weekHint: 'Week 11',
-    position: 'Standing or walking on the spot',
-    flicks: { reps: 25, holdMs: 1000, restMs: 2000 },
-    holds: { reps: 15, holdMs: 12000, restMs: 12000 },
-    ramps: { reps: 6, holdMs: 10000, restMs: 10000 },
-    cue: 'Quality over grinding. A clean rep beats a shaky one every time.',
-    focus: 'Peak strength with clean form.',
-  },
-  {
-    n: 12,
-    name: 'Mastery',
-    weekHint: 'Week 12+',
-    position: 'Any — including mid-activity',
-    flicks: { reps: 30, holdMs: 1000, restMs: 2000 },
-    holds: { reps: 15, holdMs: 15000, restMs: 15000 },
-    ramps: { reps: 6, holdMs: 10000, restMs: 10000 },
-    cue: 'From here it is maintenance: keep this up 3-4x a week and you keep the gains.',
-    focus: 'Maintenance for life.',
+    id: 'mastery', name: 'Mastery', from: 85, to: 104,
+    position: 'Any position, including mid-activity',
+    focus: 'Everything at once, and holding it for life.',
+    cues: [
+      'Mix positions within the session. The floor should work anywhere.',
+      'Quality over grinding. A clean rep beats a shaky one every time.',
+      'From here it is maintenance: three or four sessions a week keeps the gains.',
+      'You have been doing this for over a year. That is the whole trick.',
+    ],
   },
 ];
 
+export const TOTAL_WEEKS = 104;
+
+const phaseFor = (n) => PHASES.find((p) => n >= p.from && n <= p.to) || PHASES[PHASES.length - 1];
+const round500 = (ms) => Math.round(ms / 500) * 500;
+
+/** Builds one week of the plan. Every fourth week is a deload. */
+function makeLevel(n) {
+  const phase = phaseFor(n);
+  const t = (n - 1) / (TOTAL_WEEKS - 1); // 0 at week 1, 1 at week 104
+  const deload = n % 4 === 0;
+  const soft = deload ? 0.7 : 1;
+  const softReps = deload ? 0.8 : 1;
+
+  // 3s to 20s. Past twenty seconds a hold stops being productive, so the later
+  // years buy their overload from reps, ramps and pulses instead.
+  const holdMs = round500((3000 + 17000 * Math.pow(t, 0.85)) * soft);
+  const holdReps = Math.max(6, Math.round((8 + 12 * t) * softReps));
+  const flickReps = Math.max(8, Math.round((10 + 20 * t) * softReps));
+  const rampReps = n >= 13 ? Math.max(0, Math.round((2 + 4 * t) * softReps)) : 0;
+  const rampMs = round500((5000 + 7000 * t) * soft);
+  const pulseSets = n >= 49 && !deload ? (n >= 85 ? 2 : 1) : 0;
+
+  return {
+    n,
+    name: deload ? `${phase.name} · deload` : phase.name,
+    phase: phase.id,
+    weekHint: `Week ${n} of ${TOTAL_WEEKS}`,
+    position: phase.position,
+    focus: deload ? 'Lighter week on purpose. Tissue adapts during the easy weeks.' : phase.focus,
+    cue: phase.cues[(n - 1) % phase.cues.length],
+    deloadWeek: deload,
+    flicks: { reps: flickReps, holdMs: 1000, restMs: 2000 },
+    holds: { reps: holdReps, holdMs, restMs: holdMs },
+    ramps: rampReps ? { reps: rampReps, holdMs: rampMs, restMs: Math.max(8000, rampMs) } : null,
+    pulses: pulseSets ? { sets: pulseSets, reps: 10, holdMs: 500, restMs: 500 } : null,
+  };
+}
+
+export const LEVELS = Array.from({ length: TOTAL_WEEKS }, (_, i) => makeLevel(i + 1));
+export { PHASES };
+
 export const MAX_LEVEL = LEVELS.length;
 export const PROMOTION_TARGET = 3; // qualifying sessions needed to level up
+// A level is a week of training. Without a minimum time at each one, two good
+// days would promote you and the two-year plan would collapse into months.
+export const MIN_DAYS_PER_LEVEL = 6;
+
+/** Days still to serve at the current level before promotion is possible. */
+export function daysUntilEligible(state = store.get()) {
+  const started = state.program.levelStartedAt || state.program.startedAt || Date.now();
+  return Math.max(0, Math.ceil(MIN_DAYS_PER_LEVEL - (Date.now() - started) / 864e5));
+}
 
 export function levelDef(n) {
   return LEVELS[Math.min(Math.max(n, 1), MAX_LEVEL) - 1];
@@ -254,6 +245,17 @@ export function buildSession({ level, type = 'training', deload = false }) {
   for (let i = 0; i < def.holds.reps; i++) {
     steps.push({ kind: 'hold', label: 'Hold', targetMs: holdMs, rep: i + 1, of: def.holds.reps, cue: def.cue });
     steps.push({ kind: 'rest', label: 'Full release', targetMs: restMs });
+  }
+
+  if (def.pulses) {
+    steps.push({ kind: 'title', label: 'Pulses', sub: `${def.pulses.sets} × ${def.pulses.reps} rapid — speed, not force` });
+    for (let set = 0; set < def.pulses.sets; set++) {
+      for (let i = 0; i < def.pulses.reps; i++) {
+        steps.push({ kind: 'flick', label: 'Pulse', targetMs: def.pulses.holdMs, rep: i + 1, of: def.pulses.reps, cue: 'Light and quick. On, off, on, off.' });
+        steps.push({ kind: 'rest', label: 'Off', targetMs: def.pulses.restMs });
+      }
+      if (set < def.pulses.sets - 1) steps.push({ kind: 'rest', label: 'Between sets', targetMs: 20000 });
+    }
   }
 
   if (def.ramps) {
@@ -400,9 +402,14 @@ export function applyProgression(state, session) {
   const qualified = session.score >= 80 && session.completion >= 0.99;
   if (qualified) {
     p.qualifying++;
-    if (p.qualifying >= PROMOTION_TARGET && p.level < MAX_LEVEL) {
+    // A level represents a week of training, so promotion needs time served as
+    // well as good sessions — otherwise two strong days would skip a week.
+    const daysHere = (Date.now() - (p.levelStartedAt || p.startedAt || Date.now())) / 864e5;
+    outcome.daysHere = daysHere;
+    if (p.qualifying >= PROMOTION_TARGET && daysHere >= MIN_DAYS_PER_LEVEL && p.level < MAX_LEVEL) {
       p.level++;
       p.qualifying = 0;
+      p.levelStartedAt = Date.now();
       p.history.push({ level: p.level, at: Date.now() });
       outcome.levelUp = true;
       outcome.to = p.level;
@@ -461,8 +468,14 @@ export const BADGES = [
   { id: 'twenty', name: 'Twenty', desc: 'Held a contraction for 20s+', test: (s) => s.prs.maxHoldMs >= 20000 },
   { id: 'perfect', name: 'Flawless', desc: 'Scored 95 or above', test: (s) => s.prs.score >= 95 },
   { id: 'thousand', name: '1,000 contractions', desc: 'A thousand lifetime reps', test: (s) => store.totals().contractions >= 1000 },
-  { id: 'halfway', name: 'Halfway', desc: 'Reached level 6', test: (s) => s.program.level >= 6 },
-  { id: 'mastery', name: 'Mastery', desc: 'Reached level 12', test: (s) => s.program.level >= MAX_LEVEL },
+  // One badge per phase of the two-year ladder, so there is something to reach
+  // for the whole way through rather than only in the first three months.
+  { id: 'control', name: 'Control', desc: 'Reached the Control phase — week 9', test: (s) => s.program.level >= 9 },
+  { id: 'strength', name: 'Strength', desc: 'Reached the Strength phase — week 21', test: (s) => s.program.level >= 21 },
+  { id: 'endurance', name: 'Endurance', desc: 'Reached the Endurance phase — week 41', test: (s) => s.program.level >= 41 },
+  { id: 'halfway', name: 'Halfway', desc: 'Reached week 52 — a full year of the plan', test: (s) => s.program.level >= 52 },
+  { id: 'power', name: 'Power', desc: 'Reached the Power phase — week 65', test: (s) => s.program.level >= 65 },
+  { id: 'mastery', name: 'Mastery', desc: `Reached the final phase — week ${MAX_LEVEL}`, test: (s) => s.program.level >= MAX_LEVEL },
   { id: 'rested', name: 'Knows when to stop', desc: 'Completed a release day', test: (s) => s.sessions.some((x) => x.type === 'release') },
 ];
 

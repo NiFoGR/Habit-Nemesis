@@ -5,7 +5,7 @@ import * as program from './program.js';
 import { startSession } from './session.js';
 import { renderReport } from './report.js';
 import { renderTracking } from './tracking.js';
-import { fmtMs, ringSvg, escapeHtml, toast, haptic, sparkline } from './ui.js';
+import { fmtMs, fmtHours, ringSvg, escapeHtml, toast, haptic, sparkline } from './ui.js';
 import { icon, logoMark } from './icons.js';
 import * as peProgram from './pe/program.js';
 import { renderPeHome } from './pe/home.js';
@@ -14,6 +14,10 @@ import { renderMeasure } from './pe/measure.js';
 import { renderStats } from './pe/stats.js';
 import { renderGallery, leaveGallery } from './pe/gallery.js';
 import { renderPeGuide } from './pe/guide.js';
+import { renderTutorial } from './tutorial.js';
+import { renderRoadmap } from './roadmap.js';
+import { renderPocket } from './pocket.js';
+import { renderReview, reviewDue } from './review.js';
 import * as vault from './pe/vault.js';
 import { scheduleDaily, cancelAlarm, ALARM_KEGEL_REMINDER } from './native.js';
 
@@ -22,10 +26,9 @@ let activeSession = null;
 let installPrompt = null;
 
 const kegelName = () => (store.get().settings.discreet ? 'Core Training' : 'Kegels');
+const peName = () => (store.get().settings.discreet ? 'Length Training' : 'PE');
 
 /* ---------------- the NiFo hub ---------------- */
-// Features are registered here so adding the next one is a single entry.
-const SOON = ['Sleep', 'Reading', 'Workouts', 'Money', 'Habits'];
 
 /** Each feature supplies its own hub tile status, so the hub does not need to
  *  know anything about how a feature works. */
@@ -42,7 +45,7 @@ const FEATURES = [
       const st = store.streak();
       return [
         { text: plan.complete ? 'Done today' : `${plan.doneToday}/${plan.target} today`, done: plan.complete },
-        { text: `Level ${state.program.level}`, ghost: true },
+        { text: `Week ${state.program.level}/${program.TOTAL_WEEKS}`, ghost: true },
         st ? { text: `${st}d streak`, ghost: true } : null,
       ];
     },
@@ -55,7 +58,7 @@ const FEATURES = [
     id: 'pe',
     icon: 'trend',
     route: '#/pe',
-    name: () => (store.get().settings.discreet ? 'Length Training' : 'PE'),
+    name: () => peName(),
     blurb: 'Stretching, pumping and monthly measurements with a private gallery',
     pills() {
       const pe = store.get().pe;
@@ -75,7 +78,75 @@ const FEATURES = [
   },
 ];
 
+/* ---------------- Today ----------------
+   The hub used to be a menu: two tiles and a list of things that did not exist
+   yet. A menu makes you decide what to do before you can do anything, which is
+   the moment a habit gets dropped. This answers the question instead — here is
+   what is outstanding today, here is the one button that starts it. */
+
+/** Everything still owed today, across both features, most urgent first. */
+function todayTasks(state) {
+  const out = [];
+  const plan = program.planForToday(state);
+  const left = Math.max(0, plan.target - plan.doneToday);
+
+  out.push({
+    id: 'kegels',
+    icon: 'target',
+    label: plan.type === 'release' ? 'Release day' : kegelName(),
+    detail: plan.complete
+      ? 'Done today'
+      : plan.type === 'release'
+        ? 'Down-training, no strengthening'
+        : `${left} session${left === 1 ? '' : 's'} left · week ${plan.level}`,
+    done: plan.complete,
+    href: '#/session',
+    cta: plan.complete ? 'Bonus session' : plan.type === 'test' ? 'Max hold test' : 'Start',
+  });
+
+  if (state.pe.settings.safetyAck || state.pe.sessions.length) {
+    const todayStretch = state.pe.sessions
+      .filter((s) => s.date === store.dayKey() && s.type === 'stretch')
+      .reduce((a, s) => a + s.durationSec * 1000, 0);
+    const goal = peProgram.DAILY_STRETCH_GOAL_MS;
+    const hit = todayStretch >= goal;
+    out.push({
+      id: 'pe',
+      icon: 'stretch',
+      label: `${peName()} · stretching`,
+      detail: hit ? 'Two hours done' : `${fmtHours(todayStretch)} of 2h · ${fmtHours(goal - todayStretch)} left`,
+      done: hit,
+      href: '#/pe/timer?type=stretch',
+      cta: 'Stretch',
+      frac: Math.min(todayStretch / goal, 1),
+    });
+  }
+
+  const due = peProgram.measurementDue();
+  if (due.due && state.pe.settings.safetyAck) {
+    out.push({
+      id: 'measure',
+      icon: 'ruler',
+      label: 'Monthly check-in',
+      detail: due.reason,
+      done: false,
+      href: '#/pe/measure',
+      cta: 'Measure',
+    });
+  }
+
+  return out;
+}
+
 function renderHub() {
+  const state = store.get();
+  const tasks = todayTasks(state);
+  const outstanding = tasks.filter((t) => !t.done);
+  const next = outstanding[0];
+  const doneCount = tasks.length - outstanding.length;
+  const today = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+  const kStreak = store.streak();
+
   app.innerHTML = `
     <div class="screen">
       <header class="hub-head">
@@ -83,6 +154,28 @@ function renderHub() {
         <button class="icon-btn" data-nav="settings" aria-label="Settings">${icon('settings')}</button>
       </header>
 
+      <div class="today hub-today">
+        <div class="today-left">
+          <h2>${outstanding.length ? `${outstanding.length} thing${outstanding.length === 1 ? '' : 's'} left` : 'All done today'}</h2>
+          <p class="muted small">${escapeHtml(today)}${kStreak ? ` · ${kStreak}d streak` : ''}</p>
+        </div>
+        ${ringSvg(tasks.length ? doneCount / tasks.length : 1, `${doneCount}/${tasks.length}`, 'today', { size: 96 })}
+      </div>
+
+      ${reviewDue(state) ? `<a class="notice action" href="#/review">${icon('calendar', 16)} Your week is ready — see how it went.</a>` : ''}
+      ${!state.settings.tutorialDone ? `<a class="notice action" href="#/tutorial">${icon('help', 16)} Start here — how to actually do a kegel.</a>` : ''}
+
+      <div class="task-list">
+        ${tasks.map((t) => `<a class="task ${t.done ? 'done' : ''}" href="${t.href}">
+          <span class="task-ico">${t.done ? icon('check', 18) : icon(t.icon, 18)}</span>
+          <span class="task-text"><b>${escapeHtml(t.label)}</b><i>${escapeHtml(t.detail)}</i></span>
+          ${t.frac ? `<span class="task-mini"><i style="width:${(t.frac * 100).toFixed(0)}%"></i></span>` : ''}
+        </a>`).join('')}
+      </div>
+
+      ${next ? `<a class="btn primary big linkbtn" href="${next.href}">${icon('play', 18)}<span>${escapeHtml(next.cta)} — ${escapeHtml(next.label)}</span></a>` : ''}
+
+      <h3 class="sec-head">Sections</h3>
       <div class="feature-grid">
         ${FEATURES.map((f) => {
           let pills = [];
@@ -105,7 +198,6 @@ function renderHub() {
             ${spark ? `<div class="feature-spark">${spark}</div>` : ''}
           </a>`;
         }).join('')}
-        ${SOON.map((n) => `<div class="feature soon"><div class="feature-head">${icon('plus', 18)}<h2>${n}</h2></div></div>`).join('')}
       </div>
 
       <div id="installSlot"></div>
@@ -130,6 +222,11 @@ function sessionOutline(level, type) {
 
 function renderKegels() {
   const state = store.get();
+  // Nobody's first kegel should be guesswork. Straight into the walkthrough on
+  // a genuinely fresh install; after that it is a link, not a gate.
+  if (!state.settings.tutorialDone && state.sessions.length === 0) {
+    return renderTutorial(app, { onExit: () => renderKegels() });
+  }
   const plan = program.planForToday(state);
   const def = program.levelDef(plan.level);
   const st = store.streak();
@@ -158,24 +255,30 @@ function renderKegels() {
 
       <div class="today ${plan.type}">
         <div class="today-left">
-          <h2>${escapeHtml(plan.type === 'release' ? 'Release day' : plan.type === 'test' ? 'Max hold test' : `Level ${plan.level} — ${def.name}`)}</h2>
+          <h2>${escapeHtml(plan.type === 'release' ? 'Release day' : plan.type === 'test' ? 'Max hold test' : `Week ${plan.level} — ${def.name}`)}</h2>
           <p class="muted small">${st ? `${st}d streak` : 'No streak yet'}${weekAvg != null ? ` · avg ${weekAvg} this week` : ''}</p>
         </div>
         ${ringSvg(plan.target ? Math.min(plan.doneToday / plan.target, 1) : 0, `${plan.doneToday}/${plan.target}`, 'today', { size: 96 })}
       </div>
 
+      ${!state.settings.tutorialDone ? `<a class="notice action" href="#/tutorial">${icon('help', 16)} Never done these before? Two minutes, and you will know exactly what to do.</a>` : ''}
+      ${reviewDue(state) ? `<a class="notice action" href="#/review">${icon('calendar', 16)} Last week is ready to look at.</a>` : ''}
       ${reminderNotice(state, plan)}
       ${plan.deload ? '<div class="notice warn">Reduced targets active — ease through these.</div>' : ''}
       ${plan.complete ? '<div class="notice good">Done for today.</div>' : ''}
 
       <button class="btn primary big" id="start">${icon('play', 18)}<span>${plan.complete ? 'Bonus session' : 'Start'}</span></button>
-      ${plan.type === 'training' ? '<button class="btn ghost" id="quick">Quick session · 90s</button>' : ''}
+      <div class="btn-row">
+        <a class="btn ghost linkbtn" href="#/pocket">${icon('vibrate', 16)}<span>Pocket mode</span></a>
+        ${plan.type === 'training' ? '<button class="btn ghost" id="quick">Quick · 90s</button>' : ''}
+      </div>
 
       <div class="week-strip">${days.map((d) => `<i class="${d.cls}" title="${d.key}"></i>`).join('')}</div>
 
-      <div class="stat-grid">
-        <div class="stat">${icon('target', 16)}<b>${state.program.qualifying}/${program.PROMOTION_TARGET}</b><span>to level ${Math.min(state.program.level + 1, program.MAX_LEVEL)}</span></div>
+      <div class="stat-grid three">
+        <div class="stat">${icon('target', 16)}<b>${state.program.qualifying}/${program.PROMOTION_TARGET}</b><span>to week ${Math.min(state.program.level + 1, program.MAX_LEVEL)}</span></div>
         <div class="stat">${icon('timer', 16)}<b>${fmtMs(state.prs.maxHoldMs)}</b><span>best hold</span></div>
+        <div class="stat">${icon('route', 16)}<b>${Math.round((state.program.level / program.TOTAL_WEEKS) * 100)}%</b><span>of the plan</span></div>
       </div>
 
       ${recentScores.length > 1 ? `<section class="card">
@@ -185,6 +288,8 @@ function renderKegels() {
 
       <div class="linkrow">
         <a href="#/track">${icon('chart')} Tracking</a>
+        <a href="#/roadmap">${icon('route')} The plan</a>
+        <a href="#/review">${icon('calendar')} Your week</a>
         <a href="#/guide">${icon('help')} How to</a>
       </div>
     </div>`;
@@ -245,26 +350,37 @@ function renderGuide() {
         <span class="icon-btn ghost"></span>
       </header>
 
+      <a class="btn primary big linkbtn" href="#/tutorial">${icon('play', 18)}<span>Walk me through it</span></a>
+
       <section class="card">
-        <h2>Finding it</h2>
-        <p class="small muted">The muscles you would use to stop yourself passing wind. A correct contraction is a <b>lift up and in</b> — belly, thighs and buttocks stay still, breathing continues.</p>
-        <p class="warn-inline">Don't practise by stopping your urine mid-stream.</p>
+        <h2>A kegel, in one paragraph</h2>
+        <p class="small muted">There is a sheet of muscle slung across the bottom of your pelvis — the <b>pelvic floor</b>. It is what you tighten to stop yourself passing wind. A kegel is squeezing it deliberately: a lift <b>up and in</b>, towards your belly button. Then a full release. That is the whole movement.</p>
+        <p class="small muted">You are doing it right when your <b>belly, buttocks and thighs stay completely still</b> and you are <b>still breathing</b>. If any of those move, ease off to half effort — a smaller contraction of the right muscle beats a hard squeeze of the wrong three.</p>
+        <p class="warn-inline">Don't practise by stopping your urine mid-stream. Useful once as a test, a bad habit as training.</p>
+      </section>
+
+      <section class="card">
+        <h2>A reverse kegel, in one paragraph</h2>
+        <p class="small muted"><b>It is the exact opposite of a kegel.</b> Instead of lifting the floor up and in, you let it drop down and out. The easiest way to find it: breathe in slowly and let your belly widen — feel the floor sink as the air comes in. Doing that sinking on purpose <i>is</i> a reverse kegel. Gently. It is a lengthening, never a strain or a hard push.</p>
+        <p class="small muted">It matters because a muscle that only ever tightens ends up permanently tight, and a permanently tight pelvic floor causes the same problems as a weak one — and more kegels make it worse. That is why every session finishes with them.</p>
+        <a class="btn ghost linkbtn" href="#/tutorial?step=reverse">${icon('help', 16)}<span>Show me, with practice</span></a>
       </section>
 
       <section class="card">
         <h2>The rules</h2>
         <ul class="rules">
-          <li><b>Both fibre types.</b> Quick flicks for the fast response, long holds for endurance.</li>
-          <li><b>Rest as long as you hold.</b> Under-resting is why people plateau.</li>
-          <li><b>Full release matters.</b> A floor stuck tight causes the same symptoms as a weak one.</li>
-          <li><b>Progress by seconds, then reps, then position.</b> Lying → sitting → standing → under load.</li>
-          <li><b>Don't do extra.</b> More volume doesn't speed it up; it just aches.</li>
+          <li><b>Both kinds of rep.</b> Quick flicks train the fast-reacting fibres, long holds train stamina. Every session has both.</li>
+          <li><b>Rest as long as you hold.</b> Under-resting is the single most common reason people stall.</li>
+          <li><b>Let go completely.</b> A half-release means the muscle never gets to recover.</li>
+          <li><b>Harder over time, in five ways:</b> hold length, holds per session, flicks, ramps, and later rapid pulses. Position climbs lying → sitting → standing → mid-activity.</li>
+          <li><b>Don't do extra.</b> More volume doesn't speed it up; it just aches, and an overworked floor gets tighter rather than stronger.</li>
         </ul>
+        <a class="btn ghost linkbtn" href="#/roadmap">${icon('route', 16)}<span>See all 104 weeks</span></a>
       </section>
 
       <section class="card">
         <h2>Timeline</h2>
-        <p class="small muted">First changes around weeks 4–6, most of it between 8 and 12. Nothing you do in one session is visible — that's what the streak is for.</p>
+        <p class="small muted">First changes around weeks 4–6, most of it between 8 and 12. Nothing you do in one session is visible — that's what the streak is for. The plan itself runs two years.</p>
       </section>
 
       <section class="card">
@@ -332,20 +448,6 @@ function renderSettings() {
           </select>
         </label>
         <label class="setting">
-          <span><b>Pump type</b><i>Water pumps have no gauge, so intensity is logged by feel instead of as a fake pressure reading.</i></span>
-          <select id="pumpStyle">
-            <option value="hydro" ${pe.pumpStyle === 'hydro' ? 'selected' : ''}>Water (Hydromax/Bathmate)</option>
-            <option value="air" ${pe.pumpStyle === 'air' ? 'selected' : ''}>Air, with a gauge</option>
-          </select>
-        </label>
-        <label class="setting">
-          <span><b>Pressure unit</b><i>For gauged pumps.</i></span>
-          <select id="pressureUnit">
-            <option value="kPa" ${pe.pressureUnit === 'kPa' ? 'selected' : ''}>kPa</option>
-            <option value="inHg" ${pe.pressureUnit === 'inHg' ? 'selected' : ''}>inHg</option>
-          </select>
-        </label>
-        <label class="setting">
           <span><b>Check-in day</b><i>Which day of the month the measurement reminder appears.</i></span>
           <select id="measureDay">
             ${[1, 5, 10, 15, 20, 25, 28].map((d) => `<option value="${d}" ${pe.measureDay === d ? 'selected' : ''}>${d}</option>`).join('')}
@@ -357,6 +459,20 @@ function renderSettings() {
             ${[1, 2, 5, 10].map((m) => `<option value="${m}" ${pe.autoLockMin === m ? 'selected' : ''}>${m} min</option>`).join('')}
           </select>
         </label>
+      </section>
+
+      <section class="card">
+        <h2>Privacy</h2>
+        <label class="setting toggle">
+          <span><b>Lock the app</b><i>${vault.isSet() ? 'Asks for your gallery PIN when you open NiFo.' : 'Set a gallery PIN first — Progress → Gallery. The same PIN unlocks the app.'}</i></span>
+          <input type="checkbox" id="appLock" ${s.appLock ? 'checked' : ''} ${vault.isSet() ? '' : 'disabled'}>
+        </label>
+        <p class="fineprint">The lock is a door, not a safe: it keeps someone who picks up your phone out of the app, but your sessions and measurements are stored unencrypted like any other app's data. Only the photos are actually encrypted, and that is what the PIN is really protecting.</p>
+      </section>
+
+      <section class="card">
+        <h2>Technique</h2>
+        <a class="btn ghost linkbtn" href="#/tutorial">${icon('help', 16)}<span>Replay the walkthrough</span></a>
       </section>
 
       <section class="card danger">
@@ -391,6 +507,13 @@ function renderSettings() {
   bind('haptics', 'haptics', (e) => e.checked);
   bind('sound', 'sound', (e) => e.checked);
   bind('discreet', 'discreet', (e) => e.checked);
+  app.querySelector('#appLock').addEventListener('change', (e) => {
+    store.setSetting('appLock', e.target.checked);
+    // Turning it on takes effect at the next launch, not mid-session — locking
+    // someone out of the screen they just enabled it on would be absurd.
+    appUnlocked = true;
+    toast(e.target.checked ? 'The app will ask for your PIN next time' : 'App lock off');
+  });
 
   const bindPe = (id, key, get = (e) => e.value) =>
     app.querySelector('#' + id).addEventListener('change', (e) => {
@@ -400,8 +523,6 @@ function renderSettings() {
       toast('Saved');
     });
   bindPe('peUnits', 'units');
-  bindPe('pumpStyle', 'pumpStyle');
-  bindPe('pressureUnit', 'pressureUnit');
   bindPe('measureDay', 'measureDay', (e) => Number(e.value));
   bindPe('autoLockMin', 'autoLockMin', (e) => Number(e.value));
 
@@ -412,6 +533,54 @@ function renderSettings() {
       location.hash = '#/hub';
     }
   });
+}
+
+/* ---------------- app lock ----------------
+   Reuses the gallery PIN rather than inventing a second one: two PINs for one
+   app is how people end up writing them down. Unlocking here also unlocks the
+   vault, which is the behaviour you want — the alternative is being asked for
+   the same PIN twice in a row on the way to the gallery. */
+
+let appUnlocked = false;
+
+const lockActive = () => store.get().settings.appLock && vault.isSet() && !appUnlocked;
+
+function renderLock() {
+  app.innerHTML = `
+    <div class="screen lock-screen">
+      <div class="lock-brand">${logoMark(44)}<h1>NiFo</h1></div>
+      <p class="muted small centre">Enter your PIN</p>
+      <input type="password" id="pin" inputmode="numeric" autocomplete="off" class="pin-input" placeholder="••••">
+      <p class="warn-inline" id="err" hidden>Wrong PIN</p>
+      <button class="btn primary big" id="go">Unlock</button>
+    </div>`;
+
+  const pin = app.querySelector('#pin');
+  const err = app.querySelector('#err');
+  const go = app.querySelector('#go');
+
+  const attempt = async () => {
+    if (!pin.value) return;
+    go.disabled = true;
+    const ok = await vault.unlock(pin.value).catch(() => false);
+    go.disabled = false;
+    if (!ok) {
+      err.hidden = false;
+      pin.value = '';
+      haptic('miss');
+      return;
+    }
+    appUnlocked = true;
+    haptic('done');
+    route();
+  };
+
+  go.addEventListener('click', attempt);
+  pin.addEventListener('keydown', (e) => {
+    err.hidden = true;
+    if (e.key === 'Enter') attempt();
+  });
+  pin.focus();
 }
 
 /* ---------------- install prompt ---------------- */
@@ -440,11 +609,15 @@ const ROUTES = {
   '#/hub': renderHub,
   '#/kegels': renderKegels,
   '#/session': runSession,
+  '#/pocket': () => (activeSession = renderPocket(app)),
+  '#/tutorial': (params) => renderTutorial(app, { only: params.get('step') }),
+  '#/roadmap': () => renderRoadmap(app),
+  '#/review': () => renderReview(app),
   '#/track': () => renderTracking(app),
   '#/guide': renderGuide,
   '#/settings': renderSettings,
   '#/pe': () => renderPeHome(app),
-  '#/pe/timer': (params) => renderTimer(app, { type: params.get('type') || 'stretch', repeat: params.get('repeat') === '1', routine: params.get('routine') === '1' }),
+  '#/pe/timer': (params) => renderTimer(app, { type: params.get('type') || 'stretch', repeat: params.get('repeat') === '1' }),
   '#/pe/measure': () => renderMeasure(app),
   '#/pe/stats': () => renderStats(app),
   '#/pe/gallery': () => renderGallery(app),
@@ -453,6 +626,7 @@ const ROUTES = {
 
 const NAV = {
   hub: '#/hub', kegels: '#/kegels', track: '#/track', settings: '#/settings', guide: '#/guide',
+  roadmap: '#/roadmap', review: '#/review', tutorial: '#/tutorial', pocket: '#/pocket',
   pe: '#/pe', 'pe-timer': '#/pe/timer', 'pe-measure': '#/pe/measure', 'pe-stats': '#/pe/stats',
   'pe-gallery': '#/pe/gallery', 'pe-guide': '#/pe/guide',
 };
@@ -468,6 +642,8 @@ function route() {
   // Leaving the gallery frees the decrypted object URLs it handed to <img>.
   if (lastHash.startsWith('#/pe/gallery') && !location.hash.startsWith('#/pe/gallery')) leaveGallery();
   lastHash = location.hash;
+
+  if (lockActive()) return renderLock();
 
   const [path, query] = location.hash.split('?');
   const fn = ROUTES[path] || renderHub;
@@ -485,7 +661,18 @@ document.addEventListener('click', (e) => {
 // Locking the vault the moment the app is backgrounded keeps decrypted photos
 // off the app switcher preview and out of a phone handed to someone else.
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState !== 'visible' && vault.isUnlocked()) {
+  if (document.visibilityState === 'visible') {
+    if (lockActive()) route();
+    return;
+  }
+  // Backgrounding re-arms the app lock — that is the whole point of it. A
+  // session in progress is the exception: a timer running against a real
+  // contraction must not be thrown away because you glanced at a message.
+  // Note this is independent of the vault's own idle auto-lock, so a gallery
+  // that times out after two minutes does not eject you from the app.
+  if (store.get().settings.appLock && !activeSession) appUnlocked = false;
+
+  if (vault.isUnlocked()) {
     vault.lock();
     leaveGallery();
     if (location.hash.startsWith('#/pe/gallery')) location.hash = '#/pe';
