@@ -8,10 +8,12 @@
 //    are front-loaded into the first ~3 months and are measured in millimetres
 //    per week, not centimetres.
 //  - Pumping has no comparable length evidence and is treated here as a girth
-//    and conditioning tool. Consumer safety guidance: beginners 2-3 inHg
-//    (7-10 kPa), intermediate 3-5 inHg (10-17 kPa), advanced 6+ inHg, and
-//    never past 10 inHg (~34 kPa). Beginner sessions 10-20 min, in ~10 min
-//    bursts, stopping immediately for numbness, discolouration or pain.
+//    and conditioning tool. Intensity is deliberately not recorded: a water
+//    pump has no gauge, so any number would be invented. Duration and enforced
+//    set breaks are the parts that are real. Beginner sessions 10-20 min, in
+//    ~10 min bursts, stopping at once for numbness, discolouration or pain.
+//  - The stretching target is as much as can be managed up to two hours a day
+//    at no more than 10 kg of tension.
 //  - Everything here assumes healthy tissue. Pain is a stop signal, not a
 //    training cue.
 
@@ -20,26 +22,16 @@ import * as store from '../store.js';
 /* ---------------- session types ---------------- */
 
 export const TYPES = {
-  warmup: {
-    id: 'warmup',
-    label: 'Warm-up',
-    icon: 'flame',
-    colour: 'var(--warn)',
-    defaultMin: 8,
-    intensity: null,
-    blurb: 'Heat before load. Warm tissue stretches further and tears less.',
-    cue: 'Warm flannel or a rice sock, 5-10 minutes, until the skin is properly warm through.',
-  },
   stretch: {
     id: 'stretch',
     label: 'Stretching',
     icon: 'stretch',
     colour: 'var(--accent)',
-    defaultMin: 30,
-    intensity: { key: 'tensionKg', label: 'Tension', unit: 'kg', min: 1, max: 20, step: 0.5, safe: 12 },
+    defaultMin: 60,
+    intensity: { key: 'tensionKg', label: 'Tension', unit: 'kg', min: 0.5, max: 10, step: 0.5 },
     tracksBpfsl: true,
-    blurb: 'Manual stretches or an extender. The one method with clinical evidence behind it.',
-    cue: 'Steady tension, no bouncing. It should feel like a firm stretch, never a sharp pull.',
+    blurb: 'Manual stretching or an extender. The only method with clinical evidence behind it.',
+    cue: 'Steady tension, no bouncing. A firm stretch, never a sharp pull.',
   },
   pump: {
     id: 'pump',
@@ -47,9 +39,11 @@ export const TYPES = {
     icon: 'pump',
     colour: 'var(--violet)',
     defaultMin: 15,
-    intensity: { key: 'pressure', label: 'Pressure', unit: 'kPa', min: 2, max: 34, step: 0.5, safe: 17 },
-    blurb: 'Vacuum expansion. Mostly a girth and conditioning tool.',
-    cue: 'Work in ~10 minute sets with a full release between them. Release at once for numbness, cold skin or dark discolouration.',
+    // No intensity field: a Hydromax has no gauge, so any number here would be
+    // invented. Duration and set breaks are the parts that are real.
+    intensity: null,
+    blurb: 'Vacuum expansion. Girth and conditioning.',
+    cue: 'Work in ~10 minute sets with a full release between them. Release at once for numbness, cold skin or dark colour.',
   },
 };
 
@@ -57,6 +51,7 @@ export const TYPES = {
  *  against them, but old entries still have to render with their own name
  *  rather than being silently relabelled as something the user never did. */
 const RETIRED = {
+  warmup: { id: 'warmup', label: 'Warm-up', icon: 'droplet', colour: 'var(--calm)', retired: true, defaultMin: 8, intensity: null, blurb: '', cue: '' },
   jelq: { id: 'jelq', label: 'Jelqing', icon: 'stretch', colour: 'var(--calm)', retired: true, defaultMin: 10, intensity: null, blurb: '', cue: '' },
   clamp: { id: 'clamp', label: 'Clamping', icon: 'warn', colour: 'var(--danger)', retired: true, defaultMin: 5, intensity: null, blurb: '', cue: '' },
 };
@@ -67,7 +62,6 @@ export const typeDef = (id) => TYPES[id] || RETIRED[id] || TYPES.stretch;
 
 /* ---------------- units ---------------- */
 
-export const KPA_PER_INHG = 3.386;
 export const CM_PER_IN = 2.54;
 
 export function toDisplayLength(cm, units) {
@@ -80,23 +74,7 @@ export function fmtLength(cm, units = store.get().pe.settings.units, dp = 1) {
   if (cm == null) return '—';
   return `${toDisplayLength(cm, units).toFixed(dp)} ${units}`;
 }
-export function fmtPressure(kpa, unit = store.get().pe.settings.pressureUnit) {
-  if (kpa == null) return '—';
-  return unit === 'inHg' ? `${(kpa / KPA_PER_INHG).toFixed(1)} inHg` : `${kpa.toFixed(1)} kPa`;
-}
-
 /* ---------------- safety ---------------- */
-
-export const PRESSURE_BANDS = [
-  { max: 10, label: 'Beginner', note: '2-3 inHg. Where everyone should start.' },
-  { max: 17, label: 'Intermediate', note: '3-5 inHg. Only after weeks of comfortable sessions.' },
-  { max: 24, label: 'Advanced', note: '5-7 inHg. Expect more marking; watch the skin closely.' },
-  { max: 34, label: 'Hard ceiling', note: 'Approaching 10 inHg. Do not go past this, ever.' },
-];
-
-export function pressureBand(kpa) {
-  return PRESSURE_BANDS.find((b) => kpa <= b.max) || PRESSURE_BANDS[PRESSURE_BANDS.length - 1];
-}
 
 /** Checks a planned session against the limits and returns warnings to show
  *  before the timer starts, rather than after something has gone wrong. */
@@ -106,32 +84,33 @@ export function planWarnings({ type, minutes, intensity }) {
   const experienced = history.length >= 12;
 
   if (type === 'pump') {
-    if (intensity > 34) out.push({ level: 'stop', text: 'Above 10 inHg. Nothing is gained up here and vessels rupture. Bring it down.' });
-    else if (intensity > 24) out.push({ level: 'warn', text: `${fmtPressure(intensity)} is at the top of the range. Keep sets short and check the skin between them.` });
-    else if (intensity > 17 && !experienced) out.push({ level: 'warn', text: 'That is intermediate-plus pressure with fewer than a dozen logged sessions. Consider easing off.' });
     if (minutes > 20 && !experienced) out.push({ level: 'warn', text: 'Beginner guidance is 10-20 minutes total, split into ~10 minute sets.' });
-    if (minutes > 40) out.push({ level: 'warn', text: 'Over 40 minutes in one sitting is where fluid build-up and blistering start showing up.' });
+    if (minutes > 40) out.push({ level: 'warn', text: 'Past 40 minutes in one sitting is where fluid build-up and blistering show up.' });
   }
 
   if (type === 'stretch') {
-    if (intensity > 12) out.push({ level: 'warn', text: 'Heavy tension. Length comes from time under tension, not from load — more weight mostly buys injuries.' });
-    if (minutes > 120) out.push({ level: 'warn', text: 'Trials that worked used 30-90 minutes a day. Longer sessions are not what produced the results.' });
-  }
-
-  if (!didWarmupToday() && type !== 'warmup') {
-    out.push({ level: 'info', text: 'No warm-up logged today. Five minutes of heat first makes the tissue stretch further and tear less.' });
+    if (intensity >= 10) out.push({ level: 'info', text: '10 kg is the ceiling. Length comes from time under tension, not from more load.' });
+    const todayMs = store
+      .get()
+      .pe.sessions.filter((s) => s.date === store.dayKey() && s.type === 'stretch')
+      .reduce((a, s) => a + s.durationSec * 1000, 0);
+    const planned = todayMs + minutes * 60000;
+    if (planned > DAILY_STRETCH_GOAL_MS * 1.5) {
+      out.push({ level: 'warn', text: `That would put you over ${(planned / 3600000).toFixed(1)}h of stretching today. Two hours is the target; well past it is where injuries come from.` });
+    }
   }
 
   const dec = deconStatus();
-  if (dec.due) out.push({ level: 'warn', text: `${dec.consecutive} days straight without a rest day. Tissue remodels during time off — a few days down will do more than another session.` });
+  if (dec.due) out.push({ level: 'warn', text: `${dec.consecutive} days straight without a rest day. Tissue remodels during time off.` });
 
   return out;
 }
 
-export const didWarmupToday = () =>
-  store.get().pe.sessions.some((s) => s.date === store.dayKey() && s.type === 'warmup');
-
 /* ---------------- volume and streaks ---------------- */
+
+/** The target: as much stretching as you can manage, up to two hours a day.
+ *  Everything on the home screen and the warnings is measured against this. */
+export const DAILY_STRETCH_GOAL_MS = 2 * 60 * 60000;
 
 export const PERIODS = [
   { id: '7d', label: '7d', days: 7 },
@@ -179,7 +158,7 @@ export function peStreak() {
  *  rest, and the classic overtraining pattern is weeks of daily work with
  *  nothing to show for it. */
 export function deconStatus() {
-  const days = new Set(store.get().pe.sessions.filter((s) => s.type !== 'warmup').map((s) => s.date));
+  const days = new Set(store.get().pe.sessions.map((s) => s.date));
   let cursor = store.dayKey();
   if (!days.has(cursor)) cursor = store.addDays(cursor, -1);
   let consecutive = 0;
@@ -309,6 +288,78 @@ export function projection(horizonMonths = [3, 6, 12]) {
   };
 }
 
+/* ---------------- did the hours buy anything? ---------------- */
+
+/**
+ * Pairs each gap between check-ins with the training that happened inside it.
+ * This is the only chart in the app that can argue against more volume, which
+ * is exactly why it earns its place: if the dots do not slope up, the extra
+ * hours are not doing what they are supposed to.
+ */
+export function volumeVsGain(key = 'bpel') {
+  const pe = store.get().pe;
+  const ms = pe.measurements.filter((m) => m[key] != null).sort((a, b) => a.ts - b.ts);
+  const points = [];
+  for (let i = 1; i < ms.length; i++) {
+    const a = ms[i - 1];
+    const b = ms[i];
+    const days = (b.ts - a.ts) / 864e5;
+    if (days < 7) continue; // too short to separate growth from measuring noise
+    const stretchMin = pe.sessions
+      .filter((s) => s.type === 'stretch' && s.ts > a.ts && s.ts <= b.ts)
+      .reduce((acc, s) => acc + (s.durationSec || 0) / 60, 0);
+    points.push({
+      x: stretchMin / days, // average minutes a day across the gap
+      y: ((b[key] - a[key]) * 10) / (days / 30.44), // mm per month
+      from: a.ts,
+      to: b.ts,
+      days: Math.round(days),
+      label: `${Math.round(stretchMin / days)} min/day → ${(((b[key] - a[key]) * 10) / (days / 30.44)).toFixed(1)} mm/month`,
+    });
+  }
+  if (points.length < 2) return { points, r: null, verdict: null };
+
+  // Pearson's r on the pairs. With a handful of points this is suggestive, not
+  // proof, and the wording below says so.
+  const n = points.length;
+  const mx = points.reduce((a, p) => a + p.x, 0) / n;
+  const my = points.reduce((a, p) => a + p.y, 0) / n;
+  const sxy = points.reduce((a, p) => a + (p.x - mx) * (p.y - my), 0);
+  const sxx = points.reduce((a, p) => a + (p.x - mx) ** 2, 0);
+  const syy = points.reduce((a, p) => a + (p.y - my) ** 2, 0);
+  const r = sxx && syy ? sxy / Math.sqrt(sxx * syy) : null;
+
+  let verdict = null;
+  if (r == null || n < 3) verdict = 'Not enough check-ins to read a pattern yet — each new one sharpens this.';
+  else if (r > 0.5) verdict = 'More time under tension has gone with more length for you. Volume is paying.';
+  else if (r < -0.3) verdict = 'Your bigger blocks came with less gain, not more. That usually means too much, too often — try more rest days rather than more hours.';
+  else verdict = 'No clear link between hours and gain so far. Consistency and rest are worth more than piling on time.';
+
+  return { points, r, verdict, avgPerDay: mx, avgGain: my };
+}
+
+/** Thickest-point girth against base girth, plus the taper between them.
+ *  Pumping tends to move the middle before the base, so the gap is a real
+ *  training signal rather than a curiosity. */
+export function girthMap() {
+  const ms = store
+    .get()
+    .pe.measurements.filter((m) => m.eg != null && m.baseGirth != null)
+    .sort((a, b) => a.ts - b.ts);
+  if (!ms.length) return null;
+  const latest = ms[ms.length - 1];
+  const first = ms[0];
+  return {
+    entries: ms,
+    thick: latest.eg,
+    base: latest.baseGirth,
+    taper: latest.eg - latest.baseGirth,
+    taperFirst: first.eg - first.baseGirth,
+    thickGain: ms.length > 1 ? latest.eg - first.eg : 0,
+    baseGain: ms.length > 1 ? latest.baseGirth - first.baseGirth : 0,
+  };
+}
+
 /* ---------------- monthly check-in ---------------- */
 
 export function measurementDue() {
@@ -333,7 +384,8 @@ export const ACHIEVEMENTS = [
   { id: 'pe_first', name: 'Day one', desc: 'Logged your first session', test: (p) => p.sessions.length >= 1 },
   { id: 'pe_baseline', name: 'Baseline set', desc: 'Recorded your first measurement', test: (p) => p.measurements.length >= 1 },
   { id: 'pe_photo', name: 'On the record', desc: 'Saved your first progress photo', test: (p) => p.measurements.some((m) => m.photoId) },
-  { id: 'pe_warm', name: 'Warms up properly', desc: 'Logged 10 warm-ups', test: (p) => p.sessions.filter((s) => s.type === 'warmup').length >= 10 },
+  { id: 'pe_2h', name: 'Full two hours', desc: 'Stretched two hours in one day', test: (p) => dailyStretchTotals(p).some((v) => v >= 2 * 3600000) },
+  { id: 'pe_2h_week', name: 'A full week at target', desc: 'Two hours a day, seven days running', test: (p) => dailyStretchTotals(p).slice(-7).length === 7 && dailyStretchTotals(p).slice(-7).every((v) => v >= 2 * 3600000) },
   { id: 'pe_week', name: '7-day streak', desc: 'A full week without missing', test: () => peStreak() >= 7 },
   { id: 'pe_month', name: '30-day streak', desc: 'A month of consistency', test: () => peStreak() >= 30 },
   { id: 'pe_10h', name: '10 hours under tension', desc: 'Ten lifetime hours of stretching', test: (p) => lifetime(p, 'stretch') >= 36e6 },
@@ -345,6 +397,16 @@ export const ACHIEVEMENTS = [
   { id: 'pe_decon', name: 'Took the week off', desc: 'Completed a deliberate decon break', test: (p) => hasDecon(p) },
   { id: 'pe_sixmonths', name: 'Half a year in', desc: 'Six months between your first and latest measurement', test: (p) => p.measurements.length > 1 && monthsBetween(p.measurements[0].ts, p.measurements[p.measurements.length - 1].ts) >= 6 },
 ];
+
+/** Stretch milliseconds per day, oldest first — used by the goal achievements. */
+function dailyStretchTotals(pe) {
+  const byDay = new Map();
+  for (const s of pe.sessions) {
+    if (s.type !== 'stretch') continue;
+    byDay.set(s.date, (byDay.get(s.date) || 0) + s.durationSec * 1000);
+  }
+  return [...byDay.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([, v]) => v);
+}
 
 function lifetime(pe, type) {
   return pe.sessions.filter((s) => s.type === type).reduce((a, s) => a + (s.durationSec || 0) * 1000, 0);
@@ -397,9 +459,11 @@ export function insights() {
   const wk = weeklyVolumeMs('stretch', 4) / 4 / 60000;
   if (wk > 0) {
     const daily = wk / 7;
-    if (daily < 15) out.push({ level: 'warn', text: `You average ${daily.toFixed(0)} min/day of stretching. The trials that produced gains ran 30-90 min/day — below about 20 you are unlikely to see much.` });
-    else if (daily <= 100) out.push({ level: 'good', text: `You average ${daily.toFixed(0)} min/day of stretching, which sits inside the range that produced measured gains in trials.` });
-    else out.push({ level: 'info', text: `You average ${daily.toFixed(0)} min/day. Past about 90 min/day the evidence stops showing extra benefit — the risk keeps rising though.` });
+    const goalMin = DAILY_STRETCH_GOAL_MS / 60000;
+    const pctOfGoal = Math.round((daily / goalMin) * 100);
+    if (daily < 30) out.push({ level: 'warn', text: `${daily.toFixed(0)} min/day on average — ${pctOfGoal}% of your two-hour target. Below about 30 min/day there is little to measure.` });
+    else if (daily < goalMin * 0.8) out.push({ level: 'info', text: `${daily.toFixed(0)} min/day on average, ${pctOfGoal}% of your two-hour target.` });
+    else out.push({ level: 'good', text: `${daily.toFixed(0)} min/day on average — at or near your two-hour target. That is the top of the dose range anyone has studied.` });
   }
 
   const withBpfsl = sessions.filter((s) => s.bpfslBefore && s.bpfslAfter);
@@ -409,13 +473,6 @@ export function insights() {
       level: avg >= 3 ? 'good' : 'warn',
       text: `Your sessions move BPFSL by ${avg.toFixed(1)}% on average. ${avg >= 3 ? 'That is a real response to the load.' : 'Under about 3% usually means not warm enough, not long enough, or too little tension.'}`,
     });
-  }
-
-  const warm = sessions.filter((s) => s.type === 'warmup').length;
-  const work = sessions.filter((s) => s.type !== 'warmup').length;
-  if (work >= 8) {
-    const ratio = warm / work;
-    if (ratio < 0.4) out.push({ level: 'warn', text: `You warmed up before roughly ${Math.round(ratio * 100)}% of sessions. Heat first is the cheapest injury insurance there is.` });
   }
 
   const dec = deconStatus();

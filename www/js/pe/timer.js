@@ -31,18 +31,16 @@ export function renderTimer(mount, opts = {}) {
     type: pe.isValidType(opts.type) ? opts.type : 'stretch',
     minutes: null,
     intensity: null,
-    hydroLevel: s.hydroLevel,
     kegels: s.kegelDuringPump,
     bpfslBefore: null,
     setBreakMin: 10,
-    routine: !!opts.routine, // warm-up first, then straight into the work
   };
   const def = () => pe.typeDef(cfg.type);
 
   function defaults() {
     const d = def();
     cfg.minutes = cfg.type === 'stretch' ? s.stretchMin : cfg.type === 'pump' ? s.pumpMin : d.defaultMin;
-    cfg.intensity = d.intensity ? (d.intensity.key === 'tensionKg' ? s.tensionKg : s.pressure) : null;
+    cfg.intensity = d.intensity ? s.tensionKg : null;
   }
   defaults();
 
@@ -52,18 +50,9 @@ export function renderTimer(mount, opts = {}) {
     if (last) {
       cfg.minutes = Math.max(1, Math.round((last.plannedSec || last.durationSec) / 60));
       if (last.tensionKg) cfg.intensity = last.tensionKg;
-      if (last.pressure) cfg.intensity = last.pressure;
-      if (last.hydroLevel) cfg.hydroLevel = last.hydroLevel;
       run();
       return;
     }
-  }
-
-  if (cfg.routine) {
-    cfg.type = 'warmup';
-    cfg.minutes = pe.typeDef('warmup').defaultMin;
-    run();
-    return;
   }
 
   /* ---------------- setup ---------------- */
@@ -71,8 +60,6 @@ export function renderTimer(mount, opts = {}) {
   function renderSetup() {
     const d = def();
     const warnings = pe.planWarnings({ type: cfg.type, minutes: cfg.minutes, intensity: cfg.intensity });
-    const isHydro = cfg.type === 'pump' && s.pumpStyle === 'hydro';
-    const band = cfg.type === 'pump' && !isHydro ? pe.pressureBand(cfg.intensity) : null;
 
     mount.innerHTML = `
       <div class="screen">
@@ -92,17 +79,12 @@ export function renderTimer(mount, opts = {}) {
 
         <section class="card">
           <label class="slider-row"><span>Duration</span><b id="durOut">${cfg.minutes} min</b></label>
-          <input type="range" id="dur" min="1" max="120" step="1" value="${cfg.minutes}">
+          <input type="range" id="dur" min="1" max="180" step="5" value="${cfg.minutes}">
+          ${cfg.type === 'stretch' ? `<p class="small muted">${goalLine()}</p>` : ''}
 
-          ${d.intensity && !isHydro ? `
+          ${d.intensity ? `
           <label class="slider-row"><span>${escapeHtml(d.intensity.label)}</span><b id="intOut">${intensityText()}</b></label>
           <input type="range" id="int" min="${d.intensity.min}" max="${d.intensity.max}" step="${d.intensity.step}" value="${cfg.intensity}">
-          ${band ? `<p class="band ${band.label === 'Hard ceiling' ? 'danger' : ''}"><b>${escapeHtml(band.label)}</b></p>` : ''}
-          ` : ''}
-
-          ${isHydro ? `
-          <label class="slider-row"><span>Intensity</span><b id="hydroOut">Level ${cfg.hydroLevel} / 5</b></label>
-          <input type="range" id="hydro" min="1" max="5" step="1" value="${cfg.hydroLevel}">
           ` : ''}
 
           ${cfg.type === 'pump' ? `
@@ -151,7 +133,6 @@ export function renderTimer(mount, opts = {}) {
     };
     bind('dur', 'durOut', (v) => (cfg.minutes = v));
     bind('int', 'intOut', (v) => (cfg.intensity = v));
-    bind('hydro', 'hydroOut', (v) => (cfg.hydroLevel = v));
     bind('brk', 'brkOut', (v) => (cfg.setBreakMin = v));
     mount.querySelector('#keg')?.addEventListener('change', (e) => (cfg.kegels = e.target.checked));
 
@@ -167,19 +148,30 @@ export function renderTimer(mount, opts = {}) {
   function intensityText() {
     const d = def();
     if (!d.intensity) return '';
-    if (d.intensity.key === 'pressure') return pe.fmtPressure(cfg.intensity);
     return `${cfg.intensity} ${d.intensity.unit}`.trim();
   }
 
   function outText(id) {
     if (id === 'dur') return `${cfg.minutes} min`;
     if (id === 'int') return intensityText();
-    if (id === 'hydro') return `Level ${cfg.hydroLevel} / 5`;
     return `${cfg.setBreakMin} min`;
   }
 
+  /** How this session sits against the two-hour daily stretching target. */
+  function goalLine() {
+    const doneMs = store
+      .get()
+      .pe.sessions.filter((x) => x.date === store.dayKey() && x.type === 'stretch')
+      .reduce((a, x) => a + x.durationSec * 1000, 0);
+    const planned = doneMs + cfg.minutes * 60000;
+    const goal = pe.DAILY_STRETCH_GOAL_MS;
+    const pct = Math.round((planned / goal) * 100);
+    if (doneMs > 0) return `${(doneMs / 3600000).toFixed(1)}h already today — this takes you to ${(planned / 3600000).toFixed(1)}h of 2h (${pct}%).`;
+    return `${pct}% of today's two-hour target.`;
+  }
+
   function intensitySummary() {
-    if (cfg.type === 'pump' && s.pumpStyle === 'hydro') return `Level ${cfg.hydroLevel}/5 · break every ${cfg.setBreakMin} min`;
+    if (cfg.type === 'pump') return `${cfg.minutes} min · break every ${cfg.setBreakMin} min`;
     if (!def().intensity) return `${cfg.minutes} min`;
     return `${intensityText()} · ${cfg.minutes} min`;
   }
@@ -397,33 +389,8 @@ export function renderTimer(mount, opts = {}) {
     function end() {
       const worked = Math.round(elapsedMs() / 1000);
       cleanup();
-      // In a routine, the warm-up logs itself and flows straight into the work.
-      if (cfg.routine && cfg.type === 'warmup') {
-        autoSaveWarmup(worked);
-        cfg.type = 'stretch';
-        defaults();
-        run();
-        return;
-      }
       renderFinish(Math.max(0, worked));
     }
-  }
-
-  function autoSaveWarmup(durationSec) {
-    const st = store.get();
-    st.pe.sessions.push({
-      id: `pe_${Date.now()}`,
-      ts: Date.now(),
-      date: store.dayKey(),
-      type: 'warmup',
-      durationSec,
-      plannedSec: pe.typeDef('warmup').defaultMin * 60,
-      tensionKg: null, pressure: null, hydroLevel: null,
-      bpfslBefore: null, bpfslAfter: null,
-      kegelCycles: 0, quality: 'ok', discomfort: false, notes: '',
-    });
-    store.save();
-    toast('Warm-up logged — stretching now');
   }
 
   /* ---------------- finish ---------------- */
@@ -505,8 +472,6 @@ export function renderTimer(mount, opts = {}) {
       durationSec,
       plannedSec: cfg.minutes * 60,
       tensionKg: cfg.type === 'stretch' ? cfg.intensity : null,
-      pressure: cfg.type === 'pump' && s.pumpStyle !== 'hydro' ? cfg.intensity : null,
-      hydroLevel: cfg.type === 'pump' && s.pumpStyle === 'hydro' ? cfg.hydroLevel : null,
       bpfslBefore: cfg.bpfslBefore,
       bpfslAfter,
       kegelCycles: cfg.kegels && cfg.type === 'pump' ? kegelCycles : 0,
@@ -519,8 +484,6 @@ export function renderTimer(mount, opts = {}) {
     st.pe.sessions.push(record);
 
     if (record.tensionKg) st.pe.settings.tensionKg = record.tensionKg;
-    if (record.pressure) st.pe.settings.pressure = record.pressure;
-    if (record.hydroLevel) st.pe.settings.hydroLevel = record.hydroLevel;
     if (cfg.type === 'stretch') st.pe.settings.stretchMin = cfg.minutes;
     if (cfg.type === 'pump') {
       st.pe.settings.pumpMin = cfg.minutes;
@@ -562,6 +525,13 @@ export function renderTimer(mount, opts = {}) {
     renderReport(record, earned.concat(kegelBadges), kegelLogged);
   }
 
+  function todayTotal() {
+    return store
+      .get()
+      .pe.sessions.filter((x) => x.date === store.dayKey() && x.type === 'stretch')
+      .reduce((a, x) => a + x.durationSec * 1000, 0);
+  }
+
   function renderReport(record, earned, kegelLogged) {
     const verdict = pe.bpfslVerdict(record.bpfslBefore, record.bpfslAfter);
     const week = pe.weeklyVolumeMs(record.type, 1);
@@ -578,7 +548,7 @@ export function renderTimer(mount, opts = {}) {
 
         <div class="stat-grid">
           <div class="stat"><b>${fmtMs(record.durationSec * 1000)}</b><span>this session</span></div>
-          <div class="stat"><b>${(week / 3600000).toFixed(1)}h</b><span>this week</span></div>
+          <div class="stat"><b>${(todayTotal() / 3600000).toFixed(1)}h</b><span>today of 2h</span></div>
           <div class="stat"><b>${strk}</b><span>day streak</span></div>
           ${record.kegelCycles ? `<div class="stat"><b>${record.kegelCycles}</b><span>kegel cycles</span></div>` : `<div class="stat"><b>${dec.consecutive}</b><span>days no rest</span></div>`}
         </div>

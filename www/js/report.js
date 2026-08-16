@@ -15,14 +15,14 @@ function delta(now, before, fmt = (v) => String(Math.round(v))) {
 /** One line, picked by what actually happened. */
 function line({ record, outcome, prs, badges }, state) {
   const st = store.streak();
-  if (outcome.levelUp) return `Level ${outcome.from} → ${outcome.to}.`;
+  if (outcome.levelUp) return `Week ${outcome.from} → ${outcome.to}.`;
   if (prs.length) return `New best: ${prs[0].label.toLowerCase()} ${prs[0].value}, was ${prs[0].was}.`;
   if (badges.length) return `Unlocked: ${badges[0].name}.`;
   if (record.discomfort) return 'Targets dropped for the next few sessions.';
   if (record.type === 'release') return 'Rest day done.';
   if (record.type === 'quick') return 'Short one, but the streak holds.';
   if (st >= 7) return `${st} days straight.`;
-  if (record.score >= 85) return `${program.PROMOTION_TARGET - outcome.qualifying} more like that to level up.`;
+  if (record.score >= 85) return `${program.PROMOTION_TARGET - outcome.qualifying} more like that and you move up a week.`;
   if (record.score < 55) return 'Rough one. Still logged.';
   return `Session ${state.sessions.length}.`;
 }
@@ -60,7 +60,7 @@ export function renderReport(mount, result, onDone) {
           : ringSvg(record.score / 100, String(record.score), g.letter, {
               color: record.score >= 85 ? 'var(--good)' : record.score >= 62 ? 'var(--accent)' : 'var(--warn)',
             })}
-        <p class="muted">Level ${record.level} · ${fmtDuration(record.durationSec)}${record.quit ? ' · ended early' : ''}${record.estimated ? ' · estimated' : ''}</p>
+        <p class="muted">Week ${record.level} · ${fmtDuration(record.durationSec)}${record.quit ? ' · ended early' : ''}${record.estimated ? ' · estimated' : ''}</p>
         ${outcome.levelUp ? `<div class="levelup-banner">LEVEL ${outcome.to}</div>` : ''}
       </div>
 
@@ -86,7 +86,7 @@ export function renderReport(mount, result, onDone) {
 
       ${!isRelease && record.type !== 'quick' ? `<div class="prog-line">
         <div class="prog-bar"><i style="width:${(outcome.qualifying / program.PROMOTION_TARGET) * 100}%"></i></div>
-        <span>${outcome.qualifying}/${program.PROMOTION_TARGET} to level ${Math.min(state.program.level + 1, program.MAX_LEVEL)}</span>
+        <span>${outcome.qualifying}/${program.PROMOTION_TARGET} to week ${Math.min(state.program.level + 1, program.MAX_LEVEL)}</span>
       </div>` : ''}
 
       <div class="motivation">${escapeHtml(line({ record, outcome, prs, badges }, state))}</div>
