@@ -34,15 +34,12 @@ jobs:
           npx cap sync android
 
       - name: Use the project's fixed signing key
-        # Gradle signs debug builds with ~/.android/debug.keystore, and generates
-        # a throwaway one if it is missing. A fresh key on every CI run means every
-        # APK has a different signature, Android refuses to install it over the
-        # previous version, and the only way in is uninstall, which wipes all
-        # saved data. Shipping one committed key keeps the signature stable so
-        # updates install straight over the top.
-        run: |
-          mkdir -p ~/.android
-          cp signing/nifo-debug.keystore ~/.android/debug.keystore
+        # Writing to ~/.android/debug.keystore is not enough: Gradle resolves
+        # that path through ANDROID_USER_HOME, which the runner sets for itself,
+        # so the copy is never found and the Android plugin generates a fresh
+        # key anyway. The config is declared in the build file instead, where
+        # the path is explicit and a missing keystore fails the build.
+        run: node tools/patch-signing.mjs
 
       - name: Build the debug APK
         run: |
