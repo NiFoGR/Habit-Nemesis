@@ -1,9 +1,9 @@
 // End-of-session result. Numbers first, one line of context, done.
 
-import * as store from './store.js';
+import * as store from '../store.js';
 import * as program from './program.js';
-import { icon } from './icons.js';
-import { fmtMs, fmtDuration, repBars, ringSvg, escapeHtml } from './ui.js';
+import { icon } from '../icons.js';
+import { fmtMs, fmtDuration, repBars, ringSvg, escapeHtml } from '../ui.js';
 
 function delta(now, before, fmt = (v) => String(Math.round(v))) {
   if (!before) return null;

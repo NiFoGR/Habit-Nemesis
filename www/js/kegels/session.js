@@ -5,9 +5,9 @@
 // a real measurement of every single rep instead of a self-report. That is what
 // makes the quality score, the fatigue curve and the max-hold PR meaningful.
 
-import * as store from './store.js';
+import * as store from '../store.js';
 import * as program from './program.js';
-import { haptic, beep, fmtMs } from './ui.js';
+import { haptic, beep, fmtMs } from '../ui.js';
 
 const R = 132;
 const CIRC = 2 * Math.PI * R;

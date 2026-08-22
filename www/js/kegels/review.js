@@ -5,11 +5,11 @@
 // place the app is allowed to say "better" or "worse" out loud. Everything on
 // it is a difference, not a total; totals are what the tracking screen is for.
 
-import * as store from './store.js';
+import * as store from '../store.js';
 import * as program from './program.js';
-import * as pe from './pe/program.js';
-import { escapeHtml, fmtMs, fmtHours, sparkline } from './ui.js';
-import { icon } from './icons.js';
+import * as pe from '../pe/program.js';
+import { escapeHtml, fmtMs, fmtHours, sparkline } from '../ui.js';
+import { icon } from '../icons.js';
 
 /** Monday of the week a given day falls in. Used both to slice the data and to
  *  decide whether this week's review has already been seen. */

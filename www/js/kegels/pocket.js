@@ -13,10 +13,10 @@
 //    the screen it throttles timers to the point where the buzzes drift
 //    seconds out, and a pacer that lies about the time is worse than none.
 
-import * as store from './store.js';
+import * as store from '../store.js';
 import * as program from './program.js';
-import { fmtClock, haptic, toast } from './ui.js';
-import { icon } from './icons.js';
+import { fmtClock, haptic, toast } from '../ui.js';
+import { icon } from '../icons.js';
 
 // One pattern per event, chosen so they are told apart through a pocket:
 // a long rising buzz to start work, a double tap to release, a triple for a

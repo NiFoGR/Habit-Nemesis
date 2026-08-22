@@ -8,7 +8,7 @@
 
 import * as store from '../store.js';
 import * as pe from './program.js';
-import * as kegel from '../program.js';
+import * as kegel from '../kegels/program.js';
 import { haptic, beep, fmtClock, fmtMs, notify, askNotifyPermission, escapeHtml, toast } from '../ui.js';
 import { scheduleAlarm, cancelAlarm, ensureAlarmPermission, ALARM_SESSION } from '../native.js';
 import { icon } from '../icons.js';
@@ -36,6 +36,10 @@ export function renderTimer(mount, opts = {}) {
     setBreakMin: 10,
   };
   const def = () => pe.typeDef(cfg.type);
+
+  /* ---------------- 1. setup ----------------
+     Choosing the session: type, duration, intensity, and the warnings that
+     object before the timer ever starts. */
 
   function defaults() {
     const d = def();
@@ -177,6 +181,10 @@ export function renderTimer(mount, opts = {}) {
   }
 
   /* ---------------- running (wall clock) ---------------- */
+
+  /* ---------------- 2. the live session ----------------
+     All timing is wall-clock, never accumulated frames, so the countdown
+     keeps running with the screen off and recomputes on return. */
 
   let endsAt = 0; // wall-clock end of the work countdown
   let pausedRemaining = null; // ms left while paused
@@ -394,6 +402,9 @@ export function renderTimer(mount, opts = {}) {
   }
 
   /* ---------------- finish ---------------- */
+
+  /* ---------------- 3. finishing ----------------
+     What happened, what to record, and the debrief. */
 
   function renderFinish(durationSec) {
     mount.innerHTML = `

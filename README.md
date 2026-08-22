@@ -143,52 +143,33 @@ Reasoning, safety numbers and sources: [`docs/PE_PROGRAM.md`](docs/PE_PROGRAM.md
 ## Layout
 
 ```
-www/                 the entire app, plain ES modules, no build
-  index.html
-  styles.css
+www/               the entire app, plain ES modules, no build
   js/
-    app.js           routing, Today hub, kegels home, guide, settings, app lock
-    program.js       the 104-week plan, scoring, progression, index, badges
-    session.js       the guided player and per-rep measurement
-    tutorial.js      the technique walkthrough, incl. the reverse kegel
-    roadmap.js       all 104 weeks and the six phases
-    pocket.js        vibration-only session pacing
-    review.js        the weekly review
-    report.js        the end-of-session debrief
-    tracking.js      heatmap, charts, log, backups
-    store.js         localStorage persistence and input sanitising
-    ui.js            formatting, haptics, notifications, SVG charts
-    icons.js         the inline SVG icon set and the logo mark
-    native.js        Capacitor local notifications (real Android alarms)
-    pray/
-      prayers.js     the ancient core, Greek and English, and the two rules
-      program.js     what is owed today, streaks, heatmap data, alarms
-      session.js     the guided rule
-      home.js        prayer home, tracking, my prayers, settings
-    pe/
-      program.js     session types, safety limits, projection, achievements
-      home.js        PE home and the one-time safety gate
-      timer.js       session runner, set breaks, kegel-during-pump
-      measure.js     the five-measurement monthly check-in
-      camera.js      ghost-overlay photo capture and alignment
-      gallery.js     encrypted gallery, viewer, compare
-      stats.js       charts, period selector, projection, log
-      guide.js       technique and safety reference
-      vault.js       PIN-derived AES-GCM encryption
-      db.js          IndexedDB photo storage + image downscaling
-      pin.js         PIN keypad and unlock flow
-  sw.js              offline service worker
-signing/
-  nifo-debug.keystore  the fixed key every APK is signed with, so updates
-                       install over the top instead of forcing a reinstall
-tools/
-  gen-icons.mjs      draws all app and launcher icons from code
-  serve.mjs          dev server
+    app.js         route table, shell state, boot
+    hub.js         the Today screen and the feature registry
+    settings.js    app-wide settings
+    lock.js        the optional PIN gate
+    names.js       what each section is called
+    store.js       persistence and input sanitising
+    ui.js          formatting, haptics, notifications, SVG charts
+    icons.js       the inline SVG icon set
+    native.js      real Android alarms via Capacitor
+    kegels/        the Kegels feature
+    pe/            the PE feature
+    pray/          the Prayer feature
+  sw.js            offline service worker
+signing/           the fixed APK key, so updates install over the top
+tools/             icon generation, signing patch, dev server
 docs/
-  KEGEL_PROGRAM.md   the kegel protocol and where it comes from
-  PE_PROGRAM.md      PE safety limits, projection maths and sources
-  BRAINSTORM.md      feature design notes and the backlog
+  CODEMAP.md       where every file is and what it does
+  KEGEL_PROGRAM.md the kegel protocol and where it comes from
+  PE_PROGRAM.md    PE limits, projection maths and sources
+  BRAINSTORM.md    feature design notes and the backlog
 ```
+
+**[`docs/CODEMAP.md`](docs/CODEMAP.md) is the map.** One folder per feature,
+the same filenames in each, and a setting lives where the thing it affects
+lives.
 
 ## Adding the next feature
 

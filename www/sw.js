@@ -1,26 +1,37 @@
 // Offline-first service worker. The app is fully usable with no connection ,
 // which matters, because you should be able to train anywhere.
 // Bump CACHE when shipping changes so old assets are dropped.
-const CACHE = 'nifo-v6';
+const CACHE = 'nifo-v7';
 
 const ASSETS = [
   './',
   './index.html',
   './styles.css',
   './manifest.webmanifest',
+
+  // shell
   './js/app.js',
+  './js/hub.js',
+  './js/settings.js',
+  './js/lock.js',
+  './js/names.js',
   './js/store.js',
-  './js/program.js',
-  './js/session.js',
-  './js/report.js',
-  './js/tracking.js',
   './js/ui.js',
   './js/icons.js',
   './js/native.js',
-  './js/tutorial.js',
-  './js/roadmap.js',
-  './js/pocket.js',
-  './js/review.js',
+
+  // kegels
+  './js/kegels/program.js',
+  './js/kegels/session.js',
+  './js/kegels/home.js',
+  './js/kegels/report.js',
+  './js/kegels/tracking.js',
+  './js/kegels/tutorial.js',
+  './js/kegels/roadmap.js',
+  './js/kegels/pocket.js',
+  './js/kegels/review.js',
+
+  // pe
   './js/pe/program.js',
   './js/pe/home.js',
   './js/pe/timer.js',
@@ -32,10 +43,13 @@ const ASSETS = [
   './js/pe/vault.js',
   './js/pe/db.js',
   './js/pe/pin.js',
+
+  // prayer
   './js/pray/prayers.js',
   './js/pray/program.js',
   './js/pray/session.js',
   './js/pray/home.js',
+
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',

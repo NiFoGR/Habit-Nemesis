@@ -1,10 +1,10 @@
 // The tracking screen: every day you trained, every rep you logged, and the
 // trend lines that only mean something once there are a few weeks of them.
 
-import * as store from './store.js';
+import * as store from '../store.js';
 import * as program from './program.js';
-import { fmtMs, fmtDuration, lineChart, repBars, escapeHtml, relDay, ringSvg } from './ui.js';
-import { icon } from './icons.js';
+import { fmtMs, fmtDuration, lineChart, repBars, escapeHtml, relDay, ringSvg } from '../ui.js';
+import { icon } from '../icons.js';
 
 const WEEKS = 13; // a full 12-week block plus the current week
 

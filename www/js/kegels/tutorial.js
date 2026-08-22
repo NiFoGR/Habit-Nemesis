@@ -7,9 +7,9 @@
 // idea gets practised before the next one arrives, reading about a muscle you
 // cannot see does not teach you to find it.
 
-import * as store from './store.js';
-import { icon } from './icons.js';
-import { haptic, toast } from './ui.js';
+import * as store from '../store.js';
+import { icon } from '../icons.js';
+import { haptic, toast } from '../ui.js';
 
 /* ---------------- diagrams ----------------
    Deliberately schematic: a side-on outline with the floor drawn as a sling,

@@ -13,7 +13,7 @@
 //  - Position progresses lying -> sitting -> standing -> under load, because a
 //    floor that only works lying down is not much use standing up.
 
-import * as store from './store.js';
+import * as store from '../store.js';
 
 /* ---------------- the 2-year ladder ----------------
    Twelve hand-written weeks ran out of progression in three months. This is a

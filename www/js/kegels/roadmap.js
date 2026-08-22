@@ -5,10 +5,10 @@
 // replaced them, and partly because "what am I working towards" is the question
 // a progression system has to answer or it is just a counter.
 
-import * as store from './store.js';
+import * as store from '../store.js';
 import * as program from './program.js';
-import { escapeHtml, fmtMs } from './ui.js';
-import { icon } from './icons.js';
+import { escapeHtml, fmtMs } from '../ui.js';
+import { icon } from '../icons.js';
 
 const PHASE_ICON = {
   foundation: 'target',
