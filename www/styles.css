@@ -1035,3 +1035,47 @@ body[data-section="pray"] .btn.primary { color: #14100a; }
    needs air on both sides rather than only above. */
 body[data-section="pray"] .btn.big { margin-bottom: 16px; }
 .pr-nav .btn[disabled] { opacity: 0.35; }
+
+/* ---------- settings ---------- */
+
+/* The section jump list. Settings used to be one long page mixing app-wide
+   options with per-feature ones; this is the signpost for the split. */
+.set-nav { display: grid; gap: 8px; margin-bottom: 22px; }
+.set-nav a {
+  display: flex; align-items: center; gap: 13px; text-decoration: none; color: inherit;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 15px;
+}
+.set-nav a:active { background: var(--surface-2); }
+.set-nav .ico { color: var(--accent); }
+.set-nav span { display: grid; gap: 2px; }
+.set-nav b { font-size: 0.95rem; font-weight: 600; }
+.set-nav i { font-style: normal; font-size: 0.76rem; color: var(--muted); }
+
+.setting select, .setting input[type="time"] { min-width: 108px; }
+.card .h-row + .setting { border-top: 0; }
+.card.danger .h-row .ico { color: var(--danger); }
+
+/* Real switches for settings toggles. A default checkbox renders as a white
+   box on every Android WebView, which is the one control on these screens that
+   looked unfinished against a dark surface. Kept as a real checkbox underneath
+   so it stays keyboard and screen-reader correct. */
+.setting.toggle input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none;
+  position: relative; flex: 0 0 auto;
+  width: 46px; height: 27px; border-radius: 27px;
+  background: var(--surface-2); border: 1px solid var(--line);
+  cursor: pointer; transition: background 0.16s ease, border-color 0.16s ease;
+}
+.setting.toggle input[type="checkbox"]::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 19px; height: 19px; border-radius: 50%;
+  background: var(--muted); transition: transform 0.16s ease, background 0.16s ease;
+}
+.setting.toggle input[type="checkbox"]:checked {
+  background: var(--accent); border-color: var(--accent);
+}
+.setting.toggle input[type="checkbox"]:checked::after {
+  transform: translateX(19px); background: var(--bg);
+}
+.setting.toggle input[type="checkbox"]:disabled { opacity: 0.4; cursor: default; }
+.setting.toggle input[type="checkbox"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

@@ -1,6 +1,8 @@
 // Technique and safety reference. Kept blunt and specific, vague warnings get
 // ignored, and the failure modes here are avoidable and well documented.
 
+import * as store from '../store.js';
+import { toast } from '../ui.js';
 import { icon } from '../icons.js';
 
 export function renderPeGuide(mount) {
@@ -77,4 +79,87 @@ export function renderPeGuide(mount) {
 
 
     </div>`;
+}
+
+/* ---------------- settings ----------------
+   PE's own options, moved off the global settings page. Units, the check-in day
+   and the gallery lock used to live there alongside kegel training options,
+   while the session defaults below had no UI at all and could only be changed
+   by setting them once in the timer. */
+
+export function renderPeSettings(mount) {
+  const s = store.get().pe.settings;
+  const discreet = store.get().settings.discreet;
+
+  mount.innerHTML = `
+    <div class="screen">
+      <header class="screen-head">
+        <button class="icon-btn" data-nav="pe" aria-label="Back">${icon('back')}</button>
+        <h1>${discreet ? 'Length Training' : 'PE'}</h1>
+        <span class="icon-btn ghost"></span>
+      </header>
+
+      <section class="card">
+        <div class="h-row">${icon('ruler', 16)}<h2>Measuring</h2></div>
+        <label class="setting">
+          <span><b>Units</b><i>Every length and girth in the app.</i></span>
+          <select id="units">
+            <option value="cm" ${s.units === 'cm' ? 'selected' : ''}>cm</option>
+            <option value="in" ${s.units === 'in' ? 'selected' : ''}>inches</option>
+          </select>
+        </label>
+        <label class="setting">
+          <span><b>Check-in day</b><i>Which day of the month the reminder appears.</i></span>
+          <select id="measureDay">
+            ${[1, 5, 10, 15, 20, 25, 28].map((d) => `<option value="${d}" ${s.measureDay === d ? 'selected' : ''}>${d}</option>`).join('')}
+          </select>
+        </label>
+      </section>
+
+      <section class="card">
+        <div class="h-row">${icon('stretch', 16)}<h2>Session defaults</h2></div>
+        <p class="small muted">What the timer opens with. You can still change either on the day.</p>
+        <label class="setting">
+          <span><b>Stretch length</b><i>Target is two hours a day, in as many sessions as suits.</i></span>
+          <select id="stretchMin">
+            ${[15, 20, 30, 45, 60, 90, 120].map((m) => `<option value="${m}" ${s.stretchMin === m ? 'selected' : ''}>${m} min</option>`).join('')}
+          </select>
+        </label>
+        <label class="setting">
+          <span><b>Tension</b><i>10 kg is the ceiling. Length comes from time, not load.</i></span>
+          <select id="tensionKg">
+            ${[0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((k) => `<option value="${k}" ${s.tensionKg === k ? 'selected' : ''}>${k} kg</option>`).join('')}
+          </select>
+        </label>
+        <label class="setting">
+          <span><b>Pump length</b><i>Beginner guidance is 10 to 20 minutes, in ~10 minute sets.</i></span>
+          <select id="pumpMin">
+            ${[10, 15, 20, 30, 40].map((m) => `<option value="${m}" ${s.pumpMin === m ? 'selected' : ''}>${m} min</option>`).join('')}
+          </select>
+        </label>
+        <label class="setting toggle">
+          <span><b>Kegels while pumping</b><i>Runs a cadence during pump sessions. Counts for your kegel streak, never for promotion.</i></span>
+          <input type="checkbox" id="kegelDuringPump" ${s.kegelDuringPump ? 'checked' : ''}>
+        </label>
+      </section>
+
+      <section class="card">
+        <div class="h-row">${icon('shield', 16)}<h2>Reference</h2></div>
+        <a class="btn ghost linkbtn" href="#/pe/guide">${icon('shield', 16)}<span>Doing this safely</span></a>
+      </section>
+    </div>`;
+
+  const bind = (id, get = (e) => e.value) =>
+    mount.querySelector('#' + id).addEventListener('change', (e) => {
+      store.update((st) => {
+        st.pe.settings[id] = get(e.target);
+      });
+      toast('Saved');
+    });
+  bind('units');
+  bind('measureDay', (e) => Number(e.value));
+  bind('stretchMin', (e) => Number(e.value));
+  bind('tensionKg', (e) => Number(e.value));
+  bind('pumpMin', (e) => Number(e.value));
+  bind('kegelDuringPump', (e) => e.checked);
 }

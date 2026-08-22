@@ -70,6 +70,7 @@ export function renderPeHome(mount) {
         <a href="#/pe/gallery">${icon('lock')} Gallery</a>
         <a href="#/pe/measure">${icon('ruler')} Check-in${due.due ? '' : ` · ${due.next}d`}</a>
         <a href="#/pe/guide">${icon('shield')} Safety</a>
+        <a href="#/pe/settings">${icon('settings')} Settings</a>
       </div>
     </div>`;
 

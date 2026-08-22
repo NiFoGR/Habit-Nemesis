@@ -5,6 +5,7 @@ import * as program from './program.js';
 import { startSession } from './session.js';
 import { renderReport } from './report.js';
 import { renderTracking } from './tracking.js';
+import { usage as photoUsage } from './pe/db.js';
 import { fmtMs, fmtHours, ringSvg, escapeHtml, toast, haptic, sparkline } from './ui.js';
 import { icon, logoMark } from './icons.js';
 import * as peProgram from './pe/program.js';
@@ -13,7 +14,7 @@ import { renderTimer } from './pe/timer.js';
 import { renderMeasure } from './pe/measure.js';
 import { renderStats } from './pe/stats.js';
 import { renderGallery, leaveGallery } from './pe/gallery.js';
-import { renderPeGuide } from './pe/guide.js';
+import { renderPeGuide, renderPeSettings } from './pe/guide.js';
 import { renderPrayHome, renderPrayStats, renderMyPrayers, renderPraySettings } from './pray/home.js';
 import { startRule } from './pray/session.js';
 import * as prayProgram from './pray/program.js';
@@ -326,6 +327,7 @@ function renderKegels() {
         <a href="#/roadmap">${icon('route')} The plan</a>
         <a href="#/review">${icon('calendar')} Your week</a>
         <a href="#/guide">${icon('help')} How to</a>
+        <a href="#/kegels/settings">${icon('settings')} Settings</a>
       </div>
     </div>`;
 
@@ -435,10 +437,27 @@ function renderGuide() {
 
 /* ---------------- settings ---------------- */
 
+/* ---------------- settings ----------------
+   One rule decides what goes here: a setting lives where the thing it affects
+   lives. Anything true of the whole app is on this screen; anything true of one
+   section is on that section's own settings screen, reachable from its home.
+
+   This page used to hold the kegel training options, three PE fields and a link
+   to the kegel walkthrough, while Prayer kept its own screen. Two models at
+   once, and a page that grew every time a feature did. */
+
+function settingsNav() {
+  return `<div class="set-nav">
+    <a href="#/kegels/settings">${icon('target', 18)}<span><b>${escapeHtml(kegelName())}</b><i>Input, daily target, release day, reminder</i></span></a>
+    <a href="#/pe/settings">${icon('trend', 18)}<span><b>${escapeHtml(peName())}</b><i>Units, session defaults, check-in day</i></span></a>
+    <a href="#/pray/settings">${icon('book', 18)}<span><b>Prayer</b><i>Language, times, reminders</i></span></a>
+  </div>`;
+}
+
 function renderSettings() {
   const s = store.get().settings;
   const pe = store.get().pe.settings;
-  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
   app.innerHTML = `
     <div class="screen">
       <header class="screen-head">
@@ -447,17 +466,185 @@ function renderSettings() {
         <span class="icon-btn ghost"></span>
       </header>
 
+      <h3 class="sec-head">Sections</h3>
+      ${settingsNav()}
+
+      <h3 class="sec-head">Everywhere</h3>
+
       <section class="card">
-        <h2>How you train</h2>
+        <div class="h-row">${icon('flash', 16)}<h2>Feedback</h2></div>
+        <label class="setting toggle">
+          <span><b>Vibration</b><i>Buzzes on every phase change, so you can train with the screen face down.</i></span>
+          <input type="checkbox" id="haptics" ${s.haptics ? 'checked' : ''}>
+        </label>
+        <label class="setting toggle">
+          <span><b>Sound cues</b><i>A tone when a rep starts and when you reach the target.</i></span>
+          <input type="checkbox" id="sound" ${s.sound ? 'checked' : ''}>
+        </label>
+        <label class="setting toggle">
+          <span><b>Discreet mode</b><i>Renames Kegels to "Core Training" and PE to "Length Training".</i></span>
+          <input type="checkbox" id="discreet" ${s.discreet ? 'checked' : ''}>
+        </label>
+      </section>
+
+      <section class="card">
+        <div class="h-row">${icon('lock', 16)}<h2>Privacy</h2></div>
+        <label class="setting toggle">
+          <span><b>Lock the app</b><i>${vault.isSet() ? 'Asks for your gallery PIN when you open NiFo.' : 'Set a gallery PIN first, under Progress then Gallery.'}</i></span>
+          <input type="checkbox" id="appLock" ${s.appLock ? 'checked' : ''} ${vault.isSet() ? '' : 'disabled'}>
+        </label>
         <label class="setting">
-          <span><b>Input mode</b><i>Press-and-hold measures every rep. Hands-free just paces you and scores from your own rating.</i></span>
+          <span><b>Gallery auto-lock</b><i>How long the gallery stays open untouched.</i></span>
+          <select id="autoLockMin">
+            ${[1, 2, 5, 10].map((m) => `<option value="${m}" ${pe.autoLockMin === m ? 'selected' : ''}>${m} min</option>`).join('')}
+          </select>
+        </label>
+        <p class="fineprint">The app lock is a door, not a safe. It keeps someone who picks up your phone out, but sessions and measurements are stored unencrypted like any other app's data. Only the photos are actually encrypted, and that is what the PIN protects.</p>
+      </section>
+
+      <section class="card">
+        <div class="h-row">${icon('images', 16)}<h2>Data</h2></div>
+        <div class="kv"><span>On this device</span><b id="usage">checking</b></div>
+        <p class="fineprint">Everything lives on this phone. Reinstalling the app or clearing browser data wipes it, so export occasionally.</p>
+        <div class="btn-row">
+          <button class="btn" id="exportBtn">Export backup</button>
+          <button class="btn" id="importBtn">Import backup</button>
+        </div>
+        <input type="file" id="importFile" accept="application/json" hidden>
+      </section>
+
+      <section class="card danger">
+        <div class="h-row">${icon('warn', 16)}<h2>Reset</h2></div>
+        <p class="small muted">Erases every session, measurement, prayer day and badge. No undo. Export a backup first.</p>
+        <button class="btn danger" id="reset">Erase all data</button>
+      </section>
+
+      <p class="fineprint centre">NiFo, everything on-device</p>
+    </div>`;
+
+  const bind = (id, key, get = (e) => e.value) =>
+    app.querySelector('#' + id).addEventListener('change', (e) => {
+      store.setSetting(key, get(e.target));
+      toast('Saved');
+    });
+  bind('haptics', 'haptics', (e) => e.checked);
+  bind('sound', 'sound', (e) => e.checked);
+  bind('discreet', 'discreet', (e) => e.checked);
+
+  app.querySelector('#autoLockMin').addEventListener('change', (e) => {
+    store.update((st) => {
+      st.pe.settings.autoLockMin = Number(e.target.value);
+    });
+    toast('Saved');
+  });
+
+  app.querySelector('#appLock').addEventListener('change', (e) => {
+    store.setSetting('appLock', e.target.checked);
+    // Turning it on takes effect at the next launch. Locking someone out of the
+    // screen they just enabled it on would be absurd.
+    appUnlocked = true;
+    toast(e.target.checked ? 'The app will ask for your PIN next time' : 'App lock off');
+  });
+
+  showUsage();
+  wireBackup();
+
+  app.querySelector('#reset').addEventListener('click', () => {
+    if (confirm('Erase everything and start from scratch? This cannot be undone.')) {
+      store.reset();
+      toast('All data erased');
+      location.hash = '#/hub';
+    }
+  });
+}
+
+/** Storage is worth showing because it is the thing that fills up, and because
+ *  a backup is the only defence against it being cleared. */
+async function showUsage() {
+  const el = app.querySelector('#usage');
+  if (!el) return;
+  try {
+    const est = await navigator.storage?.estimate?.();
+    const mb = est?.usage ? est.usage / 1048576 : null;
+    el.textContent = mb == null ? 'unknown' : mb < 1 ? 'under 1 MB' : `${mb.toFixed(1)} MB`;
+  } catch {
+    el.textContent = 'unknown';
+  }
+}
+
+function wireBackup() {
+  app.querySelector('#exportBtn').addEventListener('click', () => {
+    const blob = new Blob([store.exportJson()], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `nifo-backup-${store.dayKey()}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    toast('Backup downloaded');
+  });
+
+  const file = app.querySelector('#importFile');
+  app.querySelector('#importBtn').addEventListener('click', () => file.click());
+  file.addEventListener('change', async () => {
+    const f = file.files?.[0];
+    if (!f) return;
+    try {
+      const text = await f.text();
+      let keepVault = false;
+      // Photos are encrypted under the PIN recorded in whichever vault wins, so
+      // a backup from another device would orphan the ones already here.
+      const count = await photoCount();
+      if (count > 0 && store.backupChangesVault(text)) {
+        keepVault = !confirm(
+          `This backup was made with a different gallery PIN, and there ${count === 1 ? 'is 1 photo' : `are ${count} photos`} stored on this device.\n\n` +
+            "OK: use the backup's PIN. The photos already here become permanently unreadable.\n" +
+            "Cancel: keep this device's PIN, and restore everything else."
+
+        );
+      }
+      const res = store.importJson(text, { keepVault });
+      toast(keepVault ? 'Backup restored, gallery PIN kept' : res.vaultChanged ? 'Backup restored, gallery PIN replaced' : 'Backup restored');
+      renderSettings();
+    } catch (err) {
+      toast(`Could not read that file: ${err.message}`);
+    }
+  });
+}
+
+async function photoCount() {
+  try {
+    const u = await photoUsage();
+    return u?.count || 0;
+  } catch {
+    return 0;
+  }
+}
+
+/* ---------------- section settings ---------------- */
+
+function renderKegelSettings() {
+  const s = store.get().settings;
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  app.innerHTML = `
+    <div class="screen">
+      <header class="screen-head">
+        <button class="icon-btn" data-nav="kegels" aria-label="Back">${icon('back')}</button>
+        <h1>${escapeHtml(kegelName())}</h1>
+        <span class="icon-btn ghost"></span>
+      </header>
+
+      <section class="card">
+        <div class="h-row">${icon('target', 16)}<h2>How you train</h2></div>
+        <label class="setting">
+          <span><b>Input mode</b><i>Press-and-hold measures every rep. Hands-free paces you and scores from your rating.</i></span>
           <select id="inputMode">
             <option value="hold" ${s.inputMode === 'hold' ? 'selected' : ''}>Press and hold</option>
             <option value="auto" ${s.inputMode === 'auto' ? 'selected' : ''}>Hands-free</option>
           </select>
         </label>
         <label class="setting">
-          <span><b>Sessions per day</b><i>Most protocols use two or three. Two is plenty to progress.</i></span>
+          <span><b>Sessions per day</b><i>Two is plenty to progress.</i></span>
           <select id="dailyTarget">
             ${[1, 2, 3].map((n) => `<option value="${n}" ${s.dailyTarget === n ? 'selected' : ''}>${n}</option>`).join('')}
           </select>
@@ -469,62 +656,16 @@ function renderSettings() {
           </select>
         </label>
         <label class="setting">
-          <span><b>Daily reminder</b><i>A nudge when you open the app after this time. No notifications, no permissions.</i></span>
+          <span><b>Daily reminder</b><i>An alarm at this time. Leave empty for none.</i></span>
           <input type="time" id="reminder" value="${escapeHtml(s.reminder || '')}">
         </label>
       </section>
 
       <section class="card">
-        <h2>Feedback</h2>
-        <label class="setting toggle"><span><b>Vibration</b><i>Buzzes on every phase change so you can train without watching the screen.</i></span><input type="checkbox" id="haptics" ${s.haptics ? 'checked' : ''}></label>
-        <label class="setting toggle"><span><b>Sound cues</b><i>A tone when a rep starts and when you reach the target.</i></span><input type="checkbox" id="sound" ${s.sound ? 'checked' : ''}></label>
-        <label class="setting toggle"><span><b>Discreet mode</b><i>Renames the section to "Core Training" everywhere in the app.</i></span><input type="checkbox" id="discreet" ${s.discreet ? 'checked' : ''}></label>
+        <div class="h-row">${icon('help', 16)}<h2>Technique</h2></div>
+        <a class="btn ghost linkbtn" href="#/tutorial">${icon('play', 16)}<span>Replay the walkthrough</span></a>
+        <a class="btn ghost linkbtn" href="#/roadmap">${icon('route', 16)}<span>See all 104 weeks</span></a>
       </section>
-
-      <section class="card">
-        <h2>PE</h2>
-        <label class="setting">
-          <span><b>Units</b><i>Applies to every length and girth in the app.</i></span>
-          <select id="peUnits">
-            <option value="cm" ${pe.units === 'cm' ? 'selected' : ''}>cm</option>
-            <option value="in" ${pe.units === 'in' ? 'selected' : ''}>inches</option>
-          </select>
-        </label>
-        <label class="setting">
-          <span><b>Check-in day</b><i>Which day of the month the measurement reminder appears.</i></span>
-          <select id="measureDay">
-            ${[1, 5, 10, 15, 20, 25, 28].map((d) => `<option value="${d}" ${pe.measureDay === d ? 'selected' : ''}>${d}</option>`).join('')}
-          </select>
-        </label>
-        <label class="setting">
-          <span><b>Gallery auto-lock</b><i>How long the gallery stays open without you touching it.</i></span>
-          <select id="autoLockMin">
-            ${[1, 2, 5, 10].map((m) => `<option value="${m}" ${pe.autoLockMin === m ? 'selected' : ''}>${m} min</option>`).join('')}
-          </select>
-        </label>
-      </section>
-
-      <section class="card">
-        <h2>Privacy</h2>
-        <label class="setting toggle">
-          <span><b>Lock the app</b><i>${vault.isSet() ? 'Asks for your gallery PIN when you open NiFo.' : 'Set a gallery PIN first, under Progress then Gallery. The same PIN unlocks the app.'}</i></span>
-          <input type="checkbox" id="appLock" ${s.appLock ? 'checked' : ''} ${vault.isSet() ? '' : 'disabled'}>
-        </label>
-        <p class="fineprint">The lock is a door, not a safe: it keeps someone who picks up your phone out of the app, but your sessions and measurements are stored unencrypted like any other app's data. Only the photos are actually encrypted, and that is what the PIN is really protecting.</p>
-      </section>
-
-      <section class="card">
-        <h2>Technique</h2>
-        <a class="btn ghost linkbtn" href="#/tutorial">${icon('help', 16)}<span>Replay the walkthrough</span></a>
-      </section>
-
-      <section class="card danger">
-        <h2>Reset</h2>
-        <p class="small muted">Deletes every session, badge and level. No undo. Export a backup from the tracking screen first.</p>
-        <button class="btn danger" id="reset">Erase all data</button>
-      </section>
-
-      <p class="fineprint centre">NiFo · everything on-device</p>
     </div>`;
 
   const bind = (id, key, get = (e) => e.value) =>
@@ -532,49 +673,20 @@ function renderSettings() {
       store.setSetting(key, get(e.target));
       toast('Saved');
     });
-
   bind('inputMode', 'inputMode');
   bind('dailyTarget', 'dailyTarget', (e) => Number(e.value));
   bind('restDay', 'restDay', (e) => Number(e.value));
+
   app.querySelector('#reminder').addEventListener('change', (e) => {
     const v = e.target.value;
     store.setSetting('reminder', v);
     if (v) {
       const [h, m] = v.split(':').map(Number);
-      scheduleDaily(ALARM_KEGEL_REMINDER, h, m, 'Kegels', 'Today\u2019s session is waiting.');
+      scheduleDaily(ALARM_KEGEL_REMINDER, h, m, 'NiFo', 'Today\u2019s session is waiting.');
     } else {
       cancelAlarm(ALARM_KEGEL_REMINDER);
     }
     toast('Saved');
-  });
-  bind('haptics', 'haptics', (e) => e.checked);
-  bind('sound', 'sound', (e) => e.checked);
-  bind('discreet', 'discreet', (e) => e.checked);
-  app.querySelector('#appLock').addEventListener('change', (e) => {
-    store.setSetting('appLock', e.target.checked);
-    // Turning it on takes effect at the next launch, not mid-session, locking
-    // someone out of the screen they just enabled it on would be absurd.
-    appUnlocked = true;
-    toast(e.target.checked ? 'The app will ask for your PIN next time' : 'App lock off');
-  });
-
-  const bindPe = (id, key, get = (e) => e.value) =>
-    app.querySelector('#' + id).addEventListener('change', (e) => {
-      store.update((st) => {
-        st.pe.settings[key] = get(e.target);
-      });
-      toast('Saved');
-    });
-  bindPe('peUnits', 'units');
-  bindPe('measureDay', 'measureDay', (e) => Number(e.value));
-  bindPe('autoLockMin', 'autoLockMin', (e) => Number(e.value));
-
-  app.querySelector('#reset').addEventListener('click', () => {
-    if (confirm('Erase every session and start from level 1? This cannot be undone.')) {
-      store.reset();
-      toast('All data erased');
-      location.hash = '#/hub';
-    }
   });
 }
 
@@ -665,6 +777,8 @@ const ROUTES = {
   '#/pe/stats': () => renderStats(app),
   '#/pe/gallery': () => renderGallery(app),
   '#/pe/guide': () => renderPeGuide(app),
+  '#/pe/settings': () => renderPeSettings(app),
+  '#/kegels/settings': renderKegelSettings,
   '#/pray': () => renderPrayHome(app),
   '#/pray/run': (params) => runRule(params),
   '#/pray/stats': () => renderPrayStats(app),
@@ -676,7 +790,8 @@ const NAV = {
   hub: '#/hub', kegels: '#/kegels', track: '#/track', settings: '#/settings', guide: '#/guide',
   roadmap: '#/roadmap', review: '#/review', tutorial: '#/tutorial', pocket: '#/pocket',
   pe: '#/pe', 'pe-timer': '#/pe/timer', 'pe-measure': '#/pe/measure', 'pe-stats': '#/pe/stats',
-  'pe-gallery': '#/pe/gallery', 'pe-guide': '#/pe/guide',
+  'pe-gallery': '#/pe/gallery', 'pe-guide': '#/pe/guide', 'pe-settings': '#/pe/settings',
+  'kegel-settings': '#/kegels/settings',
   pray: '#/pray', 'pray-stats': '#/pray/stats', 'pray-prayers': '#/pray/prayers',
   'pray-settings': '#/pray/settings',
 };
@@ -700,7 +815,7 @@ function route() {
   // everywhere; only the palette and, for prayer, the type change.
   document.body.dataset.section = path.startsWith('#/pe') ? 'pe'
     : path.startsWith('#/pray') ? 'pray'
-    : ['#/kegels', '#/session', '#/track', '#/guide', '#/roadmap', '#/review', '#/pocket', '#/tutorial'].includes(path) ? 'kegels'
+    : ['#/kegels', '#/kegels/settings', '#/session', '#/track', '#/guide', '#/roadmap', '#/review', '#/pocket', '#/tutorial'].includes(path) ? 'kegels'
     : 'hub';
   const fn = ROUTES[path] || renderHub;
   fn(new URLSearchParams(query || ''));
