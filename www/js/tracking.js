@@ -146,7 +146,7 @@ export function renderTracking(mount) {
 
       <section class="card">
         <div class="h-row">${icon('medal', 16)}<h2>Personal best hold</h2></div>
-        <p class="small muted">Your ceiling, in seconds — it only ever steps up.</p>
+        <p class="small muted">Your ceiling in seconds. It only steps up.</p>
         ${bestHoldSeries.length > 1 ? lineChart(bestHoldSeries, { color: 'var(--good)' }) : '<div class="chart-empty">Not enough sessions yet</div>'}
       </section>
 
@@ -213,7 +213,7 @@ export function renderTracking(mount) {
       if (count > 0 && store.backupChangesVault(text)) {
         keepVault = !confirm(
           `This backup was made with a different gallery PIN, and there ${count === 1 ? 'is 1 photo' : `are ${count} photos`} stored on this device.\n\n` +
-            'OK: use the backup\'s PIN — the photos already here become permanently unreadable.\n' +
+            'OK: use the backup\'s PIN. The photos already here become permanently unreadable.\n' +
             'Cancel: keep this device\'s PIN, and restore everything else.'
         );
       }

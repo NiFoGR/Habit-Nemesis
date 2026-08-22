@@ -33,11 +33,35 @@ jobs:
           node tools/gen-icons.mjs --android
           npx cap sync android
 
+      - name: Use the project's fixed signing key
+        # Gradle signs debug builds with ~/.android/debug.keystore, and generates
+        # a throwaway one if it is missing. A fresh key on every CI run means every
+        # APK has a different signature, Android refuses to install it over the
+        # previous version, and the only way in is uninstall, which wipes all
+        # saved data. Shipping one committed key keeps the signature stable so
+        # updates install straight over the top.
+        run: |
+          mkdir -p ~/.android
+          cp signing/nifo-debug.keystore ~/.android/debug.keystore
+
       - name: Build the debug APK
         run: |
           chmod +x android/gradlew
           cd android
           ./gradlew assembleDebug --no-daemon
+
+      - name: Verify the APK carries the expected signature
+        # A silent signature change is the one failure that costs data, so it is
+        # checked rather than assumed.
+        run: |
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          EXPECTED=$(keytool -list -v -keystore signing/nifo-debug.keystore \
+            -storepass android 2>/dev/null | grep 'SHA256:' | head -1 | tr -d ' ')
+          ACTUAL=$(keytool -printcert -jarfile "$APK" 2>/dev/null \
+            | grep 'SHA256:' | head -1 | tr -d ' ')
+          echo "expected $EXPECTED"
+          echo "actual   $ACTUAL"
+          test -n "$ACTUAL" && test "$EXPECTED" = "$ACTUAL"
 
       - name: Name the APK after the run
         run: |

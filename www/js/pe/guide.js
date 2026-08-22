@@ -1,4 +1,4 @@
-// Technique and safety reference. Kept blunt and specific — vague warnings get
+// Technique and safety reference. Kept blunt and specific, vague warnings get
 // ignored, and the failure modes here are avoidable and well documented.
 
 import { icon } from '../icons.js';
@@ -14,7 +14,7 @@ export function renderPeGuide(mount) {
 
       <section class="card">
         <h2>What to expect</h2>
-        <p class="small muted">Traction trials: ~1.5 cm at 3 months, ~1.6 cm at 6, from 30–90 min/day. Millimetres per month, front-loaded into the first three. Pumping has no length evidence — it is girth and conditioning.</p>
+        <p class="small muted">Traction trials: ~1.5 cm at 3 months, ~1.6 cm at 6, from 30–90 min/day. Millimetres per month, front-loaded into the first three. Pumping has no length evidence. It is girth and conditioning.</p>
       </section>
 
       <section class="card">
@@ -26,7 +26,7 @@ export function renderPeGuide(mount) {
         <h2>Every session, in order</h2>
         <ol class="rules">
           <li><b>Heat first, 5–10 min.</b> Warm flannel or rice sock. Warm tissue stretches, cold tissue tears.</li>
-          <li><b>Work.</b> Stretching or pumping — one focus per session rather than both stacked.</li>
+          <li><b>Work.</b> Stretching or pumping. One focus per session, not both stacked.</li>
           <li><b>BPFSL before and after</b> on stretch days. ~+5% means it took the load.</li>
           <li><b>Cool down.</b> Normal colour and sensation before you dress.</li>
         </ol>
@@ -34,11 +34,11 @@ export function renderPeGuide(mount) {
 
       <section class="card">
         <h2>Pumping</h2>
-        <p class="small muted">Beginners: 10–20 min total, in ~10 minute sets with a full release between them, 2–3× a week. There is deliberately no intensity setting to log — a water pump has no gauge, so any number would be invented. What is real is the clock and the breaks.</p>
+        <p class="small muted">Beginners: 10–20 min total, in ~10 minute sets with a full release between them, 2–3× a week. There is deliberately no intensity to log. A water pump has no gauge, so any number would be invented. What is real is the clock and the breaks.</p>
         <ul class="rules">
           <li><b>Never pump to pain.</b> Firm pressure, not a squeeze.</li>
           <li><b>Release fully between sets</b> and let colour return before the next one.</li>
-          <li><b>Fluid-filled swelling</b> means you went too long or too hard — take days off.</li>
+          <li><b>Fluid-filled swelling</b> means you went too long or too hard. Take days off.</li>
         </ul>
       </section>
 
@@ -47,7 +47,7 @@ export function renderPeGuide(mount) {
         <ul class="rules danger-list">
           <li>Numbness, or skin that feels cold</li>
           <li>Dark red, purple or blue discolouration that does not fade within a few minutes</li>
-          <li>Petechiae — small red or purple spots under the skin</li>
+          <li>Petechiae, small red or purple spots under the skin</li>
           <li>Blisters, or a fluid-filled ring of swelling</li>
           <li>Sharp pain at any point, or an ache that is still there the next day</li>
         </ul>
@@ -64,7 +64,7 @@ export function renderPeGuide(mount) {
         <p class="small muted">Five numbers, every check-in: BP flaccid stretched, BP erect, NBP erect, girth at the thickest point, girth at the very base. The check-in walks you through each one.</p>
         <ul class="rules">
           <li><b>Same time of day</b>, same erection quality.</li>
-          <li><b>Bone-pressed</b> means the ruler is pushed into the pubic bone — same pressure every time, or the number moves on its own.</li>
+          <li><b>Bone-pressed</b> means the ruler is pushed into the pubic bone. Same pressure every time, or the number moves on its own.</li>
           <li><b>Same two girth spots</b>: the thickest point, and hard against the base.</li>
           <li><b>Once a month.</b> Weekly is just noise.</li>
         </ul>

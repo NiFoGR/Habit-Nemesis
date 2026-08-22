@@ -166,7 +166,7 @@ export function renderTimer(mount, opts = {}) {
     const planned = doneMs + cfg.minutes * 60000;
     const goal = pe.DAILY_STRETCH_GOAL_MS;
     const pct = Math.round((planned / goal) * 100);
-    if (doneMs > 0) return `${(doneMs / 3600000).toFixed(1)}h already today — this takes you to ${(planned / 3600000).toFixed(1)}h of 2h (${pct}%).`;
+    if (doneMs > 0) return `${(doneMs / 3600000).toFixed(1)}h already today. This takes you to ${(planned / 3600000).toFixed(1)}h of 2h (${pct}%).`;
     return `${pct}% of today's two-hour target.`;
   }
 
@@ -251,7 +251,7 @@ export function renderTimer(mount, opts = {}) {
     };
 
     mount.querySelector('#pause').addEventListener('click', () => {
-      if (breakEndsAt) return; // breaks are not pausable — you are meant to release
+      if (breakEndsAt) return; // breaks are not pausable, you are meant to release
       if (pausedRemaining == null) {
         pausedRemaining = Math.max(0, endsAt - Date.now());
         cancelAlarm(ALARM_SESSION);
@@ -306,7 +306,7 @@ export function renderTimer(mount, opts = {}) {
           el.state.textContent = 'remaining';
         } else {
           el.clock.textContent = fmtClock(left);
-          el.state.textContent = 'break — release';
+          el.state.textContent = 'break, release';
           el.ring.style.strokeDashoffset = String(CIRC * (1 - left / 60000));
           return;
         }
@@ -339,7 +339,7 @@ export function renderTimer(mount, opts = {}) {
         haptic('level');
         beep(880, 200);
         notify(`${def().label} done`, `${cfg.minutes} minutes complete.`);
-        el.state.textContent = 'done — finish when ready';
+        el.state.textContent = 'done, finish when ready';
         el.player.classList.add('done');
       }
 
@@ -365,7 +365,7 @@ export function renderTimer(mount, opts = {}) {
       if (el.kegelBar) {
         el.kegelBar.style.width = `${(1 - left / hold) * 100}%`;
         el.kegelBar.className = kegelPhase;
-        el.kegelLabel.textContent = kegelPhase === 'hold' ? `Squeeze — ${(left / 1000).toFixed(0)}s` : `Release — ${(left / 1000).toFixed(0)}s`;
+        el.kegelLabel.textContent = kegelPhase === 'hold' ? `Squeeze ${(left / 1000).toFixed(0)}s` : `Release ${(left / 1000).toFixed(0)}s`;
         el.kegelCount.textContent = `${kegelCycles} cycle${kegelCycles === 1 ? '' : 's'}`;
       }
     }
@@ -445,7 +445,7 @@ export function renderTimer(mount, opts = {}) {
       const v = raw == null ? null : pe.fromDisplayLength(raw, s.units);
       const verdict = pe.bpfslVerdict(cfg.bpfslBefore, v);
       mount.querySelector('#verdict').innerHTML = verdict
-        ? `<div class="notice ${verdict.level === 'good' ? 'good' : 'warn'}">${verdict.pct.toFixed(1)}% — ${escapeHtml(verdict.text)}</div>`
+        ? `<div class="notice ${verdict.level === 'good' ? 'good' : 'warn'}">${verdict.pct.toFixed(1)}%. ${escapeHtml(verdict.text)}</div>`
         : '';
     });
 

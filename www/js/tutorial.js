@@ -4,7 +4,7 @@
 // Written for someone who has never done this and does not know what a reverse
 // kegel is. Every instruction is a physical thing you can check on yourself,
 // there is no anatomy vocabulary that is not immediately explained, and every
-// idea gets practised before the next one arrives — reading about a muscle you
+// idea gets practised before the next one arrives, reading about a muscle you
 // cannot see does not teach you to find it.
 
 import * as store from './store.js';
@@ -46,7 +46,7 @@ const STEPS = [
     title: 'What you are training',
     body: `
       <p>There is a sheet of muscle slung across the bottom of your pelvis, like a hammock between your pubic bone at the front and your tailbone at the back. That sheet is the <b>pelvic floor</b>.</p>
-      <p>It is the muscle you use to stop yourself passing wind, and the one that twitches at the end of a pee. You already own it and already use it — you have just never trained it on purpose.</p>
+      <p>It is the muscle you use to stop yourself passing wind, and the one that twitches at the end of a pee. You already own it and already use it. You have just never trained it on purpose.</p>
       ${sling('none')}
       <p class="small muted">Training it improves bladder control, erection firmness and ejaculatory control. It is a muscle: it responds to load and rest exactly like any other.</p>`,
   },
@@ -59,7 +59,7 @@ const STEPS = [
         <li>Imagine you are about to <b>pass wind in a quiet room</b> and need to stop it.</li>
         <li>Tighten to stop it.</li>
       </ol>
-      <p>That squeeze — right at the back, between your legs — is the pelvic floor. That is the muscle.</p>
+      <p>That squeeze, right at the back between your legs, is the pelvic floor. That is the muscle.</p>
       <p class="warn-inline">Do not practise by stopping your urine mid-stream. It is a useful one-off test but a bad habit, and doing it regularly causes bladder problems.</p>`,
     practice: { kind: 'find', label: 'Squeeze and hold it', ms: 3000, reps: 1, prompt: 'Hold the pad while you hold that squeeze.' },
   },
@@ -71,11 +71,11 @@ const STEPS = [
       <ul class="rules">
         <li><b>Belly still?</b> If your hand rises or the stomach hardens, you are bracing your abs, not lifting the floor.</li>
         <li><b>Buttocks still?</b> If you shift in the seat, you are clenching your glutes.</li>
-        <li><b>Thighs still?</b> Same — they should stay completely soft.</li>
+        <li><b>Thighs still?</b> Same. They stay completely soft.</li>
         <li><b>Still breathing?</b> If you held your breath, you were straining rather than contracting.</li>
       </ul>
       <p>If any of those moved, ease off to about half effort and try again. A quieter contraction that is <i>the right muscle</i> beats a hard one that is the wrong three.</p>`,
-    practice: { kind: 'find', label: 'Hand on belly — squeeze', ms: 4000, reps: 1, prompt: 'Belly, buttocks and thighs stay still. Keep breathing.' },
+    practice: { kind: 'find', label: 'Hand on belly, squeeze', ms: 4000, reps: 1, prompt: 'Belly, buttocks and thighs stay still. Keep breathing.' },
   },
   {
     id: 'kegel',
@@ -83,9 +83,9 @@ const STEPS = [
     body: `
       <p>A kegel is that squeeze done properly. The direction matters: it is a lift <b>up and in</b>, not a push.</p>
       ${sling('up')}
-      <p>Think of the hammock lifting towards your belly button. Squeeze, hold, then let go <b>completely</b> — the release is half the exercise, and letting go slowly is a skill in itself.</p>
+      <p>Think of the hammock lifting towards your belly button. Squeeze, hold, then let go <b>completely</b>. The release is half the exercise, and letting go slowly is a skill in itself.</p>
       <p class="small muted">In a session you will do two kinds: short sharp ones (quick flicks) for the fast-reacting fibres, and longer holds for stamina. Both matter, so every session has both.</p>`,
-    practice: { kind: 'kegel', label: 'Lift up and in', ms: 4000, reps: 3, prompt: 'Three of them. Full release between each — count to three before the next.' },
+    practice: { kind: 'kegel', label: 'Lift up and in', ms: 4000, reps: 3, prompt: 'Three of them. Full release between each. Count to three.' },
   },
   {
     id: 'reverse',
@@ -95,12 +95,12 @@ const STEPS = [
       ${sling('down')}
       <p>Ways to find it:</p>
       <ul class="rules">
-        <li><b>Breathe in slowly and deeply</b>, letting your belly widen. Feel the floor sink as the air comes in. That sinking <i>is</i> the movement — a reverse kegel is doing it on purpose.</li>
+        <li><b>Breathe in slowly and deeply</b>, letting your belly widen. Feel the floor sink as the air comes in. That sinking <i>is</i> the movement. A reverse kegel is doing it on purpose.</li>
         <li>Or: the very gentle feeling of <b>starting to pee</b>, or of blowing up a balloon slowly.</li>
       </ul>
       <p class="warn-inline">Gentle only. This is a lengthening and a letting-go, never a hard bear-down or a strain.</p>
-      <p><b>Why bother:</b> a muscle that can only tighten and never fully release ends up permanently tight, and a permanently tight pelvic floor causes the same symptoms as a weak one — worse control, aching, worse erections. More kegels make that <i>worse</i>. Reverse kegels are the counterweight, which is why every session ends with them.</p>`,
-    practice: { kind: 'reverse', label: 'Breathe in — let it drop', ms: 5000, reps: 2, prompt: 'Do not squeeze anything. Breathe in and let the floor sink and soften.' },
+      <p><b>Why bother:</b> a muscle that can only tighten and never fully release ends up permanently tight, and a permanently tight pelvic floor causes the same symptoms as a weak one: worse control, aching, worse erections. More kegels make that <i>worse</i>. Reverse kegels are the counterweight, which is why every session ends with them.</p>`,
+    practice: { kind: 'reverse', label: 'Breathe in, let it drop', ms: 5000, reps: 2, prompt: 'Do not squeeze anything. Breathe in and let the floor sink and soften.' },
   },
   {
     id: 'session',
@@ -113,7 +113,7 @@ const STEPS = [
         <li><b>Release.</b> Reverse kegels and breathing to finish.</li>
       </ol>
       <p>Two sessions a day, about four minutes each. The app paces you and counts.</p>
-      <p><b>Press and hold the screen while you squeeze, and let go when you let go.</b> That is how it measures every single rep instead of taking your word for it — and why the quality score means anything.</p>
+      <p><b>Press and hold the screen while you squeeze, and let go when you let go.</b> That is how it measures every single rep instead of taking your word for it, and why the quality score means anything.</p>
       <p class="small muted">Prefer not to hold the phone? Settings → Input mode → Hands-free just paces you instead.</p>`,
   },
   {
@@ -173,7 +173,7 @@ function practicePad(host, cfg, onDone) {
     const p = held / cfg.ms;
     setRing(p);
     big.textContent = (held / 1000).toFixed(1);
-    small.textContent = p >= 1 ? 'good — let go' : `of ${(cfg.ms / 1000).toFixed(0)}s`;
+    small.textContent = p >= 1 ? 'good, let go' : `of ${(cfg.ms / 1000).toFixed(0)}s`;
     if (p >= 1 && p < 1.04) haptic('hit');
     if (held > cfg.ms * 2) up();
   }
@@ -210,7 +210,7 @@ function practicePad(host, cfg, onDone) {
       pad.classList.add('done');
       big.innerHTML = icon('check', 26);
       small.textContent = 'got it';
-      msg.textContent = held >= cfg.ms * 0.8 ? 'That is the movement. Next.' : 'Shorter than the target — fine for now, the plan builds it up.';
+      msg.textContent = held >= cfg.ms * 0.8 ? 'That is the movement. Next.' : 'Shorter than the target. The plan builds it up.';
       onDone();
       return;
     }
@@ -233,7 +233,7 @@ function practicePad(host, cfg, onDone) {
 /**
  * @param {HTMLElement} mount
  * @param {object} opts
- * @param {string} [opts.only] render a single step by id — used for the
+ * @param {string} [opts.only] render a single step by id, used for the
  *        "what is a reverse kegel?" link, which should not replay everything
  * @param {()=>void} [opts.onExit]
  */

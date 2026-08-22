@@ -81,7 +81,7 @@ export function captureWithGhost(mount, ghostBlob, onDone, onCancel) {
 
     const vid = mount.querySelector('#vid');
     mount.querySelector('#shoot').addEventListener('click', () => {
-      if (!stream) return toast('No camera — choose a file instead');
+      if (!stream) return toast('No camera. Choose a file instead.');
       const c = document.createElement('canvas');
       c.width = vid.videoWidth;
       c.height = vid.videoHeight;
@@ -105,7 +105,7 @@ export function captureWithGhost(mount, ghostBlob, onDone, onCancel) {
       // screen has already been replaced there is nothing to say it on.
       if (mine !== generation) return;
       const stage = mount.querySelector('.cam-stage');
-      if (stage) stage.innerHTML = '<div class="cam-fallback">Camera unavailable — use "Choose a file instead".</div>';
+      if (stage) stage.innerHTML = '<div class="cam-fallback">Camera unavailable. Choose a file instead.</div>';
     }
   }
 
@@ -210,7 +210,7 @@ export function captureWithGhost(mount, ghostBlob, onDone, onCancel) {
     }
 
     /** Renders exactly what the stage shows, so what you aligned is what is
-     *  stored — no transform to reapply later, and the compare view is honest. */
+     *  stored, no transform to reapply later, and the compare view is honest. */
     async function bake(stageW, stageH) {
       const scale = Math.min(OUT_MAX / stageW, OUT_MAX / stageH, 3);
       const w = Math.round(stageW * scale);

@@ -1,5 +1,5 @@
 // Inline SVG icon set. One visual language: 24px grid, 1.75 stroke, round caps,
-// currentColor. No emoji — they render differently on every device and cannot
+// currentColor. No emoji, they render differently on every device and cannot
 // take the app's colours.
 
 const svg = (body, size) =>
@@ -46,6 +46,10 @@ const PATHS = {
   home: '<path d="M4 11l8-7 8 7"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/>',
   key: '<circle cx="8" cy="14" r="4"/><path d="M11 11l9-9M17 5l2 2M14 8l2 2"/>',
   book: '<path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H19v16H5.5A1.5 1.5 0 0 0 4 20.5z"/><path d="M4 17.5A1.5 1.5 0 0 1 5.5 16H19"/>',
+  // Prayer: the two slots, and a link that leaves the app.
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/>',
+  moon: '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>',
+  external: '<path d="M14 4h6v6"/><path d="M20 4l-8 8"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
 };
 
 /** icon('back') → inline SVG string. */
@@ -53,7 +57,7 @@ export function icon(name, size = 20) {
   return svg(PATHS[name] || PATHS.target, size);
 }
 
-/** The NiFo mark itself — the same arc-and-dot as the launcher icon. */
+/** The NiFo mark itself, the same arc-and-dot as the launcher icon. */
 export function logoMark(size = 26) {
   return `<svg width="${size}" height="${size}" viewBox="0 0 40 40" fill="none" aria-hidden="true" class="logo-mark">
     <defs><linearGradient id="nifoG" x1="0" y1="0" x2="1" y2="1">

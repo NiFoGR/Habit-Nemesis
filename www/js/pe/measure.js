@@ -13,8 +13,8 @@ import { captureWithGhost } from './camera.js';
 import { icon } from '../icons.js';
 import { escapeHtml, toast, haptic } from '../ui.js';
 
-/* Schematic diagrams. Deliberately abstract — a shaft as a rounded bar, the
-   pubic bone as a wall, a tape as a ring — so they read instantly at phone
+/* Schematic diagrams. Deliberately abstract, a shaft as a rounded bar, the
+   pubic bone as a wall, a tape as a ring, so they read instantly at phone
    size and are unambiguous about *where* to measure. */
 const DIAGRAMS = {
   lengthFromBone: (label) => `
@@ -174,8 +174,8 @@ export function renderMeasure(mount) {
       let msg = '';
       if (input.value !== '' && Number.isFinite(n) && n > 0) {
         const cm = toCm(input.value);
-        if (cm < MIN_CM || cm > MAX_CM) msg = `That is outside a plausible range — check the number and that you are in ${units}.`;
-        else if (last && last[def.key] && Math.abs(cm - last[def.key]) > 1.5) msg = 'Over 1.5 cm from last month. Real change is millimetres — double-check the method.';
+        if (cm < MIN_CM || cm > MAX_CM) msg = `Outside a plausible range. Check the number and the units.`;
+        else if (last && last[def.key] && Math.abs(cm - last[def.key]) > 1.5) msg = 'Over 1.5 cm from last month. Real change is millimetres. Check the method.';
       }
       err.textContent = msg;
       err.className = msg.startsWith('That is outside') ? 'err-line bad' : 'err-line warn';

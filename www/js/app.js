@@ -14,12 +14,16 @@ import { renderMeasure } from './pe/measure.js';
 import { renderStats } from './pe/stats.js';
 import { renderGallery, leaveGallery } from './pe/gallery.js';
 import { renderPeGuide } from './pe/guide.js';
+import { renderPrayHome, renderPrayStats, renderMyPrayers, renderPraySettings } from './pray/home.js';
+import { startRule } from './pray/session.js';
+import * as prayProgram from './pray/program.js';
+import { RULES as PRAY_RULES } from './pray/prayers.js';
 import { renderTutorial } from './tutorial.js';
 import { renderRoadmap } from './roadmap.js';
 import { renderPocket } from './pocket.js';
 import { renderReview, reviewDue } from './review.js';
 import * as vault from './pe/vault.js';
-import { scheduleDaily, cancelAlarm, ALARM_KEGEL_REMINDER } from './native.js';
+import { scheduleDaily, cancelAlarm, ALARM_KEGEL_REMINDER, ALARM_PRAY_MORNING, ALARM_PRAY_EVENING } from './native.js';
 
 const app = document.getElementById('app');
 let activeSession = null;
@@ -76,13 +80,29 @@ const FEATURES = [
       return sparkline(store.get().pe.measurements.map((m) => m.bpel), { color: 'var(--violet)' });
     },
   },
+  {
+    id: 'pray',
+    icon: 'book',
+    route: '#/pray',
+    name: () => 'Prayer',
+    blurb: 'Morning and night, both kept',
+    pills() {
+      const today = prayProgram.dayState();
+      const st = prayProgram.streak();
+      return [
+        { text: today.complete ? 'Both kept' : `${today.kept}/2 today`, done: today.complete },
+        st ? { text: `${st}d streak`, ghost: true } : null,
+      ];
+    },
+    spark: () => '',
+  },
 ];
 
 /* ---------------- Today ----------------
    The hub used to be a menu: two tiles and a list of things that did not exist
    yet. A menu makes you decide what to do before you can do anything, which is
-   the moment a habit gets dropped. This answers the question instead — here is
-   what is outstanding today, here is the one button that starts it. */
+   the moment a habit gets dropped. This answers the question instead: here is
+   what is outstanding today, and the one button that starts it. */
 
 /** Everything still owed today, across both features, most urgent first. */
 function todayTasks(state) {
@@ -119,6 +139,21 @@ function todayTasks(state) {
       href: '#/pe/timer?type=stretch',
       cta: 'Stretch',
       frac: Math.min(todayStretch / goal, 1),
+    });
+  }
+
+  for (const slot of prayProgram.SLOTS) {
+    const kept = prayProgram.dayState()[slot];
+    out.push({
+      id: `pray-${slot}`,
+      icon: slot === 'morning' ? 'sun' : 'moon',
+      label: PRAY_RULES[slot].label,
+      detail: kept
+        ? `Kept ${new Date(kept).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
+        : `${slot === 'morning' ? state.pray.settings.morningAt : state.pray.settings.eveningAt} · ${prayProgram.minutes(slot)} min`,
+      done: !!kept,
+      href: `#/pray/run?slot=${slot}`,
+      cta: PRAY_RULES[slot].label,
     });
   }
 
@@ -162,8 +197,8 @@ function renderHub() {
         ${ringSvg(tasks.length ? doneCount / tasks.length : 1, `${doneCount}/${tasks.length}`, 'today', { size: 96 })}
       </div>
 
-      ${reviewDue(state) ? `<a class="notice action" href="#/review">${icon('calendar', 16)} Your week is ready — see how it went.</a>` : ''}
-      ${!state.settings.tutorialDone ? `<a class="notice action" href="#/tutorial">${icon('help', 16)} Start here — how to actually do a kegel.</a>` : ''}
+      ${reviewDue(state) ? `<a class="notice action" href="#/review">${icon('calendar', 16)} Your week is ready.</a>` : ''}
+      ${!state.settings.tutorialDone ? `<a class="notice action" href="#/tutorial">${icon('help', 16)} Start here. How to do a kegel.</a>` : ''}
 
       <div class="task-list">
         ${tasks.map((t) => `<a class="task ${t.done ? 'done' : ''}" href="${t.href}">
@@ -173,7 +208,7 @@ function renderHub() {
         </a>`).join('')}
       </div>
 
-      ${next ? `<a class="btn primary big linkbtn" href="${next.href}">${icon('play', 18)}<span>${escapeHtml(next.cta)} — ${escapeHtml(next.label)}</span></a>` : ''}
+      ${next ? `<a class="btn primary big linkbtn" href="${next.href}">${icon('play', 18)}<span>${escapeHtml(next.cta)}</span></a>` : ''}
 
       <h3 class="sec-head">Sections</h3>
       <div class="feature-grid">
@@ -209,7 +244,7 @@ function renderHub() {
 
 function sessionOutline(level, type) {
   const def = program.levelDef(level);
-  if (type === 'release') return ['Diaphragmatic breathing', 'Reverse kegels — no strengthening today'];
+  if (type === 'release') return ['Diaphragmatic breathing', 'Reverse kegels, no strengthening'];
   if (type === 'test') return ['One maximum hold, to failure', 'Sets your strength baseline'];
   const out = [
     `${def.flicks.reps} quick flicks · 1s on, 2s off`,
@@ -255,7 +290,7 @@ function renderKegels() {
 
       <div class="today ${plan.type}">
         <div class="today-left">
-          <h2>${escapeHtml(plan.type === 'release' ? 'Release day' : plan.type === 'test' ? 'Max hold test' : `Week ${plan.level} — ${def.name}`)}</h2>
+          <h2>${escapeHtml(plan.type === 'release' ? 'Release day' : plan.type === 'test' ? 'Max hold test' : `Week ${plan.level}, ${def.name}`)}</h2>
           <p class="muted small">${st ? `${st}d streak` : 'No streak yet'}${weekAvg != null ? ` · avg ${weekAvg} this week` : ''}</p>
         </div>
         ${ringSvg(plan.target ? Math.min(plan.doneToday / plan.target, 1) : 0, `${plan.doneToday}/${plan.target}`, 'today', { size: 96 })}
@@ -264,7 +299,7 @@ function renderKegels() {
       ${!state.settings.tutorialDone ? `<a class="notice action" href="#/tutorial">${icon('help', 16)} Never done these before? Two minutes, and you will know exactly what to do.</a>` : ''}
       ${reviewDue(state) ? `<a class="notice action" href="#/review">${icon('calendar', 16)} Last week is ready to look at.</a>` : ''}
       ${reminderNotice(state, plan)}
-      ${plan.deload ? '<div class="notice warn">Reduced targets active — ease through these.</div>' : ''}
+      ${plan.deload ? '<div class="notice warn">Reduced targets. Ease through these.</div>' : ''}
       ${plan.complete ? '<div class="notice good">Done for today.</div>' : ''}
 
       <button class="btn primary big" id="start">${icon('play', 18)}<span>${plan.complete ? 'Bonus session' : 'Start'}</span></button>
@@ -339,6 +374,14 @@ function runSession(params) {
   });
 }
 
+function runRule(params) {
+  const slot = prayProgram.SLOTS.includes(params?.get?.('slot')) ? params.get('slot') : 'morning';
+  activeSession = startRule(app, slot, () => {
+    activeSession = null;
+    location.hash = '#/pray';
+  });
+}
+
 /* ---------------- guide ---------------- */
 
 function renderGuide() {
@@ -354,15 +397,15 @@ function renderGuide() {
 
       <section class="card">
         <h2>A kegel, in one paragraph</h2>
-        <p class="small muted">There is a sheet of muscle slung across the bottom of your pelvis — the <b>pelvic floor</b>. It is what you tighten to stop yourself passing wind. A kegel is squeezing it deliberately: a lift <b>up and in</b>, towards your belly button. Then a full release. That is the whole movement.</p>
-        <p class="small muted">You are doing it right when your <b>belly, buttocks and thighs stay completely still</b> and you are <b>still breathing</b>. If any of those move, ease off to half effort — a smaller contraction of the right muscle beats a hard squeeze of the wrong three.</p>
+        <p class="small muted">There is a sheet of muscle slung across the bottom of your pelvis, the <b>pelvic floor</b>. It is what you tighten to stop yourself passing wind. A kegel is squeezing it deliberately: a lift <b>up and in</b>, towards your belly button. Then a full release. That is the whole movement.</p>
+        <p class="small muted">You are doing it right when your <b>belly, buttocks and thighs stay completely still</b> and you are <b>still breathing</b>. If any of those move, ease off to half effort. a smaller contraction of the right muscle beats a hard squeeze of the wrong three.</p>
         <p class="warn-inline">Don't practise by stopping your urine mid-stream. Useful once as a test, a bad habit as training.</p>
       </section>
 
       <section class="card">
         <h2>A reverse kegel, in one paragraph</h2>
-        <p class="small muted"><b>It is the exact opposite of a kegel.</b> Instead of lifting the floor up and in, you let it drop down and out. The easiest way to find it: breathe in slowly and let your belly widen — feel the floor sink as the air comes in. Doing that sinking on purpose <i>is</i> a reverse kegel. Gently. It is a lengthening, never a strain or a hard push.</p>
-        <p class="small muted">It matters because a muscle that only ever tightens ends up permanently tight, and a permanently tight pelvic floor causes the same problems as a weak one — and more kegels make it worse. That is why every session finishes with them.</p>
+        <p class="small muted"><b>It is the exact opposite of a kegel.</b> Instead of lifting the floor up and in, you let it drop down and out. The easiest way to find it: breathe in slowly and let your belly widen, feeling the floor sink as the air comes in. Doing that sinking on purpose <i>is</i> a reverse kegel. Gently. It is a lengthening, never a strain or a hard push.</p>
+        <p class="small muted">It matters because a muscle that only ever tightens ends up permanently tight, and a permanently tight pelvic floor causes the same problems as a weak one, and more kegels make it worse. That is why every session finishes with them.</p>
         <a class="btn ghost linkbtn" href="#/tutorial?step=reverse">${icon('help', 16)}<span>Show me, with practice</span></a>
       </section>
 
@@ -380,7 +423,7 @@ function renderGuide() {
 
       <section class="card">
         <h2>Timeline</h2>
-        <p class="small muted">First changes around weeks 4–6, most of it between 8 and 12. Nothing you do in one session is visible — that's what the streak is for. The plan itself runs two years.</p>
+        <p class="small muted">First changes around weeks 4–6, most of it between 8 and 12. Nothing in one session is visible. That is what the streak is for. The plan itself runs two years.</p>
       </section>
 
       <section class="card">
@@ -464,7 +507,7 @@ function renderSettings() {
       <section class="card">
         <h2>Privacy</h2>
         <label class="setting toggle">
-          <span><b>Lock the app</b><i>${vault.isSet() ? 'Asks for your gallery PIN when you open NiFo.' : 'Set a gallery PIN first — Progress → Gallery. The same PIN unlocks the app.'}</i></span>
+          <span><b>Lock the app</b><i>${vault.isSet() ? 'Asks for your gallery PIN when you open NiFo.' : 'Set a gallery PIN first, under Progress then Gallery. The same PIN unlocks the app.'}</i></span>
           <input type="checkbox" id="appLock" ${s.appLock ? 'checked' : ''} ${vault.isSet() ? '' : 'disabled'}>
         </label>
         <p class="fineprint">The lock is a door, not a safe: it keeps someone who picks up your phone out of the app, but your sessions and measurements are stored unencrypted like any other app's data. Only the photos are actually encrypted, and that is what the PIN is really protecting.</p>
@@ -477,7 +520,7 @@ function renderSettings() {
 
       <section class="card danger">
         <h2>Reset</h2>
-        <p class="small muted">Deletes every session, badge and level. There is no undo — export a backup from the tracking screen first.</p>
+        <p class="small muted">Deletes every session, badge and level. No undo. Export a backup from the tracking screen first.</p>
         <button class="btn danger" id="reset">Erase all data</button>
       </section>
 
@@ -509,7 +552,7 @@ function renderSettings() {
   bind('discreet', 'discreet', (e) => e.checked);
   app.querySelector('#appLock').addEventListener('change', (e) => {
     store.setSetting('appLock', e.target.checked);
-    // Turning it on takes effect at the next launch, not mid-session — locking
+    // Turning it on takes effect at the next launch, not mid-session, locking
     // someone out of the screen they just enabled it on would be absurd.
     appUnlocked = true;
     toast(e.target.checked ? 'The app will ask for your PIN next time' : 'App lock off');
@@ -538,7 +581,7 @@ function renderSettings() {
 /* ---------------- app lock ----------------
    Reuses the gallery PIN rather than inventing a second one: two PINs for one
    app is how people end up writing them down. Unlocking here also unlocks the
-   vault, which is the behaviour you want — the alternative is being asked for
+   vault, which is the behaviour you want. The alternative is being asked for
    the same PIN twice in a row on the way to the gallery. */
 
 let appUnlocked = false;
@@ -622,6 +665,11 @@ const ROUTES = {
   '#/pe/stats': () => renderStats(app),
   '#/pe/gallery': () => renderGallery(app),
   '#/pe/guide': () => renderPeGuide(app),
+  '#/pray': () => renderPrayHome(app),
+  '#/pray/run': (params) => runRule(params),
+  '#/pray/stats': () => renderPrayStats(app),
+  '#/pray/prayers': () => renderMyPrayers(app),
+  '#/pray/settings': () => renderPraySettings(app),
 };
 
 const NAV = {
@@ -629,6 +677,8 @@ const NAV = {
   roadmap: '#/roadmap', review: '#/review', tutorial: '#/tutorial', pocket: '#/pocket',
   pe: '#/pe', 'pe-timer': '#/pe/timer', 'pe-measure': '#/pe/measure', 'pe-stats': '#/pe/stats',
   'pe-gallery': '#/pe/gallery', 'pe-guide': '#/pe/guide',
+  pray: '#/pray', 'pray-stats': '#/pray/stats', 'pray-prayers': '#/pray/prayers',
+  'pray-settings': '#/pray/settings',
 };
 
 let lastHash = '';
@@ -646,6 +696,12 @@ function route() {
   if (lockActive()) return renderLock();
 
   const [path, query] = location.hash.split('?');
+  // One token set per section, swapped on the body. The shell stays the same
+  // everywhere; only the palette and, for prayer, the type change.
+  document.body.dataset.section = path.startsWith('#/pe') ? 'pe'
+    : path.startsWith('#/pray') ? 'pray'
+    : ['#/kegels', '#/session', '#/track', '#/guide', '#/roadmap', '#/review', '#/pocket', '#/tutorial'].includes(path) ? 'kegels'
+    : 'hub';
   const fn = ROUTES[path] || renderHub;
   fn(new URLSearchParams(query || ''));
   if (path !== '#/session') window.scrollTo(0, 0);
@@ -665,7 +721,7 @@ document.addEventListener('visibilitychange', () => {
     if (lockActive()) route();
     return;
   }
-  // Backgrounding re-arms the app lock — that is the whole point of it. A
+  // Backgrounding re-arms the app lock, that is the whole point of it. A
   // session in progress is the exception: a timer running against a real
   // contraction must not be thrown away because you glanced at a message.
   // Note this is independent of the vault's own idle auto-lock, so a gallery
@@ -683,6 +739,11 @@ window.addEventListener('hashchange', route);
 
 if (!location.hash) location.hash = '#/hub';
 route();
+
+// The prayer reminders are the only alarms that must survive a reinstall of the
+// app's own state, so they are re-armed from settings on every launch rather
+// than only when the times are edited.
+prayProgram.syncAlarms();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));

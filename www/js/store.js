@@ -1,4 +1,4 @@
-// Persistence layer. Everything lives on-device in localStorage — no accounts,
+// Persistence layer. Everything lives on-device in localStorage, no accounts,
 // no network, nothing leaves the phone.
 
 import { toast } from './ui.js';
@@ -55,6 +55,23 @@ function blank() {
       prs: { sessionMs: 0, weekMs: 0, bpel: 0, eg: 0, bpfsl: 0, streak: 0 },
       vault: null, // { salt, iv, check } once a gallery PIN is set
     },
+
+    // Third feature: the prayer rule. Morning and night are both required, so
+    // unlike the other features there is no target to configure, only whether
+    // each of the two was kept.
+    pray: {
+      settings: {
+        lang: 'both', // 'en' | 'el' | 'both'
+        morningAt: '07:00',
+        eveningAt: '22:00',
+        remind: true,
+        largeText: false,
+      },
+      days: {}, // dayKey -> { morning: ts|null, evening: ts|null }
+      custom: [], // prayers you added: { id, slot, title, el, en }
+      streak: 0,
+      best: 0,
+    },
   };
 }
 
@@ -65,7 +82,7 @@ function blank() {
    coerced to the type and range it is supposed to be, before anything renders
    it. Unknown keys are dropped rather than carried along. */
 
-/** Clamping is right for settings — pull a silly value back into range. */
+/** Clamping is right for settings, pull a silly value back into range. */
 const num = (v, lo = -1e9, hi = 1e9) => {
   const n = Number(v);
   return Number.isFinite(n) ? Math.min(Math.max(n, lo), hi) : null;
@@ -88,6 +105,14 @@ const arr = (v, max) => (Array.isArray(v) ? v.slice(0, max) : []);
 const dateKey = (v) => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : dayKey());
 const id = (v, prefix) => (typeof v === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(v) ? v : `${prefix}${Math.random().toString(36).slice(2)}`);
 const b64 = (v) => (typeof v === 'string' && /^[A-Za-z0-9+/=]{1,4096}$/.test(v) ? v : null);
+/** Reminder times end up as arguments to Android's alarm scheduler, so the
+ *  shape passing is not enough: "99:99" matches HH:MM and then asks for hour 99.
+ *  The range has to be checked as well. */
+const timeStr = (v, dflt = '') => {
+  if (typeof v !== 'string' || !/^\d{2}:\d{2}$/.test(v)) return dflt;
+  const [h, m] = v.split(':').map(Number);
+  return h <= 23 && m <= 59 ? v : dflt;
+};
 
 // Plausible human range in cm. Outside it the value is a typo, a unit mix-up
 // or junk, and keeping it would corrupt every trend and projection.
@@ -196,7 +221,7 @@ function hydrate(saved) {
       discreet: bool(ss.discreet),
       restDay: int(ss.restDay, 0, 6, base.settings.restDay),
       dailyTarget: int(ss.dailyTarget, 1, 3, base.settings.dailyTarget),
-      reminder: /^\d{2}:\d{2}$/.test(ss.reminder) ? ss.reminder : '',
+      reminder: timeStr(ss.reminder),
       appLock: bool(ss.appLock),
       tutorialDone: bool(ss.tutorialDone),
       weeklyReviewSeen: /^\d{4}-\d{2}-\d{2}$/.test(ss.weeklyReviewSeen) ? ss.weeklyReviewSeen : '',
@@ -226,7 +251,7 @@ function hydrate(saved) {
         stretchMin: int(ps.stretchMin, 1, 180, base.pe.settings.stretchMin),
         pumpMin: int(ps.pumpMin, 1, 120, base.pe.settings.pumpMin),
         kegelDuringPump: ps.kegelDuringPump !== false,
-        reminder: /^\d{2}:\d{2}$/.test(ps.reminder) ? ps.reminder : '',
+        reminder: timeStr(ps.reminder),
         measureDay: int(ps.measureDay, 1, 28, base.pe.settings.measureDay),
         autoLockMin: int(ps.autoLockMin, 1, 10, base.pe.settings.autoLockMin),
         safetyAck: bool(ps.safetyAck),
@@ -250,6 +275,48 @@ function hydrate(saved) {
         ? { salt: b64(vault.salt), iv: b64(vault.iv), check: b64(vault.check) }
         : null,
     },
+    pray: cleanPray(saved.pray, base.pray),
+  };
+}
+
+/** The prayer slice. `days` is a map rather than a list because the only
+ *  question ever asked of it is "was this day kept", and a map answers that
+ *  without a scan. Keys are validated as dates so a hostile file cannot put
+ *  arbitrary strings into the object. */
+function cleanPray(sp, base) {
+  const src = sp && typeof sp === 'object' ? sp : {};
+  const ps = src.settings && typeof src.settings === 'object' ? src.settings : {};
+
+  const days = {};
+  const raw = src.days && typeof src.days === 'object' ? src.days : {};
+  for (const [k, v] of Object.entries(raw).slice(0, 20000)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !v || typeof v !== 'object') continue;
+    const morning = num(v.morning, 0, 4e12);
+    const evening = num(v.evening, 0, 4e12);
+    if (morning == null && evening == null) continue;
+    days[k] = { morning: morning ?? null, evening: evening ?? null };
+  }
+
+  return {
+    settings: {
+      lang: oneOf(ps.lang, ['en', 'el', 'both'], base.settings.lang),
+      morningAt: timeStr(ps.morningAt, base.settings.morningAt),
+      eveningAt: timeStr(ps.eveningAt, base.settings.eveningAt),
+      remind: ps.remind !== false,
+      largeText: bool(ps.largeText),
+    },
+    days,
+    custom: arr(src.custom, 200)
+      .map((c) => ({
+        id: id(c?.id, 'c_'),
+        slot: oneOf(c?.slot, ['morning', 'evening'], 'morning'),
+        title: str(c?.title, 80),
+        el: str(c?.el, 4000),
+        en: str(c?.en, 4000),
+      }))
+      .filter((c) => c.el || c.en),
+    streak: int(src.streak, 0, 100000, 0),
+    best: int(src.best, 0, 100000, 0),
   };
 }
 
@@ -293,7 +360,7 @@ export function save() {
     console.warn('NiFo: could not save state', err);
     if (!saveFailed) {
       saveFailed = true;
-      toast('Could not save — device storage is full. Export a backup and clear some space.');
+      toast('Storage is full. Export a backup and clear some space.');
     }
   }
   listeners.forEach((fn) => fn(state));
@@ -326,7 +393,7 @@ export function exportJson() {
 }
 
 /** Restores a backup. `keepVault` holds on to the gallery key already on this
- *  device — without it, importing a backup made on another phone would leave
+ *  device, without it, importing a backup made on another phone would leave
  *  the photos here encrypted under a key nothing knows any more. */
 export function importJson(text, { keepVault = false } = {}) {
   if (typeof text !== 'string' || text.length > 50e6) throw new Error('That file is too large to be a NiFo backup');
@@ -351,7 +418,7 @@ export function backupChangesVault(text) {
   }
 }
 
-/* ---------- date helpers (local time, not UTC — a session at 23:50 belongs to
+/* ---------- date helpers (local time, not UTC, a session at 23:50 belongs to
    the day you did it, not to tomorrow) ---------- */
 
 export function dayKey(d = new Date()) {

@@ -1,7 +1,7 @@
 // Bridge to Capacitor's LocalNotifications when running as the installed APK.
 //
 // In the APK this schedules through Android's AlarmManager, so the alarm fires
-// with sound even when the app is backgrounded or killed — a web Notification
+// with sound even when the app is backgrounded or killed, a web Notification
 // cannot do that. In the browser everything here is a silent no-op and the
 // caller falls back to the in-page notification.
 
@@ -60,3 +60,5 @@ export async function scheduleDaily(id, hour, minute, title, body) {
 // Fixed ids so re-scheduling replaces rather than stacks.
 export const ALARM_SESSION = 1001;
 export const ALARM_KEGEL_REMINDER = 2001;
+export const ALARM_PRAY_MORNING = 3001;
+export const ALARM_PRAY_EVENING = 3002;

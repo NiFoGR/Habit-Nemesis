@@ -144,8 +144,8 @@ export function renderStats(mount) {
       ${segmented('period', pe.PERIODS, period)}
 
       <div class="stat-grid four">
-        <div class="stat"><b>${ms.length ? pe.fmtLength(ms[ms.length - 1].bpel) : '—'}</b><span>BPEL now</span></div>
-        <div class="stat"><b>${ms.length ? pe.fmtLength(ms[ms.length - 1].eg) : '—'}</b><span>girth now</span></div>
+        <div class="stat"><b>${ms.length ? pe.fmtLength(ms[ms.length - 1].bpel) : '-'}</b><span>BPEL now</span></div>
+        <div class="stat"><b>${ms.length ? pe.fmtLength(ms[ms.length - 1].eg) : '-'}</b><span>girth now</span></div>
         <div class="stat"><b>${fmtHours(vol.stretch || 0)}</b><span>stretch this period</span></div>
         <div class="stat"><b>${fmtHours(vol.pump || 0)}</b><span>pump this period</span></div>
         <div class="stat"><b>${pe.peStreak()}</b><span>day streak</span></div>
@@ -205,7 +205,7 @@ export function renderStats(mount) {
         <div class="legend"><i style="background:var(--violet)"></i> thickest <i style="background:var(--calm)"></i> base</div>
         <p class="fineprint">Thickest ${girth.thickGain >= 0 ? '+' : '−'}${pe.fmtLength(Math.abs(girth.thickGain), undefined, 2)}, base ${girth.baseGain >= 0 ? '+' : '−'}${pe.fmtLength(Math.abs(girth.baseGain), undefined, 2)}. ${
           girth.taper > girth.taperFirst + 0.15
-            ? 'The middle is growing faster than the base — normal with pumping, and worth watching if the gap keeps widening.'
+            ? 'The middle is growing faster than the base. Normal with pumping, worth watching if the gap widens.'
             : girth.taper < girth.taperFirst - 0.15
               ? 'The base is catching up with the middle. That is the more even shape.'
               : 'The two are moving together, which is the shape you want.'
@@ -242,7 +242,7 @@ export function renderStats(mount) {
       ${s.eq.length > 1 ? `<section class="card">
         <div class="h-row">${icon('droplet', 16)}<h2>Erection quality</h2></div>
         ${lineChart(pe.inPeriod(s.eq, period).map((e) => e.v), { color: 'var(--good)' })}
-        <p class="fineprint">Weekly self-rating, 1–10. The outcome that actually matters — watch it against volume.</p>
+        <p class="fineprint">Weekly self-rating, 1–10. The outcome that actually matters. Watch it against volume.</p>
       </section>` : ''}
 
       ${insights.length ? `<section class="card">

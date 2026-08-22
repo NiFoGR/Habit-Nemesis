@@ -1,4 +1,4 @@
-/* NiFo — phone-first dark UI. One stylesheet, no framework. */
+/* NiFo, phone-first dark UI. One stylesheet, no framework. */
 
 /* Palette taken from the app icon: teal sweeping to violet on deep slate.
    Flat surfaces, but the brand ramp is used deliberately on rings and charts
@@ -891,3 +891,147 @@ input[type="range"] {
 .cam-guides i:first-child { left: 0; right: 0; top: 50%; height: 1px; }
 .cam-guides i:last-child { top: 0; bottom: 0; left: 50%; width: 1px; }
 .cam-fallback { display: grid; place-items: center; height: 100%; color: var(--muted); font-size: 0.86rem; padding: 20px; text-align: center; }
+
+/* ================= per-section themes =================
+   One skeleton, three rooms. Spacing, radius, type scale and motion are shared
+   so the app stays one app; the accent, the surface tint and, for prayer, the
+   typeface are what change. Tokens are swapped on the body by the router, so
+   every existing component picks the section up without knowing about it. */
+
+body[data-section="kegels"] {
+  --accent: #22d3c5;
+  --bg: #0a0e13;
+  --bg-2: #0d131a;
+  --surface: #121a22;
+  --surface-2: #17212c;
+  --line: #1f2c3a;
+}
+
+body[data-section="pe"] {
+  --accent: #a78bfa;
+  --violet: #a78bfa;
+  --bg: #0b0912;
+  --bg-2: #100d18;
+  --surface: #171327;
+  --surface-2: #1d1830;
+  --line: #2b2442;
+}
+
+/* Prayer is deliberately the darkest and the quietest: near-black ground, warm
+   gold instead of a cool accent, and a serif face. It should not look like the
+   training screens, because it is not one. */
+body[data-section="pray"] {
+  --accent: #d9b061;
+  --violet: #c9a227;
+  --bg: #05060a;
+  --bg-2: #080a0f;
+  --surface: #0d1016;
+  --surface-2: #12161e;
+  --line: #1e242f;
+  --text: #ede7db;
+  --muted: #8b8477;
+  --good: #a3b380;
+}
+
+body[data-section="pray"] .screen {
+  font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+}
+body[data-section="pray"] h1,
+body[data-section="pray"] h2 { letter-spacing: 0; font-weight: 600; }
+body[data-section="pray"] .btn { font-family: inherit; letter-spacing: 0.01em; }
+body[data-section="pray"] .btn.primary { color: #14100a; }
+
+/* ---------- prayer: home ---------- */
+
+.pray-today { align-items: center; }
+.slot-dots { display: flex; gap: 10px; }
+.slot-dots i {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid var(--line); background: transparent;
+}
+.slot-dots i.on { background: var(--accent); border-color: var(--accent); }
+
+.rule-list { display: grid; gap: 10px; margin-bottom: 16px; }
+.rule-card {
+  display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 16px 15px;
+}
+.rule-card:active { background: var(--surface-2); }
+.rule-card.live { border-color: var(--accent); }
+.rule-card.kept { opacity: 0.6; }
+.rc-ico { display: flex; color: var(--accent); }
+.rule-card.kept .rc-ico { color: var(--good); }
+.rc-text { flex: 1; display: grid; gap: 3px; }
+.rc-text b { font-size: 1.05rem; font-weight: 600; }
+.rc-text i { font-style: normal; font-size: 0.8rem; color: var(--muted); }
+.rc-go { color: var(--muted); display: flex; }
+
+.btn.ext { display: flex; align-items: center; justify-content: center; gap: 9px; }
+.btn.ext .ico:last-child { opacity: 0.6; }
+
+/* ---------- prayer: the rule ---------- */
+
+.pray-run { display: flex; flex-direction: column; min-height: 100dvh; }
+.pr-bar { display: flex; gap: 3px; margin-bottom: 18px; }
+.pr-bar i { flex: 1; height: 3px; border-radius: 3px; background: var(--line); }
+.pr-bar i.on { background: var(--accent); }
+.pr-bar i.done { background: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+
+.pr-body { flex: 1; overflow-y: auto; padding-bottom: 20px; }
+.pr-title { font-size: 1.15rem; color: var(--accent); margin-bottom: 14px; font-weight: 600; }
+.pr-own { font-style: normal; font-size: 0.7rem; color: var(--muted); font-weight: 400; }
+.pr-repeat {
+  display: inline-block; font-size: 0.75rem; color: var(--muted);
+  border: 1px solid var(--line); border-radius: 20px; padding: 2px 10px; margin-bottom: 12px;
+}
+.pr-text p { font-size: 1.12rem; line-height: 1.75; margin: 0 0 10px; }
+.pr-text.el p { color: var(--text); }
+.pr-text.en p { color: var(--muted); }
+.pr-text.en { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+.pray-run.big .pr-text p { font-size: 1.34rem; line-height: 1.8; }
+.pr-note { font-size: 0.8rem; color: var(--muted); font-style: italic; margin-top: 16px; }
+
+.pr-silence { display: grid; place-items: center; gap: 8px; padding: 60px 0; text-align: center; }
+.pr-silence b { font-size: 2.6rem; font-variant-numeric: tabular-nums; font-weight: 400; }
+.pr-silence span { color: var(--muted); font-size: 0.85rem; }
+
+.pr-nav { display: flex; gap: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+.pr-nav .btn { flex: 1; margin-top: 0; }
+.pr-nav .btn.primary { flex: 2; }
+
+.pray-done { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100dvh; text-align: center; gap: 6px; }
+.pray-done .done-mark { color: var(--good); margin-bottom: 8px; }
+.pray-done h1 { font-size: 1.6rem; }
+.pray-done .stat-grid { width: 100%; margin: 22px 0; }
+.pray-done .btn { width: 100%; max-width: 300px; }
+
+/* ---------- prayer: tracking + my prayers ---------- */
+
+.heatmap i.pr-none { background: var(--surface-2); }
+.heatmap i.pr-half { background: color-mix(in srgb, var(--accent) 45%, transparent); }
+.heatmap i.pr-full { background: var(--accent); }
+.heatmap i.pr-today { background: transparent; border: 1px dashed var(--line); }
+.hm-key i.pr-none { background: var(--surface-2); }
+.hm-key i.pr-half { background: color-mix(in srgb, var(--accent) 45%, transparent); }
+.hm-key i.pr-full { background: var(--accent); }
+
+.own-row b { display: flex; gap: 6px; }
+.mini {
+  background: none; border: 1px solid var(--line); color: var(--muted);
+  border-radius: 7px; padding: 4px 10px; font-size: 0.76rem; cursor: pointer; font-family: inherit;
+}
+.mini:active { background: var(--surface-2); }
+.mini.danger { color: var(--danger); border-color: rgba(248, 113, 113, 0.35); }
+
+.text-input {
+  width: 100%; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 9px; color: var(--text); padding: 12px; font-size: 0.95rem; font-family: inherit;
+}
+.text-input:focus { outline: none; border-color: var(--accent); }
+.field label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 6px; }
+
+/* The live-slot button sits between the rule list and the stats card, so it
+   needs air on both sides rather than only above. */
+body[data-section="pray"] .btn.big { margin-bottom: 16px; }
+.pr-nav .btn[disabled] { opacity: 0.35; }

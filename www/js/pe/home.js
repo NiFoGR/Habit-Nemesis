@@ -48,10 +48,10 @@ export function renderPeHome(mount) {
         ${s.measurements.length > 1 ? sparkline(s.measurements.map((m) => m.bpel), { color: 'var(--violet)', h: 40 }) : ''}
       </div>` : ''}
 
-      ${due.due ? `<a class="notice action" href="#/pe/measure">${icon('ruler', 16)} Monthly check-in due — tap to measure.</a>` : ''}
+      ${due.due ? `<a class="notice action" href="#/pe/measure">${icon('ruler', 16)} Monthly check-in due.</a>` : ''}
       ${dec.due ? `<div class="notice warn">${dec.consecutive} days without a rest day. Take a few off.</div>` : ''}
 
-      ${lastStretch ? `<a class="btn primary big linkbtn" href="#/pe/timer?type=stretch&repeat=1">${icon('repeat', 18)}<span>Repeat — ${Math.max(1, Math.round((lastStretch.plannedSec || lastStretch.durationSec) / 60))} min @ ${lastStretch.tensionKg ?? s.settings.tensionKg} kg</span></a>` : ''}
+      ${lastStretch ? `<a class="btn primary big linkbtn" href="#/pe/timer?type=stretch&repeat=1">${icon('repeat', 18)}<span>Repeat ${Math.max(1, Math.round((lastStretch.plannedSec || lastStretch.durationSec) / 60))} min @ ${lastStretch.tensionKg ?? s.settings.tensionKg} kg</span></a>` : ''}
 
       <div class="start-grid">
         <a class="start-card" href="#/pe/timer?type=stretch" style="--c:var(--accent)">${icon('stretch')}<span class="sc-text"><span>Stretch</span><i>${s.settings.stretchMin} min · ${s.settings.tensionKg} kg</i></span></a>
@@ -86,7 +86,7 @@ export function renderPeHome(mount) {
   );
 }
 
-/** Shown once. Short on purpose — the full version lives in the guide. */
+/** Shown once. Short on purpose, the full version lives in the guide. */
 function renderSafetyGate(mount) {
   mount.innerHTML = `
     <div class="screen">

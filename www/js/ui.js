@@ -115,7 +115,7 @@ export function onSegment(root, name, fn) {
   });
 }
 
-/** Tiny inline trend line for a headline number. No axes, no labels — it is
+/** Tiny inline trend line for a headline number. No axes, no labels, it is
  *  there to show shape at a glance, not to be read off. */
 export function sparkline(values, { color = 'var(--accent)', w = 120, h = 34, fill = true } = {}) {
   const vals = values.filter((v) => Number.isFinite(v));
@@ -139,7 +139,7 @@ export function sparkline(values, { color = 'var(--accent)', w = 120, h = 34, fi
   </svg>`;
 }
 
-/** Donut for a small set of parts — weekly volume by session type. */
+/** Donut for a small set of parts, weekly volume by session type. */
 export function donut(parts, { size = 104, thickness = 13, centre = '' } = {}) {
   const total = parts.reduce((a, p) => a + p.value, 0);
   const r = (size - thickness) / 2;
@@ -168,7 +168,7 @@ export function donut(parts, { size = 104, thickness = 13, centre = '' } = {}) {
   </div>`;
 }
 
-/** Vertical bars with labels — used for volume by day. */
+/** Vertical bars with labels, used for volume by day. */
 export function barChart(bars, { h = 120, unit = '' } = {}) {
   if (!bars.length) return '<div class="chart-empty">Nothing logged in this period</div>';
   const max = Math.max(...bars.map((b) => b.value), 1);
@@ -284,7 +284,7 @@ export function multiLine(series, { w = 320, h = 150, padL = 34, padR = 8, padT 
 }
 
 /** Scatter with an optional least-squares trend line. Used for "did the hours
- *  actually buy anything" — the one chart that can talk you out of a habit. */
+ *  actually buy anything", the one chart that can talk you out of a habit. */
 export function scatter(points, { w = 320, h = 160, xLabel = '', yLabel = '', color = 'var(--accent)', trend = true } = {}) {
   if (points.length < 2) return '<div class="chart-empty">Three check-ins fill this in</div>';
   const padL = 34;
@@ -330,8 +330,8 @@ export function scatter(points, { w = 320, h = 160, xLabel = '', yLabel = '', co
       <title>${escapeHtml(p.label || `${p.x.toFixed(0)} → ${p.y.toFixed(2)}`)}</title></circle>`)
     .join('');
 
-  // Axis captions sit at the far end of the axis they name — y at the top of
-  // the vertical, x at the right of the horizontal — so neither is mistaken
+  // Axis captions sit at the far end of the axis they name, y at the top of
+  // the vertical, x at the right of the horizontal, so neither is mistaken
   // for the other, which is exactly what happens with both in the same corner.
   return `<svg class="chart tall" viewBox="0 0 ${w} ${h}" role="img">
     ${ticks}${zero}${line}${dots}
@@ -340,7 +340,7 @@ export function scatter(points, { w = 320, h = 160, xLabel = '', yLabel = '', co
   </svg>`;
 }
 
-/** Per-rep bars — the fatigue curve for a single session. */
+/** Per-rep bars, the fatigue curve for a single session. */
 export function repBars(reps, { h = 54 } = {}) {
   if (!reps.length) return '';
   return `<div class="repbars" style="--h:${h}px">${reps

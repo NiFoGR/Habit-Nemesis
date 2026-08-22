@@ -59,7 +59,7 @@ export function startSession(mount, opts, onFinish) {
       <div class="player-cue" id="cue"></div>
 
       <div class="player-bottom">
-        <div class="rep-meter"><span id="repText">—</span></div>
+        <div class="rep-meter"><span id="repText">-</span></div>
         <div class="rep-dots" id="dots"></div>
       </div>
     </div>`;
@@ -245,7 +245,7 @@ export function startSession(mount, opts, onFinish) {
       const p = held / target;
       setRing(Math.min(p, 1), p >= 1 ? 'over' : 'work');
       el.coreBig.textContent = (held / 1000).toFixed(1);
-      el.coreSmall.textContent = p >= 1 ? 'strong — ease off when you fade' : `of ${(target / 1000).toFixed(0)}s`;
+      el.coreSmall.textContent = p >= 1 ? 'strong, ease off when you fade' : `of ${(target / 1000).toFixed(0)}s`;
       if (p >= 1 && p < 1.03) {
         buzz('hit');
         if (sound()) beep(1320, 80);
@@ -259,7 +259,7 @@ export function startSession(mount, opts, onFinish) {
     ev.preventDefault();
     if (phase !== 'await') return;
     // Capture the pointer so a thumb drifting off the pad mid-contraction does
-    // not end the rep early — only lifting off does.
+    // not end the rep early, only lifting off does.
     try {
       el.pad.setPointerCapture(ev.pointerId);
     } catch {
@@ -278,7 +278,7 @@ export function startSession(mount, opts, onFinish) {
     el.stage.classList.remove('pressing');
     setTargetMark(null);
     if (held < 250) {
-      // A stray tap is not a rep — go back to waiting.
+      // A stray tap is not a rep, go back to waiting.
       phase = 'await';
       t0 = performance.now();
       return;
