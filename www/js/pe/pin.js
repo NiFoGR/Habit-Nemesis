@@ -14,7 +14,7 @@ export function renderPinGate(mount, { onReady, onCancel, title }) {
     mount.innerHTML = `
       <div class="screen">
         <header class="screen-head">
-          <button class="icon-btn" id="cancel" aria-label="Back">${icon('back')}</button>
+          <button class="icon-btn" data-back id="cancel" aria-label="Back">${icon('back')}</button>
           <h1>${escapeHtml(title || 'Private gallery')}</h1>
           <span class="icon-btn ghost"></span>
         </header>
@@ -37,7 +37,7 @@ export function renderPinGate(mount, { onReady, onCancel, title }) {
     mount.innerHTML = `
       <div class="screen pin-screen">
         <header class="screen-head">
-          <button class="icon-btn" id="cancel" aria-label="Back">${icon('back')}</button>
+          <button class="icon-btn" data-back id="cancel" aria-label="Back">${icon('back')}</button>
           <h1>${escapeHtml(title || 'Private gallery')}</h1>
           <span class="icon-btn ghost"></span>
         </header>

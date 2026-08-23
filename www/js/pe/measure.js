@@ -12,6 +12,7 @@ import { withVault } from './pin.js';
 import { captureWithGhost } from './camera.js';
 import { icon } from '../icons.js';
 import { escapeHtml, toast, haptic } from '../ui.js';
+import { leaveTo } from '../back.js';
 
 /* Schematic diagrams. Deliberately abstract, a shaft as a rounded bar, the
    pubic bone as a wall, a tape as a ring, so they read instantly at phone
@@ -136,7 +137,7 @@ export function renderMeasure(mount) {
     mount.innerHTML = `
       <div class="screen">
         <header class="screen-head">
-          <button class="icon-btn" id="back" aria-label="Back">${icon('back')}</button>
+          <button class="icon-btn" data-back id="back" aria-label="Back">${icon('back')}</button>
           <h1>${step + 1} of ${STEPS.length + 1}</h1>
           <span class="icon-btn ghost"></span>
         </header>
@@ -186,7 +187,7 @@ export function renderMeasure(mount) {
     });
 
     mount.querySelector('#back').addEventListener('click', () => {
-      if (step === 0) return (location.hash = '#/pe');
+      if (step === 0) return leaveTo('#/pe');
       step--;
       drawStep();
     });
@@ -216,7 +217,7 @@ export function renderMeasure(mount) {
     mount.innerHTML = `
       <div class="screen">
         <header class="screen-head">
-          <button class="icon-btn" id="back" aria-label="Back">${icon('back')}</button>
+          <button class="icon-btn" data-back id="back" aria-label="Back">${icon('back')}</button>
           <h1>${STEPS.length + 1} of ${STEPS.length + 1}</h1>
           <span class="icon-btn ghost"></span>
         </header>
@@ -286,7 +287,7 @@ export function renderMeasure(mount) {
     mount.innerHTML = `
       <div class="screen">
         <header class="screen-head">
-          <button class="icon-btn" id="back" aria-label="Back">${icon('back')}</button>
+          <button class="icon-btn" data-back id="back" aria-label="Back">${icon('back')}</button>
           <h1>Review</h1>
           <span class="icon-btn ghost"></span>
         </header>

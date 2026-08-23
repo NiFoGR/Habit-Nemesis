@@ -30,7 +30,7 @@ export function renderPeHome(mount) {
   mount.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="hub" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back="hub" aria-label="Back">${icon('back')}</button>
         <h1>${store.get().settings.discreet ? 'Length Training' : 'PE'}</h1>
         <button class="icon-btn" data-nav="pe-stats" aria-label="Progress">${icon('chart')}</button>
       </header>
@@ -92,7 +92,7 @@ function renderSafetyGate(mount) {
   mount.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="hub" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back="hub" aria-label="Back">${icon('back')}</button>
         <h1>Before you start</h1>
         <span class="icon-btn ghost"></span>
       </header>

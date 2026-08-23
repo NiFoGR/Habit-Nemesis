@@ -8,6 +8,7 @@ import * as vault from './vault.js';
 import { withVault } from './pin.js';
 import { icon } from '../icons.js';
 import { escapeHtml, toast } from '../ui.js';
+import { leaveTo, replaceWith } from '../back.js';
 
 let urls = []; // object URLs to revoke when leaving
 
@@ -25,7 +26,7 @@ export function renderGallery(mount) {
   releaseUrls();
   withVault(mount, {
     title: 'Private gallery',
-    onCancel: () => (location.hash = '#/pe'),
+    onCancel: () => leaveTo('#/pe'),
     onReady: () => grid(mount),
   });
 }
@@ -58,7 +59,7 @@ async function grid(mount) {
   mount.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="pe" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back="pe" aria-label="Back">${icon('back')}</button>
         <h1>Gallery</h1>
         <button class="icon-btn" id="lock" aria-label="Lock now">${icon('lock')}</button>
       </header>
@@ -99,7 +100,8 @@ async function grid(mount) {
   mount.querySelector('#lock')?.addEventListener('click', () => {
     vault.lock();
     releaseUrls();
-    location.hash = '#/pe';
+    // Locking on purpose should not leave the unlocked gallery one Back away.
+    replaceWith('#/pe');
   });
 
   mount.querySelector('#compareBtn')?.addEventListener('click', () => {
@@ -136,7 +138,7 @@ async function viewer(mount, id, items) {
   mount.innerHTML = `
     <div class="screen viewer">
       <header class="screen-head">
-        <button class="icon-btn" id="back" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back id="back" aria-label="Back">${icon('back')}</button>
         <h1>${date.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}</h1>
         <button class="icon-btn" id="del" aria-label="Delete">${icon('close')}</button>
       </header>
@@ -184,7 +186,7 @@ async function compareView(mount, ids, items) {
   mount.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" id="back" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back id="back" aria-label="Back">${icon('back')}</button>
         <h1>Compare</h1>
         <span class="icon-btn ghost"></span>
       </header>
