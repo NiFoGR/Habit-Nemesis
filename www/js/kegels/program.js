@@ -13,13 +13,13 @@
 //  - Position progresses lying -> sitting -> standing -> under load, because a
 //    floor that only works lying down is not much use standing up.
 
-import * as store from './store.js';
+import * as store from '../store.js';
 
 /* ---------------- the 2-year ladder ----------------
    Twelve hand-written weeks ran out of progression in three months. This is a
    104-week periodised plan generated from a model, so overload continues for
    two years: six phases, each four-week block ending in a deload week, and
-   five separate things that grow — hold length, hold reps, flick reps, ramps
+   five separate things that grow: hold length, hold reps, flick reps, ramps
    and (later) pulse sets. Position and load progress across the phases. */
 
 const PHASES = [
@@ -53,7 +53,7 @@ const PHASES = [
       'Standing recruits more of the deep system. Keep the glutes quiet.',
       'Full effort on the squeeze, full release between. Half-rest gives you half the adaptation.',
       'If rep ten is much weaker than rep one, take longer rests rather than pushing through.',
-      'Lift up and in — not down and out. Down is the reverse kegel.',
+      'Lift up and in, not down and out. Down is the reverse kegel.',
     ],
   },
   {
@@ -70,7 +70,7 @@ const PHASES = [
   {
     id: 'power', name: 'Power', from: 65, to: 84,
     position: 'Standing; brace before a cough, lift or step',
-    focus: 'Fast, automatic response under pressure — the reflex that matters.',
+    focus: 'Fast, automatic response under pressure. The reflex that matters.',
     cues: [
       'Pre-brace: contract just before you would cough, lift or sneeze.',
       'Snap the flicks. Fast fibres only train if the contraction is genuinely sharp.',
@@ -163,8 +163,8 @@ export function buildSession({ level, type = 'training', deload = false }) {
   const warmup = () => {
     steps.push({ kind: 'title', label: 'Warm up', sub: def.position });
     for (let i = 0; i < 2; i++) {
-      steps.push(breathStep('Breathe in — let the floor drop', 4000, 'Belly widens. Pelvic floor lengthens and softens.'));
-      steps.push(breathStep('Breathe out — let it come back', 6000, 'No effort. You are only teaching it to release.'));
+      steps.push(breathStep('Breathe in, let the floor drop', 4000, 'Belly widens. Pelvic floor lengthens and softens.'));
+      steps.push(breathStep('Breathe out, let it come back', 6000, 'No effort. You are only teaching it to release.'));
     }
   };
 
@@ -184,10 +184,10 @@ export function buildSession({ level, type = 'training', deload = false }) {
 
   if (type === 'release') {
     // Weekly down-training day: no strengthening at all, on purpose.
-    steps.push({ kind: 'title', label: 'Release day', sub: 'Down-training — no strengthening today' });
+    steps.push({ kind: 'title', label: 'Release day', sub: 'Down-training only' });
     for (let i = 0; i < 4; i++) {
-      steps.push(breathStep('Breathe in — lengthen', 4000, 'Feel the floor drop as the belly expands.'));
-      steps.push(breathStep('Breathe out — stay soft', 6000, 'Do not contract on the way out.'));
+      steps.push(breathStep('Breathe in, lengthen', 4000, 'Feel the floor drop as the belly expands.'));
+      steps.push(breathStep('Breathe out, stay soft', 6000, 'Do not contract on the way out.'));
     }
     cooldown();
     return { level, type, steps, def };
@@ -214,9 +214,9 @@ export function buildSession({ level, type = 'training', deload = false }) {
     steps.push(breathStep('Settle the breath', 5000, 'Slow and low.'));
     steps.push({
       kind: 'max',
-      label: 'Max hold — go',
+      label: 'Max hold, go',
       targetMs: 60000,
-      cue: 'Hold until it genuinely fades, then release. Do not fake it — this number sets your baseline.',
+      cue: 'Hold until it genuinely fades, then release. Do not fake it. This number sets your baseline.',
     });
     cooldown();
     return { level, type, steps, def };
@@ -224,7 +224,7 @@ export function buildSession({ level, type = 'training', deload = false }) {
 
   warmup();
 
-  steps.push({ kind: 'title', label: 'Quick flicks', sub: `${def.flicks.reps} sharp contractions — fast-twitch fibres` });
+  steps.push({ kind: 'title', label: 'Quick flicks', sub: `${def.flicks.reps} sharp contractions, fast-twitch` });
   for (let i = 0; i < def.flicks.reps; i++) {
     steps.push({ kind: 'flick', label: 'Squeeze', targetMs: def.flicks.holdMs, rep: i + 1, of: def.flicks.reps, cue: 'Sharp on, sharp off.' });
     steps.push({ kind: 'rest', label: 'Let go', targetMs: def.flicks.restMs });
@@ -240,7 +240,7 @@ export function buildSession({ level, type = 'training', deload = false }) {
   steps.push({
     kind: 'title',
     label: 'Endurance holds',
-    sub: `${def.holds.reps} × ${(holdMs / 1000).toFixed(0)}s — slow-twitch fibres`,
+    sub: `${def.holds.reps} × ${(holdMs / 1000).toFixed(0)}s, slow-twitch`,
   });
   for (let i = 0; i < def.holds.reps; i++) {
     steps.push({ kind: 'hold', label: 'Hold', targetMs: holdMs, rep: i + 1, of: def.holds.reps, cue: def.cue });
@@ -248,7 +248,7 @@ export function buildSession({ level, type = 'training', deload = false }) {
   }
 
   if (def.pulses) {
-    steps.push({ kind: 'title', label: 'Pulses', sub: `${def.pulses.sets} × ${def.pulses.reps} rapid — speed, not force` });
+    steps.push({ kind: 'title', label: 'Pulses', sub: `${def.pulses.sets} × ${def.pulses.reps} rapid, speed not force` });
     for (let set = 0; set < def.pulses.sets; set++) {
       for (let i = 0; i < def.pulses.reps; i++) {
         steps.push({ kind: 'flick', label: 'Pulse', targetMs: def.pulses.holdMs, rep: i + 1, of: def.pulses.reps, cue: 'Light and quick. On, off, on, off.' });
@@ -322,13 +322,13 @@ export function planForToday(state = store.get()) {
 const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
 
 /** Turns the raw per-rep record into a 0-100 session score.
- *  completion  — did you do the reps you were asked for       (40)
- *  fidelity    — did you actually hold for as long as the target (40)
- *  consistency — was rep 12 as good as rep 1, i.e. fatigue resistance (20)
+ *  completion , did you do the reps you were asked for       (40)
+ *  fidelity   , did you actually hold for as long as the target (40)
+ *  consistency, was rep 12 as good as rep 1, i.e. fatigue resistance (20)
  *
  *  Fidelity credits each rep at most 100% of its target, so holding some reps
  *  long can never paper over reps you cut short. Genuinely exceeding the target
- *  is rewarded separately, and only when nothing fell short — otherwise the
+ *  is rewarded separately, and only when nothing fell short, otherwise the
  *  honest way to a high score would be to overhold a few and bail on the rest.
  */
 export function scoreSession(reps, { estimated = false } = {}) {
@@ -359,7 +359,7 @@ export function scoreSession(reps, { estimated = false } = {}) {
   return { score, completion, fidelity, consistency, estimated };
 }
 
-/** Hands-free mode has no per-rep data, so the self-rating stands in for it —
+/** Hands-free mode has no per-rep data, so the self-rating stands in for it ,
  *  flagged as estimated everywhere it is displayed. */
 export function scoreFromRating(rating) {
   const map = { easy: 94, solid: 86, hard: 74, failed: 52 };
@@ -403,7 +403,7 @@ export function applyProgression(state, session) {
   if (qualified) {
     p.qualifying++;
     // A level represents a week of training, so promotion needs time served as
-    // well as good sessions — otherwise two strong days would skip a week.
+    // well as good sessions, otherwise two strong days would skip a week.
     const daysHere = (Date.now() - (p.levelStartedAt || p.startedAt || Date.now())) / 864e5;
     outcome.daysHere = daysHere;
     if (p.qualifying >= PROMOTION_TARGET && daysHere >= MIN_DAYS_PER_LEVEL && p.level < MAX_LEVEL) {
@@ -470,12 +470,12 @@ export const BADGES = [
   { id: 'thousand', name: '1,000 contractions', desc: 'A thousand lifetime reps', test: (s) => store.totals().contractions >= 1000 },
   // One badge per phase of the two-year ladder, so there is something to reach
   // for the whole way through rather than only in the first three months.
-  { id: 'control', name: 'Control', desc: 'Reached the Control phase — week 9', test: (s) => s.program.level >= 9 },
-  { id: 'strength', name: 'Strength', desc: 'Reached the Strength phase — week 21', test: (s) => s.program.level >= 21 },
-  { id: 'endurance', name: 'Endurance', desc: 'Reached the Endurance phase — week 41', test: (s) => s.program.level >= 41 },
-  { id: 'halfway', name: 'Halfway', desc: 'Reached week 52 — a full year of the plan', test: (s) => s.program.level >= 52 },
-  { id: 'power', name: 'Power', desc: 'Reached the Power phase — week 65', test: (s) => s.program.level >= 65 },
-  { id: 'mastery', name: 'Mastery', desc: `Reached the final phase — week ${MAX_LEVEL}`, test: (s) => s.program.level >= MAX_LEVEL },
+  { id: 'control', name: 'Control', desc: 'Reached the Control phase, week 9', test: (s) => s.program.level >= 9 },
+  { id: 'strength', name: 'Strength', desc: 'Reached the Strength phase, week 21', test: (s) => s.program.level >= 21 },
+  { id: 'endurance', name: 'Endurance', desc: 'Reached the Endurance phase, week 41', test: (s) => s.program.level >= 41 },
+  { id: 'halfway', name: 'Halfway', desc: 'Reached week 52, a full year', test: (s) => s.program.level >= 52 },
+  { id: 'power', name: 'Power', desc: 'Reached the Power phase, week 65', test: (s) => s.program.level >= 65 },
+  { id: 'mastery', name: 'Mastery', desc: `Reached the final phase, week ${MAX_LEVEL}`, test: (s) => s.program.level >= MAX_LEVEL },
   { id: 'rested', name: 'Knows when to stop', desc: 'Completed a release day', test: (s) => s.sessions.some((x) => x.type === 'release') },
 ];
 

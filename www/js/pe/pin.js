@@ -46,7 +46,7 @@ export function renderPinGate(mount, { onReady, onCancel, title }) {
           <div class="pin-lock">${icon('lock', 34)}</div>
           <h2>${stage}</h2>
           <p class="small muted centre">${setting
-            ? 'Photos are encrypted with this PIN. It is not a screen lock — the files themselves are unreadable without it, including to anything else on the phone.'
+            ? 'Photos are encrypted with this PIN. It is not a screen lock. The files themselves are unreadable without it, including to anything else on the phone.'
             : 'Your photos are encrypted. They cannot be shown until this is right.'}</p>
 
           <div class="pin-dots ${error ? 'shake' : ''}">
@@ -61,7 +61,7 @@ export function renderPinGate(mount, { onReady, onCancel, title }) {
             <button class="ghost-key" data-del>⌫</button>
           </div>
 
-          ${setting ? `<p class="fineprint centre">There is no recovery. Forgetting the PIN means the photos are gone for good — that is what makes the encryption worth anything.</p>` : ''}
+          ${setting ? `<p class="fineprint centre">There is no recovery. Forgetting the PIN means the photos are gone for good. That is what makes the encryption worth anything.</p>` : ''}
         </div>
       </div>`;
 
@@ -119,7 +119,7 @@ export function renderPinGate(mount, { onReady, onCancel, title }) {
   }
 
   async function forgotFlow() {
-    if (!confirm('There is no way to recover the PIN — the photos are encrypted with it.\n\nErase the gallery and start over? Your measurements and graphs are kept.')) return;
+    if (!confirm('There is no way to recover the PIN. The photos are encrypted with it.\n\nErase the gallery and start over? Your measurements and graphs are kept.')) return;
     await db.clear();
     vault.destroy();
     toast('Gallery erased');

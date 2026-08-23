@@ -5,10 +5,10 @@
 // replaced them, and partly because "what am I working towards" is the question
 // a progression system has to answer or it is just a counter.
 
-import * as store from './store.js';
+import * as store from '../store.js';
 import * as program from './program.js';
-import { escapeHtml, fmtMs } from './ui.js';
-import { icon } from './icons.js';
+import { escapeHtml, fmtMs } from '../ui.js';
+import { icon } from '../icons.js';
 
 const PHASE_ICON = {
   foundation: 'target',
@@ -21,7 +21,7 @@ const PHASE_ICON = {
 
 /** Every fourth week is a deload, and phases happen to end on one. Summarising
  *  a phase with its deload week makes the numbers read as if the plan gets
- *  *easier* over it — so the range is drawn between the working weeks. */
+ *  *easier* over it, so the range is drawn between the working weeks. */
 function hardWeeks(from, to) {
   const weeks = [];
   for (let n = from; n <= to; n++) {
@@ -79,7 +79,7 @@ export function renderRoadmap(mount) {
         ${def.ramps ? `<div class="kv"><span>Ramps</span><b>${def.ramps.reps} × ${(def.ramps.holdMs / 1000).toFixed(0)}s</b></div>` : ''}
         ${def.pulses ? `<div class="kv"><span>Pulses</span><b>${def.pulses.sets} × ${def.pulses.reps}</b></div>` : ''}
         <div class="kv"><span>To promote</span><b>${state.program.qualifying}/${program.PROMOTION_TARGET} good sessions${daysLeft ? ` · ${daysLeft}d served` : ' · time served'}</b></div>
-        ${def.deloadWeek ? '<p class="fineprint">This is a deload week — every fourth week is deliberately lighter. Easy weeks are where the adaptation lands.</p>' : ''}
+        ${def.deloadWeek ? '<p class="fineprint">A deload week. Every fourth one is deliberately lighter. Easy weeks are where the adaptation lands.</p>' : ''}
       </section>
 
       <section class="card">
@@ -100,7 +100,7 @@ export function renderRoadmap(mount) {
                 </div>
                 ${state_ === 'done' ? `<span class="phase-tag">${icon('check', 14)}</span>` : state_ === 'on' ? '<span class="phase-tag on">here</span>' : eta ? `<span class="phase-tag">~${eta}w away</span>` : ''}
               </div>
-              <p class="small muted">${escapeHtml(p.position)} — ${escapeHtml(p.focus)}</p>
+              <p class="small muted">${escapeHtml(p.position)}. ${escapeHtml(p.focus)}</p>
               <div class="phase-nums">
                 <span>holds ${(startLvl.holds.holdMs / 1000).toFixed(0)}s → ${(endLvl.holds.holdMs / 1000).toFixed(0)}s</span>
                 <span>reps ${startLvl.holds.reps} → ${endLvl.holds.reps}</span>

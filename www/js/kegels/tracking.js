@@ -1,11 +1,10 @@
 // The tracking screen: every day you trained, every rep you logged, and the
 // trend lines that only mean something once there are a few weeks of them.
 
-import * as store from './store.js';
+import * as store from '../store.js';
 import * as program from './program.js';
-import { fmtMs, fmtDuration, lineChart, repBars, escapeHtml, relDay, toast, ringSvg } from './ui.js';
-import { usage as photoUsage } from './pe/db.js';
-import { icon } from './icons.js';
+import { fmtMs, fmtDuration, lineChart, repBars, escapeHtml, relDay, ringSvg } from '../ui.js';
+import { icon } from '../icons.js';
 
 const WEEKS = 13; // a full 12-week block plus the current week
 
@@ -146,7 +145,7 @@ export function renderTracking(mount) {
 
       <section class="card">
         <div class="h-row">${icon('medal', 16)}<h2>Personal best hold</h2></div>
-        <p class="small muted">Your ceiling, in seconds — it only ever steps up.</p>
+        <p class="small muted">Your ceiling in seconds. It only steps up.</p>
         ${bestHoldSeries.length > 1 ? lineChart(bestHoldSeries, { color: 'var(--good)' }) : '<div class="chart-empty">Not enough sessions yet</div>'}
       </section>
 
@@ -179,49 +178,9 @@ export function renderTracking(mount) {
 
       <section class="card">
         <div class="h-row">${icon('shield', 16)}<h2>Your data</h2></div>
-        <p class="small muted">Everything is stored on this device only. Nothing is uploaded anywhere. Back it up before you clear your browser data or move phones.</p>
-        <div class="row-btns">
-          <button class="btn" id="exportBtn">Export backup</button>
-          <button class="btn" id="importBtn">Import backup</button>
-        </div>
-        <input type="file" id="importFile" accept="application/json" hidden>
+        <p class="small muted">Everything is stored on this device only. Back it up before you clear browser data or move phones.</p>
+        <a class="btn ghost linkbtn" href="#/settings">${icon('settings', 16)}<span>Backups, under Settings</span></a>
       </section>
     </div>`;
 
-  mount.querySelector('#exportBtn').addEventListener('click', () => {
-    const blob = new Blob([store.exportJson()], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `nifo-backup-${store.dayKey()}.json`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    toast('Backup downloaded');
-  });
-
-  const file = mount.querySelector('#importFile');
-  mount.querySelector('#importBtn').addEventListener('click', () => file.click());
-  file.addEventListener('change', async () => {
-    const f = file.files?.[0];
-    if (!f) return;
-    try {
-      const text = await f.text();
-      let keepVault = false;
-      // Photos live in IndexedDB, encrypted; the key material lives in the
-      // backup. Restoring a backup from another device would leave the photos
-      // on this one permanently unreadable, so it is asked about first.
-      const { count } = await photoUsage();
-      if (count > 0 && store.backupChangesVault(text)) {
-        keepVault = !confirm(
-          `This backup was made with a different gallery PIN, and there ${count === 1 ? 'is 1 photo' : `are ${count} photos`} stored on this device.\n\n` +
-            'OK: use the backup\'s PIN — the photos already here become permanently unreadable.\n' +
-            'Cancel: keep this device\'s PIN, and restore everything else.'
-        );
-      }
-      const res = store.importJson(text, { keepVault });
-      toast(keepVault ? 'Backup restored, gallery PIN kept' : res.vaultChanged ? 'Backup restored, gallery PIN replaced' : 'Backup restored');
-      renderTracking(mount);
-    } catch (err) {
-      toast(`Could not read that file: ${err.message}`);
-    }
-  });
 }

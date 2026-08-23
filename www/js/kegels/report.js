@@ -1,9 +1,9 @@
 // End-of-session result. Numbers first, one line of context, done.
 
-import * as store from './store.js';
+import * as store from '../store.js';
 import * as program from './program.js';
-import { icon } from './icons.js';
-import { fmtMs, fmtDuration, repBars, ringSvg, escapeHtml } from './ui.js';
+import { icon } from '../icons.js';
+import { fmtMs, fmtDuration, repBars, ringSvg, escapeHtml } from '../ui.js';
 
 function delta(now, before, fmt = (v) => String(Math.round(v))) {
   if (!before) return null;
@@ -27,7 +27,7 @@ function line({ record, outcome, prs, badges }, state) {
   return `Session ${state.sessions.length}.`;
 }
 
-/** Fatigue read from the user's own holds — the one thing worth explaining. */
+/** Fatigue read from the user's own holds, the one thing worth explaining. */
 function fatigueNote(record) {
   const holds = record.reps.filter((r) => r.kind === 'hold' && r.actualMs > 250);
   if (holds.length < 3) return null;
@@ -35,7 +35,7 @@ function fatigueNote(record) {
   const first = holds.slice(0, half).reduce((a, r) => a + r.actualMs / r.targetMs, 0) / half;
   const second = holds.slice(half).reduce((a, r) => a + r.actualMs / r.targetMs, 0) / (holds.length - half);
   if (second >= first * 0.97) return 'Held form to the end.';
-  if (second >= first * 0.85) return 'Slight fade late — normal.';
+  if (second >= first * 0.85) return 'Slight fade late, normal.';
   return 'Big drop-off late. Take the full rest between holds.';
 }
 

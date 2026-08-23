@@ -1,7 +1,7 @@
 // IndexedDB store for progress photos.
 //
 // localStorage is capped at a few MB and holds strings, which is nowhere near
-// enough for photos — so ciphertext lives here as ArrayBuffers instead. The
+// enough for photos, so ciphertext lives here as ArrayBuffers instead. The
 // database only ever sees encrypted bytes; the keys live in vault.js.
 
 const DB = 'nifo-pe';

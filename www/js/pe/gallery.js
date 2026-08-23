@@ -80,7 +80,7 @@ async function grid(mount) {
 
       <section class="card">
         <h2>How this is protected</h2>
-        <p class="small muted">Each photo is encrypted with AES-GCM using a key derived from your PIN, and only decrypted in memory while you are looking at it. The gallery re-locks after ${store.get().pe.settings.autoLockMin} minutes of inactivity, and losing the PIN means losing the photos — there is no recovery key.</p>
+        <p class="small muted">Each photo is encrypted with AES-GCM using a key derived from your PIN, and only decrypted in memory while you are looking at it. The gallery re-locks after ${store.get().pe.settings.autoLockMin} minutes of inactivity, and losing the PIN means losing the photos. There is no recovery key.</p>
         <button class="btn ghost" id="changePin">Change PIN</button>
       </section>
     </div>`;
@@ -203,7 +203,7 @@ async function compareView(mount, ids, items) {
         <h2>Over ${months < 1.5 ? 'about a month' : `${Math.round(months)} months`}</h2>
         <div class="kv"><span>Length</span><b class="${dl > 0 ? 'good-text' : ''}">${sign(dl)}</b></div>
         <div class="kv"><span>Girth</span><b class="${dg > 0 ? 'good-text' : ''}">${sign(dg)}</b></div>
-        <p class="small muted">Photos are useful for morale and useless as measurement — angle, lighting and erection quality move the apparent size far more than a month of training does. Trust the numbers, enjoy the pictures.</p>
+        <p class="small muted">Photos are useful for morale and useless as measurement. Angle, lighting and erection quality move the apparent size far more than a month of training does. Trust the numbers, enjoy the pictures.</p>
       </section>` : ''}
 
       <button class="btn ghost" id="back2">Back to gallery</button>

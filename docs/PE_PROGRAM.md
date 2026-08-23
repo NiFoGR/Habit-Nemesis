@@ -23,12 +23,12 @@ That is the ceiling this app is built around. It says so on the safety gate, in 
 
 ## The target, and the two numbers that define it
 
-- **Two hours of stretching a day** (`DAILY_STRETCH_GOAL_MS`) — as much as can be managed up to that. Everything on the PE home screen, the Today hub and the warnings is measured against it.
-- **10 kg of tension, hard ceiling** — the tension slider stops there, `store.js` refuses anything outside 0.5–10 on the way in, and the safety gate says why: length comes from time under tension, not from more load.
+- **Two hours of stretching a day** (`DAILY_STRETCH_GOAL_MS`), as much as can be managed up to that. Everything on the PE home screen, the Today hub and the warnings is measured against it.
+- **10 kg of tension, hard ceiling**, the tension slider stops there, `store.js` refuses anything outside 0.5–10 on the way in, and the safety gate says why: length comes from time under tension, not from more load.
 
 ## Safety numbers used in the code
 
-Session guidance for pumping: beginners **10–20 minutes total**, split into **~10 minute sets** with a full release between them, 2–3 times a week. The app enforces the set breaks itself — at each boundary the timer pauses for 60 seconds and tells you to release and check the skin.
+Session guidance for pumping: beginners **10–20 minutes total**, split into **~10 minute sets** with a full release between them, 2–3 times a week. The app enforces the set breaks itself, at each boundary the timer pauses for 60 seconds and tells you to release and check the skin.
 
 Stop signals coded into the guide and the discomfort flag: numbness, cold skin, dark discolouration that does not fade, petechiae, blisters, fluid ring, sharp pain, or an ache that lasts into the next day.
 
@@ -36,24 +36,24 @@ Stop signals coded into the guide and the discomfort flag: numbness, cold skin, 
 
 ### No intensity on pumping
 
-Pumping records **duration only**. A water pump has no gauge, so any pressure number would be invented, and a 1–5 "by feel" scale is the same invention with extra steps — it charts like data and is not. What is real is the clock and the enforced set breaks, so that is all that is stored. Pressure bands, the pressure/intensity settings and the pump-intensity stats were all removed; sessions logged by the older build still display whatever they recorded, read-only.
+Pumping records **duration only**. A water pump has no gauge, so any pressure number would be invented, and a 1–5 "by feel" scale is the same invention with extra steps, it charts like data and is not. What is real is the clock and the enforced set breaks, so that is all that is stored. Pressure bands, the pressure/intensity settings and the pump-intensity stats were all removed; sessions logged by the older build still display whatever they recorded, read-only.
 
 ## BPFSL as the session-level signal
 
 Bone-pressed flaccid stretched length taken **before and after** a session is the fastest feedback available: it moves within one session, months before erect length does. Roughly **+5%** afterwards is the usual sign the tissue took the load. `bpfslVerdict()` reads it as:
 
-- **< 1.5%** — not warm enough, not long enough, or too little tension
-- **1.5–8%** — the response you want
-- **> 8%** — a great session or a measurement inconsistency; suspicious if it comes with soreness
+- **< 1.5%**, not warm enough, not long enough, or too little tension
+- **1.5–8%**, the response you want
+- **> 8%**, a great session or a measurement inconsistency; suspicious if it comes with soreness
 
 ## The growth projection
 
 `projection()` blends two things:
 
-1. **Your own trend** — least-squares regression of BPEL against time across every check-in, with r².
-2. **A volume-based prior** — what the literature would predict at your current weekly stretch and pump minutes. Traction response saturates around an hour a day (more hours did not buy proportional length in the trials), and the rate decays with time in training because gains front-load.
+1. **Your own trend**, least-squares regression of BPEL against time across every check-in, with r².
+2. **A volume-based prior**, what the literature would predict at your current weekly stretch and pump minutes. Traction response saturates around an hour a day (more hours did not buy proportional length in the trials), and the rate decays with time in training because gains front-load.
 
-The blend weight `w` rises with the number of measurements, the span they cover, and how cleanly they fit a line — capped at 0.85. Early on the prior dominates, because two points cannot distinguish a trend from measurement noise. Later, your own data takes over.
+The blend weight `w` rises with the number of measurements, the span they cover, and how cleanly they fit a line, capped at 0.85. Early on the prior dominates, because two points cannot distinguish a trend from measurement noise. Later, your own data takes over.
 
 Output is always a **range**, not a point, and the band widens as confidence drops. The confidence figure is shown on the stats screen alongside it. A projection that promised a single number, or a straight line forever, would be lying.
 
@@ -65,17 +65,17 @@ Every check-in records **five measurements, all required**:
 
 | Key | What | Why it is in the set |
 |---|---|---|
-| `bpfsl` | BP flaccid stretched length | Moves first — the earliest signal there is |
+| `bpfsl` | BP flaccid stretched length | Moves first, the earliest signal there is |
 | `bpel` | BP erect length | The headline number everything else is judged against |
 | `nbpel` | NBP erect length | The gap to BPEL is your fat pad; moves with body weight, not growth |
 | `eg` | Erect girth at the **thickest point** | Where pumping shows up first |
 | `baseGirth` | Erect girth at the **very base** | Often moves independently of mid-shaft |
 
-The check-in is one measurement per screen (`pe/measure.js`), each with a schematic diagram, the exact method, and why it is being asked for. Next stays disabled until the field holds a plausible number — none of them is optional, so none of them gets a skip button.
+The check-in is one measurement per screen (`pe/measure.js`), each with a schematic diagram, the exact method, and why it is being asked for. Next stays disabled until the field holds a plausible number, none of them is optional, so none of them gets a skip button.
 
 Method inconsistency swamps real change, so:
 
-- Check-ins are **monthly**, not weekly — weekly measuring produces noise to worry about.
+- Check-ins are **monthly**, not weekly, weekly measuring produces noise to worry about.
 - The form warns on any change over **1.5 cm** from the previous entry, because that is a typo or a different method, not a month of growth. Anything outside 1–60 cm is refused outright.
 - Bone-pressed is the headline number; NBPEL is recorded but flagged as fat-pad dependent.
 
@@ -87,7 +87,7 @@ Photos are shot against a translucent **ghost of last month's photo** (`pe/camer
 
 Two charts on the stats screen exist to answer questions the totals cannot:
 
-- **"Do the hours pay?"** (`volumeVsGain()`) pairs each gap between check-ins with the stretching that happened inside it, and plots average minutes a day against millimetres a month, with a trend line and Pearson's r. Gaps under a week are dropped — too short to separate growth from measuring noise. It is the one chart in the app that can argue *against* more volume, and it says so when r goes negative: bigger blocks with less gain usually means too much, too often.
+- **"Do the hours pay?"** (`volumeVsGain()`) pairs each gap between check-ins with the stretching that happened inside it, and plots average minutes a day against millimetres a month, with a trend line and Pearson's r. Gaps under a week are dropped, too short to separate growth from measuring noise. It is the one chart in the app that can argue *against* more volume, and it says so when r goes negative: bigger blocks with less gain usually means too much, too often.
 - **Girth map** (`girthMap()`) plots thickest-point girth against base girth over time, with the difference between them called out. Pumping tends to move the middle before the base, so a widening gap is a real training signal rather than a curiosity.
 
 ## The gallery

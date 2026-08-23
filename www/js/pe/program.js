@@ -71,7 +71,7 @@ export function fromDisplayLength(v, units) {
   return units === 'in' ? v * CM_PER_IN : v;
 }
 export function fmtLength(cm, units = store.get().pe.settings.units, dp = 1) {
-  if (cm == null) return '—';
+  if (cm == null) return '-';
   return `${toDisplayLength(cm, units).toFixed(dp)} ${units}`;
 }
 /* ---------------- safety ---------------- */
@@ -182,7 +182,7 @@ export function bpfslVerdict(before, after) {
     return { pct, level: 'low', text: 'Barely moved. Either the tissue was not warm, the session was too short, or the tension was too light to register.' };
   }
   if (pct <= 8) {
-    return { pct, level: 'good', text: 'That is the response you want — roughly the 5% the tissue gives up when it has genuinely been loaded.' };
+    return { pct, level: 'good', text: 'The response you want. Roughly the 5% the tissue gives up when it has genuinely been loaded.' };
   }
   return { pct, level: 'high', text: 'A big jump. Either a great session or a measuring inconsistency; if it comes with soreness, take the next day off.' };
 }
@@ -330,9 +330,9 @@ export function volumeVsGain(key = 'bpel') {
   const r = sxx && syy ? sxy / Math.sqrt(sxx * syy) : null;
 
   let verdict = null;
-  if (r == null || n < 3) verdict = 'Not enough check-ins to read a pattern yet — each new one sharpens this.';
+  if (r == null || n < 3) verdict = 'Not enough check-ins yet. Each new one sharpens this.';
   else if (r > 0.5) verdict = 'More time under tension has gone with more length for you. Volume is paying.';
-  else if (r < -0.3) verdict = 'Your bigger blocks came with less gain, not more. That usually means too much, too often — try more rest days rather than more hours.';
+  else if (r < -0.3) verdict = 'Your bigger blocks came with less gain, not more. That usually means too much, too often. Try more rest days rather than more hours.';
   else verdict = 'No clear link between hours and gain so far. Consistency and rest are worth more than piling on time.';
 
   return { points, r, verdict, avgPerDay: mx, avgGain: my };
@@ -367,7 +367,7 @@ export function measurementDue() {
   const last = s.measurements[s.measurements.length - 1];
   const now = new Date();
   const day = s.settings.measureDay || 1;
-  if (!last) return { due: true, reason: 'No measurements logged yet — this is your baseline.' };
+  if (!last) return { due: true, reason: 'No measurements yet' };
   const daysSince = Math.floor((Date.now() - last.ts) / 864e5);
   // Overdue is overdue: the preferred day of the month brings a check-in
   // forward a little, it must never hold an overdue one back.
@@ -398,7 +398,7 @@ export const ACHIEVEMENTS = [
   { id: 'pe_sixmonths', name: 'Half a year in', desc: 'Six months between your first and latest measurement', test: (p) => p.measurements.length > 1 && monthsBetween(p.measurements[0].ts, p.measurements[p.measurements.length - 1].ts) >= 6 },
 ];
 
-/** Stretch milliseconds per day, oldest first — used by the goal achievements. */
+/** Stretch milliseconds per day, oldest first, used by the goal achievements. */
 function dailyStretchTotals(pe) {
   const byDay = new Map();
   for (const s of pe.sessions) {
@@ -419,7 +419,7 @@ function gain(pe, key) {
 }
 
 /** A decon break is 5+ clear days between sessions, after a real training
- *  block — not just a gap because life happened early on. */
+ *  block, not just a gap because life happened early on. */
 function hasDecon(pe) {
   const days = pe.sessions.map((s) => s.ts).sort((a, b) => a - b);
   if (days.length < 10) return false;
@@ -461,9 +461,9 @@ export function insights() {
     const daily = wk / 7;
     const goalMin = DAILY_STRETCH_GOAL_MS / 60000;
     const pctOfGoal = Math.round((daily / goalMin) * 100);
-    if (daily < 30) out.push({ level: 'warn', text: `${daily.toFixed(0)} min/day on average — ${pctOfGoal}% of your two-hour target. Below about 30 min/day there is little to measure.` });
+    if (daily < 30) out.push({ level: 'warn', text: `${daily.toFixed(0)} min/day on average, ${pctOfGoal}% of your two-hour target. Below about 30 min/day there is little to measure.` });
     else if (daily < goalMin * 0.8) out.push({ level: 'info', text: `${daily.toFixed(0)} min/day on average, ${pctOfGoal}% of your two-hour target.` });
-    else out.push({ level: 'good', text: `${daily.toFixed(0)} min/day on average — at or near your two-hour target. That is the top of the dose range anyone has studied.` });
+    else out.push({ level: 'good', text: `${daily.toFixed(0)} min/day on average, at or near your two-hour target. That is the top of the dose range anyone has studied.` });
   }
 
   const withBpfsl = sessions.filter((s) => s.bpfslBefore && s.bpfslAfter);
@@ -476,7 +476,7 @@ export function insights() {
   }
 
   const dec = deconStatus();
-  if (dec.consecutive >= 10) out.push({ level: 'warn', text: `${dec.consecutive} consecutive training days. Schedule a few days off — adaptation happens during the rest, not during the session.` });
+  if (dec.consecutive >= 10) out.push({ level: 'warn', text: `${dec.consecutive} consecutive training days. Schedule a few days off. Adaptation happens during the rest, not during the session.` });
 
   const proj = projection();
   if (proj && proj.n >= 3 && proj.observedRate != null) {
@@ -485,7 +485,7 @@ export function insights() {
       level: perMonth > 0 ? 'good' : 'info',
       text: perMonth > 0
         ? `Your own measurements trend at ${(perMonth * 10).toFixed(1)} mm/month of bone-pressed length. Real gains are measured in millimetres per month, so that is what progress looks like.`
-        : 'Your measured length is flat so far. Over short spans that is normal — measurement noise is bigger than a month of real change.',
+        : 'Your measured length is flat so far. Over short spans that is normal. Measurement noise is bigger than a month of change.',
     });
   }
   return out;

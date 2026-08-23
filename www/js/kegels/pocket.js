@@ -1,6 +1,6 @@
 // Pocket mode: the same session, paced entirely by vibration.
 //
-// The point is doing kegels somewhere you cannot be seen holding a phone —
+// The point is doing kegels somewhere you cannot be seen holding a phone:
 // a desk, a bus, a queue. So there is nothing to press and nothing to watch:
 // distinct buzz patterns tell you when to squeeze, when to hold and when to
 // let go, and the screen is a near-black card you can leave face-down.
@@ -13,10 +13,10 @@
 //    the screen it throttles timers to the point where the buzzes drift
 //    seconds out, and a pacer that lies about the time is worse than none.
 
-import * as store from './store.js';
+import * as store from '../store.js';
 import * as program from './program.js';
-import { fmtClock, haptic, toast } from './ui.js';
-import { icon } from './icons.js';
+import { fmtClock, haptic, toast } from '../ui.js';
+import { icon } from '../icons.js';
 
 // One pattern per event, chosen so they are told apart through a pocket:
 // a long rising buzz to start work, a double tap to release, a triple for a
@@ -72,14 +72,14 @@ export function renderPocket(mount) {
       <div id="intro">
         <section class="card">
           <div class="h-row">${icon('vibrate', 16)}<h2>How it works</h2></div>
-          <p class="small muted">Phone in your pocket, face down, wherever. It buzzes what to do — nothing to watch, nothing to press.</p>
+          <p class="small muted">Phone in your pocket, face down, wherever. It buzzes what to do. Nothing to watch, nothing to press.</p>
           <div class="buzz-key">
-            <div><i class="bz long"></i><span><b>One long buzz</b> — squeeze and hold</span></div>
-            <div><i class="bz short"></i><span><b>One short buzz</b> — quick flick</span></div>
-            <div><i class="bz double"></i><span><b>Two quick buzzes</b> — let go completely</span></div>
-            <div><i class="bz triple"></i><span><b>Three buzzes</b> — new block starting</span></div>
+            <div><i class="bz long"></i><span><b>One long buzz</b>, squeeze and hold</span></div>
+            <div><i class="bz short"></i><span><b>One short buzz</b>, quick flick</span></div>
+            <div><i class="bz double"></i><span><b>Two quick buzzes</b>, let go completely</span></div>
+            <div><i class="bz triple"></i><span><b>Three buzzes</b>, new block starting</span></div>
           </div>
-          <p class="fineprint">No press-and-hold means no per-rep measurement, so this is scored from your own rating at the end and marked estimated — same as hands-free mode. The screen stays on but goes dark: Android slows timers on a sleeping screen and the buzzes would drift.</p>
+          <p class="fineprint">No press-and-hold means no per-rep measurement, so this is scored from your own rating at the end and marked estimated, the same as hands-free mode. The screen stays on but goes dark: Android slows timers on a sleeping screen and the buzzes would drift.</p>
         </section>
 
         <div class="stat-grid">
@@ -195,7 +195,7 @@ export function renderPocket(mount) {
     const scored = program.scoreFromRating(rating);
     const workSteps = session.steps.filter(program.isWorkStep);
     // Credit the prescribed work only for the part of the timeline that
-    // actually elapsed — quitting a third of the way in must not bank a full
+    // actually elapsed, quitting a third of the way in must not bank a full
     // session's contractions.
     const reached = timeline.filter((s) => program.isWorkStep(s) && s.to <= elapsedMs);
     const tutMs = reached.reduce((a, s) => a + (s.targetMs || 0), 0);
@@ -236,7 +236,7 @@ export function renderPocket(mount) {
     store.save();
 
     haptic('done');
-    toast('Logged — estimated score');
+    toast('Logged, estimated score');
     location.hash = '#/kegels';
   }
 

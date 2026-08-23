@@ -33,11 +33,32 @@ jobs:
           node tools/gen-icons.mjs --android
           npx cap sync android
 
+      - name: Use the project's fixed signing key
+        # Writing to ~/.android/debug.keystore is not enough: Gradle resolves
+        # that path through ANDROID_USER_HOME, which the runner sets for itself,
+        # so the copy is never found and the Android plugin generates a fresh
+        # key anyway. The config is declared in the build file instead, where
+        # the path is explicit and a missing keystore fails the build.
+        run: node tools/patch-signing.mjs
+
       - name: Build the debug APK
         run: |
           chmod +x android/gradlew
           cd android
           ./gradlew assembleDebug --no-daemon
+
+      - name: Verify the APK carries the expected signature
+        # A silent signature change is the one failure that costs data, so it is
+        # checked rather than assumed.
+        run: |
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          EXPECTED=$(keytool -list -v -keystore signing/nifo-debug.keystore \
+            -storepass android 2>/dev/null | grep 'SHA256:' | head -1 | tr -d ' ')
+          ACTUAL=$(keytool -printcert -jarfile "$APK" 2>/dev/null \
+            | grep 'SHA256:' | head -1 | tr -d ' ')
+          echo "expected $EXPECTED"
+          echo "actual   $ACTUAL"
+          test -n "$ACTUAL" && test "$EXPECTED" = "$ACTUAL"
 
       - name: Name the APK after the run
         run: |

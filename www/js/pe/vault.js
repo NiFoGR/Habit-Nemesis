@@ -4,7 +4,7 @@
 // unlocked, or any script that can read IndexedDB, still gets the photos. So
 // the photos are genuinely encrypted with AES-GCM under a key derived from the
 // PIN, and the key exists only in memory while the gallery is open. Forgetting
-// the PIN means the photos are unrecoverable — that is the point, and the UI
+// the PIN means the photos are unrecoverable, that is the point, and the UI
 // says so before you set one.
 
 import * as store from '../store.js';
@@ -153,7 +153,7 @@ async function encryptWith(k, blob) {
 }
 
 /** Wipes the vault and everything it protects. Used by "forgot PIN", which
- *  cannot be a recovery flow — there is no key escrow by design. */
+ *  cannot be a recovery flow, there is no key escrow by design. */
 export function destroy() {
   lock();
   store.update((s) => {
