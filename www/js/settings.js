@@ -27,6 +27,7 @@ function settingsNav() {
     <a href="#/kegels/settings">${icon('target', 18)}<span><b>${escapeHtml(kegelName())}</b><i>Input, daily target, release day, reminder</i></span></a>
     <a href="#/pe/settings">${icon('trend', 18)}<span><b>${escapeHtml(peName())}</b><i>Units, session defaults, check-in day</i></span></a>
     <a href="#/pray/settings">${icon('book', 18)}<span><b>Prayer</b><i>Language, times, reminders</i></span></a>
+    <a href="#/bible/settings">${icon('scripture', 18)}<span><b>Bible</b><i>Reading plan, reminder, text size</i></span></a>
   </div>`;
 }
 
@@ -91,7 +92,7 @@ export function renderSettings(mount) {
 
       <section class="card danger">
         <div class="h-row">${icon('warn', 16)}<h2>Reset</h2></div>
-        <p class="small muted">Erases every session, measurement, prayer day and badge. No undo. Export a backup first.</p>
+        <p class="small muted">Erases every session, measurement, prayer day, chapter read and badge. No undo. Export a backup first.</p>
         <button class="btn danger" id="reset">Erase all data</button>
       </section>
 

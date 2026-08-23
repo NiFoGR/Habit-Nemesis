@@ -137,3 +137,107 @@ Built since this list was written: local notifications from the APK build, the v
 **Today, not a menu.** The hub asks "what is left today" and gives one button for the most urgent thing. A menu makes you decide before you can act, which is where a habit dies.
 
 **App lock reuses the gallery PIN.** Two PINs for one app is how people end up writing them down. It re-arms on backgrounding, except while a session is running, a timer against a real contraction must not be thrown away because a message came in. It is also described honestly in settings: a door, not a safe. Only the photos are encrypted.
+
+---
+
+# Bible
+
+## The core decision
+
+Every Bible app is a reader with a progress bar bolted on. The obvious build
+here was the same: extract the text from the Orthodox Study Bible, put it on the
+screen, tick off chapters. That was attempted and abandoned, for two reasons
+that are both worth keeping.
+
+**The text does not survive extraction.** PDF export preserves prose and
+destroys poetry and italics, inserting spaces inside words. The Psalter, all
+2,534 verses of it, comes out as `B lessed is the m an / Who walks not in the
+counsel of the ungodly`. Chapter openings are separately mangled by the drop
+caps. A verse-anchored parse reached about 61% alignment before anyone had
+checked whether the aligned verses were correct. A Bible with broken words in
+the Psalms is worse than no Bible.
+
+**And it is not ours to ship.** The OSB grants quotation of 1,000 verses, under
+50% of a book. This repository is public and deploys to Pages.
+
+Prayer had already answered this exact question, and its answer was reused:
+bundle nothing copyrighted, link out for the rest, and be useful about the part
+that is actually yours. So the app holds structure, references and its own
+writing, and the text stays in the book on the shelf. `docs/BIBLE.md` has the
+long version.
+
+Once that was settled, the feature got better rather than worse, because the
+question stopped being "how do I show the text" and became "what do I know that
+the book on the shelf does not tell you", which has three good answers: what
+today's reading is, what you have already read, and what the book you are about
+to open actually is.
+
+## What got built
+
+### Data
+- **The canon from the edition itself**, not from a verse-count table.
+  76 books, 1,344 chapters, 35,903 verses, read out of the ebook's own
+  navigation index. Psalms 151, Septuagint numbering, four books of Kingdoms,
+  all the deuterocanonical books, because that is what is in the book.
+- **The lectionary as references.** 349 movable days keyed to Pascha, 20 fixed
+  feasts, 9 days hung off Nativity and Theophany.
+- **Orthodox Pascha computed**, via Meeus and a Julian day number conversion
+  rather than a hard-coded thirteen days that silently breaks in 2100.
+
+### The pretext
+- **A context screen for all 76 books**, six identical questions each, written
+  for this app. The fixed shape is the point: it makes books comparable.
+- **Two extra questions for the Gospels**: who it was written for, and what only
+  this one gives you. Those are the two facts that distinguish four accounts of
+  the same events, and no study Bible puts them where you would see them.
+- Book names inside a lectionary citation link straight through to that book's
+  context, so a reference is a door rather than a string.
+
+### Plans
+- Lectionary, whole Bible in one year or two, NT in 90 days, Gospels in a month,
+  the Psalter in a week by kathisma, or nothing.
+- **Position, not calendar.** Today is the next reading you have not done. A
+  missed day postpones the plan; it never deletes a chapter out of it. The
+  "days behind" figure is shown as information and is never fixed by dropping
+  readings, which is the same principle as refusing streak freezes in Kegels.
+- Days are cut by cumulative division, so a plan lands on its last chapter on
+  its last day instead of running out early.
+
+### Tracking
+- Chapter-level, 13-week heatmap, streak, a bar per part of the canon, books
+  finished, and a day log.
+
+## Deliberately rejected
+
+- **Shipping the text.** Both reasons above.
+- **Importing the user's own copy and parsing it in the browser.** Designed and
+  dropped. It ships the same broken Psalter, just from their device instead of
+  ours, and it would have needed a letter-spacing repair pass that is guesswork
+  by definition.
+- **Verse-level ticking.** A chapter is the largest unit you can honestly claim.
+  Verses would make the tracker something you argue with.
+- **A lectionary passage marking its chapter read.** Romans 2:10-16 is not
+  Romans 2. It counts for the day and for the streak, and it does not colour in
+  a chapter.
+- **A full liturgical calendar with saints.** Different project, varies by
+  jurisdiction, and goarch.org is one tap away and does it properly.
+- **Guessing past the end of the printed table.** Between the last week after
+  Pentecost and the next Triodion the readings vary by year. The app says the
+  table has run out rather than showing a plausible wrong day.
+- **A "days behind" that quietly self-corrects.** See above. Same reason streak
+  freezes were rejected in Kegels: the record should show what happened.
+
+## Backlog
+
+1. **The kathisma names and their stasis divisions**, so the Psalter plan can
+   say "Kathisma 3, second stasis" the way a prayer book does.
+2. **Reading-time estimates per chapter**, from verse counts, so "today" can
+   say roughly how long it will take. Cheap, and it is the number that decides
+   whether you start.
+3. **A note per chapter**, one line, kept with the day it was read. The Kegels
+   debrief is the model: the point is what you thought at the time, not a
+   journal.
+4. **Cross-references from the context screens into the lectionary**, so a book
+   can say when in the year the Church actually reads it.
+5. **Old Calendar dates** alongside the New, since the lectionary data carries
+   both and only the New is used.

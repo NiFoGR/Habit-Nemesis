@@ -10,7 +10,7 @@
 //   settings.js       app-wide settings
 //   lock.js           the optional PIN gate
 //   names.js          what each section is called
-//   kegels/ pe/ pray/ one folder per feature
+//   kegels/ pe/ pray/ bible/ one folder per feature
 //
 // docs/CODEMAP.md has the full map.
 
@@ -33,6 +33,11 @@ import { renderPeGuide, renderPeSettings } from './pe/guide.js';
 import { renderPrayHome, renderPrayStats, renderMyPrayers, renderPraySettings } from './pray/home.js';
 import { startRule } from './pray/session.js';
 import * as prayProgram from './pray/program.js';
+import { renderBibleHome, renderPlans, renderBibleSettings } from './bible/home.js';
+import { renderRead } from './bible/read.js';
+import { renderBookContext } from './bible/book.js';
+import { renderBibleTracking } from './bible/tracking.js';
+import * as bibleProgram from './bible/program.js';
 import { renderHub } from './hub.js';
 import { renderSettings } from './settings.js';
 import { lockActive, renderLock, relock } from './lock.js';
@@ -101,6 +106,12 @@ const ROUTES = {
   '#/pray/stats': () => renderPrayStats(app),
   '#/pray/prayers': () => renderMyPrayers(app),
   '#/pray/settings': () => renderPraySettings(app),
+  '#/bible': () => renderBibleHome(app),
+  '#/bible/read': (params) => renderRead(app, { book: params.get('book') }),
+  '#/bible/book': (params) => renderBookContext(app, params.get('id')),
+  '#/bible/plans': () => renderPlans(app),
+  '#/bible/track': () => renderBibleTracking(app),
+  '#/bible/settings': () => renderBibleSettings(app),
 };
 
 const NAV = {
@@ -111,6 +122,8 @@ const NAV = {
   'kegel-settings': '#/kegels/settings',
   pray: '#/pray', 'pray-stats': '#/pray/stats', 'pray-prayers': '#/pray/prayers',
   'pray-settings': '#/pray/settings',
+  bible: '#/bible', 'bible-read': '#/bible/read', 'bible-plans': '#/bible/plans',
+  'bible-track': '#/bible/track', 'bible-settings': '#/bible/settings',
 };
 
 let lastHash = '';
@@ -132,6 +145,7 @@ function route() {
   // everywhere; only the palette and, for prayer, the type change.
   document.body.dataset.section = path.startsWith('#/pe') ? 'pe'
     : path.startsWith('#/pray') ? 'pray'
+    : path.startsWith('#/bible') ? 'bible'
     : ['#/kegels', '#/kegels/settings', '#/session', '#/track', '#/guide', '#/roadmap', '#/review', '#/pocket', '#/tutorial'].includes(path) ? 'kegels'
     : 'hub';
   const fn = ROUTES[path] || (() => renderHub(app));
@@ -188,10 +202,11 @@ window.addEventListener('hashchange', route);
 
 route();
 
-// The prayer reminders are the only alarms that must survive a reinstall of the
-// app's own state, so they are re-armed from settings on every launch rather
-// than only when the times are edited.
+// The prayer and reading reminders must survive a reinstall of the app's own
+// state, so they are re-armed from settings on every launch rather than only
+// when the times are edited.
 prayProgram.syncAlarms();
+bibleProgram.syncAlarm();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));

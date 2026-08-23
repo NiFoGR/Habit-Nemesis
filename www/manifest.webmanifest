@@ -1,7 +1,7 @@
 {
   "name": "NiFo",
   "short_name": "NiFo",
-  "description": "Personal app. Progressive pelvic floor training with real per-rep tracking.",
+  "description": "Personal app. Pelvic floor training, length training, a prayer rule and Bible reading, all tracked on-device.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

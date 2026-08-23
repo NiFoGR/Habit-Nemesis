@@ -62,3 +62,4 @@ export const ALARM_SESSION = 1001;
 export const ALARM_KEGEL_REMINDER = 2001;
 export const ALARM_PRAY_MORNING = 3001;
 export const ALARM_PRAY_EVENING = 3002;
+export const ALARM_BIBLE = 4001;

@@ -2,13 +2,14 @@
 //
 // Two things live here. `FEATURES` is the registry every section tile renders
 // from, and `todayTasks` is the list of what is still owed today across all of
-// them. Adding a fourth feature means adding an entry to each, and nothing
-// else on this screen needs to know about it.
+// them. Adding a feature means adding an entry to each, and nothing else on
+// this screen needs to know about it.
 
 import * as store from './store.js';
 import * as program from './kegels/program.js';
 import * as peProgram from './pe/program.js';
 import * as prayProgram from './pray/program.js';
+import * as bibleProgram from './bible/program.js';
 import { RULES as PRAY_RULES } from './pray/prayers.js';
 import { fmtHours, ringSvg, escapeHtml, sparkline } from './ui.js';
 import { icon, logoMark } from './icons.js';
@@ -79,6 +80,28 @@ const FEATURES = [
     },
     spark: () => '',
   },
+  {
+    id: 'bible',
+    icon: 'scripture',
+    route: '#/bible',
+    name: () => 'Bible',
+    blurb: 'What you have read, and what each book is for',
+    pills() {
+      const today = bibleProgram.dayRead();
+      const st = bibleProgram.streak();
+      const prog = bibleProgram.overallProgress();
+      return [
+        { text: today.any ? `${today.count} read today` : 'Nothing read today', done: today.any },
+        { text: `${Math.round(prog.frac * 100)}% of the canon`, ghost: true },
+        st ? { text: `${st}d streak`, ghost: true } : null,
+      ];
+    },
+    spark() {
+      // The hub is on its own palette, so this names the Bible section's gold
+      // directly rather than reaching for a token that is not defined here.
+      return sparkline(bibleProgram.history(4).map((d) => d.n), { color: '#d9b061' });
+    },
+  },
 ];
 
 /* ---------------- Today ----------------
@@ -87,7 +110,7 @@ const FEATURES = [
    the moment a habit gets dropped. This answers the question instead: here is
    what is outstanding today, and the one button that starts it. */
 
-/** Everything still owed today, across both features, most urgent first. */
+/** Everything still owed today, across every feature, most urgent first. */
 function todayTasks(state) {
   const out = [];
   const plan = program.planForToday(state);
@@ -139,6 +162,32 @@ function todayTasks(state) {
       cta: PRAY_RULES[slot].label,
     });
   }
+
+  // Reading is a daily obligation like the prayer rule, so it belongs in the
+  // list whether or not a plan is running: with no plan, the ask is simply
+  // that something was read.
+  const reading = bibleProgram.today();
+  const readToday = bibleProgram.dayRead();
+  const bibleDone = reading.kind === 'free' ? readToday.any : reading.complete;
+  out.push({
+    id: 'bible',
+    icon: 'scripture',
+    label: 'Bible',
+    detail: bibleDone
+      ? reading.kind === 'free'
+        ? `${readToday.count} read today`
+        : 'Today\u2019s reading done'
+      : reading.kind === 'free'
+        ? 'Nothing read today'
+        : reading.items.length
+          // The lectionary's items are named days carrying the passages, so
+          // the useful line is the passages; a plan's items are the passages.
+          ? reading.items.map((i) => i.detail || i.label).join(' · ')
+          : 'Nothing appointed today',
+    done: bibleDone,
+    href: '#/bible',
+    cta: 'Read',
+  });
 
   const due = peProgram.measurementDue();
   if (due.due && state.pe.settings.safetyAck) {

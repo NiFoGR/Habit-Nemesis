@@ -51,6 +51,18 @@ const ASSETS = [
   './js/pray/session.js',
   './js/pray/home.js',
 
+  // bible
+  './js/bible/canon.js',
+  './js/bible/lectionary.js',
+  './js/bible/context.js',
+  './js/bible/pascha.js',
+  './js/bible/plans.js',
+  './js/bible/program.js',
+  './js/bible/home.js',
+  './js/bible/read.js',
+  './js/bible/book.js',
+  './js/bible/tracking.js',
+
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
