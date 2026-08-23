@@ -92,7 +92,7 @@ export function renderBibleHome(mount) {
   mount.innerHTML = `
     <div class="screen bible">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="hub" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back="hub" aria-label="Back">${icon('back')}</button>
         <h1>Bible</h1>
         <button class="icon-btn" data-nav="bible-track" aria-label="Tracking">${icon('chart')}</button>
       </header>
@@ -184,7 +184,7 @@ export function renderPlans(mount) {
   mount.innerHTML = `
     <div class="screen bible">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="bible" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back="bible" aria-label="Back">${icon('back')}</button>
         <h1>Plans</h1>
         <span class="icon-btn ghost"></span>
       </header>
@@ -244,7 +244,7 @@ export function renderBibleSettings(mount) {
   mount.innerHTML = `
     <div class="screen bible">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="bible" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back="bible" aria-label="Back">${icon('back')}</button>
         <h1>Bible settings</h1>
         <span class="icon-btn ghost"></span>
       </header>

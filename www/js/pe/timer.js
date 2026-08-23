@@ -12,6 +12,7 @@ import * as kegel from '../kegels/program.js';
 import { haptic, beep, fmtClock, fmtMs, notify, askNotifyPermission, escapeHtml, toast } from '../ui.js';
 import { scheduleAlarm, cancelAlarm, ensureAlarmPermission, ALARM_SESSION } from '../native.js';
 import { icon } from '../icons.js';
+import { leaveTo } from '../back.js';
 
 const R = 132;
 const CIRC = 2 * Math.PI * R;
@@ -68,7 +69,7 @@ export function renderTimer(mount, opts = {}) {
     mount.innerHTML = `
       <div class="screen">
         <header class="screen-head">
-          <button class="icon-btn" data-nav="pe" aria-label="Back">${icon('back')}</button>
+          <button class="icon-btn" data-back="pe" aria-label="Back">${icon('back')}</button>
           <h1>${escapeHtml(d.label)}</h1>
           <button class="icon-btn" data-nav="pe-guide" aria-label="Safety guide">${icon('help')}</button>
         </header>
@@ -215,7 +216,7 @@ export function renderTimer(mount, opts = {}) {
     mount.innerHTML = `
       <div class="player pe-player" id="player">
         <div class="player-top">
-          <button class="icon-btn" id="stop" aria-label="Finish">${icon('close')}</button>
+          <button class="icon-btn" data-back id="stop" aria-label="Finish">${icon('close')}</button>
           <div class="player-progress"><i id="prog"></i></div>
           <button class="icon-btn" id="pause" aria-label="Pause">${icon('pause')}</button>
         </div>
@@ -391,7 +392,7 @@ export function renderTimer(mount, opts = {}) {
 
     function abandon() {
       cleanup();
-      location.hash = '#/pe';
+      leaveTo('#/pe');
     }
 
     function end() {

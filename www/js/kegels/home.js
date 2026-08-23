@@ -10,6 +10,7 @@ import { renderTutorial } from './tutorial.js';
 import { fmtMs, ringSvg, escapeHtml, toast, sparkline } from '../ui.js';
 import { icon } from '../icons.js';
 import { kegelName } from '../names.js';
+import { leaveTo } from '../back.js';
 import { scheduleDaily, cancelAlarm, ALARM_KEGEL_REMINDER } from '../native.js';
 
 /* ---------------- home ---------------- */
@@ -19,7 +20,14 @@ export function renderKegels(mount) {
   // Nobody's first kegel should be guesswork. Straight into the walkthrough on
   // a genuinely fresh install; after that it is a link, not a gate.
   if (!state.settings.tutorialDone && state.sessions.length === 0) {
-    return renderTutorial(mount, { onExit: () => renderKegels(mount) });
+    return renderTutorial(mount, {
+      // The walkthrough renders in place, still at #/kegels, so backing out of
+      // it means backing out of Kegels. Re-rendering the home would only hit
+      // this gate again and redraw step one, which is what made the back arrow
+      // look dead on a fresh install. Finishing or skipping sets tutorialDone,
+      // and that is the difference between the two exits.
+      onExit: () => (store.get().settings.tutorialDone ? renderKegels(mount) : leaveTo('#/hub')),
+    });
   }
   const plan = program.planForToday(state);
   const def = program.levelDef(plan.level);
@@ -42,7 +50,7 @@ export function renderKegels(mount) {
   mount.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="hub" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back="hub" aria-label="Back">${icon('back')}</button>
         <h1>${escapeHtml(kegelName())}</h1>
         <button class="icon-btn" data-nav="track" aria-label="Tracking">${icon('chart')}</button>
       </header>
@@ -114,7 +122,7 @@ export function renderGuide(mount) {
   mount.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="kegels" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back="kegels" aria-label="Back">${icon('back')}</button>
         <h1>How to</h1>
         <span class="icon-btn ghost"></span>
       </header>
@@ -168,7 +176,7 @@ export function renderKegelSettings(mount) {
   mount.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="kegels" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back="kegels" aria-label="Back">${icon('back')}</button>
         <h1>${escapeHtml(kegelName())}</h1>
         <span class="icon-btn ghost"></span>
       </header>

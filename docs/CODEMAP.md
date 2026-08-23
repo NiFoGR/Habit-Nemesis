@@ -2,7 +2,7 @@
 
 Where everything is, so finding it does not mean reading it.
 
-Three rules the tree follows:
+Four rules the tree follows:
 
 1. **One folder per feature.** `kegels/`, `pe/`, `pray/`, `bible/`. Anything at
    the top level of `js/` is shell, used by all of them.
@@ -12,6 +12,10 @@ Three rules the tree follows:
    `pe-program.js` at the root would not be.
 3. **A setting lives where the thing it affects lives.** App-wide options are
    in `settings.js`; per-section options are in that section's own screen.
+4. **Back is not a link.** Every screen marks its corner control with
+   `data-back`: with a nav key when it is plain navigation, bare when the
+   screen handles Back itself. `back.js` reads that one attribute and answers
+   for the arrow, the browser and the Android hardware button together.
 
 Every file opens with a comment saying what it is and why it works the way it
 does. Long files are split by `/* ---- section ---- */` banners, so
@@ -22,7 +26,8 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/app.js` | 196 | Route table, shell state, boot. Nothing renders here. |
+| `js/app.js` | 213 | Route table, shell state, boot. Nothing renders here. |
+| `js/back.js` | 213 | What Back means: the corner arrow, the hardware button, history. |
 | `js/hub.js` | 299 | The Today screen, the feature registry, the install prompt. |
 | `js/icons.js` | 74 | The inline SVG icon set and the logo mark. |
 | `js/lock.js` | 70 | The optional PIN gate. Owns whether the app is unlocked. |
@@ -36,15 +41,15 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/kegels/home.js` | 231 | Kegels home, how-to, and Kegels settings. |
-| `js/kegels/pocket.js` | 263 | Vibration-only session pacing. |
+| `js/kegels/home.js` | 239 | Kegels home, how-to, and Kegels settings. |
+| `js/kegels/pocket.js` | 264 | Vibration-only session pacing. |
 | `js/kegels/program.js` | 496 | The 104-week plan, scoring, progression, badges. |
 | `js/kegels/report.js` | 99 | End-of-session debrief. |
 | `js/kegels/review.js` | 134 | The weekly review. |
 | `js/kegels/roadmap.js` | 134 | All 104 weeks and the six phases. |
 | `js/kegels/session.js` | 476 | The guided player and per-rep measurement. |
 | `js/kegels/tracking.js` | 186 | Heatmap, charts, session log. |
-| `js/kegels/tutorial.js` | 321 | Technique walkthrough, including the reverse kegel. |
+| `js/kegels/tutorial.js` | 322 | Technique walkthrough, including the reverse kegel. |
 
 ## PE
 
@@ -52,14 +57,14 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 |---|---|---|
 | `js/pe/camera.js` | 246 | Ghost-overlay photo capture and alignment. |
 | `js/pe/db.js` | 133 | IndexedDB photo storage and downscaling. |
-| `js/pe/gallery.js` | 239 | Encrypted gallery, viewer, compare. |
+| `js/pe/gallery.js` | 241 | Encrypted gallery, viewer, compare. |
 | `js/pe/guide.js` | 165 | Safety reference and PE settings. |
 | `js/pe/home.js` | 124 | PE home and the one-time safety gate. |
-| `js/pe/measure.js` | 400 | The five-measurement monthly check-in. |
+| `js/pe/measure.js` | 401 | The five-measurement monthly check-in. |
 | `js/pe/pin.js` | 140 | PIN keypad and unlock flow. |
 | `js/pe/program.js` | 492 | Session types, limits, projection, achievements. |
 | `js/pe/stats.js` | 309 | Charts, period selector, projection, log. |
-| `js/pe/timer.js` | 590 | Session runner, set breaks, kegels during pump. |
+| `js/pe/timer.js` | 591 | Session runner, set breaks, kegels during pump. |
 | `js/pe/vault.js` | 162 | PIN-derived AES-GCM encryption. |
 
 ## Prayer
@@ -78,7 +83,7 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 | `js/bible/book.js` | 92 | One book's context screen, the six questions. |
 | `js/bible/canon.js` | 88 | **Generated.** 76 books, 1,344 chapters, verse counts. |
 | `js/bible/context.js` | 841 | What every book is and what to watch for. |
-| `js/bible/home.js` | 304 | Bible home, the plan picker, Bible settings. |
+| `js/bible/home.js` | 309 | Bible home, the plan picker, Bible settings. |
 | `js/bible/lectionary.js` | 402 | **Generated.** The OSB lectionary as references. |
 | `js/bible/pascha.js` | 177 | Orthodox Pascha, the season, the day's readings. |
 | `js/bible/plans.js` | 142 | The six reading plans, and how a day is cut. |
@@ -109,11 +114,16 @@ all. [`docs/BIBLE.md`](BIBLE.md) says why.
 1. A folder under `www/js/`, following rule 2 above.
 2. An entry in `FEATURES` in `hub.js` for the section tile.
 3. A line in `todayTasks` in `hub.js` if it owes you something daily.
-4. Routes in `ROUTES` and `NAV` in `app.js`.
+4. Routes in `ROUTES` and `NAV` in `app.js`, plus `EPHEMERAL` there if the
+   screen starts running the moment you arrive on it.
 5. Its slice of the store, added to `blank()` and `hydrate()` in `store.js`.
    Keep it additive: `hydrate` merges saved state over the blank shape, so new
    fields appear on old saves instead of coming back `undefined`.
 6. Its modules added to `ASSETS` in `sw.js`, or it will not work offline.
 7. A theme block in `styles.css` and a case in the router's section switch.
+8. `data-back="<nav key>"` on every corner arrow, never an `href`. An anchor
+   pushes a history entry instead of unwinding one, and it carries no marker
+   for `back.js` to find, so the Android hardware button falls past all four
+   rules and quits the app. See `back.js`.
 
-43 modules, 10,676 lines.
+44 modules, 10,925 lines.

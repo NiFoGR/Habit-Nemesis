@@ -107,7 +107,7 @@ export function renderTracking(mount) {
   mount.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="kegels" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back="kegels" aria-label="Back">${icon('back')}</button>
         <h1>Tracking</h1>
         <button class="icon-btn" data-nav="settings" aria-label="Settings">${icon('settings')}</button>
       </header>

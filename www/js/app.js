@@ -41,6 +41,7 @@ import * as bibleProgram from './bible/program.js';
 import { renderHub } from './hub.js';
 import { renderSettings } from './settings.js';
 import { lockActive, renderLock, relock } from './lock.js';
+import { initBack, navigate, replaceWith } from './back.js';
 import * as vault from './pe/vault.js';
 import { haptic } from './ui.js';
 
@@ -61,12 +62,12 @@ function runSession(params) {
     document.body.classList.remove('in-session');
     activeSession = null;
     if (!result) {
-      location.hash = '#/kegels';
+      navigate('#/kegels');
       return;
     }
     haptic(result.outcome.levelUp ? 'level' : 'done');
     renderReport(app, result, () => {
-      location.hash = '#/kegels';
+      navigate('#/kegels');
     });
   });
 }
@@ -75,7 +76,7 @@ function runRule(params) {
   const slot = prayProgram.SLOTS.includes(params?.get?.('slot')) ? params.get('slot') : 'morning';
   activeSession = startRule(app, slot, () => {
     activeSession = null;
-    location.hash = '#/pray';
+    navigate('#/pray');
   });
 }
 
@@ -156,7 +157,24 @@ document.addEventListener('click', (e) => {
   const nav = e.target.closest('[data-nav]');
   if (!nav) return;
   e.preventDefault();
-  location.hash = NAV[nav.dataset.nav] || '#/hub';
+  navigate(NAV[nav.dataset.nav] || '#/hub');
+});
+
+// Screens that start running the moment you arrive. Leaving one replaces it
+// instead of stacking on top, so Back cannot walk into a session you have just
+// finished and set it going again.
+const EPHEMERAL = ['#/session', '#/pray/run', '#/pe/timer', '#/pe/measure', '#/pocket'];
+
+// Today is the default screen, settled before back.js takes its bearings below.
+// replaceState rather than assignment: landing on the app should not leave a
+// blank entry underneath Today for Back to fall into.
+if (!location.hash) history.replaceState(history.state, '', '#/hub');
+
+// Back is its own gesture, not a link that happens to point backwards. back.js
+// says why, and owns the Android hardware button along with it.
+initBack({
+  resolve: (key) => NAV[key] || '#/hub',
+  ephemeral: (hash) => EPHEMERAL.some((r) => hash.startsWith(r)),
 });
 
 // Locking the vault the moment the app is backgrounded keeps decrypted photos
@@ -176,13 +194,12 @@ document.addEventListener('visibilitychange', () => {
   if (vault.isUnlocked()) {
     vault.lock();
     leaveGallery();
-    if (location.hash.startsWith('#/pe/gallery')) location.hash = '#/pe';
+    if (location.hash.startsWith('#/pe/gallery')) replaceWith('#/pe');
   }
 });
 
 window.addEventListener('hashchange', route);
 
-if (!location.hash) location.hash = '#/hub';
 route();
 
 // The prayer and reading reminders must survive a reinstall of the app's own

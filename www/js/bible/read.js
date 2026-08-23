@@ -29,7 +29,7 @@ function renderShelf(mount) {
   mount.innerHTML = `
     <div class="screen bible">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="bible" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back="bible" aria-label="Back">${icon('back')}</button>
         <h1>The books</h1>
         <span class="icon-btn ghost"></span>
       </header>
@@ -82,7 +82,7 @@ function renderBook(mount, b) {
   mount.innerHTML = `
     <div class="screen bible">
       <header class="screen-head">
-        <a class="icon-btn" href="#/bible/read" aria-label="Back">${icon('back')}</a>
+        <button class="icon-btn" data-back="bible-read" aria-label="Back">${icon('back')}</button>
         <h1>${escapeHtml(b.name)}</h1>
         <a class="icon-btn" href="#/bible/book?id=${b.id}" aria-label="About this book">${icon('help')}</a>
       </header>

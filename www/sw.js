@@ -11,6 +11,7 @@ const ASSETS = [
 
   // shell
   './js/app.js',
+  './js/back.js',
   './js/hub.js',
   './js/settings.js',
   './js/lock.js',

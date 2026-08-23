@@ -29,7 +29,7 @@ export function renderBibleTracking(mount) {
   mount.innerHTML = `
     <div class="screen bible">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="bible" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back="bible" aria-label="Back">${icon('back')}</button>
         <h1>Tracking</h1>
         <span class="icon-btn ghost"></span>
       </header>

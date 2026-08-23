@@ -35,7 +35,7 @@ export function renderBookContext(mount, id) {
     mount.innerHTML = `
       <div class="screen bible">
         <header class="screen-head">
-          <a class="icon-btn" href="#/bible/read" aria-label="Back">${icon('back')}</a>
+          <button class="icon-btn" data-back="bible-read" aria-label="Back">${icon('back')}</button>
           <h1>Not found</h1>
           <span class="icon-btn ghost"></span>
         </header>
@@ -51,7 +51,7 @@ export function renderBookContext(mount, id) {
   mount.innerHTML = `
     <div class="screen bible ${large ? 'large' : ''}">
       <header class="screen-head">
-        <a class="icon-btn" href="#/bible/read?book=${b.id}" aria-label="Back">${icon('back')}</a>
+        <button class="icon-btn" data-back="bible-read" aria-label="Back">${icon('back')}</button>
         <h1>${escapeHtml(b.name)}</h1>
         <span class="icon-btn ghost"></span>
       </header>

@@ -972,13 +972,26 @@ body[data-section="pray"] .btn.primary { color: #14100a; }
 
 /* ---------- prayer: the rule ---------- */
 
-.pray-run { display: flex; flex-direction: column; min-height: 100dvh; }
+/* Fixed to the viewport rather than `min-height: 100dvh`, for the same reason
+   `.player` is: a flex column only hands its middle child a scrollbar when the
+   column's own height is definite. With min-height the column grew to fit the
+   prayer instead, `.pr-body` never scrolled, and the Next button sat below the
+   fold on a screen that `body.in-session` had already stopped scrolling. The
+   long prayers were unfinishable. */
+.pray-run {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  padding: calc(var(--safe-t) + 14px) var(--pad) calc(var(--safe-b) + 14px);
+}
 .pr-bar { display: flex; gap: 3px; margin-bottom: 18px; }
 .pr-bar i { flex: 1; height: 3px; border-radius: 3px; background: var(--line); }
 .pr-bar i.on { background: var(--accent); }
 .pr-bar i.done { background: color-mix(in srgb, var(--accent) 40%, var(--line)); }
 
-.pr-body { flex: 1; overflow-y: auto; padding-bottom: 20px; }
+/* min-height:0 is what actually lets this shrink below its content; overflow
+   alone is not enough in every engine. overscroll-behavior keeps a flick at
+   the end of a prayer from dragging the page behind it. */
+.pr-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 20px; }
 .pr-title { font-size: 1.15rem; color: var(--accent); margin-bottom: 14px; font-weight: 600; }
 .pr-own { font-style: normal; font-size: 0.7rem; color: var(--muted); font-weight: 400; }
 .pr-repeat {
@@ -1000,7 +1013,11 @@ body[data-section="pray"] .btn.primary { color: #14100a; }
 .pr-nav .btn { flex: 1; margin-top: 0; }
 .pr-nav .btn.primary { flex: 2; }
 
-.pray-done { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100dvh; text-align: center; gap: 6px; }
+.pray-done {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 100dvh; text-align: center; gap: 6px;
+  padding: calc(var(--safe-t) + 24px) var(--pad) calc(var(--safe-b) + 24px);
+}
 .pray-done .done-mark { color: var(--good); margin-bottom: 8px; }
 .pray-done h1 { font-size: 1.6rem; }
 .pray-done .stat-grid { width: 100%; margin: 22px 0; }
