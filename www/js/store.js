@@ -2,6 +2,12 @@
 // no network, nothing leaves the phone.
 
 import { toast } from './ui.js';
+import { BOOKS } from './bible/canon.js';
+
+// The sanitiser needs to know how many chapters each book has, so a saved file
+// cannot smuggle "gen:9999" or a book that does not exist into the page.
+const CANON_LIMITS = BOOKS.map((b) => [b.id, b.chapters.length]);
+const PLAN_IDS = ['lectionary', 'year', 'twoyear', 'nt', 'gospels', 'psalter', 'free'];
 
 const KEY = 'nifo.state.v1';
 const SCHEMA = 1;
@@ -69,6 +75,25 @@ function blank() {
       },
       days: {}, // dayKey -> { morning: ts|null, evening: ts|null }
       custom: [], // prayers you added: { id, slot, title, el, en }
+      streak: 0,
+      best: 0,
+    },
+
+    // Fourth feature: reading the Bible. `read` is the lifetime record, one
+    // entry per chapter, and `days` is what happened on each day. The two are
+    // kept apart because unreading a chapter must not erase the day it was
+    // read on for every other chapter beside it.
+    bible: {
+      settings: {
+        plan: 'lectionary',
+        planStart: dayKey(),
+        remind: false,
+        remindAt: '07:30',
+        largeText: false,
+      },
+      read: {}, // bookId -> { chapterNumber: ts }
+      days: {}, // dayKey -> { chapters: ['gen:1'], refs: ['Romans 2:10-16'] }
+      planDone: 0, // plan-days finished, which is not the same as days elapsed
       streak: 0,
       best: 0,
     },
@@ -276,6 +301,62 @@ function hydrate(saved) {
         : null,
     },
     pray: cleanPray(saved.pray, base.pray),
+    bible: cleanBible(saved.bible, base.bible),
+  };
+}
+
+/** The Bible slice. Book ids and chapter numbers are used as object keys and
+ *  rendered into the page, so both are checked against the canon itself rather
+ *  than against a pattern: a key that is not a real book, or a chapter beyond
+ *  the end of one, is dropped instead of carried along. */
+function cleanBible(sb, base) {
+  const src = sb && typeof sb === 'object' ? sb : {};
+  const bs = src.settings && typeof src.settings === 'object' ? src.settings : {};
+  const limits = new Map(CANON_LIMITS);
+
+  const read = {};
+  const rawRead = src.read && typeof src.read === 'object' ? src.read : {};
+  for (const [book, chapters] of Object.entries(rawRead).slice(0, 200)) {
+    const max = limits.get(book);
+    if (!max || !chapters || typeof chapters !== 'object') continue;
+    const kept = {};
+    for (const [ch, ts] of Object.entries(chapters).slice(0, 200)) {
+      const n = Number(ch);
+      if (!Number.isInteger(n) || n < 1 || n > max) continue;
+      kept[n] = num(ts, 0, 4e12) ?? Date.now();
+    }
+    if (Object.keys(kept).length) read[book] = kept;
+  }
+
+  const validUnit = (u) => {
+    if (typeof u !== 'string') return false;
+    const [book, ch] = u.split(':');
+    const max = limits.get(book);
+    return !!max && /^\d{1,3}$/.test(ch || '') && +ch >= 1 && +ch <= max;
+  };
+
+  const days = {};
+  const rawDays = src.days && typeof src.days === 'object' ? src.days : {};
+  for (const [k, v] of Object.entries(rawDays).slice(0, 20000)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !v || typeof v !== 'object') continue;
+    const chapters = arr(v.chapters, 400).filter(validUnit);
+    const refs = arr(v.refs, 100).map((r) => str(r, 200)).filter(Boolean);
+    if (chapters.length || refs.length) days[k] = { chapters, refs };
+  }
+
+  return {
+    settings: {
+      plan: oneOf(bs.plan, PLAN_IDS, base.settings.plan),
+      planStart: dateKey(bs.planStart),
+      remind: bool(bs.remind),
+      remindAt: timeStr(bs.remindAt, base.settings.remindAt),
+      largeText: bool(bs.largeText),
+    },
+    read,
+    days,
+    planDone: int(src.planDone, 0, 100000, 0),
+    streak: int(src.streak, 0, 100000, 0),
+    best: int(src.best, 0, 100000, 0),
   };
 }
 

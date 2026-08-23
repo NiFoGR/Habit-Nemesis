@@ -10,9 +10,11 @@ Runs entirely on the phone. No account, no server, no analytics, nothing leaves 
 
 **Feature 3 - Prayer:** a morning and a night rule, both required, in Greek and English, with the ancient core bundled and room for the prayers you say yourself. Streaks and a 13-week heatmap, and a button through to goarch.org for the readings and the calendar.
 
-The home screen is a **Today** list: what is outstanding across all three features, and one button for the most urgent thing.
+**Feature 4 - Bible:** the whole Orthodox canon, 76 books and 1,344 chapters, taken from the Orthodox Study Bible itself. Today's reading from the church lectionary or from one of five plans, a screen for every book saying what it is and what to watch for before you open it, and a record of everything you have read.
 
-Each section has its own palette. Kegels is teal on cool graphite, PE violet on deep plum, Prayer warm gold on near-black with a serif face. One skeleton, three rooms.
+The home screen is a **Today** list: what is outstanding across all four features, and one button for the most urgent thing.
+
+Each section has its own palette. Kegels is teal on cool graphite, PE violet on deep plum, Prayer warm gold on near-black with a serif face, Bible the deep red of a Gospel book. One skeleton, four rooms.
 
 ---
 
@@ -140,6 +142,22 @@ Reasoning, safety numbers and sources: [`docs/PE_PROGRAM.md`](docs/PE_PROGRAM.md
 
 **goarch.org** for the day's readings, the calendar, fasts and saints, one tap from the prayer home.
 
+## What is in the Bible feature
+
+**The app does not contain the Bible, and that is the point.** You bought a copy; read from it. What the app does is know exactly what is in it, tell you what you are about to read before you read it, and remember what you have read. Full reasoning: [`docs/BIBLE.md`](docs/BIBLE.md).
+
+**The real canon, from your own edition.** 76 books, 1,344 chapters, 35,903 verses, with the per-chapter verse counts read out of the Orthodox Study Bible's own index. So the Psalms number 151 and run on the Septuagint numbering, the four books of Kingdoms are called that, and Tobit, Judith, the three books of Maccabees, Wisdom, Sirach, Baruch and the rest are all there, because they are in the book on your shelf.
+
+**Today's reading, worked out properly.** The OSB's lectionary, keyed to Orthodox Pascha, which the app computes rather than looks up. 349 days of the movable cycle, twenty fixed feasts, and the days that hang off the Nativity and Theophany. It tells you where you are in the church year, whether it is a fast, and it says plainly when the printed table has run out for the year rather than showing you the wrong day.
+
+**Or a plan, if you would rather.** The whole Bible in a year or two, the New Testament in ninety days, the four Gospels in a month, or the Psalter in a week by the twenty kathismata. A missed day never deletes a chapter: today is always the next reading you have not done, and the app tells you how far behind the calendar that has left you rather than quietly dropping readings to make the number look better.
+
+**A screen for every book, before you open it.** The same six questions for all 76: who wrote it, when, where it sits in the story, what it is for, what to watch for while you read, and how the Church reads it toward Christ. The four Gospels answer two more, which are the only two that actually distinguish four accounts of the same events: **who it was written for, and what only this one gives you.**
+
+**What you have read.** Chapter by chapter, with a 13-week heatmap, a streak, a bar per part of the canon so you can see which parts you have never been into, books finished, and a log of what you read on which day. A chapter is the unit because it is the largest thing you can honestly say you either read or did not.
+
+**One tap to goarch.org** for the authoritative daily readings, exactly as the Prayer section does.
+
 ## Layout
 
 ```
@@ -157,13 +175,15 @@ www/               the entire app, plain ES modules, no build
     kegels/        the Kegels feature
     pe/            the PE feature
     pray/          the Prayer feature
+    bible/         the Bible feature
   sw.js            offline service worker
 signing/           the fixed APK key, so updates install over the top
-tools/             icon generation, signing patch, dev server
+tools/             icon generation, signing patch, dev server, data extraction
 docs/
   CODEMAP.md       where every file is and what it does
   KEGEL_PROGRAM.md the kegel protocol and where it comes from
   PE_PROGRAM.md    PE limits, projection maths and sources
+  BIBLE.md         where the canon and lectionary came from, and what is not shipped
   BRAINSTORM.md    feature design notes and the backlog
 ```
 
