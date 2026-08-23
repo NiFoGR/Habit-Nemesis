@@ -34,7 +34,7 @@ export function renderPrayHome(mount) {
   mount.innerHTML = `
     <div class="screen pray">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="hub" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back="hub" aria-label="Back">${icon('back')}</button>
         <h1>Prayer</h1>
         <button class="icon-btn" data-nav="pray-stats" aria-label="Tracking">${icon('chart')}</button>
       </header>
@@ -93,7 +93,7 @@ export function renderPrayStats(mount) {
   mount.innerHTML = `
     <div class="screen pray">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="pray" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back="pray" aria-label="Back">${icon('back')}</button>
         <h1>Tracking</h1>
         <span class="icon-btn ghost"></span>
       </header>
@@ -135,7 +135,7 @@ export function renderMyPrayers(mount) {
     mount.innerHTML = `
       <div class="screen pray">
         <header class="screen-head">
-          <button class="icon-btn" data-nav="pray" aria-label="Back">${icon('back')}</button>
+          <button class="icon-btn" data-back="pray" aria-label="Back">${icon('back')}</button>
           <h1>My prayers</h1>
           <span class="icon-btn ghost"></span>
         </header>
@@ -174,7 +174,7 @@ export function renderMyPrayers(mount) {
     mount.innerHTML = `
       <div class="screen pray">
         <header class="screen-head">
-          <button class="icon-btn" id="back" aria-label="Back">${icon('back')}</button>
+          <button class="icon-btn" data-back id="back" aria-label="Back">${icon('back')}</button>
           <h1>${existing ? 'Edit' : 'Add'}</h1>
           <span class="icon-btn ghost"></span>
         </header>
@@ -228,7 +228,7 @@ export function renderPraySettings(mount) {
   mount.innerHTML = `
     <div class="screen pray">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="pray" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back="pray" aria-label="Back">${icon('back')}</button>
         <h1>Settings</h1>
         <span class="icon-btn ghost"></span>
       </header>

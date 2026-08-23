@@ -43,7 +43,7 @@ export function captureWithGhost(mount, ghostBlob, onDone, onCancel) {
     mount.innerHTML = `
       <div class="screen cam-screen">
         <header class="screen-head">
-          <button class="icon-btn" id="cancel" aria-label="Back">${icon('back')}</button>
+          <button class="icon-btn" data-back id="cancel" aria-label="Back">${icon('back')}</button>
           <h1>Progress photo</h1>
           <span class="icon-btn ghost"></span>
         </header>
@@ -132,7 +132,7 @@ export function captureWithGhost(mount, ghostBlob, onDone, onCancel) {
       mount.innerHTML = `
         <div class="screen">
           <header class="screen-head">
-            <button class="icon-btn" id="back" aria-label="Back">${icon('back')}</button>
+            <button class="icon-btn" data-back id="back" aria-label="Back">${icon('back')}</button>
             <h1>Align</h1>
             <span class="icon-btn ghost"></span>
           </header>

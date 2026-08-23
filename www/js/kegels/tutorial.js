@@ -10,6 +10,7 @@
 import * as store from '../store.js';
 import { icon } from '../icons.js';
 import { haptic, toast } from '../ui.js';
+import { leaveTo } from '../back.js';
 
 /* ---------------- diagrams ----------------
    Deliberately schematic: a side-on outline with the floor drawn as a sling,
@@ -245,7 +246,7 @@ export function renderTutorial(mount, { only = null, onExit = null } = {}) {
   const leave = () => {
     teardown?.();
     if (onExit) onExit();
-    else location.hash = '#/kegels';
+    else leaveTo('#/kegels');
   };
 
   function draw() {
@@ -257,7 +258,7 @@ export function renderTutorial(mount, { only = null, onExit = null } = {}) {
     mount.innerHTML = `
       <div class="screen tut">
         <header class="screen-head">
-          <button class="icon-btn" id="back" aria-label="Back">${icon('back')}</button>
+          <button class="icon-btn" data-back id="back" aria-label="Back">${icon('back')}</button>
           <h1>${step.title}</h1>
           <button class="icon-btn ${steps.length > 1 ? 'text-btn' : 'ghost'}" id="skip" aria-label="Skip">${steps.length > 1 ? 'Skip' : ''}</button>
         </header>
