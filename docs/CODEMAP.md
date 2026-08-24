@@ -4,8 +4,10 @@ Where everything is, so finding it does not mean reading it.
 
 Four rules the tree follows:
 
-1. **One folder per feature.** `kegels/`, `pe/`, `pray/`, `bible/`. Anything at
-   the top level of `js/` is shell, used by all of them.
+1. **One folder per feature.** `kegels/`, `pe/`, `bible/`. Anything at the top
+   level of `js/` is shell, used by all of them. `pray/` is not a fourth
+   feature: the rule is part of the Bible section, and the folder holds the
+   prayer texts and the guided rule it runs.
 2. **The same filenames in each.** `program.js` is always the domain logic,
    `home.js` always the section's screens, `session.js` always the thing that
    runs. The folder disambiguates, so `pe/program.js` is unambiguous where a
@@ -26,15 +28,15 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/app.js` | 213 | Route table, shell state, boot. Nothing renders here. |
+| `js/app.js` | 210 | Route table, shell state, boot. Nothing renders here. |
 | `js/back.js` | 213 | What Back means: the corner arrow, the hardware button, history. |
-| `js/hub.js` | 299 | The Today screen, the feature registry, the install prompt. |
+| `js/hub.js` | 273 | The Today screen, the feature registry, the install prompt. |
 | `js/icons.js` | 74 | The inline SVG icon set and the logo mark. |
 | `js/lock.js` | 70 | The optional PIN gate. Owns whether the app is unlocked. |
 | `js/names.js` | 10 | What each section is called, under discreet mode. |
 | `js/native.js` | 65 | Capacitor bridge for real Android alarms. |
 | `js/settings.js` | 199 | App-wide settings: feedback, privacy, data, reset. |
-| `js/store.js` | 569 | localStorage persistence and the input sanitiser. |
+| `js/store.js` | 571 | localStorage persistence and the input sanitiser. |
 | `js/ui.js` | 376 | Shared helpers: formatting, haptics, notifications, SVG charts. |
 
 ## Kegels
@@ -67,34 +69,30 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 | `js/pe/timer.js` | 591 | Session runner, set breaks, kegels during pump. |
 | `js/pe/vault.js` | 162 | PIN-derived AES-GCM encryption. |
 
-## Prayer
-
-| File | Lines | What it is |
-|---|---|---|
-| `js/pray/home.js` | 281 | Prayer home, tracking, my prayers, prayer settings. |
-| `js/pray/prayers.js` | 240 | The bundled prayers and the two rules. |
-| `js/pray/program.js` | 182 | What is owed today, streaks, heatmap data, alarms. |
-| `js/pray/session.js` | 151 | The guided rule. |
-
 ## Bible
+
+The prayer rule lives in this section too.
 
 | File | Lines | What it is |
 |---|---|---|
 | `js/bible/book.js` | 92 | One book's context screen, the six questions. |
 | `js/bible/canon.js` | 88 | **Generated.** 76 books, 1,344 chapters, verse counts. |
 | `js/bible/context.js` | 841 | What every book is and what to watch for. |
-| `js/bible/home.js` | 309 | Bible home, the plan picker, Bible settings. |
-| `js/bible/lectionary.js` | 402 | **Generated.** The OSB lectionary as references. |
-| `js/bible/pascha.js` | 177 | Orthodox Pascha, the season, the day's readings. |
-| `js/bible/plans.js` | 142 | The six reading plans, and how a day is cut. |
-| `js/bible/program.js` | 337 | Progress, streaks, marking, today's assignment. |
-| `js/bible/read.js` | 144 | The shelf and the chapter grid. |
-| `js/bible/tracking.js` | 97 | Heatmap, canon progress, log. |
+| `js/bible/home.js` | 280 | Section home, the import screen, settings. |
+| `js/bible/parse.js` | 384 | Turns your copy of the OSB into chapters and verses. |
+| `js/bible/program.js` | 259 | Progress, streaks, marking, reading position. |
+| `js/bible/read.js` | 133 | The shelf and the chapter grid. |
+| `js/bible/reader.js` | 102 | One chapter on screen, Genesis to Revelation. |
+| `js/bible/text.js` | 152 | The imported scripture, in IndexedDB on the device. |
+| `js/bible/tracking.js` | 114 | Heatmap, canon progress, the rule, log. |
+| `js/pray/home.js` | 104 | The prayers you added yourself. |
+| `js/pray/prayers.js` | 240 | The bundled prayers and the two rules. |
+| `js/pray/program.js` | 182 | What is owed today, streaks, heatmap data, alarms. |
+| `js/pray/session.js` | 151 | The guided rule. |
 
-The two generated files come from `tools/extract-bible-data.mjs`, which reads a
-text export of the Orthodox Study Bible. **Neither holds any scripture**, only
-structure and references, and the app does not contain the text of the Bible at
-all. [`docs/BIBLE.md`](BIBLE.md) says why.
+**No scripture is in this repository.** `parse.js` reads the copy you import on
+the phone and `text.js` stores it there. [`docs/BIBLE.md`](BIBLE.md) says why,
+and how the parser undoes what the PDF export did to the text.
 
 ## Elsewhere
 
@@ -105,7 +103,7 @@ all. [`docs/BIBLE.md`](BIBLE.md) says why.
 | `www/sw.js` | Offline service worker. **Add new modules to its ASSETS list** |
 | `signing/` | The fixed APK signing key, so updates install over the top |
 | `tools/gen-icons.mjs` | Draws all app and launcher icons from code |
-| `tools/extract-bible-data.mjs` | Builds `bible/canon.js` and `bible/lectionary.js` |
+| `tools/extract-bible-text.mjs` | Runs the Bible parser outside the browser to check it |
 | `tools/patch-signing.mjs` | Points the generated Android project at the key |
 | `docs/` | The reasoning and sources behind each feature |
 
@@ -126,4 +124,4 @@ all. [`docs/BIBLE.md`](BIBLE.md) says why.
    for `back.js` to find, so the Android hardware button falls past all four
    rules and quits the app. See `back.js`.
 
-44 modules, 10,925 lines.
+44 modules, 10,537 lines.

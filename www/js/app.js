@@ -10,7 +10,7 @@
 //   settings.js       app-wide settings
 //   lock.js           the optional PIN gate
 //   names.js          what each section is called
-//   kegels/ pe/ pray/ bible/ one folder per feature
+//   kegels/ pe/ bible/ one folder per feature (pray/ is part of bible/)
 //
 // docs/CODEMAP.md has the full map.
 
@@ -30,10 +30,11 @@ import { renderMeasure } from './pe/measure.js';
 import { renderStats } from './pe/stats.js';
 import { renderGallery, leaveGallery } from './pe/gallery.js';
 import { renderPeGuide, renderPeSettings } from './pe/guide.js';
-import { renderPrayHome, renderPrayStats, renderMyPrayers, renderPraySettings } from './pray/home.js';
+import { renderMyPrayers } from './pray/home.js';
 import { startRule } from './pray/session.js';
 import * as prayProgram from './pray/program.js';
-import { renderBibleHome, renderPlans, renderBibleSettings } from './bible/home.js';
+import { renderBibleHome, renderImport, renderBibleSettings } from './bible/home.js';
+import { renderReader } from './bible/reader.js';
 import { renderRead } from './bible/read.js';
 import { renderBookContext } from './bible/book.js';
 import { renderBibleTracking } from './bible/tracking.js';
@@ -76,7 +77,7 @@ function runRule(params) {
   const slot = prayProgram.SLOTS.includes(params?.get?.('slot')) ? params.get('slot') : 'morning';
   activeSession = startRule(app, slot, () => {
     activeSession = null;
-    navigate('#/pray');
+    navigate('#/bible');
   });
 }
 
@@ -101,17 +102,15 @@ const ROUTES = {
   '#/pe/guide': () => renderPeGuide(app),
   '#/pe/settings': () => renderPeSettings(app),
   '#/kegels/settings': () => renderKegelSettings(app),
-  '#/pray': () => renderPrayHome(app),
-  '#/pray/run': (params) => runRule(params),
-  '#/pray/stats': () => renderPrayStats(app),
-  '#/pray/prayers': () => renderMyPrayers(app),
-  '#/pray/settings': () => renderPraySettings(app),
   '#/bible': () => renderBibleHome(app),
-  '#/bible/read': (params) => renderRead(app, { book: params.get('book') }),
+  '#/bible/reader': (params) => renderReader(app, { book: params.get('book'), ch: params.get('ch') }),
+  '#/bible/books': (params) => renderRead(app, { book: params.get('book') }),
   '#/bible/book': (params) => renderBookContext(app, params.get('id')),
-  '#/bible/plans': () => renderPlans(app),
+  '#/bible/import': () => renderImport(app),
   '#/bible/track': () => renderBibleTracking(app),
   '#/bible/settings': () => renderBibleSettings(app),
+  '#/bible/pray': (params) => runRule(params),
+  '#/bible/prayers': () => renderMyPrayers(app),
 };
 
 const NAV = {
@@ -120,10 +119,9 @@ const NAV = {
   pe: '#/pe', 'pe-timer': '#/pe/timer', 'pe-measure': '#/pe/measure', 'pe-stats': '#/pe/stats',
   'pe-gallery': '#/pe/gallery', 'pe-guide': '#/pe/guide', 'pe-settings': '#/pe/settings',
   'kegel-settings': '#/kegels/settings',
-  pray: '#/pray', 'pray-stats': '#/pray/stats', 'pray-prayers': '#/pray/prayers',
-  'pray-settings': '#/pray/settings',
-  bible: '#/bible', 'bible-read': '#/bible/read', 'bible-plans': '#/bible/plans',
+  bible: '#/bible', 'bible-books': '#/bible/books', 'bible-import': '#/bible/import',
   'bible-track': '#/bible/track', 'bible-settings': '#/bible/settings',
+  'bible-prayers': '#/bible/prayers',
 };
 
 let lastHash = '';
@@ -144,7 +142,6 @@ function route() {
   // One token set per section, swapped on the body. The shell stays the same
   // everywhere; only the palette and, for prayer, the type change.
   document.body.dataset.section = path.startsWith('#/pe') ? 'pe'
-    : path.startsWith('#/pray') ? 'pray'
     : path.startsWith('#/bible') ? 'bible'
     : ['#/kegels', '#/kegels/settings', '#/session', '#/track', '#/guide', '#/roadmap', '#/review', '#/pocket', '#/tutorial'].includes(path) ? 'kegels'
     : 'hub';
@@ -163,7 +160,7 @@ document.addEventListener('click', (e) => {
 // Screens that start running the moment you arrive. Leaving one replaces it
 // instead of stacking on top, so Back cannot walk into a session you have just
 // finished and set it going again.
-const EPHEMERAL = ['#/session', '#/pray/run', '#/pe/timer', '#/pe/measure', '#/pocket'];
+const EPHEMERAL = ['#/session', '#/bible/pray', '#/pe/timer', '#/pe/measure', '#/pocket'];
 
 // Today is the default screen, settled before back.js takes its bearings below.
 // replaceState rather than assignment: landing on the app should not leave a

@@ -1,4 +1,4 @@
-// Bible tracking: the heatmap, progress through the canon, and the log.
+// Bible tracking: the heatmap, progress through the canon, the rule, and the log.
 //
 // Same shape as the other three sections, deliberately. A thirteen-week grid
 // answers "am I actually doing this" faster than any number, and the section
@@ -7,6 +7,7 @@
 
 import * as store from '../store.js';
 import * as bible from './program.js';
+import * as pray from '../pray/program.js';
 import { BOOKS } from './canon.js';
 import { escapeHtml, fmtDate, relDay } from '../ui.js';
 import { icon } from '../icons.js';
@@ -66,6 +67,23 @@ export function renderBibleTracking(mount) {
       </section>
 
       <section class="card">
+        <div class="h-row">${icon('sun', 16)}<h2>The rule</h2>
+          <span class="pill ghost">${pray.streak()}d streak</span></div>
+        <div class="stat-grid">
+          <div class="stat"><b>${pray.totals(30).full}</b><span>full days, 30d</span></div>
+          <div class="stat"><b>${pray.totals(30).morning}</b><span>mornings</span></div>
+          <div class="stat"><b>${pray.totals(30).evening}</b><span>nights</span></div>
+          <div class="stat"><b>${pray.lifetime()}</b><span>rules kept</span></div>
+        </div>
+        <div class="heatmap">
+          ${(() => { const h = pray.history(13); const cols = [];
+            for (let i = 0; i < h.length; i += 7) cols.push(h.slice(i, i + 7));
+            return cols.map((c) => `<div class="hm-col">${c.map((d) => `<i class="pr-${d.cls}" title="${d.key}"></i>`).join('')}</div>`).join(''); })()}
+        </div>
+        <div class="hm-key"><i class="pr-none"></i> none <i class="pr-half"></i> one <i class="pr-full"></i> both</div>
+      </section>
+
+      <section class="card">
         <div class="h-row">${icon('medal', 16)}<h2>Books finished</h2>
           <span class="pill ghost">${bible.booksFinished()}/${BOOKS.length}</span></div>
         ${(() => {
@@ -87,8 +105,7 @@ export function renderBibleTracking(mount) {
                   relDay(key) === fmtDate(key) ? '' : `<i>${escapeHtml(fmtDate(key))}</i>`
                 }</span>
                 <span class="lr-what">
-                  ${d.chapters.map((u) => `<a class="pill ghost" href="#/bible/read?book=${u.split(':')[0]}">${escapeHtml(bible.refName(u))}</a>`).join('')}
-                  ${d.refs.map((r) => `<span class="pill ghost">${escapeHtml(r)}</span>`).join('')}
+                  ${d.chapters.map((u) => `<a class="pill ghost" href="#/bible/reader?book=${u.split(':')[0]}&ch=${u.split(':')[1]}">${escapeHtml(bible.refName(u))}</a>`).join('')}
                 </span>
               </div>`).join('')}</div>`
           : '<p class="muted small">Nothing logged yet.</p>'}

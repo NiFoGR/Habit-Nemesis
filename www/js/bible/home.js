@@ -1,93 +1,49 @@
-// Bible home, the plan picker and Bible settings.
+// The Bible section, which is also where the prayer rule lives.
 //
-// The home screen is today's reading and nothing else above the fold. Whatever
-// plan you are on, the answer to "what am I reading" is the first thing on the
-// page and it is tickable in place, because a tracker that makes you navigate
-// somewhere to record what you did is a tracker you stop using in a fortnight.
+// One room for the whole of it: what you are reading, and the two rules that
+// bracket the day. They belong together because they are the same practice,
+// and splitting them across two tiles meant the hub asked you to choose
+// between them every morning.
+//
+// Reading comes first on the screen because it is the thing with no fixed
+// time. The rules sit under it with their own times and their own streak.
 
 import * as store from '../store.js';
 import * as bible from './program.js';
-import { PLANS, planById } from './plans.js';
-import { CONTEXT } from './context.js';
+import * as text from './text.js';
+import * as pray from '../pray/program.js';
+import { RULES } from '../pray/prayers.js';
 import { escapeHtml, ringSvg, haptic, toast } from '../ui.js';
 import { icon } from '../icons.js';
 
 const GOARCH = 'https://www.goarch.org/chapel';
 
-/* ---------------- today's reading ---------------- */
-
-/** The tickable list of what today asks for. Shared by the home screen so the
- *  two kinds of plan, appointed passages and assigned chapters, render the
- *  same way and are ticked the same way. */
-function todayList(t) {
-  if (!t.items.length) return '<p class="muted small">Nothing appointed for today in the table.</p>';
-
-  return `<div class="read-list">${t.items.map((it) => {
-    const done = it.type === 'chapter'
-      ? bible.chapterRead(...it.id.split(':'))
-      : bible.refDone(it.id);
-    return `<button class="read-item ${done ? 'done' : ''}" data-kind="${it.type}" data-id="${escapeHtml(it.id)}">
-      <span class="ri-box">${done ? icon('check', 16) : ''}</span>
-      <span class="ri-text">
-        <b>${escapeHtml(it.label)}</b>
-        ${it.detail ? `<i>${bible.linkRefs(it.detail, escapeHtml)}</i>` : ''}
-      </span>
-    </button>`;
-  }).join('')}</div>`;
-}
-
-/** Wires the tick buttons. Everything on this screen mutates the same state,
- *  so the whole screen is re-rendered rather than patched: it is one list of at
- *  most a dozen rows and correctness is worth more than the repaint. */
-function bindTicks(mount, rerender) {
-  mount.querySelectorAll('.read-item').forEach((el) => {
-    el.addEventListener('click', () => {
-      const { kind, id } = el.dataset;
-      if (kind === 'chapter') {
-        const [book, ch] = id.split(':');
-        if (bible.chapterRead(book, ch)) bible.unmarkChapter(book, +ch);
-        else bible.markChapter(book, +ch);
-      } else if (bible.refDone(id)) bible.unmarkRef(id);
-      else bible.markRef(id);
-      haptic('tick');
-      rerender();
-    });
-  });
-}
-
-/* ---------------- home ---------------- */
-
-export function renderBibleHome(mount) {
-  const rerender = () => renderBibleHome(mount);
+export async function renderBibleHome(mount) {
   const st = store.get().bible;
-  const t = bible.today();
   const prog = bible.overallProgress();
   const streak = bible.streak();
-  const season = bible.season();
-  const today = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+  const pos = bible.position();
+  const posBook = bible.bookById(pos.book);
+  const today = pray.dayState();
+  const prayStreak = pray.streak();
+  const live = pray.currentSlot();
+  const installed = await text.isInstalled();
 
-  // A cycle repeats, so its plan-day count keeps climbing past the length of
-  // the cycle. Everything shown to the reader uses the wrapped number.
-  const shown = t.kind === 'cycle' ? t.day % t.plan.days || t.plan.days : t.day;
-  const nextShown = t.kind === 'cycle' ? (shown % t.plan.days) + 1 : shown + 1;
-
-  // The plan line has to say something different for each kind of plan, and
-  // saying nothing useful is worse than saying nothing.
-  const planLine = t.kind === 'date'
-    ? escapeHtml(season.name || 'The church year')
-    : t.kind === 'free'
-      ? 'No plan. Chapters you mark still count.'
-      : t.kind === 'cycle'
-        ? `Day ${shown} of ${t.plan.days}`
-        : `Day ${shown} of ${t.of}`;
-
-  const behind = t.behind > 0
-    ? `<p class="notice small">${t.behind} day${t.behind === 1 ? '' : 's'} behind the calendar. Nothing has been skipped; the plan waits for you.</p>`
-    : '';
-
-  const gap = t.gap
-    ? `<p class="notice small">The printed table runs out here. Between the last week after Pentecost and the next Triodion the readings vary by year, so check goarch.org for today.</p>`
-    : '';
+  const ruleCard = (slot) => {
+    const def = RULES[slot];
+    const kept = today[slot];
+    const at = slot === 'morning' ? store.get().pray.settings.morningAt : store.get().pray.settings.eveningAt;
+    return `<a class="rule-card ${kept ? 'kept' : ''} ${live === slot ? 'live' : ''}" href="#/bible/pray?slot=${slot}">
+      <span class="rc-ico">${kept ? icon('check', 20) : icon(slot === 'morning' ? 'sun' : 'moon', 20)}</span>
+      <span class="rc-text">
+        <b>${escapeHtml(def.label)}</b>
+        <i>${kept
+          ? `Kept ${new Date(kept).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
+          : `${escapeHtml(at)} · ${pray.minutes(slot)} min`}</i>
+      </span>
+      ${kept ? '' : `<span class="rc-go">${icon('play', 16)}</span>`}
+    </a>`;
+  };
 
   mount.innerHTML = `
     <div class="screen bible">
@@ -99,147 +55,163 @@ export function renderBibleHome(mount) {
 
       <div class="today bible-today">
         <div class="today-left">
-          <h2>${t.complete ? 'Today is read' : "Today's reading"}</h2>
-          <p class="muted small">${escapeHtml(today)}${season.fast ? ` · ${escapeHtml(season.fast)}` : ''}</p>
-          <p class="muted small">${planLine}</p>
+          <h2>${installed
+            ? escapeHtml(bible.refName(`${pos.book}:${pos.ch}`))
+            : 'Import your Bible'}</h2>
+          <p class="muted small">${installed
+            ? `${prog.read} of ${bible.TOTAL_CHAPTERS} chapters${streak ? ` · ${streak}d streak` : ''}`
+            : 'The reader is here. The text is yours to bring.'}</p>
         </div>
-        ${ringSvg(prog.frac, `${Math.round(prog.frac * 100)}%`, 'canon', { size: 92, color: 'var(--accent)' })}
+        ${ringSvg(prog.frac, `${Math.round(prog.frac * 100)}%`, 'read', { size: 92, color: 'var(--accent)' })}
       </div>
 
-      ${behind}${gap}
+      ${installed
+        ? `<a class="btn primary big linkbtn" href="#/bible/reader?book=${pos.book}&ch=${pos.ch}">
+            ${icon('book', 18)}<span>${prog.read ? 'Carry on reading' : 'Start at Genesis 1'}</span>
+          </a>`
+        : `<a class="btn primary big linkbtn" href="#/bible/import">
+            ${icon('plus', 18)}<span>Import your Bible</span>
+          </a>`}
 
       <section class="card">
-        <div class="h-row">${icon('book', 16)}<h2>${escapeHtml(t.plan.short)}</h2></div>
-        ${t.kind === 'free'
-          ? freeBlock()
-          : todayList(t)}
-        ${t.plan.note ? `<p class="muted tiny">${escapeHtml(t.plan.note)}</p>` : ''}
-        ${(t.kind === 'sequence' || t.kind === 'cycle') && t.complete
-          ? `<button class="btn primary wide" id="planDone">Day ${shown} done, on to day ${nextShown}</button>`
-          : ''}
+        <div class="h-row">${icon('sun', 16)}<h2>The rule</h2>
+          <span class="pill ${today.complete ? 'done' : 'ghost'}">${today.kept}/2 today</span></div>
+        <div class="rule-list">
+          ${ruleCard('morning')}
+          ${ruleCard('evening')}
+        </div>
+        <p class="muted small">${prayStreak ? `${prayStreak} day streak` : 'Both are required. A day counts when both are kept.'}</p>
       </section>
 
-      <div class="stat-grid">
-        <div class="stat"><b>${streak}</b><span>day streak</span></div>
-        <div class="stat"><b>${st.best}</b><span>best</span></div>
-        <div class="stat"><b>${prog.read}</b><span>of ${bible.TOTAL_CHAPTERS} chapters</span></div>
-        <div class="stat"><b>${bible.booksFinished()}</b><span>of 76 books</span></div>
-      </div>
-
       <a class="btn ghost linkbtn ext" href="${GOARCH}" target="_blank" rel="noopener noreferrer">
-        ${icon('book', 16)}<span>The day's readings at goarch.org</span>${icon('external', 14)}
+        ${icon('book', 16)}<span>Readings and calendar at goarch.org</span>${icon('external', 14)}
       </a>
 
       <div class="linkrow">
-        <a href="#/bible/read">${icon('book')} The books</a>
-        <a href="#/bible/plans">${icon('route')} Plans</a>
+        <a href="#/bible/books">${icon('book')} The books</a>
+        <a href="#/bible/prayers">${icon('book')} My prayers</a>
         <a href="#/bible/track">${icon('chart')} Tracking</a>
         <a href="#/bible/settings">${icon('settings')} Settings</a>
       </div>
     </div>`;
-
-  bindTicks(mount, rerender);
-  mount.querySelector('#planDone')?.addEventListener('click', () => {
-    bible.completePlanDay();
-    haptic('done');
-    toast('On to the next day.');
-    rerender();
-  });
 }
 
-/** With no plan running, the useful thing is a way back to where you were. */
-function freeBlock() {
-  const last = bible.lastBook();
-  const next = bible.nextUnread();
-  const rows = [];
-  if (last) {
-    const b = bible.bookById(last);
-    const p = bible.bookProgress(last);
-    rows.push(`<a class="read-item" href="#/bible/read?book=${last}">
-      <span class="ri-box">${icon('play', 14)}</span>
-      <span class="ri-text"><b>Carry on in ${escapeHtml(b.name)}</b><i>${p.read} of ${p.total} chapters read</i></span>
-    </a>`);
-  }
-  if (next) {
-    rows.push(`<a class="read-item" href="#/bible/read?book=${next.split(':')[0]}">
-      <span class="ri-box">${icon('book', 14)}</span>
-      <span class="ri-text"><b>${escapeHtml(bible.refName(next))}</b><i>The next chapter you have not read</i></span>
-    </a>`);
-  }
-  if (!rows.length) {
-    rows.push(`<a class="read-item" href="#/bible/read?book=mrk">
-      <span class="ri-box">${icon('book', 14)}</span>
-      <span class="ri-text"><b>Mark 1</b><i>The shortest gospel. As good a place to start as any.</i></span>
-    </a>`);
-  }
-  return `<div class="read-list">${rows.join('')}</div>`;
-}
+/* ---------------- import ---------------- */
 
-/* ---------------- plans ---------------- */
-
-export function renderPlans(mount) {
-  const st = store.get().bible;
-  const current = planById(st.settings.plan);
+export async function renderImport(mount) {
+  const st = await text.status();
 
   mount.innerHTML = `
     <div class="screen bible">
       <header class="screen-head">
         <button class="icon-btn" data-back="bible" aria-label="Back">${icon('back')}</button>
-        <h1>Plans</h1>
+        <h1>Your Bible</h1>
         <span class="icon-btn ghost"></span>
       </header>
 
-      <p class="muted small">
-        A plan decides what today asks of you. The lectionary follows the church
-        year and cannot be fallen behind on. The rest are sequences: today is
-        always the next reading you have not done, so a missed day postpones the
-        plan rather than deleting a day out of it.
-      </p>
+      ${st ? `<section class="card">
+        <div class="h-row">${icon('check', 16)}<h2>Imported</h2></div>
+        <div class="stat-grid">
+          <div class="stat"><b>${st.stats.books}</b><span>books</span></div>
+          <div class="stat"><b>${st.stats.chapters}</b><span>chapters</span></div>
+          <div class="stat"><b>${st.stats.verses.toLocaleString()}</b><span>verses</span></div>
+          <div class="stat"><b>${st.stats.missing}</b><span>not recovered</span></div>
+        </div>
+        <p class="muted small">Imported ${new Date(st.at).toLocaleDateString()}. Stored on this phone only.</p>
+      </section>` : ''}
 
-      <div class="plan-list">
-        ${PLANS.map((p) => `<button class="plan ${p.id === current.id ? 'on' : ''}" data-plan="${p.id}">
-          <span class="plan-head">
-            <b>${escapeHtml(p.name)}</b>
-            ${p.id === current.id ? `<span class="pill done">Current</span>` : ''}
-          </span>
-          <i>${escapeHtml(p.blurb)}</i>
-          ${p.kind === 'sequence' ? `<span class="pill ghost">${p.days} days</span>` : ''}
-          ${p.kind === 'cycle' ? `<span class="pill ghost">Repeats weekly</span>` : ''}
-        </button>`).join('')}
-      </div>
+      <section class="card">
+        <div class="h-row">${icon('book', 16)}<h2>${st ? 'Import again' : 'Import'}</h2></div>
+        <p class="muted small">
+          NiFo ships the reader, not the scripture. Choose the plain-text export
+          of the Orthodox Study Bible you own. It is parsed here on the phone,
+          takes a few seconds, and is stored on the device. Nothing is uploaded.
+        </p>
+        <input type="file" id="file" accept=".txt,text/plain" hidden>
+        <button class="btn primary wide" id="pick">${st ? 'Choose a different file' : 'Choose file'}</button>
+        <div id="progress"></div>
+      </section>
 
-      ${current.kind === 'sequence' ? planProgress(current, st) : ''}
+      <section class="card">
+        <div class="h-row">${icon('warn', 16)}<h2>What to expect</h2></div>
+        <p class="muted small">
+          The export is a PDF conversion and it is not perfect. Roughly one
+          chapter in five has a rough opening, and about 270 verses out of
+          35,900 do not survive at all. Those are marked in the text rather than
+          skipped quietly, so you always know to reach for the book itself.
+        </p>
+      </section>
+
+      ${st ? `<div class="btn-row">
+        <button class="btn ghost danger" id="wipe">Remove the imported text</button>
+      </div>` : ''}
     </div>`;
 
-  mount.querySelectorAll('[data-plan]').forEach((el) => {
-    el.addEventListener('click', () => {
-      const id = el.dataset.plan;
-      if (id === st.settings.plan) return;
-      // Switching restarts the position, which is why it asks first: someone
-      // two hundred days into a year plan should not lose that to a mis-tap.
-      const started = st.planDone > 0;
-      if (started && !confirm(`Switch to "${planById(id).name}"? Your position in ${current.name} (day ${st.planDone + 1}) is reset. Chapters you have already read stay read.`)) return;
-      bible.setPlan(id);
-      haptic('done');
-      renderPlans(mount);
-    });
+  const file = mount.querySelector('#file');
+  mount.querySelector('#pick').addEventListener('click', () => file.click());
+  file.addEventListener('change', () => runImport(mount, file.files?.[0]));
+  mount.querySelector('#wipe')?.addEventListener('click', async () => {
+    if (!confirm('Remove the imported Bible? What you have read is kept.')) return;
+    await text.remove();
+    renderImport(mount);
   });
 }
 
-function planProgress(plan, st) {
-  const done = st.planDone;
-  const frac = plan.days ? Math.min(done / plan.days, 1) : 0;
-  return `<section class="card">
-    <div class="h-row">${icon('route', 16)}<h2>Where you are</h2></div>
-    <div class="prog-bar"><i style="width:${(frac * 100).toFixed(1)}%"></i></div>
-    <p class="muted small">Day ${done + 1} of ${plan.days}. Started ${escapeHtml(st.settings.planStart)}.</p>
-  </section>`;
+async function runImport(mount, f) {
+  if (!f) return;
+  const out = mount.querySelector('#progress');
+  const say = (msg) => { out.innerHTML = `<p class="muted small">${escapeHtml(msg)}</p>`; };
+
+  say('Reading the file…');
+  let raw;
+  try {
+    raw = await f.text();
+  } catch {
+    say('That file could not be read.');
+    return;
+  }
+
+  const { parseBible, looksLikeOsb } = await import('./parse.js');
+  if (!looksLikeOsb(raw)) {
+    say('That does not look like the Orthodox Study Bible text export.');
+    return;
+  }
+
+  say('Parsing. This takes a few seconds…');
+  // One frame, so the message paints before the parser blocks the thread.
+  await new Promise((r) => setTimeout(r, 50));
+
+  let result;
+  try {
+    result = parseBible(raw);
+  } catch (err) {
+    say(`The parser could not make sense of that file. ${err.message}`);
+    return;
+  }
+  if (!result.stats.verses) {
+    say('No verses were found in that file.');
+    return;
+  }
+
+  say('Saving to this phone…');
+  try {
+    await text.persist();
+    await text.install(result.books, result.stats);
+  } catch (err) {
+    say(`Could not save it: ${err.message}`);
+    return;
+  }
+
+  haptic('level');
+  toast(`${result.stats.verses.toLocaleString()} verses imported.`);
+  renderImport(mount);
 }
 
 /* ---------------- settings ---------------- */
 
 export function renderBibleSettings(mount) {
   const s = store.get().bible.settings;
+  const p = store.get().pray.settings;
 
   mount.innerHTML = `
     <div class="screen bible">
@@ -250,9 +222,13 @@ export function renderBibleSettings(mount) {
       </header>
 
       <section class="card">
-        <div class="h-row">${icon('bell', 16)}<h2>Reminder</h2></div>
+        <div class="h-row">${icon('book', 16)}<h2>Reading</h2></div>
         <label class="setting toggle">
-          <span><b>Remind me to read</b><i>Scheduled as a real alarm on the APK, so it fires whether or not the app is running.</i></span>
+          <span><b>Larger text</b><i>For the reader and the book screens.</i></span>
+          <input type="checkbox" id="largeText" ${s.largeText ? 'checked' : ''}>
+        </label>
+        <label class="setting toggle">
+          <span><b>Remind me to read</b><i>A real alarm on the APK.</i></span>
           <input type="checkbox" id="remind" ${s.remind ? 'checked' : ''}>
         </label>
         <label class="setting">
@@ -262,48 +238,43 @@ export function renderBibleSettings(mount) {
       </section>
 
       <section class="card">
-        <div class="h-row">${icon('book', 16)}<h2>Reading</h2></div>
+        <div class="h-row">${icon('sun', 16)}<h2>The rule</h2></div>
+        <label class="setting">
+          <span><b>Morning</b></span>
+          <input type="time" id="morningAt" value="${escapeHtml(p.morningAt)}">
+        </label>
+        <label class="setting">
+          <span><b>Night</b></span>
+          <input type="time" id="eveningAt" value="${escapeHtml(p.eveningAt)}">
+        </label>
         <label class="setting toggle">
-          <span><b>Larger text</b><i>For the context screens.</i></span>
-          <input type="checkbox" id="largeText" ${s.largeText ? 'checked' : ''}>
+          <span><b>Remind me to pray</b><i>Both times, as real alarms on the APK.</i></span>
+          <input type="checkbox" id="prayRemind" ${p.remind ? 'checked' : ''}>
+        </label>
+        <label class="setting">
+          <span><b>Language</b></span>
+          <select id="lang">
+            <option value="both" ${p.lang === 'both' ? 'selected' : ''}>Greek and English</option>
+            <option value="el" ${p.lang === 'el' ? 'selected' : ''}>Greek</option>
+            <option value="en" ${p.lang === 'en' ? 'selected' : ''}>English</option>
+          </select>
         </label>
       </section>
 
-      <section class="card">
-        <div class="h-row">${icon('help', 16)}<h2>About the text</h2></div>
-        <p class="muted small">
-          NiFo tracks what you read and tells you what a book is for. It does not
-          contain the text of the Bible, and that is deliberate: the Orthodox
-          Study Bible's translations are under copyright, and the app would have
-          to ship them to show them. Read from your own copy, and mark it here.
-        </p>
-        <p class="muted small">
-          The canon, the chapter and verse counts, and the lectionary are taken
-          from the Orthodox Study Bible itself, so what the app counts is what
-          your Bible actually contains.
-        </p>
-      </section>
-
       <div class="linkrow">
-        <a href="#/bible/plans">${icon('route')} Plans</a>
-        <a href="#/bible/track">${icon('chart')} Tracking</a>
+        <a href="#/bible/import">${icon('plus')} Your Bible</a>
+        <a href="#/bible/prayers">${icon('book')} My prayers</a>
       </div>
     </div>`;
 
-  const set = (key, value) => {
-    store.update((st) => {
-      st.bible.settings[key] = value;
-    });
-  };
-  mount.querySelector('#remind').addEventListener('change', (e) => {
-    set('remind', e.target.checked);
-    bible.syncAlarm();
-  });
-  mount.querySelector('#remindAt').addEventListener('change', (e) => {
-    set('remindAt', e.target.value);
-    bible.syncAlarm();
-  });
-  mount.querySelector('#largeText').addEventListener('change', (e) => set('largeText', e.target.checked));
-}
+  const bset = (k, v) => store.update((st) => { st.bible.settings[k] = v; });
+  const pset = (k, v) => store.update((st) => { st.pray.settings[k] = v; });
 
-export { CONTEXT };
+  mount.querySelector('#largeText').addEventListener('change', (e) => bset('largeText', e.target.checked));
+  mount.querySelector('#remind').addEventListener('change', (e) => { bset('remind', e.target.checked); bible.syncAlarm(); });
+  mount.querySelector('#remindAt').addEventListener('change', (e) => { bset('remindAt', e.target.value); bible.syncAlarm(); });
+  mount.querySelector('#morningAt').addEventListener('change', (e) => { pset('morningAt', e.target.value); pray.syncAlarms(); });
+  mount.querySelector('#eveningAt').addEventListener('change', (e) => { pset('eveningAt', e.target.value); pray.syncAlarms(); });
+  mount.querySelector('#prayRemind').addEventListener('change', (e) => { pset('remind', e.target.checked); pray.syncAlarms(); });
+  mount.querySelector('#lang').addEventListener('change', (e) => pset('lang', e.target.value));
+}

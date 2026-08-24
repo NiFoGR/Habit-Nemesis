@@ -7,7 +7,6 @@ import { BOOKS } from './bible/canon.js';
 // The sanitiser needs to know how many chapters each book has, so a saved file
 // cannot smuggle "gen:9999" or a book that does not exist into the page.
 const CANON_LIMITS = BOOKS.map((b) => [b.id, b.chapters.length]);
-const PLAN_IDS = ['lectionary', 'year', 'twoyear', 'nt', 'gospels', 'psalter', 'free'];
 
 const KEY = 'nifo.state.v1';
 const SCHEMA = 1;
@@ -85,15 +84,13 @@ function blank() {
     // read on for every other chapter beside it.
     bible: {
       settings: {
-        plan: 'lectionary',
-        planStart: dayKey(),
         remind: false,
         remindAt: '07:30',
         largeText: false,
       },
       read: {}, // bookId -> { chapterNumber: ts }
-      days: {}, // dayKey -> { chapters: ['gen:1'], refs: ['Romans 2:10-16'] }
-      planDone: 0, // plan-days finished, which is not the same as days elapsed
+      days: {}, // dayKey -> { chapters: ['gen:1'] }
+      position: { book: 'gen', ch: 1 }, // where the reader last had you
       streak: 0,
       best: 0,
     },
@@ -340,21 +337,26 @@ function cleanBible(sb, base) {
   for (const [k, v] of Object.entries(rawDays).slice(0, 20000)) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !v || typeof v !== 'object') continue;
     const chapters = arr(v.chapters, 400).filter(validUnit);
-    const refs = arr(v.refs, 100).map((r) => str(r, 200)).filter(Boolean);
-    if (chapters.length || refs.length) days[k] = { chapters, refs };
+    if (chapters.length) days[k] = { chapters };
   }
+
+  // The reading position is two values that index straight into the canon, so
+  // both are checked against it rather than trusted.
+  const rawPos = src.position && typeof src.position === 'object' ? src.position : {};
+  const posMax = limits.get(rawPos.book);
+  const position = posMax
+    ? { book: rawPos.book, ch: int(rawPos.ch, 1, posMax, 1) }
+    : { ...base.position };
 
   return {
     settings: {
-      plan: oneOf(bs.plan, PLAN_IDS, base.settings.plan),
-      planStart: dateKey(bs.planStart),
       remind: bool(bs.remind),
       remindAt: timeStr(bs.remindAt, base.settings.remindAt),
       largeText: bool(bs.largeText),
     },
     read,
     days,
-    planDone: int(src.planDone, 0, 100000, 0),
+    position,
     streak: int(src.streak, 0, 100000, 0),
     best: int(src.best, 0, 100000, 0),
   };

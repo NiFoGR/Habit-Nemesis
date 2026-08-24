@@ -920,28 +920,9 @@ body[data-section="pe"] {
 /* Prayer is deliberately the darkest and the quietest: near-black ground, warm
    gold instead of a cool accent, and a serif face. It should not look like the
    training screens, because it is not one. */
-body[data-section="pray"] {
-  --accent: #d9b061;
-  --violet: #c9a227;
-  --bg: #05060a;
-  --bg-2: #080a0f;
-  --surface: #0d1016;
-  --surface-2: #12161e;
-  --line: #1e242f;
-  --text: #ede7db;
-  --muted: #8b8477;
-  --good: #a3b380;
-}
 
-body[data-section="pray"] .screen {
-  font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
-}
-body[data-section="pray"] h1,
-body[data-section="pray"] h2 { letter-spacing: 0; font-weight: 600; }
-body[data-section="pray"] .btn { font-family: inherit; letter-spacing: 0.01em; }
-body[data-section="pray"] .btn.primary { color: #14100a; }
 
-/* ---------- prayer: home ---------- */
+/* ---------- the prayer rule, inside the Bible section ---------- */
 
 .pray-today { align-items: center; }
 .slot-dots { display: flex; gap: 10px; }
@@ -1050,7 +1031,6 @@ body[data-section="pray"] .btn.primary { color: #14100a; }
 
 /* The live-slot button sits between the rule list and the stats card, so it
    needs air on both sides rather than only above. */
-body[data-section="pray"] .btn.big { margin-bottom: 16px; }
 .pr-nav .btn[disabled] { opacity: 0.35; }
 
 /* ---------- settings ---------- */
@@ -1144,6 +1124,11 @@ body[data-section="bible"] .hm-key i.l3 { background: color-mix(in srgb, var(--a
 body[data-section="bible"] .heatmap i.l4,
 body[data-section="bible"] .hm-key i.l4 { background: var(--accent); }
 
+/* The rule cards moved into the Bible section with the rest of prayer, so the
+   styles they were sharing with the old prayer home live here now. */
+body[data-section="bible"] .rule-card { border-color: var(--line); }
+body[data-section="bible"] .rule-card.live { border-color: var(--accent); }
+
 /* ---------- bible: today's reading ---------- */
 
 .bible-today { align-items: center; }
@@ -1174,21 +1159,35 @@ body[data-section="bible"] .hm-key i.l4 { background: var(--accent); }
 /* Book names inside a citation link through to that book's context. */
 .reflink { color: var(--accent); text-decoration: none; border-bottom: 1px dotted currentColor; }
 
-/* ---------- bible: plans ---------- */
+/* ---------- bible: the reader ---------- */
 
-.plan-list { display: flex; flex-direction: column; gap: 8px; }
-.plan {
-  display: flex; flex-direction: column; gap: 5px; align-items: flex-start;
-  width: 100%; padding: 14px; text-align: left;
-  background: var(--surface); border: 1px solid var(--line);
-  border-radius: var(--radius); color: inherit; font: inherit; cursor: pointer;
+/* Scripture is set to be read, not scanned: a measured line length, generous
+   leading, and verse numbers small enough to stay out of the way but present
+   enough to find a reference by. */
+.reader .verses { margin: 4px 0 22px; }
+.verse {
+  margin: 0 0 10px; line-height: 1.7; font-size: 1.02rem;
+  text-align: left; hyphens: auto;
 }
-.plan.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
-.plan-head { display: flex; align-items: center; gap: 8px; width: 100%; }
-.plan-head b { font-weight: 600; }
-.plan-head .pill { margin-left: auto; }
-.plan i { font-style: normal; color: var(--muted); font-size: 0.86rem; line-height: 1.45; }
+.verse b {
+  display: inline-block; min-width: 1.35em;
+  font-size: 0.68rem; font-weight: 700; vertical-align: 0.35em;
+  color: var(--accent); font-family: system-ui, sans-serif;
+}
+.screen.large .verse { font-size: 1.18rem; line-height: 1.8; }
+/* A verse the import could not recover says so. Silently skipping one would
+   leave a hole you could not see, which is worse. */
+.verse.gap i { font-style: italic; color: var(--muted); font-size: 0.86rem; }
 
+.chapter-nav {
+  display: flex; gap: 10px; align-items: center; justify-content: space-between;
+  margin: 18px 0 8px;
+}
+.chapter-nav .btn { flex: 1; min-width: 0; }
+.chapter-nav .btn .ico { flex: 0 0 auto; }
+.chapter-nav span:empty { flex: 1; }
+
+/* ---------- bible: the shelf ---------- */
 /* ---------- bible: the shelf ---------- */
 
 .book-list { display: flex; flex-direction: column; }
@@ -1213,7 +1212,7 @@ body[data-section="bible"] .hm-key i.l4 { background: var(--accent); }
    actual Bible open, which is the whole situation this screen exists for. */
 .ch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; }
 .ch {
-  aspect-ratio: 1; min-height: 44px;
+  aspect-ratio: 1; min-height: 44px; text-decoration: none;
   display: flex; align-items: center; justify-content: center;
   background: var(--surface-2); border: 1px solid var(--line);
   border-radius: 8px; color: var(--muted);
