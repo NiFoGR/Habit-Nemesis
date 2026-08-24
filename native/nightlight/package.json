@@ -1,0 +1,20 @@
+{
+  "name": "nifo-nightlight",
+  "version": "1.0.0",
+  "description": "System-wide blue-light filter for NiFo: a scheduled colour-temperature ramp applied by a foreground service, preferring Android's own Night Light where the permission for it has been granted.",
+  "main": "index.js",
+  "license": "UNLICENSED",
+  "capacitor": {
+    "android": {
+      "src": "android"
+    }
+  },
+  "files": [
+    "android/src/main/",
+    "android/build.gradle",
+    "index.js"
+  ],
+  "peerDependencies": {
+    "@capacitor/core": "^7.0.0"
+  }
+}

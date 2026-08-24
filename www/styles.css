@@ -28,11 +28,20 @@
 
 html, body {
   margin: 0;
-  background: var(--bg);
   color: var(--text);
   font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   overscroll-behavior-y: none;
 }
+
+/* The background goes on body alone, deliberately.
+   Each section swaps the palette by redefining the tokens on
+   body[data-section=...], so --bg read from html still resolves to the :root
+   value. With a background on html as well, the canvas was painted the default
+   blue-grey while body painted its own darker box on top, and any screen
+   shorter than the viewport showed the difference as a lighter band across the
+   bottom. Leaving html transparent makes the canvas take body's background
+   instead, section colour and all. */
+body { background: var(--bg); }
 
 body.in-session { overflow: hidden; }
 
@@ -347,6 +356,9 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 .heatmap i, .hm-key i { width: 13px; height: 13px; border-radius: 3px; display: block; }
 .heatmap i.none { background: var(--surface-2); }
 .heatmap i.future { background: transparent; border: 1px dashed var(--line); }
+/* Today, with nothing on it yet. Without this the cell is invisible rather
+   than empty, and the grid looks like it ends yesterday. */
+.heatmap i.today { background: transparent; border: 1px dashed var(--line); }
 .heatmap i.l1 { background: rgba(34, 211, 197, 0.22); }
 .heatmap i.l2 { background: rgba(34, 211, 197, 0.44); }
 .heatmap i.l3 { background: rgba(34, 211, 197, 0.7); }
@@ -1048,7 +1060,12 @@ body[data-section="pe"] {
 .set-nav b { font-size: 0.95rem; font-weight: 600; }
 .set-nav i { font-style: normal; font-size: 0.76rem; color: var(--muted); }
 
-.setting select, .setting input[type="time"] { min-width: 108px; }
+/* A control is capped so it cannot grow into the label beside it. Without
+   this, one long <option> is enough to squeeze a setting's text into a
+   two-words-per-line column, which is what a night-light temperature list
+   did. */
+.setting select, .setting input[type="time"] { min-width: 108px; max-width: 50%; }
+.setting input[type="range"] { flex: 0 1 46%; min-width: 120px; accent-color: var(--accent); }
 .card .h-row + .setting { border-top: 0; }
 .card.danger .h-row .ico { color: var(--danger); }
 
@@ -1260,3 +1277,140 @@ body[data-section="bible"] .rule-card.live { border-color: var(--accent); }
 .lr-day i { font-style: normal; color: var(--muted); font-size: 0.7rem; }
 .lr-what { display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-start; }
 .lr-what .pill { text-decoration: none; }
+
+/* ---------- the wind-down ---------- */
+
+/* Indigo on near-black. The section is used lying down in an unlit room, so it
+   runs darker than the other three and its accent is the dimmest of the four:
+   every value here is a light source pointed at your face at bedtime. */
+body[data-section="breathe"] {
+  --accent: #8aa4e8;
+  --violet: #a78bfa;
+  --bg: #06070d;
+  --bg-2: #090b12;
+  --surface: #101321;
+  --surface-2: #161a2b;
+  --line: #232840;
+  --text: #e4e8f5;
+  --muted: #8b93ad;
+}
+/* The shared heatmap ramp is a hard-coded teal, so each themed section that
+   uses it has to restate the ramp in its own colour. */
+body[data-section="breathe"] .heatmap i.l1,
+body[data-section="breathe"] .hm-key i.l1 { background: color-mix(in srgb, var(--accent) 22%, var(--surface-2)); }
+body[data-section="breathe"] .heatmap i.l2,
+body[data-section="breathe"] .hm-key i.l2 { background: color-mix(in srgb, var(--accent) 46%, var(--surface-2)); }
+body[data-section="breathe"] .heatmap i.l3,
+body[data-section="breathe"] .hm-key i.l3 { background: color-mix(in srgb, var(--accent) 72%, var(--surface-2)); }
+body[data-section="breathe"] .heatmap i.l4,
+body[data-section="breathe"] .hm-key i.l4 { background: var(--accent); }
+
+.br-mark {
+  width: 58px; height: 58px; border-radius: 50%;
+  display: grid; place-items: center;
+  border: 1px solid var(--line); color: var(--muted);
+}
+.br-mark.on { border-color: var(--accent); color: var(--accent); }
+
+/* ---------- the wind-down: the session ---------- */
+
+.br-face {
+  min-height: 64vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  gap: 10px;
+  padding: 16px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* The orb is scaled, never resized: a transform does not reflow, so the phase
+   animation cannot cost a layout every frame on a five-minute loop. Its box
+   stays at full size and the scale happens inside it, which also stops the
+   labels beneath from shuffling up and down with the breath. */
+.br-orb {
+  width: 46vw; height: 46vw;
+  max-width: 250px; max-height: 250px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(138, 164, 232, 0.26), rgba(138, 164, 232, 0.05) 60%, transparent 72%);
+  border: 1px solid rgba(138, 164, 232, 0.26);
+  transform: scale(0.52);
+  transition-property: transform, opacity, border-color;
+  transition-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
+  transition-duration: 600ms;
+  will-change: transform;
+}
+.br-face[data-kind="hold"] .br-orb { border-color: rgba(138, 164, 232, 0.5); }
+.br-face[data-kind="settle"] .br-orb { opacity: 0.6; }
+
+.br-face b { font-size: 1.3rem; font-weight: 500; color: #ccd5ee; }
+.br-face span { color: var(--muted); font-size: 0.84rem; max-width: 28ch; min-height: 1.2em; }
+.br-clock { font-variant-numeric: tabular-nums; color: var(--muted); opacity: 0.45; font-size: 0.78rem; }
+
+.breathe-run #stop { width: 100%; }
+
+/* Tapping the face puts the screen out. Everything fades rather than vanishing,
+   because a hard cut is itself a small startle. The face keeps its pointer
+   events so the same tap brings it back. */
+body.blacked { background: #000; }
+body.blacked .breathe-run header,
+body.blacked .br-face b,
+body.blacked .br-face span,
+body.blacked .br-clock,
+body.blacked .breathe-run #stop { opacity: 0; pointer-events: none; }
+body.blacked .br-orb { opacity: 0.09; }
+.breathe-run header, .br-face b, .br-face span, .br-clock, .breathe-run #stop { transition: opacity 700ms ease; }
+
+.breathe-done {
+  min-height: 82vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  gap: 12px;
+}
+.br-done-mark {
+  width: 62px; height: 62px; border-radius: 50%;
+  display: grid; place-items: center;
+  border: 1px solid var(--accent); color: var(--accent);
+}
+.breathe-done h1 { font-weight: 500; }
+
+/* ---------- night light ---------- */
+
+/* The browser's filter. In the APK this element is never used: there the
+   filter is a system overlay drawn by a service, over every app rather than
+   just this one. Here it can do the better thing, because CSS can multiply
+   where an Android window can only wash — multiply is what a colour
+   temperature actually is, and it leaves black alone. */
+#nightlight {
+  position: fixed;
+  inset: 0;
+  display: none;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  z-index: 2147483000;
+}
+
+/* The day, as a row of swatches: white, as it will look at each hour. */
+.nl-strip {
+  display: flex;
+  height: 44px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.nl-strip i { flex: 1 1 0; display: block; }
+.nl-axis {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.7rem;
+  margin-top: 5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.nl-strip + .nl-axis { margin-bottom: 4px; }

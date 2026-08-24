@@ -10,32 +10,37 @@ Runs entirely on the phone. No account, no server, no analytics, nothing leaves 
 
 **Feature 3 - Bible:** the whole Orthodox canon read straight through, Genesis 1 to Revelation 22, parsed from a copy of the Orthodox Study Bible and bundled with the app. A screen for every book saying what it is before you open it, a record of everything you have read, and the morning and night prayer rule, which lives in the same section because it is the same practice.
 
-The home screen is a **Today** list: what is outstanding across all three features, and one button for the most urgent thing.
+**Feature 4 - Wind-down:** five minutes of paced breathing as the last thing in the day, done lying down with the phone on your chest. A long exhale at around six breaths a minute, opened with three physiological sighs, paced by a tone that rises and falls with the breath and by vibration you can feel through a shirt. No score and nothing to beat, because it is the last thing before sleep. [`docs/WINDDOWN.md`](docs/WINDDOWN.md).
 
-Each section has its own palette. Kegels is teal on cool graphite, PE violet on deep plum, Bible the deep red of a Gospel book with a serif face. One skeleton, three rooms.
+**Feature 5 - Night light:** the screen's colour temperature on a curve through the day, across the whole phone rather than just this app. Neutral in the morning, warming so slowly you never catch it happening, fully warm by bedtime. A Capacitor plugin drives Android's own Night Light where it is allowed to and falls back to an overlay where it is not. [`docs/NIGHTLIGHT.md`](docs/NIGHTLIGHT.md).
+
+The home screen is a **Today** list: what is outstanding across all four features, and one button for the most urgent thing.
+
+Each section has its own palette. Kegels is teal on cool graphite, PE violet on deep plum, Bible the deep red of a Gospel book with a serif face, Wind-down indigo on near-black because it is used in an unlit room. One skeleton, four rooms.
 
 ---
 
 ## Getting it on your phone
 
-Two ways. The first takes about thirty seconds.
+Build the APK and sideload it.
 
-### Option A, install it as an app from the browser (fastest)
+### Why there is no web install
 
-The app is a PWA, so Chrome on Android will install it to your home screen with its own icon, its own window (no browser bar) and full offline support. It behaves like any other installed app.
+There used to be a second route: GitHub Pages served `www/`, and Chrome on
+Android installed it as a PWA. That is gone, and it must stay gone.
 
-1. Turn Pages on once: **Settings → Pages → Source: GitHub Actions**. (The
-   workflow cannot do this for you, its token is not allowed to create a Pages
-   site, so the deploy fails until this is ticked.)
-2. Re-run **Actions → Deploy to GitHub Pages**, or push anything to `main`. It
-   publishes to `https://nifogr.github.io/NiFo-App/`.
-3. Open that link in **Chrome on your phone** → menu (⋮) → **Add to Home screen** / **Install app**.
+`www/bible/` now holds the full text of the Orthodox Study Bible. Shipping that
+inside an APK you install on your own phone is a personal copy of a book you
+own. Publishing it to a website is redistributing a commercial translation, and
+**GitHub Pages is public even when the repository is private** — private Pages
+needs an Enterprise plan. So the deploy workflow has been deleted rather than
+merely disabled, because a disabled workflow is one click away from being a
+copyright problem. [`docs/BIBLE.md`](docs/BIBLE.md) explains the line in full.
 
-That is a real installed app: it opens fullscreen, works with no signal, and keeps your data between launches.
+If Pages was ever switched on for this repository, turn it off in
+**Settings → Pages → Source: None**.
 
-### Option B, build an actual APK
-
-If you want a genuine `.apk` file to sideload:
+### Build an actual APK
 
 1. Go to the **Actions** tab → **Build Android APK** → **Run workflow**.
 2. When it finishes (~4 minutes), open the run and download the **`nifo-apk`** artifact.
@@ -158,19 +163,25 @@ www/               the entire app, plain ES modules, no build
     ui.js          formatting, haptics, notifications, SVG charts
     icons.js       the inline SVG icon set
     native.js      real Android alarms via Capacitor
+    nightlight.js  the night light bridge, settings and browser fallback
     kegels/        the Kegels feature
     pe/            the PE feature
     bible/         the Bible feature and reader
     pray/          the prayer rule, part of the Bible section
+    breathe/       the wind-down
   bible/           the scripture itself, one JSON file per book, generated
   sw.js            offline service worker
+native/
+  nightlight/      Capacitor plugin: the system-wide blue-light filter
 signing/           the fixed APK key, so updates install over the top
 tools/             icon generation, signing patch, dev server, data extraction
 docs/
   CODEMAP.md       where every file is and what it does
   KEGEL_PROGRAM.md the kegel protocol and where it comes from
   PE_PROGRAM.md    PE limits, projection maths and sources
-  BIBLE.md         the parser, what it recovers, and why no scripture is shipped
+  BIBLE.md         the parser, what it recovers, and why the text is bundled
+  WINDDOWN.md      the physiology, and why the screen goes black not off
+  NIGHTLIGHT.md    why the schedule is native, and the two filters
   BRAINSTORM.md    feature design notes and the backlog
 ```
 
@@ -180,7 +191,7 @@ lives.
 
 ## Adding the next feature
 
-`FEATURES` in `www/js/app.js` is the registry the section tiles render from, and `todayTasks()` builds the Today list. A new feature is an entry in both, plus a module that renders into `#app` and a route in `ROUTES`. Keep the store schema additive, `hydrate()` in `store.js` merges saved state over the blank shape, so new fields appear on old saves instead of coming back `undefined`.
+`FEATURES` in `www/js/hub.js` is the registry the section tiles render from, and `todayTasks()` beside it builds the Today list. A new feature is an entry in both, plus a module that renders into `#app` and a route in `ROUTES`. Keep the store schema additive, `hydrate()` in `store.js` merges saved state over the blank shape, so new fields appear on old saves instead of coming back `undefined`.
 
 ---
 

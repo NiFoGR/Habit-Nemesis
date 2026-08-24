@@ -20,16 +20,16 @@ with its two times, and there is no plan to fall behind on.
 
 The Orthodox Study Bible's translations are under copyright: the front matter
 allows a thousand verses, under half of any one book. There are 35,903 verses
-here, and the app is a public repository that deploys to a public website.
-Shipping the full text there would be redistributing a commercial translation
-in bulk, which is not something the license covers and not something to do
-regardless of what it covers.
+here, and the app was then a public repository that deployed to a public
+website. Shipping the full text there would have been redistributing a
+commercial translation in bulk, which is not something the license covers and
+not something to do regardless of what it covers.
 
-**This repository is now private, and GitHub Pages is off.** That changes what
-shipping the text means: it is a personal copy of a book you own, kept for
-personal use, not a public release. So the parsed text is committed under
-`www/bible/`, one JSON file per book, and the reader loads it directly. There is
-no import step.
+**This repository is now private, and the GitHub Pages workflow has been
+deleted.** That changes what shipping the text means: it is a personal copy of
+a book you own, kept for personal use, not a public release. So the parsed text
+is committed under `www/bible/`, one JSON file per book, and the reader loads it
+directly. There is no import step.
 
 If this repository is ever made public again, `www/bible/` has to come out
 first and the app goes back to reading from a copy you import on the device,
@@ -175,7 +175,10 @@ entry says so rather than picking a side.
 * **Silently dropping a verse the parser missed.** It is marked.
 * **The text in a public place.** It is in this repository because this
   repository is private. It has never been, and must never be, in a GitHub
-  Pages deployment or any other public surface.
+  Pages deployment or any other public surface. Note that Pages is public even
+  when the repository is private, so `.github/workflows/pages.yml` was deleted
+  outright rather than disabled: a workflow that is merely switched off is one
+  click away from publishing the whole translation.
 
 ## Sources
 

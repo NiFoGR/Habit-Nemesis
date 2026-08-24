@@ -22,18 +22,26 @@ import { markUnlocked } from './lock.js';
    to the kegel walkthrough, while Prayer kept its own screen. Two models at
    once, and a page that grew every time a feature did. */
 
+/** One row per section that has its own settings screen.
+ *
+ *  Prayer had a row of its own pointing at `#/pray/settings`, which is not in
+ *  the route table and never was, so it fell through to the hub. There is no
+ *  such screen to point it at either: the rule's settings live on the Bible
+ *  screen, because the rule lives in the Bible section. One row, named for
+ *  both. */
 function settingsNav() {
   return `<div class="set-nav">
     <a href="#/kegels/settings">${icon('target', 18)}<span><b>${escapeHtml(kegelName())}</b><i>Input, daily target, release day, reminder</i></span></a>
     <a href="#/pe/settings">${icon('trend', 18)}<span><b>${escapeHtml(peName())}</b><i>Units, session defaults, check-in day</i></span></a>
-    <a href="#/pray/settings">${icon('book', 18)}<span><b>Prayer</b><i>Language, times, reminders</i></span></a>
-    <a href="#/bible/settings">${icon('scripture', 18)}<span><b>Bible</b><i>Reading plan, reminder, text size</i></span></a>
+    <a href="#/bible/settings">${icon('scripture', 18)}<span><b>Bible and prayer</b><i>Text size, reminder, the rule's times and language</i></span></a>
+    <a href="#/breathe/settings">${icon('breath', 18)}<span><b>Wind-down</b><i>Pattern, length, pacing, reminder</i></span></a>
   </div>`;
 }
 
 export function renderSettings(mount) {
   const s = store.get().settings;
   const pe = store.get().pe.settings;
+  const nl = store.get().nightlight;
 
   mount.innerHTML = `
     <div class="screen">
@@ -62,6 +70,14 @@ export function renderSettings(mount) {
           <span><b>Discreet mode</b><i>Renames Kegels to "Core Training" and PE to "Length Training".</i></span>
           <input type="checkbox" id="discreet" ${s.discreet ? 'checked' : ''}>
         </label>
+      </section>
+
+      <section class="card">
+        <div class="h-row">${icon('warmth', 16)}<h2>Night light</h2></div>
+        <p class="small muted">${nl.enabled
+          ? `Warming from ${escapeHtml(nl.wakeAt)} to ${nl.nightKelvin}K by ${escapeHtml(nl.sleepAt)}.`
+          : 'Off. Takes the blue out of the screen as the evening goes on.'}</p>
+        <a class="btn ghost wide linkbtn" href="#/settings/night">${nl.enabled ? 'Adjust' : 'Set it up'}</a>
       </section>
 
       <section class="card">
