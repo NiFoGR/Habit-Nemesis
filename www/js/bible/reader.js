@@ -35,11 +35,6 @@ export async function renderReader(mount, { book, ch }) {
   const body = mount.querySelector('#chapterBody');
   const verses = await text.chapter(b.id, n, b.chapters[n - 1]);
 
-  if (!verses) {
-    body.innerHTML = notImported(b, n);
-    return;
-  }
-
   const prev = bible.previousChapter(b.id, n);
   const next = bible.nextChapter(b.id, n);
   const read = bible.chapterRead(b.id, n);
@@ -52,7 +47,7 @@ export async function renderReader(mount, { book, ch }) {
 
     <div class="verses">
       ${verses.map((v) => v.missing
-        ? `<p class="verse gap"><b>${v.n}</b><i>Not separated out by the import. Its text is usually folded into the verse above; check your Bible.</i></p>`
+        ? `<p class="verse gap"><b>${v.n}</b><i>Not separated out by the parser. Its text is usually folded into the verse above; check your Bible.</i></p>`
         : `<p class="verse"><b>${v.n}</b>${escapeHtml(v.text)}</p>`).join('')}
     </div>
 
@@ -89,14 +84,3 @@ export async function renderReader(mount, { book, ch }) {
   }
 }
 
-function notImported(b, n) {
-  return `<section class="card">
-      <div class="h-row">${icon('book', 16)}<h2>No Bible imported yet</h2></div>
-      <p class="muted small">
-        NiFo ships the reader, not the scripture. Import the copy of the Orthodox
-        Study Bible you own and it is parsed on this phone and stored here.
-        Nothing is uploaded and nothing is bundled with the app.
-      </p>
-      <a class="btn primary wide linkbtn" href="#/bible/import">${icon('plus', 16)}<span>Import your Bible</span></a>
-    </section>`;
-}

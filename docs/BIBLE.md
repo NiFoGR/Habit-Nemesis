@@ -16,25 +16,36 @@ August whether or not you had read anything on the thirteenth.
 Both are gone. The section opens where you left off, the rule sits underneath
 with its two times, and there is no plan to fall behind on.
 
-## Why the app parses your copy instead of shipping one
+## Why the text is bundled, and why it wasn't at first
 
 The Orthodox Study Bible's translations are under copyright: the front matter
 allows a thousand verses, under half of any one book. There are 35,903 verses
-here, and this repository is public.
+here, and the app is a public repository that deploys to a public website.
+Shipping the full text there would be redistributing a commercial translation
+in bulk, which is not something the license covers and not something to do
+regardless of what it covers.
 
-So **the app ships the parser, not the scripture.** You import the copy you own,
-once. It is parsed on the phone by `www/js/bible/parse.js`, stored in IndexedDB
-by `text.js`, and never leaves the device. Nothing of the text is in this
-repository and nothing is bundled into the APK.
+**This repository is now private, and GitHub Pages is off.** That changes what
+shipping the text means: it is a personal copy of a book you own, kept for
+personal use, not a public release. So the parsed text is committed under
+`www/bible/`, one JSON file per book, and the reader loads it directly. There is
+no import step.
 
-The Prayer feature drew the same line first, and for the same reason: it bundles
-the ancient core, links out for the rest, and lets you type in what you actually
-say from your own book.
+If this repository is ever made public again, `www/bible/` has to come out
+first and the app goes back to reading from a copy you import on the device,
+which is how the first version of this feature worked and which
+`www/js/bible/parse.js` still knows how to do.
+
+The Prayer feature draws a related line for its own book: it bundles the
+ancient core, which is in the public domain, and lets you type in the rest from
+your own copy rather than including a copyrighted prayer book.
 
 ## What the export does to the text, and how it is undone
 
 A PDF conversion of a print Bible arrives with two faults. Both are repaired in
-`parse.js`, and the reasoning is in the code beside each fix.
+`www/js/bible/parse.js`, which is also what `tools/extract-bible-text.mjs` runs
+to generate the files in `www/bible/`. The reasoning is in the code beside each
+fix.
 
 ### Letter spacing
 
@@ -123,6 +134,18 @@ it, because you cannot see the hole.
 `tools/extract-bible-text.mjs` runs the same parser outside the browser and
 prints these numbers, which is how a regression in it gets caught.
 
+## How the text is stored
+
+One JSON file per book under `www/bible/`, plus `_meta.json` for the summary
+numbers the settings screen shows. `www/js/bible/text.js` fetches a book the
+first time you open a chapter in it and keeps it in memory after that, and the
+service worker precaches every file, so reading works offline from the first
+launch rather than only after each book has been touched once.
+
+`www/js/bible/parse.js` is still in the app, unused at runtime, because it is
+the thing that would be needed again if this ever goes back to a device-side
+import.
+
 ## The reader
 
 One chapter on screen, Genesis 1 through to Revelation 22, with next and
@@ -146,11 +169,13 @@ entry says so rather than picking a side.
 
 ## What is deliberately not here
 
-* **The scripture, in this repository.** See above.
 * **A lectionary or a reading plan.** Removed. A daily portion is a thing to
   fall behind on; the book has an order of its own and the reader follows it.
 * **A verse-level tracker.** A chapter is the honest unit.
 * **Silently dropping a verse the parser missed.** It is marked.
+* **The text in a public place.** It is in this repository because this
+  repository is private. It has never been, and must never be, in a GitHub
+  Pages deployment or any other public surface.
 
 ## Sources
 

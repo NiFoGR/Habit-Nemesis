@@ -185,9 +185,14 @@ morning which half of one practice you wanted.
 - **A chapter is the unit.** The largest thing you can honestly say you either
   read or did not.
 
-## Deliberately rejected
+## Deliberately rejected, then un-rejected
 
-- **Shipping the text in the repo.** It is public and deploys to a public site.
+- **Shipping the text in the repo.** Rejected while the repo was public and
+  deploying to Pages: that would have been bulk public redistribution of a
+  commercial translation, not personal use. The repo is now private and Pages
+  is off, which removed the actual objection rather than just the appearance
+  of it, so the parsed text now ships in `www/bible/`. If the repo is ever
+  made public again this has to be reverted, back to a device-side import.
 - **A lectionary or reading plan.** See above.
 - **Treating welded digits as verse markers.** Tried, and it split John 1:1
   into three fragments. They are debris, and stripping them is right even

@@ -33,7 +33,7 @@ import { renderPeGuide, renderPeSettings } from './pe/guide.js';
 import { renderMyPrayers } from './pray/home.js';
 import { startRule } from './pray/session.js';
 import * as prayProgram from './pray/program.js';
-import { renderBibleHome, renderImport, renderBibleSettings } from './bible/home.js';
+import { renderBibleHome, renderBibleSettings } from './bible/home.js';
 import { renderReader } from './bible/reader.js';
 import { renderRead } from './bible/read.js';
 import { renderBookContext } from './bible/book.js';
@@ -106,7 +106,6 @@ const ROUTES = {
   '#/bible/reader': (params) => renderReader(app, { book: params.get('book'), ch: params.get('ch') }),
   '#/bible/books': (params) => renderRead(app, { book: params.get('book') }),
   '#/bible/book': (params) => renderBookContext(app, params.get('id')),
-  '#/bible/import': () => renderImport(app),
   '#/bible/track': () => renderBibleTracking(app),
   '#/bible/settings': () => renderBibleSettings(app),
   '#/bible/pray': (params) => runRule(params),
@@ -119,7 +118,7 @@ const NAV = {
   pe: '#/pe', 'pe-timer': '#/pe/timer', 'pe-measure': '#/pe/measure', 'pe-stats': '#/pe/stats',
   'pe-gallery': '#/pe/gallery', 'pe-guide': '#/pe/guide', 'pe-settings': '#/pe/settings',
   'kegel-settings': '#/kegels/settings',
-  bible: '#/bible', 'bible-books': '#/bible/books', 'bible-import': '#/bible/import',
+  bible: '#/bible', 'bible-books': '#/bible/books',
   'bible-track': '#/bible/track', 'bible-settings': '#/bible/settings',
   'bible-prayers': '#/bible/prayers',
 };

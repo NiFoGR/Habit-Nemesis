@@ -8,7 +8,7 @@ Runs entirely on the phone. No account, no server, no analytics, nothing leaves 
 
 **Feature 2 - PE:** stretching and pumping sessions against a two-hour daily target, safety limits that object *before* you start, a five-measurement monthly check-in with an encrypted photo gallery, before/after BPFSL per session, and a growth projection built from your own data rather than wishful thinking.
 
-**Feature 3 - Bible:** the whole Orthodox canon read straight through, Genesis 1 to Revelation 22, from the copy of the Orthodox Study Bible you own and import onto the phone. A screen for every book saying what it is before you open it, a record of everything you have read, and the morning and night prayer rule, which lives in the same section because it is the same practice.
+**Feature 3 - Bible:** the whole Orthodox canon read straight through, Genesis 1 to Revelation 22, parsed from a copy of the Orthodox Study Bible and bundled with the app. A screen for every book saying what it is before you open it, a record of everything you have read, and the morning and night prayer rule, which lives in the same section because it is the same practice.
 
 The home screen is a **Today** list: what is outstanding across all three features, and one button for the most urgent thing.
 
@@ -128,11 +128,11 @@ Reasoning, safety numbers and sources: [`docs/PE_PROGRAM.md`](docs/PE_PROGRAM.md
 
 ## What is in the Bible feature
 
-**The app ships the reader, not the scripture.** You bought a copy; import it once and it is parsed on the phone, stored on the device, and never leaves it. Nothing of the text is in this repository. Reasoning and the numbers: [`docs/BIBLE.md`](docs/BIBLE.md).
+**The scripture ships with the app.** This repository is private, which is what makes that the right call rather than a public redistribution of a commercial translation. There is no import step: open the section and it is already there. Reasoning and the numbers: [`docs/BIBLE.md`](docs/BIBLE.md).
 
 **It reads straight through.** Genesis 1 to Revelation 22, next and previous, opening where you left off. There is no daily portion and no plan, because a plan is a thing to fall behind on and the book already has an order.
 
-**The import repairs what the PDF export broke.** A conversion of a print Bible arrives with the kerning turned into spaces, so the whole Psalter reads `B lessed is the m an`, and with every chapter opening transposed by its drop cap, which loses verse 1 of all 1,344 chapters. Both are undone: about **99% of the 35,903 verses come out clean**, in about a second and a half. Where a verse could not be recovered the reader says so rather than skipping it quietly, because a hole you cannot see is worse.
+**The parser repairs what the PDF export broke.** A conversion of a print Bible arrives with the kerning turned into spaces, so the whole Psalter reads `B lessed is the m an`, and with every chapter opening transposed by its drop cap, which loses verse 1 of all 1,344 chapters. Both are undone: about **99% of the 35,903 verses come out clean**. Where a verse could not be recovered the reader says so rather than skipping it quietly, because a hole you cannot see is worse. `tools/extract-bible-text.mjs` runs the parser and regenerates the bundled text if you ever get a cleaner export.
 
 **The real canon, from your own edition.** 76 books with the per-chapter verse counts read out of the OSB's own index, so the Psalms number 151 on Septuagint numbering, the four books of Kingdoms are called that, and Tobit, Judith, the three books of Maccabees, Wisdom, Sirach and Baruch are all there.
 
@@ -160,8 +160,9 @@ www/               the entire app, plain ES modules, no build
     native.js      real Android alarms via Capacitor
     kegels/        the Kegels feature
     pe/            the PE feature
-    bible/         the Bible feature, reader and parser
+    bible/         the Bible feature and reader
     pray/          the prayer rule, part of the Bible section
+  bible/           the scripture itself, one JSON file per book, generated
   sw.js            offline service worker
 signing/           the fixed APK key, so updates install over the top
 tools/             icon generation, signing patch, dev server, data extraction
