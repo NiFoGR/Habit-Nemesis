@@ -3,11 +3,10 @@
 // One screen with two states. With no book chosen it is the shelf, seventy-six
 // books in the order the Orthodox Study Bible prints them, grouped into the
 // eight parts of the story. With a book chosen it is a grid of its chapters,
-// and tapping one marks it read.
+// and tapping one opens it in the reader.
 //
-// The grid is the whole interaction, so it is built to be tapped accurately
-// with a thumb while holding a physical Bible in the other hand, which is the
-// actual situation this feature exists for.
+// The grid is for jumping. Reading straight through needs nothing from this
+// screen at all, which is why the reader has its own next and previous.
 
 import * as store from '../store.js';
 import * as bible from './program.js';
@@ -53,7 +52,7 @@ function renderShelf(mount) {
             ${books.map((x) => {
               const p = bible.bookProgress(x.id);
               const finished = p.read >= p.total;
-              return `<a class="book-row ${finished ? 'done' : ''}" href="#/bible/read?book=${x.id}">
+              return `<a class="book-row ${finished ? 'done' : ''}" href="#/bible/books?book=${x.id}">
                 <span class="br-name">
                   <b>${escapeHtml(x.name)}</b>
                   ${x.also || x.deutero
@@ -82,7 +81,7 @@ function renderBook(mount, b) {
   mount.innerHTML = `
     <div class="screen bible">
       <header class="screen-head">
-        <button class="icon-btn" data-back="bible-read" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back="bible-books" aria-label="Back">${icon('back')}</button>
         <h1>${escapeHtml(b.name)}</h1>
         <a class="icon-btn" href="#/bible/book?id=${b.id}" aria-label="About this book">${icon('help')}</a>
       </header>
@@ -105,8 +104,8 @@ function renderBook(mount, b) {
           ${b.chapters.map((verses, i) => {
             const n = i + 1;
             const read = bible.chapterRead(b.id, n);
-            return `<button class="ch ${read ? 'on' : ''}" data-ch="${n}"
-              title="${psalms ? 'Psalm' : 'Chapter'} ${n}, ${verses} verses">${n}</button>`;
+            return `<a class="ch ${read ? 'on' : ''}" href="#/bible/reader?book=${b.id}&ch=${n}"
+              title="${psalms ? 'Psalm' : 'Chapter'} ${n}, ${verses} verses">${n}</a>`;
           }).join('')}
         </div>
       </section>
@@ -116,16 +115,6 @@ function renderBook(mount, b) {
         <button class="btn ghost danger" id="allClear">Clear</button>
       </div>
     </div>`;
-
-  mount.querySelectorAll('.ch').forEach((el) => {
-    el.addEventListener('click', () => {
-      const n = +el.dataset.ch;
-      if (bible.chapterRead(b.id, n)) bible.unmarkChapter(b.id, n);
-      else bible.markChapter(b.id, n);
-      haptic('tick');
-      rerender();
-    });
-  });
 
   // Both of these are destructive enough to be worth a question. Marking a
   // fifty-chapter book read in one tap is a claim about fifty days of reading.

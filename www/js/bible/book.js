@@ -35,7 +35,7 @@ export function renderBookContext(mount, id) {
     mount.innerHTML = `
       <div class="screen bible">
         <header class="screen-head">
-          <button class="icon-btn" data-back="bible-read" aria-label="Back">${icon('back')}</button>
+          <button class="icon-btn" data-back="bible-books" aria-label="Back">${icon('back')}</button>
           <h1>Not found</h1>
           <span class="icon-btn ghost"></span>
         </header>
@@ -51,7 +51,7 @@ export function renderBookContext(mount, id) {
   mount.innerHTML = `
     <div class="screen bible ${large ? 'large' : ''}">
       <header class="screen-head">
-        <button class="icon-btn" data-back="bible-read" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back="bible-books" aria-label="Back">${icon('back')}</button>
         <h1>${escapeHtml(b.name)}</h1>
         <span class="icon-btn ghost"></span>
       </header>
@@ -85,7 +85,7 @@ export function renderBookContext(mount, id) {
         <p class="muted small">${p.read} of ${p.total} chapters read.</p>
       </section>
 
-      <a class="btn primary big linkbtn" href="#/bible/read?book=${b.id}">
+      <a class="btn primary big linkbtn" href="#/bible/reader?book=${b.id}&ch=1">
         ${icon('book', 18)}<span>${p.read ? 'Carry on' : 'Start'} ${escapeHtml(b.name)}</span>
       </a>
     </div>`;

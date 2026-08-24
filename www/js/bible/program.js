@@ -6,23 +6,19 @@
 // and books are too coarse to feel like progress, and both would turn the
 // tracker into a thing you argue with.
 //
-// The lectionary is the exception. It appoints passages, not chapters, so a
-// ticked lectionary reading is recorded as the reference it is. It counts for
-// the day and for the streak, and it deliberately does not colour in a chapter
-// of the canon, because reading Romans 2:10-16 is not reading Romans 2.
+// There is no reading plan. The book runs Genesis to Revelation and so does
+// the reader; what it keeps is where you are and what you have already been
+// through, which is all a plan was ever standing in for.
 
 import * as store from '../store.js';
 import { BOOKS } from './canon.js';
-import { PLANS, planById, unitsForDay, blocksForDay, planTotal } from './plans.js';
-import { readingsFor, season, beyondTable, pascha } from './pascha.js';
 import { scheduleDaily, cancelAlarm, ALARM_BIBLE } from '../native.js';
 
 export const bookById = (id) => BOOKS.find((b) => b.id === id) || null;
 
-// The lectionary cites books by their familiar English names, while the Old
-// Testament here is printed with its Septuagint ones, so "1 Kings 17" in a
-// reading is 3 Kingdoms in the canon. This is the only place that difference
-// has to be reconciled.
+// References cite books by their familiar English names, while the Old
+// Testament here is printed with its Septuagint ones, so "1 Kings 17" means
+// 3 Kingdoms. This is the only place that difference has to be reconciled.
 const ALIASES = new Map([
   ['1 samuel', '1ki'], ['2 samuel', '2ki'], ['1 kings', '3ki'], ['2 kings', '4ki'],
   ['3 kings', '3ki'], ['4 kings', '4ki'], ['1 kingdoms', '1ki'], ['2 kingdoms', '2ki'],
@@ -113,7 +109,7 @@ export function booksFinished() {
 
 function dayEntry(st, key) {
   const days = st.bible.days;
-  if (!days[key]) days[key] = { chapters: [], refs: [] };
+  if (!days[key]) days[key] = { chapters: [] };
   return days[key];
 }
 
@@ -146,37 +142,18 @@ export function unmarkChapter(id, ch) {
   });
 }
 
-/** Ticks off one of the day's appointed readings. */
-export function markRef(ref, key = store.dayKey()) {
-  store.update((st) => {
-    const day = dayEntry(st, key);
-    if (!day.refs.includes(ref)) day.refs.push(ref);
-    bumpStreak(st);
-  });
-}
-
-export function unmarkRef(ref, key = store.dayKey()) {
-  store.update((st) => {
-    const day = st.bible.days[key];
-    if (day) day.refs = day.refs.filter((r) => r !== ref);
-    bumpStreak(st);
-  });
-}
-
-export const refDone = (ref, key = store.dayKey()) => !!store.get().bible.days[key]?.refs.includes(ref);
-
 /* ---------------- the day ---------------- */
 
 /** Anything at all read on a day. */
 export function dayRead(key = store.dayKey()) {
   const d = store.get().bible.days[key];
-  if (!d) return { chapters: [], refs: [], any: false, count: 0 };
-  return { chapters: d.chapters, refs: d.refs, any: !!(d.chapters.length || d.refs.length), count: d.chapters.length + d.refs.length };
+  if (!d) return { chapters: [], any: false, count: 0 };
+  return { chapters: d.chapters, any: d.chapters.length > 0, count: d.chapters.length };
 }
 
 function bumpStreak(st) {
   const days = st.bible.days;
-  const any = (k) => !!(days[k] && (days[k].chapters.length || days[k].refs.length));
+  const any = (k) => !!days[k]?.chapters.length;
   let cursor = store.dayKey();
   if (!any(cursor)) cursor = store.addDays(cursor, -1);
   let n = 0;
@@ -190,7 +167,7 @@ function bumpStreak(st) {
 
 export function streak() {
   const days = store.get().bible.days;
-  const any = (k) => !!(days[k] && (days[k].chapters.length || days[k].refs.length));
+  const any = (k) => !!days[k]?.chapters.length;
   let cursor = store.dayKey();
   if (!any(cursor)) cursor = store.addDays(cursor, -1);
   let n = 0;
@@ -208,7 +185,7 @@ export function history(weeks = 13) {
   for (let i = weeks * 7 - 1; i >= 0; i--) {
     const key = store.addDays(store.dayKey(), -i);
     const d = days[key];
-    const n = d ? d.chapters.length + d.refs.length : 0;
+    const n = d ? d.chapters.length : 0;
     out.push({ key, n, cls: n === 0 ? 'none' : n < 2 ? 'l1' : n < 4 ? 'l2' : n < 7 ? 'l3' : 'l4' });
   }
   return out;
@@ -221,106 +198,51 @@ export function totals(days = 30) {
   for (let i = 0; i < days; i++) {
     const d = map[store.addDays(store.dayKey(), -i)];
     if (!d) continue;
-    const n = d.chapters.length + d.refs.length;
+    const n = d.chapters.length;
     if (n) read++;
     items += n;
   }
   return { days, read, items, rate: days ? read / days : 0 };
 }
 
-/* ---------------- today's assignment ---------------- */
+/* ---------------- where you are ---------------- */
 
-/** What the current plan asks for today, in a shape the screens can render
- *  without knowing which kind of plan it is. */
-export function today(date = new Date()) {
-  const st = store.get().bible;
-  const plan = planById(st.settings.plan);
-  const key = store.dayKey(date);
-
-  if (plan.kind === 'free') {
-    return { plan, kind: 'free', items: [], complete: false, behind: 0 };
-  }
-
-  if (plan.kind === 'date') {
-    const appointed = readingsFor(date);
-    const items = appointed.map((r) => ({ type: 'ref', id: r.title, label: r.title, detail: r.readings, kind: r.kind }));
-    return {
-      plan,
-      kind: 'date',
-      items,
-      season: season(date),
-      gap: beyondTable(date),
-      complete: items.length > 0 && items.every((i) => refDone(i.id, key)),
-      behind: 0,
-    };
-  }
-
-  const n = st.planDone + 1;
-  const units = unitsForDay(plan, n);
-  const items = units.map((u) => ({ type: 'chapter', id: u, label: refName(u) }));
-  const elapsed = daysSince(st.settings.planStart) + 1;
-  const total = planTotal(plan);
-
-  return {
-    plan,
-    kind: plan.kind,
-    day: n,
-    of: plan.kind === 'sequence' ? plan.days : 0,
-    blocks: blocksForDay(plan, n),
-    items,
-    complete: items.length > 0 && items.every((i) => chapterRead(...i.id.split(':'))),
-    behind: Math.max(0, elapsed - n),
-    done: st.planDone,
-    total,
-  };
+/** The chapter you were last on. Defaults to the very beginning. */
+export function position() {
+  const p = store.get().bible.position;
+  return bookById(p?.book) ? p : { book: BOOKS[0].id, ch: 1 };
 }
 
-function daysSince(key) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) return 0;
-  const [y, m, d] = key.split('-').map(Number);
-  const then = Date.UTC(y, m - 1, d);
-  const now = new Date();
-  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-  return Math.max(0, Math.round((today - then) / 86400000));
-}
-
-/** Advances the plan by one day. Called when the day's readings are all done,
- *  never by the calendar, so a missed day postpones the plan rather than
- *  deleting a day out of it. */
-export function completePlanDay() {
+export function setPosition(book, ch) {
+  if (!bookById(book)) return;
   store.update((st) => {
-    st.bible.planDone += 1;
+    st.bible.position = { book, ch };
   });
 }
 
-export function setPlan(id) {
-  store.update((st) => {
-    st.bible.settings.plan = planById(id).id;
-    st.bible.settings.planStart = store.dayKey();
-    st.bible.planDone = 0;
-  });
-  syncAlarm();
+/** The next chapter in the whole canon, rolling on into the next book. */
+export function nextChapter(book, ch) {
+  const i = BOOKS.findIndex((b) => b.id === book);
+  if (i < 0) return null;
+  if (ch < BOOKS[i].chapters.length) return { book, ch: ch + 1 };
+  const nb = BOOKS[i + 1];
+  return nb ? { book: nb.id, ch: 1 } : null;
 }
 
-/* ---------------- reading position ---------------- */
+export function previousChapter(book, ch) {
+  const i = BOOKS.findIndex((b) => b.id === book);
+  if (i < 0) return null;
+  if (ch > 1) return { book, ch: ch - 1 };
+  const pb = BOOKS[i - 1];
+  return pb ? { book: pb.id, ch: pb.chapters.length } : null;
+}
 
-/** The next unread chapter in canonical order, for the "carry on" button. */
-export function nextUnread() {
+/** The next chapter you have not read, for picking the thread back up. */
+export function nextUnreadChapter() {
   for (const b of BOOKS) {
     for (let c = 1; c <= b.chapters.length; c++) {
-      if (!chapterRead(b.id, c)) return `${b.id}:${c}`;
+      if (!chapterRead(b.id, c)) return { book: b.id, ch: c };
     }
-  }
-  return null;
-}
-
-/** The book you were last reading, which is usually where you want to go. */
-export function lastBook() {
-  const days = store.get().bible.days;
-  const keys = Object.keys(days).sort();
-  for (let i = keys.length - 1; i >= 0; i--) {
-    const ch = days[keys[i]].chapters;
-    if (ch.length) return ch[ch.length - 1].split(':')[0];
   }
   return null;
 }
@@ -334,4 +256,4 @@ export function syncAlarm() {
   return scheduleDaily(ALARM_BIBLE, h, m, 'NiFo', "Today's reading.");
 }
 
-export { PLANS, planById, season, pascha, readingsFor };
+export { BOOKS };

@@ -65,35 +65,19 @@ const FEATURES = [
     },
   },
   {
-    id: 'pray',
-    icon: 'book',
-    route: '#/pray',
-    name: () => 'Prayer',
-    blurb: 'Morning and night, both kept',
-    pills() {
-      const today = prayProgram.dayState();
-      const st = prayProgram.streak();
-      return [
-        { text: today.complete ? 'Both kept' : `${today.kept}/2 today`, done: today.complete },
-        st ? { text: `${st}d streak`, ghost: true } : null,
-      ];
-    },
-    spark: () => '',
-  },
-  {
     id: 'bible',
     icon: 'scripture',
     route: '#/bible',
     name: () => 'Bible',
-    blurb: 'What you have read, and what each book is for',
+    blurb: 'Reading, and the morning and night rule',
     pills() {
       const today = bibleProgram.dayRead();
-      const st = bibleProgram.streak();
+      const rule = prayProgram.dayState();
       const prog = bibleProgram.overallProgress();
       return [
+        { text: rule.complete ? 'Rule kept' : `${rule.kept}/2 rule`, done: rule.complete },
         { text: today.any ? `${today.count} read today` : 'Nothing read today', done: today.any },
-        { text: `${Math.round(prog.frac * 100)}% of the canon`, ghost: true },
-        st ? { text: `${st}d streak`, ghost: true } : null,
+        { text: `${Math.round(prog.frac * 100)}% read`, ghost: true },
       ];
     },
     spark() {
@@ -158,34 +142,24 @@ function todayTasks(state) {
         ? `Kept ${new Date(kept).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
         : `${slot === 'morning' ? state.pray.settings.morningAt : state.pray.settings.eveningAt} · ${prayProgram.minutes(slot)} min`,
       done: !!kept,
-      href: `#/pray/run?slot=${slot}`,
+      href: `#/bible/pray?slot=${slot}`,
       cta: PRAY_RULES[slot].label,
     });
   }
 
-  // Reading is a daily obligation like the prayer rule, so it belongs in the
-  // list whether or not a plan is running: with no plan, the ask is simply
-  // that something was read.
-  const reading = bibleProgram.today();
+  // Reading has no time of day attached, so it is one row that says where you
+  // are rather than what is owed.
   const readToday = bibleProgram.dayRead();
-  const bibleDone = reading.kind === 'free' ? readToday.any : reading.complete;
+  const pos = bibleProgram.position();
   out.push({
     id: 'bible',
     icon: 'scripture',
     label: 'Bible',
-    detail: bibleDone
-      ? reading.kind === 'free'
-        ? `${readToday.count} read today`
-        : 'Today\u2019s reading done'
-      : reading.kind === 'free'
-        ? 'Nothing read today'
-        : reading.items.length
-          // The lectionary's items are named days carrying the passages, so
-          // the useful line is the passages; a plan's items are the passages.
-          ? reading.items.map((i) => i.detail || i.label).join(' · ')
-          : 'Nothing appointed today',
-    done: bibleDone,
-    href: '#/bible',
+    detail: readToday.any
+      ? `${readToday.count} chapter${readToday.count === 1 ? '' : 's'} today`
+      : bibleProgram.refName(`${pos.book}:${pos.ch}`),
+    done: readToday.any,
+    href: `#/bible/reader?book=${pos.book}&ch=${pos.ch}`,
     cta: 'Read',
   });
 

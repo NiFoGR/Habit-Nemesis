@@ -1,189 +1,187 @@
-# The Bible feature
+# The Bible section
 
-Where the data comes from, why the app does not contain the text of the Bible,
-and how the church calendar is worked out.
+One room for reading and for the rule, why the app parses your own copy rather
+than shipping one, and how the parser undoes what the PDF export did to the
+text.
 
 ---
 
-## The decision that shaped everything else
+## Why reading and prayer are one section
 
-The obvious version of this feature is a Bible reader: the text on the screen,
-a tap to mark a chapter read, done. That version was attempted first and
-abandoned, and the reason is worth writing down so it is not attempted again.
+They were two tiles for about a day. Splitting them meant the hub asked you
+every morning to choose between the two halves of the same practice, and the
+Bible tile had a lectionary telling you what to read on the fourteenth of
+August whether or not you had read anything on the thirteenth.
 
-The source was a plain-text export of the Orthodox Study Bible. Two things
-killed it.
+Both are gone. The section opens where you left off, the rule sits underneath
+with its two times, and there is no plan to fall behind on.
 
-**The text is not recoverable at the quality scripture deserves.** PDF text
-extraction preserves prose reasonably and destroys anything italic or poetic.
-Every poetic passage in the book comes out letter-spaced, with spaces inserted
-inside words. This is Psalm 1 as the export gives it:
+## Why the text is bundled, and why it wasn't at first
+
+The Orthodox Study Bible's translations are under copyright: the front matter
+allows a thousand verses, under half of any one book. There are 35,903 verses
+here, and the app is a public repository that deploys to a public website.
+Shipping the full text there would be redistributing a commercial translation
+in bulk, which is not something the license covers and not something to do
+regardless of what it covers.
+
+**This repository is now private, and GitHub Pages is off.** That changes what
+shipping the text means: it is a personal copy of a book you own, kept for
+personal use, not a public release. So the parsed text is committed under
+`www/bible/`, one JSON file per book, and the reader loads it directly. There is
+no import step.
+
+If this repository is ever made public again, `www/bible/` has to come out
+first and the app goes back to reading from a copy you import on the device,
+which is how the first version of this feature worked and which
+`www/js/bible/parse.js` still knows how to do.
+
+The Prayer feature draws a related line for its own book: it bundles the
+ancient core, which is in the public domain, and lets you type in the rest from
+your own copy rather than including a copyrighted prayer book.
+
+## What the export does to the text, and how it is undone
+
+A PDF conversion of a print Bible arrives with two faults. Both are repaired in
+`www/js/bible/parse.js`, which is also what `tools/extract-bible-text.mjs` runs
+to generate the files in `www/bible/`. The reasoning is in the code beside each
+fix.
+
+### Letter spacing
+
+The exporter turns the kerning after a wide glyph into a space, so every italic
+and poetic passage arrives broken. This is Psalm 1 as it comes out:
 
 ```
 B lessed is the m an
 Who walks not in the counsel of the ungodly ,
-Nor stands in the way of sinners,
 ```
 
-That is not a handful of bad characters to patch. It is the whole Psalter,
-2,534 verses, the most-read book in Orthodox practice, plus every prophetic
-oracle and every hymn in the New Testament. Chapter openings are mangled
-separately, because the print edition sets them as drop caps and the extractor
-interleaves the drop cap with the lines beside it: Genesis 1:1 comes out as
-`1 Inandthedarkness` on one line with its neighbours on others. A verse-anchored
-parse aligned about 61% of verses before the accuracy of the aligned ones was
-even in question. Shipping that would mean a Bible with broken words scattered
-through it, which is worse than no Bible at all.
+That is most of the Psalter, every prophetic oracle, and the Beatitudes. Two
+things make repairing it a decision rather than a guess.
 
-**And it could not be shipped anyway.** The OSB's front matter grants
-quotation of up to 1,000 verses, under 50% of any one book. The app has 35,903
-verses in front of it, and this repository is public and deploys to GitHub
-Pages. Bundling the text would be redistribution, not quotation.
+**The gap has a cause, and the cause constrains it.** It only ever opens after
+`m`, `v`, `w`, `y` or a lone letter, because those are the glyphs the typesetter
+kerns. Every other space in the book is therefore known to be real and is never
+touched. That one constraint is what keeps `it may be` and `any one of them`
+intact while `heav en` and `m ourn` are joined.
 
-The Prayer feature had already made this decision once, for the same reason:
-*"A full modern prayer book is a copyrighted translation, so the app does not
-ship one."* It bundles the ancient core, links out for the rest, and lets you
-type in what you actually say. Bible does the same thing. **You read from the
-copy you own. The app tracks it, and tells you what you are about to read.**
+**Fragments are re-segmented, not paired up.** `com m andm ents` needs a
+four-way merge whose intermediate steps (`comm`, `commandm`) are not words, so
+no rule that joins neighbouring pairs can ever reach it. The whole run goes
+through dynamic programming instead, scoring each candidate segmentation by
+summed log probability. That also settles the ambiguous cases on evidence
+rather than on a hand-written exception: `may be` scores far better split than
+joined, and `m an` far better joined than split.
 
-So what is in the repository is structure and references, which are facts about
-the book rather than the book:
+**The vocabulary has to be learned somewhere the fault cannot reach**, or the
+broken forms teach the repairer their own mistakes. Counted naively over the
+whole book, `judgm` occurs 158 times and `ent` 247, and a segmenter will then
+happily keep `judgm ent` apart. Choosing a "clean region" does not work either,
+because the Beatitudes are poetry inside an otherwise clean gospel. What works
+is positional: a fragment is only ever created *before* another lowercase word,
+so a token appearing immediately before punctuation or a capital is, by
+construction, a whole word. Counting only those positions gives a vocabulary the
+artefact cannot contaminate, and in it every fragment reads zero.
 
-* how many chapters each of the 76 books has, and how many verses in each;
-* the lectionary, which is a table of citations;
-* book introductions written for this app, not copied from the OSB's.
+Splitting a run that arrived with no spaces at all gets its own unfiltered
+count, because that job is mostly function words and the positional vocabulary
+is blind to them: `the` and `in` are almost never followed by punctuation.
 
-## What was extracted, and how
+### Drop caps
 
-`tools/extract-bible-data.mjs` takes a path to the text export and writes two
-files. It is committed so the extraction is reproducible, not because it needs
-to run again.
+Every chapter opens with one, and the exporter emits the words beside the cap as
+their own short line, out of order with the lines above and below:
 
-### The canon
+```
+again He entered Capernaum after some days, and it was heard that He was in the
+2 And
+house. 2Immediately many gathered together...
+```
 
-The ebook carries a navigation index: for every chapter, a heading
-(`Verses in Genesis Chapter 12`) followed by the verse numbers in that chapter.
-Parsing it yields **76 books, 1,344 chapters, 35,903 verses**, with exactly one
-chapter where the printed verse list skips a number (3 Kingdoms 16, which lists
-41 verses and numbers up to 42). That is an authoritative structure taken from
-the edition itself rather than from a generic verse-count table that would
-disagree with the book in your hands. The Psalms are the obvious case: this
-Bible has 151 of them, numbered as the Septuagint numbers them, and a table
-built for a Protestant canon would be wrong about both.
+Nothing is lost, it is transposed, so the opening is put back in reading order.
+Without this, verse 1 of all 1,344 chapters is missing outright. Where the cap
+spans two printed lines the two fragments arrive concatenated, which is why
+Genesis opened `Inandthedarkness`; those are split back into words by the same
+segmenter.
 
-Book names follow the OSB, so the four books of Kingdoms are 1 to 4 Kingdoms
-rather than 1 and 2 Samuel and 1 and 2 Kings. Each book carries the familiar
-Hebrew-canon name alongside, because that is what most references use, and
-because the lectionary itself cites `1 Kings 17` when it means 3 Kingdoms.
+## What it gets, and what it does not
 
-### The lectionary
+From a full run over the OSB export:
 
-The OSB prints a lectionary and describes it, in its own words, as intended
-"strictly as a rough guide for personal reading" and "not for liturgical use".
-The app repeats that on screen rather than quietly presenting it as the
-authoritative daily reading, and links to goarch.org for a real one.
+| | |
+|---|---|
+| Books | 76 |
+| Chapters | 1,344 |
+| Verses recovered | 35,633 |
+| Verses not recovered | 270 (0.75%) |
+| Verses with a jammed run | 62 (0.17%) |
+| Verses with stray digits | 65 (0.18%) |
+| Parse time | about 1.5 seconds |
+| Size on device | about 5 MB |
 
-Every week of the movable cycle prints the same way, Monday through Saturday
-followed by the Sunday that closes it, so one number per week places all seven
-days: the offset from Pascha of that week's Monday. That gives **349 days from
-Pascha minus 76 to Pascha plus 273**, with no gaps and no collisions. On top of
-that sit **20 feasts fixed to calendar dates** and **9 days hung off the
-Nativity and Theophany** (the Saturday before Nativity, and so on), which are
-computed rather than dated because they move with the weekday.
+So roughly **99% of verses come out clean**. Psalm 22, the Beatitudes, John 1:1
+and the end of Revelation all read correctly.
 
-## Working out the day
+The residue is concentrated in chapter openings, because that is where the drop
+cap is. Genesis 1:1 is the worst of them and still reads wrongly: the two
+fragments beside its cap are recovered as words but land in the wrong order.
 
-`pascha.js` computes Orthodox Pascha with Meeus's algorithm, which returns a
-date on the Julian calendar, and converts it through the Julian day number
-rather than by adding thirteen days. The thirteen-day offset is correct only
-until 2100, and a hard-coded constant that silently goes wrong is worse than
-the four extra lines. Checked against the published dates for 2020 to 2030.
+**A verse that could not be recovered is marked in the reader rather than
+skipped.** A Bible that silently drops a verse is worse than one that admits to
+it, because you cannot see the hole.
 
-Everything else is measured in days from there. A date in February belongs to
-the cycle of the Pascha still ahead of it, not the one ten months behind, so
-the changeover is placed at 77 days before Pascha, the day before the Triodion
-opens.
+`tools/extract-bible-text.mjs` runs the same parser outside the browser and
+prints these numbers, which is how a regression in it gets caught.
 
-Two limits are shown to the user rather than papered over:
+## How the text is stored
 
-* **The table runs out.** The OSB stops at the thirty-second week after
-  Pentecost. In a year with a late Pascha there are more weeks than that before
-  the next Triodion, and the Nativity and Theophany cycles cut across them. When
-  the requested day is past the end of the table the app says so and points at
-  goarch.org, instead of showing a reading that is not today's.
-* **Fixed feasts collide with the cycle.** They supersede it, so both are shown,
-  the feast first.
+One JSON file per book under `www/bible/`, plus `_meta.json` for the summary
+numbers the settings screen shows. `www/js/bible/text.js` fetches a book the
+first time you open a chapter in it and keeps it in memory after that, and the
+service worker precaches every file, so reading works offline from the first
+launch rather than only after each book has been touched once.
 
-The seasons and fasts are derived from the same offset: Great Lent, Holy Week,
-the Pentecostarion, the Apostles', Dormition and Nativity fasts, ordinary
-Wednesdays and Fridays, and the fast-free weeks. It is a line of context under
-the date, not a rule book, and the app does not pretend otherwise.
+`www/js/bible/parse.js` is still in the app, unused at runtime, because it is
+the thing that would be needed again if this ever goes back to a device-side
+import.
 
-## Reading plans
+## The reader
 
-Two shapes, and they behave differently on purpose.
+One chapter on screen, Genesis 1 through to Revelation 22, with next and
+previous. Reaching the bottom of a chapter marks it read, so the record builds
+itself out of reading rather than out of remembering to tick something.
 
-**The lectionary is driven by the date.** The church appoints what it appoints
-for the fourteenth of August whether or not you read anything on the thirteenth.
-There is nothing to fall behind on and nothing to catch up.
-
-**Everything else is driven by position.** Today's reading is the next one you
-have not done, never the one the calendar says you should be on. If a plan
-advanced by the calendar, a missed day would delete a chapter out of it, and a
-year-long plan would quietly become a ten-month plan with holes. So the plan
-waits, and the app tells you how many days behind the calendar you have drifted.
-That number is information, not a debt, and it is never fixed by throwing
-readings away.
-
-Chapters are spread across a plan by cumulative division rather than a fixed
-per-day count, so 1,344 chapters over 365 days lands on Revelation 22 on day
-365 instead of running out in November with a stub week.
-
-The plans are: the lectionary; the whole Bible in one year or two; the New
-Testament in 90 days; the four Gospels in a month; the Psalter in a week by the
-twenty kathismata, which is how the Church has read it for centuries; and no
-plan at all.
+The unit is the chapter because it is the largest thing you can honestly say you
+either read or did not. Verses are too fine to tick and would make the tracker
+something you argue with.
 
 ## The context screens
 
-The part of a study Bible that is genuinely useful and that nobody reads,
-because it is four pages of small print in front of the thing you came for.
+Every one of the 76 books answers the same six questions: who wrote it, when,
+where it sits in the story, what it is for, what to watch for while reading, and
+how the Church reads it toward Christ. The four Gospels answer two more, which
+are the only two that actually distinguish four accounts of the same events:
+who it was written for, and what only this one gives you.
 
-Every one of the 76 books answers the same six questions, in the same order:
-who wrote it, when, where it sits in the story, what it is for, what to watch
-for while reading, and how the Church reads it toward Christ. A fixed shape is
-what makes them comparable, so Habakkuk and Colossians can be held in the same
-map rather than as unrelated facts.
-
-The four Gospels answer two more, because the useful question about a gospel is
-never "what happened" but **"who was this written for, and what does only this
-one give me"**, and no one ever says it out loud.
-
-These are written for this app. Where a traditional ascription is disputed, the
+Written for this app, not copied. Where a traditional ascription is disputed the
 entry says so rather than picking a side.
 
 ## What is deliberately not here
 
-* **The text of the Bible.** For the two reasons at the top.
-* **An import-your-own-file path.** It was designed and dropped: it would mean
-  shipping the parser and the letter-spacing repair anyway, and handing the user
-  a Psalter that reads as `B lessed is the m an`. The failure would just have
-  been on their device rather than in the repository.
-* **A verse-level tracker.** A chapter is the largest unit you can honestly say
-  you either read or did not. Verses are too fine to tick and would turn the
-  tracker into a thing you argue with.
-* **A full liturgical calendar with saints' commemorations.** That is a
-  different project, it varies by jurisdiction, and goarch.org already does it
-  properly and is one tap away.
-* **Ticking a lectionary passage marking its chapter read.** Reading
-  Romans 2:10-16 is not reading Romans 2. The day's log records what it was.
+* **A lectionary or a reading plan.** Removed. A daily portion is a thing to
+  fall behind on; the book has an order of its own and the reader follows it.
+* **A verse-level tracker.** A chapter is the honest unit.
+* **Silently dropping a verse the parser missed.** It is marked.
+* **The text in a public place.** It is in this repository because this
+  repository is private. It has never been, and must never be, in a GitHub
+  Pages deployment or any other public surface.
 
 ## Sources
 
 * *The Orthodox Study Bible*, St. Athanasius Academy of Orthodox Theology, 2008.
   Old Testament: St. Athanasius Academy Septuagint. New Testament: New King
-  James Version. The canon structure and the lectionary references come from
-  this edition; its text does not.
-* Jean Meeus, *Astronomical Algorithms*, for the paschal computation.
-* The Greek Orthodox Archdiocese of America, goarch.org, for the authoritative
-  daily readings the app links to.
+  James Version. The canon structure in `canon.js` is taken from this edition's
+  own navigation index; its text is not in this repository.
+* The Greek Orthodox Archdiocese of America, goarch.org, for the daily readings
+  and the calendar the section links to.
