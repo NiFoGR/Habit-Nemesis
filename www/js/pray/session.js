@@ -82,7 +82,7 @@ export function startRule(mount, slot, onDone) {
     return `
       <div class="screen pray-run${large ? ' big' : ''}">
         <header class="screen-head">
-          <button class="icon-btn" id="close" aria-label="Close">${icon('close')}</button>
+          <button class="icon-btn" data-back id="close" aria-label="Close">${icon('close')}</button>
           <h1>${escapeHtml(def.label)}</h1>
           <span class="icon-btn ghost"></span>
         </header>

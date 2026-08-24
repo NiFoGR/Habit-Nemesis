@@ -1,12 +1,17 @@
 name: Build Android APK
 
-# Produces an installable debug APK and attaches it to the run as an artifact.
+# Produces an installable debug APK. Every branch build attaches it to the run
+# as an artifact; a build of main also publishes it as a release asset.
 # Run it from the Actions tab, or let it run on every push to a branch.
 on:
   push:
     branches: ['**']
     paths-ignore: ['docs/**', '**/*.md']
   workflow_dispatch:
+
+# Needed to create the release below. Everything else here only reads.
+permissions:
+  contents: write
 
 jobs:
   apk:
@@ -71,3 +76,26 @@ jobs:
           path: out/*.apk
           if-no-files-found: error
           retention-days: 90
+
+      - name: Publish the APK as a release
+        # An artifact is a zip, behind a GitHub login, that expires in 90 days.
+        # A release asset is a plain .apk on a permanent URL, which is what you
+        # want when the thing being downloaded goes straight onto a phone.
+        # Only on main, so branch builds stay artifacts and do not litter the
+        # releases page.
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SHORT="${GITHUB_SHA::7}"
+          APK="out/nifo-$SHORT.apk"
+          # Re-running a build of the same commit must not fail on the tag it
+          # created the first time round.
+          if gh release view "build-$SHORT" >/dev/null 2>&1; then
+            gh release upload "build-$SHORT" "$APK" --clobber
+          else
+            gh release create "build-$SHORT" "$APK" \
+              --title "NiFo $SHORT" \
+              --notes "Debug APK built from $GITHUB_SHA. Signed with the project's fixed key, so it installs over an earlier build without clearing your data." \
+              --latest
+          fi

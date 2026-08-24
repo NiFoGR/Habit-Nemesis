@@ -2,6 +2,15 @@
 // no network, nothing leaves the phone.
 
 import { toast } from './ui.js';
+import { BOOKS } from './bible/canon.js';
+
+// The sanitiser needs to know how many chapters each book has, so a saved file
+// cannot smuggle "gen:9999" or a book that does not exist into the page.
+const CANON_LIMITS = BOOKS.map((b) => [b.id, b.chapters.length]);
+
+// Listed here rather than imported from breathe/program.js, which imports this
+// module: the sanitiser cannot depend on a feature that depends on it.
+const BREATHE_PATTERNS = ['exhale', 'coherent', '478'];
 
 const KEY = 'nifo.state.v1';
 const SCHEMA = 1;
@@ -71,6 +80,55 @@ function blank() {
       custom: [], // prayers you added: { id, slot, title, el, en }
       streak: 0,
       best: 0,
+    },
+
+    // Fourth feature: reading the Bible. `read` is the lifetime record, one
+    // entry per chapter, and `days` is what happened on each day. The two are
+    // kept apart because unreading a chapter must not erase the day it was
+    // read on for every other chapter beside it.
+    bible: {
+      settings: {
+        remind: false,
+        remindAt: '07:30',
+        largeText: false,
+      },
+      read: {}, // bookId -> { chapterNumber: ts }
+      days: {}, // dayKey -> { chapters: ['gen:1'] }
+      position: { book: 'gen', ch: 1 }, // where the reader last had you
+      streak: 0,
+      best: 0,
+    },
+
+    // Fifth feature: the wind-down, the last thing in the day. One record per
+    // day and nothing more, because nothing here is scored: the only question
+    // ever asked of it is whether you did it and for how long.
+    breathe: {
+      settings: {
+        pattern: 'exhale', // 'exhale' | 'coherent' | '478'
+        minutes: 5,
+        sound: true,
+        vibrate: true,
+        remind: false,
+        remindAt: '22:30',
+      },
+      days: {}, // dayKey -> { at, ms, pattern }
+      streak: 0,
+      best: 0,
+    },
+
+    // The night light. App-wide rather than a section, so it has no `days` and
+    // nothing to track — only settings. It gets a slice of its own anyway
+    // because on the APK the real copy lives in the filter service's own
+    // SharedPreferences, and this is the copy that ends up in a backup.
+    nightlight: {
+      enabled: false,
+      curve: 'gradual', // 'gradual' warms all day, 'flux' drops in the evening
+      wakeAt: '07:00',
+      sleepAt: '22:00',
+      dayKelvin: 6500, // 6500K is neutral: no tint at all during the day
+      nightKelvin: 2700,
+      transitionMin: 60,
+      intensity: 1, // 0..1, weakens the tint without moving the temperatures
     },
   };
 }
@@ -276,6 +334,121 @@ function hydrate(saved) {
         : null,
     },
     pray: cleanPray(saved.pray, base.pray),
+    bible: cleanBible(saved.bible, base.bible),
+    breathe: cleanBreathe(saved.breathe, base.breathe),
+    nightlight: cleanNightlight(saved.nightlight, base.nightlight),
+  };
+}
+
+/** The night light slice. Every value here is handed to Android as a schedule
+ *  or a colour temperature, so each is clamped to a range the filter can
+ *  actually use rather than merely to the right type. */
+function cleanNightlight(sn, base) {
+  const src = sn && typeof sn === 'object' ? sn : {};
+  return {
+    enabled: bool(src.enabled),
+    curve: oneOf(src.curve, ['gradual', 'flux'], base.curve),
+    wakeAt: timeStr(src.wakeAt, base.wakeAt),
+    sleepAt: timeStr(src.sleepAt, base.sleepAt),
+    dayKelvin: int(src.dayKelvin, 1900, 6500, base.dayKelvin),
+    nightKelvin: int(src.nightKelvin, 1900, 6500, base.nightKelvin),
+    transitionMin: int(src.transitionMin, 1, 240, base.transitionMin),
+    intensity: num(src.intensity, 0, 1) ?? base.intensity,
+  };
+}
+
+/** The Bible slice. Book ids and chapter numbers are used as object keys and
+ *  rendered into the page, so both are checked against the canon itself rather
+ *  than against a pattern: a key that is not a real book, or a chapter beyond
+ *  the end of one, is dropped instead of carried along. */
+function cleanBible(sb, base) {
+  const src = sb && typeof sb === 'object' ? sb : {};
+  const bs = src.settings && typeof src.settings === 'object' ? src.settings : {};
+  const limits = new Map(CANON_LIMITS);
+
+  const read = {};
+  const rawRead = src.read && typeof src.read === 'object' ? src.read : {};
+  for (const [book, chapters] of Object.entries(rawRead).slice(0, 200)) {
+    const max = limits.get(book);
+    if (!max || !chapters || typeof chapters !== 'object') continue;
+    const kept = {};
+    for (const [ch, ts] of Object.entries(chapters).slice(0, 200)) {
+      const n = Number(ch);
+      if (!Number.isInteger(n) || n < 1 || n > max) continue;
+      kept[n] = num(ts, 0, 4e12) ?? Date.now();
+    }
+    if (Object.keys(kept).length) read[book] = kept;
+  }
+
+  const validUnit = (u) => {
+    if (typeof u !== 'string') return false;
+    const [book, ch] = u.split(':');
+    const max = limits.get(book);
+    return !!max && /^\d{1,3}$/.test(ch || '') && +ch >= 1 && +ch <= max;
+  };
+
+  const days = {};
+  const rawDays = src.days && typeof src.days === 'object' ? src.days : {};
+  for (const [k, v] of Object.entries(rawDays).slice(0, 20000)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !v || typeof v !== 'object') continue;
+    const chapters = arr(v.chapters, 400).filter(validUnit);
+    if (chapters.length) days[k] = { chapters };
+  }
+
+  // The reading position is two values that index straight into the canon, so
+  // both are checked against it rather than trusted.
+  const rawPos = src.position && typeof src.position === 'object' ? src.position : {};
+  const posMax = limits.get(rawPos.book);
+  const position = posMax
+    ? { book: rawPos.book, ch: int(rawPos.ch, 1, posMax, 1) }
+    : { ...base.position };
+
+  return {
+    settings: {
+      remind: bool(bs.remind),
+      remindAt: timeStr(bs.remindAt, base.settings.remindAt),
+      largeText: bool(bs.largeText),
+    },
+    read,
+    days,
+    position,
+    streak: int(src.streak, 0, 100000, 0),
+    best: int(src.best, 0, 100000, 0),
+  };
+}
+
+/** The wind-down slice. One entry per day: when it was done, how long it ran
+ *  and which pattern. A day with no time on it is not a day, so it is dropped
+ *  rather than kept as an empty record that would still light up the heatmap. */
+function cleanBreathe(sb, base) {
+  const src = sb && typeof sb === 'object' ? sb : {};
+  const bs = src.settings && typeof src.settings === 'object' ? src.settings : {};
+
+  const days = {};
+  const raw = src.days && typeof src.days === 'object' ? src.days : {};
+  for (const [k, v] of Object.entries(raw).slice(0, 20000)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !v || typeof v !== 'object') continue;
+    const ms = int(v.ms, 0, 86400000, 0);
+    if (!ms) continue;
+    days[k] = {
+      at: num(v.at, 0, 4e12) ?? Date.now(),
+      ms,
+      pattern: oneOf(v.pattern, BREATHE_PATTERNS, base.settings.pattern),
+    };
+  }
+
+  return {
+    settings: {
+      pattern: oneOf(bs.pattern, BREATHE_PATTERNS, base.settings.pattern),
+      minutes: int(bs.minutes, 3, 20, base.settings.minutes),
+      sound: bs.sound !== false,
+      vibrate: bs.vibrate !== false,
+      remind: bool(bs.remind),
+      remindAt: timeStr(bs.remindAt, base.settings.remindAt),
+    },
+    days,
+    streak: int(src.streak, 0, 100000, 0),
+    best: int(src.best, 0, 100000, 0),
   };
 }
 

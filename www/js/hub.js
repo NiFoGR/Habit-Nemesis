@@ -2,15 +2,17 @@
 //
 // Two things live here. `FEATURES` is the registry every section tile renders
 // from, and `todayTasks` is the list of what is still owed today across all of
-// them. Adding a fourth feature means adding an entry to each, and nothing
-// else on this screen needs to know about it.
+// them. Adding a feature means adding an entry to each, and nothing else on
+// this screen needs to know about it.
 
 import * as store from './store.js';
 import * as program from './kegels/program.js';
 import * as peProgram from './pe/program.js';
 import * as prayProgram from './pray/program.js';
+import * as bibleProgram from './bible/program.js';
+import * as breatheProgram from './breathe/program.js';
 import { RULES as PRAY_RULES } from './pray/prayers.js';
-import { fmtHours, ringSvg, escapeHtml, sparkline } from './ui.js';
+import { fmtHours, fmtDuration, ringSvg, escapeHtml, sparkline } from './ui.js';
 import { icon, logoMark } from './icons.js';
 import { kegelName, peName } from './names.js';
 import { reviewDue } from './kegels/review.js';
@@ -64,20 +66,48 @@ const FEATURES = [
     },
   },
   {
-    id: 'pray',
-    icon: 'book',
-    route: '#/pray',
-    name: () => 'Prayer',
-    blurb: 'Morning and night, both kept',
+    id: 'bible',
+    icon: 'scripture',
+    route: '#/bible',
+    name: () => 'Bible',
+    blurb: 'Reading, and the morning and night rule',
     pills() {
-      const today = prayProgram.dayState();
-      const st = prayProgram.streak();
+      const today = bibleProgram.dayRead();
+      const rule = prayProgram.dayState();
+      const prog = bibleProgram.overallProgress();
       return [
-        { text: today.complete ? 'Both kept' : `${today.kept}/2 today`, done: today.complete },
-        st ? { text: `${st}d streak`, ghost: true } : null,
+        { text: rule.complete ? 'Rule kept' : `${rule.kept}/2 rule`, done: rule.complete },
+        { text: today.any ? `${today.count} read today` : 'Nothing read today', done: today.any },
+        { text: `${Math.round(prog.frac * 100)}% read`, ghost: true },
       ];
     },
-    spark: () => '',
+    spark() {
+      // The hub is on its own palette, so this names the Bible section's gold
+      // directly rather than reaching for a token that is not defined here.
+      return sparkline(bibleProgram.history(4).map((d) => d.n), { color: '#d9b061' });
+    },
+  },
+  {
+    id: 'breathe',
+    icon: 'breath',
+    route: '#/breathe',
+    name: () => 'Wind-down',
+    blurb: 'Five minutes of paced breathing, so you fall asleep from the parasympathetic side',
+    pills() {
+      const today = breatheProgram.dayState();
+      const st = breatheProgram.streak();
+      const p = breatheProgram.PATTERNS[breatheProgram.settings().pattern];
+      return [
+        { text: today.done ? 'Done tonight' : 'Not yet tonight', done: today.done },
+        p ? { text: p.short, ghost: true } : null,
+        st ? { text: `${st} night${st === 1 ? '' : 's'}`, ghost: true } : null,
+      ];
+    },
+    spark() {
+      // Same reasoning as the Bible's gold above: the hub palette has no token
+      // for this section's indigo, so it is named outright.
+      return sparkline(breatheProgram.history(4).map((d) => d.ms / 60000), { color: '#8aa4e8' });
+    },
   },
 ];
 
@@ -87,12 +117,38 @@ const FEATURES = [
    the moment a habit gets dropped. This answers the question instead: here is
    what is outstanding today, and the one button that starts it. */
 
-/** Everything still owed today, across both features, most urgent first. */
+/** Everything still owed today, in the order a day actually runs.
+ *
+ *  The morning rule opens the list, with everything that has no fixed hour in
+ *  between. That is not cosmetic: the two rules bracket the day, so a list that
+ *  buried the morning behind three training rows was asking you to scroll past
+ *  the first thing you owe.
+ *
+ *  The night rule used to close the list, on the grounds that putting anything
+ *  after it read as though something came after it. The wind-down is the one
+ *  thing that genuinely does: you pray, and then you lie down and breathe until
+ *  you are ready to sleep. So it takes the last row and the rule keeps the one
+ *  above it. */
 function todayTasks(state) {
-  const out = [];
+  const rule = (slot) => {
+    const kept = prayProgram.dayState()[slot];
+    return {
+      id: `pray-${slot}`,
+      icon: slot === 'morning' ? 'sun' : 'moon',
+      label: PRAY_RULES[slot].label,
+      detail: kept
+        ? `Kept ${new Date(kept).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
+        : `${slot === 'morning' ? state.pray.settings.morningAt : state.pray.settings.eveningAt} · ${prayProgram.minutes(slot)} min`,
+      done: !!kept,
+      href: `#/bible/pray?slot=${slot}`,
+      cta: PRAY_RULES[slot].label,
+    };
+  };
+
+  const out = [rule('morning')];
+
   const plan = program.planForToday(state);
   const left = Math.max(0, plan.target - plan.doneToday);
-
   out.push({
     id: 'kegels',
     icon: 'target',
@@ -125,20 +181,21 @@ function todayTasks(state) {
     });
   }
 
-  for (const slot of prayProgram.SLOTS) {
-    const kept = prayProgram.dayState()[slot];
-    out.push({
-      id: `pray-${slot}`,
-      icon: slot === 'morning' ? 'sun' : 'moon',
-      label: PRAY_RULES[slot].label,
-      detail: kept
-        ? `Kept ${new Date(kept).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
-        : `${slot === 'morning' ? state.pray.settings.morningAt : state.pray.settings.eveningAt} · ${prayProgram.minutes(slot)} min`,
-      done: !!kept,
-      href: `#/pray/run?slot=${slot}`,
-      cta: PRAY_RULES[slot].label,
-    });
-  }
+  // Reading has no time of day attached, so it is one row that says where you
+  // are rather than what is owed.
+  const readToday = bibleProgram.dayRead();
+  const pos = bibleProgram.position();
+  out.push({
+    id: 'bible',
+    icon: 'scripture',
+    label: 'Bible',
+    detail: readToday.any
+      ? `${readToday.count} chapter${readToday.count === 1 ? '' : 's'} today`
+      : bibleProgram.refName(`${pos.book}:${pos.ch}`),
+    done: readToday.any,
+    href: `#/bible/reader?book=${pos.book}&ch=${pos.ch}`,
+    cta: 'Read',
+  });
 
   const due = peProgram.measurementDue();
   if (due.due && state.pe.settings.safetyAck) {
@@ -153,6 +210,23 @@ function todayTasks(state) {
     });
   }
 
+  out.push(rule('evening'));
+
+  // Last, and after the night rule on purpose: this is the thing you do lying
+  // down with the light already off.
+  const wind = breatheProgram.dayState();
+  const pattern = breatheProgram.PATTERNS[state.breathe.settings.pattern];
+  out.push({
+    id: 'breathe',
+    icon: 'breath',
+    label: 'Wind-down',
+    detail: wind.done
+      ? `${fmtDuration(wind.ms / 1000)} breathing`
+      : `${state.breathe.settings.minutes} min · ${pattern ? pattern.short : 'paced breathing'}`,
+    done: wind.done,
+    href: '#/breathe/run',
+    cta: 'Wind down',
+  });
   return out;
 }
 

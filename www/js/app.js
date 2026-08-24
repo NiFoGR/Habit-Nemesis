@@ -10,7 +10,7 @@
 //   settings.js       app-wide settings
 //   lock.js           the optional PIN gate
 //   names.js          what each section is called
-//   kegels/ pe/ pray/ one folder per feature
+//   kegels/ pe/ bible/ breathe/ one folder per feature (pray/ is part of bible/)
 //
 // docs/CODEMAP.md has the full map.
 
@@ -30,12 +30,23 @@ import { renderMeasure } from './pe/measure.js';
 import { renderStats } from './pe/stats.js';
 import { renderGallery, leaveGallery } from './pe/gallery.js';
 import { renderPeGuide, renderPeSettings } from './pe/guide.js';
-import { renderPrayHome, renderPrayStats, renderMyPrayers, renderPraySettings } from './pray/home.js';
+import { renderMyPrayers } from './pray/home.js';
 import { startRule } from './pray/session.js';
 import * as prayProgram from './pray/program.js';
+import { renderBibleHome, renderBibleSettings } from './bible/home.js';
+import { renderReader } from './bible/reader.js';
+import { renderRead } from './bible/read.js';
+import { renderBookContext } from './bible/book.js';
+import { renderBibleTracking } from './bible/tracking.js';
+import * as bibleProgram from './bible/program.js';
+import { renderBreatheHome, renderBreatheSettings } from './breathe/home.js';
+import { startBreathe } from './breathe/session.js';
+import * as breatheProgram from './breathe/program.js';
 import { renderHub } from './hub.js';
+import * as nightlight from './nightlight.js';
 import { renderSettings } from './settings.js';
 import { lockActive, renderLock, relock } from './lock.js';
+import { initBack, navigate, replaceWith } from './back.js';
 import * as vault from './pe/vault.js';
 import { haptic } from './ui.js';
 
@@ -56,12 +67,12 @@ function runSession(params) {
     document.body.classList.remove('in-session');
     activeSession = null;
     if (!result) {
-      location.hash = '#/kegels';
+      navigate('#/kegels');
       return;
     }
     haptic(result.outcome.levelUp ? 'level' : 'done');
     renderReport(app, result, () => {
-      location.hash = '#/kegels';
+      navigate('#/kegels');
     });
   });
 }
@@ -70,7 +81,14 @@ function runRule(params) {
   const slot = prayProgram.SLOTS.includes(params?.get?.('slot')) ? params.get('slot') : 'morning';
   activeSession = startRule(app, slot, () => {
     activeSession = null;
-    location.hash = '#/pray';
+    navigate('#/bible');
+  });
+}
+
+function runBreathe() {
+  activeSession = startBreathe(app, () => {
+    activeSession = null;
+    navigate('#/breathe');
   });
 }
 
@@ -95,11 +113,18 @@ const ROUTES = {
   '#/pe/guide': () => renderPeGuide(app),
   '#/pe/settings': () => renderPeSettings(app),
   '#/kegels/settings': () => renderKegelSettings(app),
-  '#/pray': () => renderPrayHome(app),
-  '#/pray/run': (params) => runRule(params),
-  '#/pray/stats': () => renderPrayStats(app),
-  '#/pray/prayers': () => renderMyPrayers(app),
-  '#/pray/settings': () => renderPraySettings(app),
+  '#/bible': () => renderBibleHome(app),
+  '#/bible/reader': (params) => renderReader(app, { book: params.get('book'), ch: params.get('ch') }),
+  '#/bible/books': (params) => renderRead(app, { book: params.get('book') }),
+  '#/bible/book': (params) => renderBookContext(app, params.get('id')),
+  '#/bible/track': () => renderBibleTracking(app),
+  '#/bible/settings': () => renderBibleSettings(app),
+  '#/bible/pray': (params) => runRule(params),
+  '#/bible/prayers': () => renderMyPrayers(app),
+  '#/breathe': () => renderBreatheHome(app),
+  '#/breathe/run': () => runBreathe(),
+  '#/breathe/settings': () => renderBreatheSettings(app),
+  '#/settings/night': () => nightlight.renderNightlightSettings(app),
 };
 
 const NAV = {
@@ -108,8 +133,11 @@ const NAV = {
   pe: '#/pe', 'pe-timer': '#/pe/timer', 'pe-measure': '#/pe/measure', 'pe-stats': '#/pe/stats',
   'pe-gallery': '#/pe/gallery', 'pe-guide': '#/pe/guide', 'pe-settings': '#/pe/settings',
   'kegel-settings': '#/kegels/settings',
-  pray: '#/pray', 'pray-stats': '#/pray/stats', 'pray-prayers': '#/pray/prayers',
-  'pray-settings': '#/pray/settings',
+  bible: '#/bible', 'bible-books': '#/bible/books',
+  'bible-track': '#/bible/track', 'bible-settings': '#/bible/settings',
+  'bible-prayers': '#/bible/prayers',
+  breathe: '#/breathe', 'breathe-settings': '#/breathe/settings',
+  nightlight: '#/settings/night',
 };
 
 let lastHash = '';
@@ -130,9 +158,15 @@ function route() {
   // One token set per section, swapped on the body. The shell stays the same
   // everywhere; only the palette and, for prayer, the type change.
   document.body.dataset.section = path.startsWith('#/pe') ? 'pe'
-    : path.startsWith('#/pray') ? 'pray'
+    : path.startsWith('#/bible') ? 'bible'
+    : path.startsWith('#/breathe') ? 'breathe'
     : ['#/kegels', '#/kegels/settings', '#/session', '#/track', '#/guide', '#/roadmap', '#/review', '#/pocket', '#/tutorial'].includes(path) ? 'kegels'
     : 'hub';
+  // The progress gallery and the monthly check-in's camera are the two screens
+  // where a colour cast is not cosmetic: it would make a photo look like
+  // progress, or hide it. The night light stands down for both.
+  nightlight.suspend(path.startsWith('#/pe/gallery') || path.startsWith('#/pe/measure'));
+
   const fn = ROUTES[path] || (() => renderHub(app));
   fn(new URLSearchParams(query || ''));
   if (path !== '#/session') window.scrollTo(0, 0);
@@ -142,7 +176,24 @@ document.addEventListener('click', (e) => {
   const nav = e.target.closest('[data-nav]');
   if (!nav) return;
   e.preventDefault();
-  location.hash = NAV[nav.dataset.nav] || '#/hub';
+  navigate(NAV[nav.dataset.nav] || '#/hub');
+});
+
+// Screens that start running the moment you arrive. Leaving one replaces it
+// instead of stacking on top, so Back cannot walk into a session you have just
+// finished and set it going again.
+const EPHEMERAL = ['#/session', '#/bible/pray', '#/pe/timer', '#/pe/measure', '#/pocket', '#/breathe/run'];
+
+// Today is the default screen, settled before back.js takes its bearings below.
+// replaceState rather than assignment: landing on the app should not leave a
+// blank entry underneath Today for Back to fall into.
+if (!location.hash) history.replaceState(history.state, '', '#/hub');
+
+// Back is its own gesture, not a link that happens to point backwards. back.js
+// says why, and owns the Android hardware button along with it.
+initBack({
+  resolve: (key) => NAV[key] || '#/hub',
+  ephemeral: (hash) => EPHEMERAL.some((r) => hash.startsWith(r)),
 });
 
 // Locking the vault the moment the app is backgrounded keeps decrypted photos
@@ -162,19 +213,25 @@ document.addEventListener('visibilitychange', () => {
   if (vault.isUnlocked()) {
     vault.lock();
     leaveGallery();
-    if (location.hash.startsWith('#/pe/gallery')) location.hash = '#/pe';
+    if (location.hash.startsWith('#/pe/gallery')) replaceWith('#/pe');
   }
 });
 
 window.addEventListener('hashchange', route);
 
-if (!location.hash) location.hash = '#/hub';
 route();
 
-// The prayer reminders are the only alarms that must survive a reinstall of the
-// app's own state, so they are re-armed from settings on every launch rather
-// than only when the times are edited.
+// The prayer and reading reminders must survive a reinstall of the app's own
+// state, so they are re-armed from settings on every launch rather than only
+// when the times are edited.
 prayProgram.syncAlarms();
+bibleProgram.syncAlarm();
+breatheProgram.syncAlarm();
+
+// The night light is the same story: the APK's filter service keeps its own
+// copy of the schedule, and this is what puts the two back in step after a
+// reinstall or a restored backup.
+nightlight.init();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));

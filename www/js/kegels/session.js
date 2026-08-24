@@ -32,7 +32,7 @@ export function startSession(mount, opts, onFinish) {
   mount.innerHTML = `
     <div class="player" id="player">
       <div class="player-top">
-        <button class="icon-btn" id="quit" aria-label="End session">✕</button>
+        <button class="icon-btn" data-back id="quit" aria-label="End session">✕</button>
         <div class="player-progress"><i id="prog"></i></div>
         <button class="icon-btn" id="pause" aria-label="Pause">❚❚</button>
       </div>

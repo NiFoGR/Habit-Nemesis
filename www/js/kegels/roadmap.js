@@ -57,7 +57,7 @@ export function renderRoadmap(mount) {
   mount.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="kegels" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back="kegels" aria-label="Back">${icon('back')}</button>
         <h1>The plan</h1>
         <span class="icon-btn ghost"></span>
       </header>

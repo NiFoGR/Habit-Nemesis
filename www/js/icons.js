@@ -46,9 +46,21 @@ const PATHS = {
   home: '<path d="M4 11l8-7 8 7"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/>',
   key: '<circle cx="8" cy="14" r="4"/><path d="M11 11l9-9M17 5l2 2M14 8l2 2"/>',
   book: '<path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H19v16H5.5A1.5 1.5 0 0 0 4 20.5z"/><path d="M4 17.5A1.5 1.5 0 0 1 5.5 16H19"/>',
+  // Open on a lectern, with the cross on the page, so it reads as scripture
+  // rather than as the closed book the prayer section already uses.
+  scripture:
+    '<path d="M12 6.5C10.5 5 8 4.3 4 4.3V18c4 0 6.5.7 8 2.2 1.5-1.5 4-2.2 8-2.2V4.3c-4 0-6.5.7-8 2.2z"/><path d="M12 6.5v14"/><path d="M15.5 10h4M17.5 8v4"/>',
   // Prayer: the two slots, and a link that leaves the app.
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/>',
   moon: '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>',
+  // A breath: the centre held, two rings of it moving out. Reads as expansion
+  // rather than as lungs, which at 20px turn into a smudge.
+  breath:
+    '<circle cx="12" cy="12" r="3.2"/><path d="M8.4 8.6a5.4 5.4 0 0 0 0 6.8M15.6 8.6a5.4 5.4 0 0 1 0 6.8"/><path d="M5.2 5.8a10 10 0 0 0 0 12.4M18.8 5.8a10 10 0 0 1 0 12.4"/>',
+  // Half a sun, filled. Colour temperature has no obvious glyph, and a moon
+  // already means the night prayers, so this says "warmth" instead of "night".
+  warmth:
+    '<circle cx="12" cy="12" r="4.6"/><path d="M12 7.4a4.6 4.6 0 0 0 0 9.2z" fill="currentColor" stroke="none"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M18.8 5.2l-1.4 1.4M6.6 17.4l-1.4 1.4"/>',
   external: '<path d="M14 4h6v6"/><path d="M20 4l-8 8"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
 };
 

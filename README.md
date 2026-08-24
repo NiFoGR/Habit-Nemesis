@@ -8,34 +8,39 @@ Runs entirely on the phone. No account, no server, no analytics, nothing leaves 
 
 **Feature 2 - PE:** stretching and pumping sessions against a two-hour daily target, safety limits that object *before* you start, a five-measurement monthly check-in with an encrypted photo gallery, before/after BPFSL per session, and a growth projection built from your own data rather than wishful thinking.
 
-**Feature 3 - Prayer:** a morning and a night rule, both required, in Greek and English, with the ancient core bundled and room for the prayers you say yourself. Streaks and a 13-week heatmap, and a button through to goarch.org for the readings and the calendar.
+**Feature 3 - Bible:** the whole Orthodox canon read straight through, Genesis 1 to Revelation 22, parsed from a copy of the Orthodox Study Bible and bundled with the app. A screen for every book saying what it is before you open it, a record of everything you have read, and the morning and night prayer rule, which lives in the same section because it is the same practice.
 
-The home screen is a **Today** list: what is outstanding across all three features, and one button for the most urgent thing.
+**Feature 4 - Wind-down:** five minutes of paced breathing as the last thing in the day, done lying down with the phone on your chest. A long exhale at around six breaths a minute, opened with three physiological sighs, paced by a tone that rises and falls with the breath and by vibration you can feel through a shirt. No score and nothing to beat, because it is the last thing before sleep. [`docs/WINDDOWN.md`](docs/WINDDOWN.md).
 
-Each section has its own palette. Kegels is teal on cool graphite, PE violet on deep plum, Prayer warm gold on near-black with a serif face. One skeleton, three rooms.
+**Feature 5 - Night light:** the screen's colour temperature on a curve through the day, across the whole phone rather than just this app. Neutral in the morning, warming so slowly you never catch it happening, fully warm by bedtime. A Capacitor plugin drives Android's own Night Light where it is allowed to and falls back to an overlay where it is not. [`docs/NIGHTLIGHT.md`](docs/NIGHTLIGHT.md).
+
+The home screen is a **Today** list: what is outstanding across all four features, and one button for the most urgent thing.
+
+Each section has its own palette. Kegels is teal on cool graphite, PE violet on deep plum, Bible the deep red of a Gospel book with a serif face, Wind-down indigo on near-black because it is used in an unlit room. One skeleton, four rooms.
 
 ---
 
 ## Getting it on your phone
 
-Two ways. The first takes about thirty seconds.
+Build the APK and sideload it.
 
-### Option A, install it as an app from the browser (fastest)
+### Why there is no web install
 
-The app is a PWA, so Chrome on Android will install it to your home screen with its own icon, its own window (no browser bar) and full offline support. It behaves like any other installed app.
+There used to be a second route: GitHub Pages served `www/`, and Chrome on
+Android installed it as a PWA. That is gone, and it must stay gone.
 
-1. Turn Pages on once: **Settings → Pages → Source: GitHub Actions**. (The
-   workflow cannot do this for you, its token is not allowed to create a Pages
-   site, so the deploy fails until this is ticked.)
-2. Re-run **Actions → Deploy to GitHub Pages**, or push anything to `main`. It
-   publishes to `https://nifogr.github.io/NiFo-App/`.
-3. Open that link in **Chrome on your phone** → menu (⋮) → **Add to Home screen** / **Install app**.
+`www/bible/` now holds the full text of the Orthodox Study Bible. Shipping that
+inside an APK you install on your own phone is a personal copy of a book you
+own. Publishing it to a website is redistributing a commercial translation, and
+**GitHub Pages is public even when the repository is private** — private Pages
+needs an Enterprise plan. So the deploy workflow has been deleted rather than
+merely disabled, because a disabled workflow is one click away from being a
+copyright problem. [`docs/BIBLE.md`](docs/BIBLE.md) explains the line in full.
 
-That is a real installed app: it opens fullscreen, works with no signal, and keeps your data between launches.
+If Pages was ever switched on for this repository, turn it off in
+**Settings → Pages → Source: None**.
 
-### Option B, build an actual APK
-
-If you want a genuine `.apk` file to sideload:
+### Build an actual APK
 
 1. Go to the **Actions** tab → **Build Android APK** → **Run workflow**.
 2. When it finishes (~4 minutes), open the run and download the **`nifo-apk`** artifact.
@@ -126,19 +131,23 @@ Hold `Space` instead of pressing the screen when testing on a desktop.
 
 Reasoning, safety numbers and sources: [`docs/PE_PROGRAM.md`](docs/PE_PROGRAM.md).
 
-## What is in the Prayer feature
+## What is in the Bible feature
 
-**Two rules, both required.** Morning and night. There is no daily target to tune and no partial credit, because a rule you can negotiate with is not a rule. A day only counts toward the streak when both were kept.
+**The scripture ships with the app.** This repository is private, which is what makes that the right call rather than a public redistribution of a commercial translation. There is no import step: open the section and it is already there. Reasoning and the numbers: [`docs/BIBLE.md`](docs/BIBLE.md).
 
-**Greek and English together.** The app bundles the ancient core: the Trisagion, the Lord's Prayer, Heavenly King, the doxology, Axion Estin, the Jesus Prayer and the dismissal, in the original Greek with the traditional English. A full modern prayer book is a copyrighted translation, so the app does not ship one. **My prayers** lets you add what you actually say from your own book, into either slot, and it joins the rule exactly like the bundled texts.
+**It reads straight through.** Genesis 1 to Revelation 22, next and previous, opening where you left off. There is no daily portion and no plan, because a plan is a thing to fall behind on and the book already has an order.
 
-**Nothing is recorded unless you finish.** Leaving part way through records nothing at all.
+**The parser repairs what the PDF export broke.** A conversion of a print Bible arrives with the kerning turned into spaces, so the whole Psalter reads `B lessed is the m an`, and with every chapter opening transposed by its drop cap, which loses verse 1 of all 1,344 chapters. Both are undone: about **99% of the 35,903 verses come out clean**. Where a verse could not be recovered the reader says so rather than skipping it quietly, because a hole you cannot see is worse. `tools/extract-bible-text.mjs` runs the parser and regenerates the bundled text if you ever get a cleaner export.
 
-**Tracking.** Day streak, best streak, lifetime rules kept, a 13-week heatmap showing none, one or both, and per-slot streaks so a run of mornings still shows when nights slip.
+**The real canon, from your own edition.** 76 books with the per-chapter verse counts read out of the OSB's own index, so the Psalms number 151 on Septuagint numbering, the four books of Kingdoms are called that, and Tobit, Judith, the three books of Maccabees, Wisdom, Sirach and Baruch are all there.
 
-**Reminders** at both times, scheduled as real Android alarms on the APK, re-armed on every launch.
+**A screen for every book, before you open it.** The same six questions for all 76: who wrote it, when, where it sits in the story, what it is for, what to watch for while you read, and how the Church reads it toward Christ. The four Gospels answer two more, which are the only two that actually distinguish four accounts of the same events: **who it was written for, and what only this one gives you.**
 
-**goarch.org** for the day's readings, the calendar, fasts and saints, one tap from the prayer home.
+**The rule, in the same room.** Morning and night, both required, in Greek and English, with the ancient core bundled and room for the prayers you say yourself from your own book. Streaks, per-slot streaks and a 13-week heatmap.
+
+**What you have read.** Chapter by chapter, marked as you reach the end of one, with a heatmap, a streak, a bar per part of the canon and books finished. A chapter is the unit because it is the largest thing you can honestly say you either read or did not.
+
+**One tap to goarch.org** for the day's readings, the calendar, fasts and saints.
 
 ## Layout
 
@@ -154,16 +163,25 @@ www/               the entire app, plain ES modules, no build
     ui.js          formatting, haptics, notifications, SVG charts
     icons.js       the inline SVG icon set
     native.js      real Android alarms via Capacitor
+    nightlight.js  the night light bridge, settings and browser fallback
     kegels/        the Kegels feature
     pe/            the PE feature
-    pray/          the Prayer feature
+    bible/         the Bible feature and reader
+    pray/          the prayer rule, part of the Bible section
+    breathe/       the wind-down
+  bible/           the scripture itself, one JSON file per book, generated
   sw.js            offline service worker
+native/
+  nightlight/      Capacitor plugin: the system-wide blue-light filter
 signing/           the fixed APK key, so updates install over the top
-tools/             icon generation, signing patch, dev server
+tools/             icon generation, signing patch, dev server, data extraction
 docs/
   CODEMAP.md       where every file is and what it does
   KEGEL_PROGRAM.md the kegel protocol and where it comes from
   PE_PROGRAM.md    PE limits, projection maths and sources
+  BIBLE.md         the parser, what it recovers, and why the text is bundled
+  WINDDOWN.md      the physiology, and why the screen goes black not off
+  NIGHTLIGHT.md    why the schedule is native, and the two filters
   BRAINSTORM.md    feature design notes and the backlog
 ```
 
@@ -173,7 +191,7 @@ lives.
 
 ## Adding the next feature
 
-`FEATURES` in `www/js/app.js` is the registry the section tiles render from, and `todayTasks()` builds the Today list. A new feature is an entry in both, plus a module that renders into `#app` and a route in `ROUTES`. Keep the store schema additive, `hydrate()` in `store.js` merges saved state over the blank shape, so new fields appear on old saves instead of coming back `undefined`.
+`FEATURES` in `www/js/hub.js` is the registry the section tiles render from, and `todayTasks()` beside it builds the Today list. A new feature is an entry in both, plus a module that renders into `#app` and a route in `ROUTES`. Keep the store schema additive, `hydrate()` in `store.js` merges saved state over the blank shape, so new fields appear on old saves instead of coming back `undefined`.
 
 ---
 

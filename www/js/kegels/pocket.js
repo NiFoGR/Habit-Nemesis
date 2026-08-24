@@ -17,6 +17,7 @@ import * as store from '../store.js';
 import * as program from './program.js';
 import { fmtClock, haptic, toast } from '../ui.js';
 import { icon } from '../icons.js';
+import { navigate, leaveTo } from '../back.js';
 
 // One pattern per event, chosen so they are told apart through a pocket:
 // a long rising buzz to start work, a double tap to release, a triple for a
@@ -64,7 +65,7 @@ export function renderPocket(mount) {
   mount.innerHTML = `
     <div class="screen pocket" id="pocket">
       <header class="screen-head">
-        <button class="icon-btn" id="back" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back id="back" aria-label="Back">${icon('back')}</button>
         <h1>Pocket mode</h1>
         <span class="icon-btn ghost"></span>
       </header>
@@ -170,7 +171,7 @@ export function renderPocket(mount) {
 
     if (quit && elapsed < 45000) {
       toast('Too short to log');
-      location.hash = '#/kegels';
+      navigate('#/kegels');
       return;
     }
 
@@ -237,7 +238,7 @@ export function renderPocket(mount) {
 
     haptic('done');
     toast('Logged, estimated score');
-    location.hash = '#/kegels';
+    navigate('#/kegels');
   }
 
   $('start').addEventListener('click', start);
@@ -245,7 +246,7 @@ export function renderPocket(mount) {
   $('back').addEventListener('click', () => {
     stopTimers();
     running = false;
-    location.hash = '#/kegels';
+    leaveTo('#/kegels');
   });
 
   // Coming back to a throttled tab resyncs immediately rather than waiting for

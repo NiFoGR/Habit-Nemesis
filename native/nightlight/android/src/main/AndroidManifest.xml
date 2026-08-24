@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Merged into the app's manifest by Capacitor, so these permissions and this
+  service arrive without anything having to be patched into the generated
+  android/ tree. That is the whole reason this is a plugin package rather than
+  a script that edits the project after `cap add`: android/ is regenerated on
+  every build and would throw such edits away.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- The overlay window itself. Granted from a settings screen, never a
+         runtime dialog: there is no runtime dialog for this one. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- The filter has to survive the app being backgrounded and killed, which
+         on Android 8 and up means a foreground service, which means a
+         notification. Android 14 additionally wants the type declared. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- The good path: Android's own Night Light, which is a real colour
+         transform rather than a wash over the top. Signature-level, so it can
+         only ever be granted over adb, and the app works without it. Declaring
+         it is what makes that grant possible at all; lint objects to any app
+         naming a protected permission, which is what the suppression is for. -->
+    <uses-permission
+        android:name="android.permission.WRITE_SECURE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
+
+    <application>
+        <service
+            android:name="gr.nifo.nightlight.OverlayService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps a scheduled screen colour-temperature filter applied whenever the display is on." />
+        </service>
+
+        <receiver
+            android:name="gr.nifo.nightlight.BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

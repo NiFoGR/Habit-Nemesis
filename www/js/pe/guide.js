@@ -9,7 +9,7 @@ export function renderPeGuide(mount) {
   mount.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="pe" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back="pe" aria-label="Back">${icon('back')}</button>
         <h1>Doing this safely</h1>
         <span class="icon-btn ghost"></span>
       </header>
@@ -94,7 +94,7 @@ export function renderPeSettings(mount) {
   mount.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="pe" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back="pe" aria-label="Back">${icon('back')}</button>
         <h1>${discreet ? 'Length Training' : 'PE'}</h1>
         <span class="icon-btn ghost"></span>
       </header>

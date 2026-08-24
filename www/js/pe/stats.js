@@ -136,7 +136,7 @@ export function renderStats(mount) {
   mount.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" data-nav="pe" aria-label="Back">${icon('back')}</button>
+        <button class="icon-btn" data-back="pe" aria-label="Back">${icon('back')}</button>
         <h1>Progress</h1>
         <button class="icon-btn" data-nav="pe-gallery" aria-label="Gallery">${icon('images')}</button>
       </header>

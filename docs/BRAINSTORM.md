@@ -137,3 +137,74 @@ Built since this list was written: local notifications from the APK build, the v
 **Today, not a menu.** The hub asks "what is left today" and gives one button for the most urgent thing. A menu makes you decide before you can act, which is where a habit dies.
 
 **App lock reuses the gallery PIN.** Two PINs for one app is how people end up writing them down. It re-arms on backgrounding, except while a session is running, a timer against a real contraction must not be thrown away because a message came in. It is also described honestly in settings: a door, not a safe. Only the photos are encrypted.
+
+
+---
+
+# Bible
+
+## What changed after the first version
+
+The first build was a reading *tracker* with a lectionary, a set of plans, and
+no scripture in it, on the grounds that the PDF export was unreadable and the
+translation was not ours to ship. Two of those three conclusions were wrong.
+
+**The export is recoverable.** Giving up on it was a failure of effort, not a
+real limit. The letter spacing has a cause, and the cause is a hard constraint:
+the gap only opens after m, v, w, y or a lone letter, so every other space in
+the book is known to be genuine. With that, plus DP re-segmentation and a
+vocabulary learned only from positions the fault cannot reach, about 99% of the
+35,903 verses come out clean. Drop caps transpose a chapter's opening rather
+than destroying it, so those go back in order too.
+
+**A daily portion was the wrong shape.** The lectionary told you what to read on
+a date whether or not you had read anything the day before, and the plans were
+a thing to fall behind on. Both are gone. The book has an order; the reader
+follows it, opening where you left off.
+
+**The copyright point stands, and the answer is to ship the parser.** The app
+holds no scripture. You import the copy you own, it is parsed on the phone, and
+it stays there. Prayer had already drawn that line for its prayer book.
+
+**And prayer belongs in the same room.** Two tiles meant the hub asked every
+morning which half of one practice you wanted.
+
+## Decisions worth keeping
+
+- **The causal constraint before the dictionary.** Knowing *why* the space is
+  there is what makes the repair safe. A pure dictionary approach would join
+  "it may be" into "maybe" and there would be no principled reason not to.
+- **The vocabulary must be learned where the fault cannot reach.** Counted
+  naively, "judgm" occurs 158 times and the segmenter keeps "judgm ent" apart.
+  Region-based selection fails too, because the Beatitudes are poetry inside a
+  clean gospel. Positional selection works: a fragment only ever appears before
+  another lowercase word.
+- **A missed verse is marked, not skipped.** A hole you cannot see is worse.
+- **Marking read on reaching the bottom.** The record builds itself out of
+  reading rather than out of remembering to tick.
+- **A chapter is the unit.** The largest thing you can honestly say you either
+  read or did not.
+
+## Deliberately rejected, then un-rejected
+
+- **Shipping the text in the repo.** Rejected while the repo was public and
+  deploying to Pages: that would have been bulk public redistribution of a
+  commercial translation, not personal use. The repo is now private and Pages
+  is off, which removed the actual objection rather than just the appearance
+  of it, so the parsed text now ships in `www/bible/`. If the repo is ever
+  made public again this has to be reverted, back to a device-side import.
+- **A lectionary or reading plan.** See above.
+- **Treating welded digits as verse markers.** Tried, and it split John 1:1
+  into three fragments. They are debris, and stripping them is right even
+  though it means a couple of verses fold into their neighbour.
+- **Verse-level ticking.**
+
+## Backlog
+
+1. **Chapter openings.** Where the residue is: Genesis 1:1 still has its two
+   drop-cap fragments in the wrong order. Roughly one chapter in five has some
+   roughness at the very start.
+2. **The 270 unrecovered verses**, mostly the same cause.
+3. **Search across the imported text**, which IndexedDB makes cheap.
+4. **Reading-time estimates per chapter**, from verse counts.
+5. **A note per chapter**, kept with the day it was read.

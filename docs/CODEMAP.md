@@ -2,16 +2,22 @@
 
 Where everything is, so finding it does not mean reading it.
 
-Three rules the tree follows:
+Four rules the tree follows:
 
-1. **One folder per feature.** `kegels/`, `pe/`, `pray/`. Anything at the top
-   level of `js/` is shell, used by all three.
+1. **One folder per feature.** `kegels/`, `pe/`, `bible/`, `breathe/`. Anything at the top
+   level of `js/` is shell, used by all of them. `pray/` is not a fourth
+   feature: the rule is part of the Bible section, and the folder holds the
+   prayer texts and the guided rule it runs.
 2. **The same filenames in each.** `program.js` is always the domain logic,
    `home.js` always the section's screens, `session.js` always the thing that
    runs. The folder disambiguates, so `pe/program.js` is unambiguous where a
    `pe-program.js` at the root would not be.
 3. **A setting lives where the thing it affects lives.** App-wide options are
    in `settings.js`; per-section options are in that section's own screen.
+4. **Back is not a link.** Every screen marks its corner control with
+   `data-back`: with a nav key when it is plain navigation, bare when the
+   screen handles Back itself. `back.js` reads that one attribute and answers
+   for the arrow, the browser and the Android hardware button together.
 
 Every file opens with a comment saying what it is and why it works the way it
 does. Long files are split by `/* ---- section ---- */` banners, so
@@ -22,29 +28,31 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/app.js` | 181 | Route table, shell state, boot. Nothing renders here. |
-| `js/hub.js` | 250 | The Today screen, the feature registry, the install prompt. |
-| `js/icons.js` | 70 | The inline SVG icon set and the logo mark. |
+| `js/app.js` | 238 | Route table, shell state, boot. Nothing renders here. |
+| `js/back.js` | 213 | What Back means: the corner arrow, the hardware button, history. |
+| `js/hub.js` | 324 | The Today screen, the feature registry, the install prompt. |
+| `js/icons.js` | 82 | The inline SVG icon set and the logo mark. |
 | `js/lock.js` | 70 | The optional PIN gate. Owns whether the app is unlocked. |
 | `js/names.js` | 10 | What each section is called, under discreet mode. |
-| `js/native.js` | 64 | Capacitor bridge for real Android alarms. |
-| `js/settings.js` | 198 | App-wide settings: feedback, privacy, data, reset. |
-| `js/store.js` | 488 | localStorage persistence and the input sanitiser. |
+| `js/native.js` | 66 | Capacitor bridge for real Android alarms. |
+| `js/nightlight.js` | 451 | The night light: the bridge, its settings screen, the browser fallback. |
+| `js/settings.js` | 215 | App-wide settings: feedback, privacy, data, reset. |
+| `js/store.js` | 661 | localStorage persistence and the input sanitiser. |
 | `js/ui.js` | 376 | Shared helpers: formatting, haptics, notifications, SVG charts. |
 
 ## Kegels
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/kegels/home.js` | 231 | Kegels home, how-to, and Kegels settings. |
-| `js/kegels/pocket.js` | 263 | Vibration-only session pacing. |
+| `js/kegels/home.js` | 239 | Kegels home, how-to, and Kegels settings. |
+| `js/kegels/pocket.js` | 264 | Vibration-only session pacing. |
 | `js/kegels/program.js` | 496 | The 104-week plan, scoring, progression, badges. |
 | `js/kegels/report.js` | 99 | End-of-session debrief. |
 | `js/kegels/review.js` | 134 | The weekly review. |
 | `js/kegels/roadmap.js` | 134 | All 104 weeks and the six phases. |
 | `js/kegels/session.js` | 476 | The guided player and per-rep measurement. |
 | `js/kegels/tracking.js` | 186 | Heatmap, charts, session log. |
-| `js/kegels/tutorial.js` | 321 | Technique walkthrough, including the reverse kegel. |
+| `js/kegels/tutorial.js` | 322 | Technique walkthrough, including the reverse kegel. |
 
 ## PE
 
@@ -52,47 +60,72 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 |---|---|---|
 | `js/pe/camera.js` | 246 | Ghost-overlay photo capture and alignment. |
 | `js/pe/db.js` | 133 | IndexedDB photo storage and downscaling. |
-| `js/pe/gallery.js` | 239 | Encrypted gallery, viewer, compare. |
+| `js/pe/gallery.js` | 241 | Encrypted gallery, viewer, compare. |
 | `js/pe/guide.js` | 165 | Safety reference and PE settings. |
 | `js/pe/home.js` | 124 | PE home and the one-time safety gate. |
-| `js/pe/measure.js` | 400 | The five-measurement monthly check-in. |
+| `js/pe/measure.js` | 401 | The five-measurement monthly check-in. |
 | `js/pe/pin.js` | 140 | PIN keypad and unlock flow. |
 | `js/pe/program.js` | 492 | Session types, limits, projection, achievements. |
 | `js/pe/stats.js` | 309 | Charts, period selector, projection, log. |
-| `js/pe/timer.js` | 590 | Session runner, set breaks, kegels during pump. |
+| `js/pe/timer.js` | 591 | Session runner, set breaks, kegels during pump. |
 | `js/pe/vault.js` | 162 | PIN-derived AES-GCM encryption. |
 
-## Prayer
+## Bible
+
+The prayer rule lives in this section too.
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/pray/home.js` | 281 | Prayer home, tracking, my prayers, prayer settings. |
+| `js/bible/book.js` | 92 | One book's context screen, the six questions. |
+| `js/bible/canon.js` | 88 | **Generated.** 76 books, 1,344 chapters, verse counts. |
+| `js/bible/context.js` | 841 | What every book is and what to watch for. |
+| `js/bible/home.js` | 172 | Section home and settings. |
+| `js/bible/parse.js` | 385 | The parser. Unused at runtime; kept for `tools/extract-bible-text.mjs`. |
+| `js/bible/program.js` | 259 | Progress, streaks, marking, reading position. |
+| `js/bible/read.js` | 133 | The shelf and the chapter grid. |
+| `js/bible/reader.js` | 86 | One chapter on screen, Genesis to Revelation. |
+| `js/bible/text.js` | 51 | Loads a book from `www/bible/`, cached in memory. |
+| `js/bible/tracking.js` | 114 | Heatmap, canon progress, the rule, log. |
+| `js/pray/home.js` | 104 | The prayers you added yourself. |
 | `js/pray/prayers.js` | 240 | The bundled prayers and the two rules. |
 | `js/pray/program.js` | 182 | What is owed today, streaks, heatmap data, alarms. |
 | `js/pray/session.js` | 151 | The guided rule. |
 
-## Elsewhere
+**The scripture ships with the app**, as `www/bible/<id>.json`, one file per
+book, generated by `tools/extract-bible-text.mjs` and precached for offline
+reading by the service worker. This repository is private, which is what makes
+that legitimate; [`docs/BIBLE.md`](BIBLE.md) explains the line and what would
+have to change if that ever stopped being true. `parse.js` stays in the app
+unused at runtime, in case it does.
 
-| Path | What it is |
+## Native
+
+| File | What it is |
 |---|---|
-| `www/index.html` | The shell page and the Content-Security-Policy |
-| `www/styles.css` | Every style, including the per-section themes |
-| `www/sw.js` | Offline service worker. **Add new modules to its ASSETS list** |
-| `signing/` | The fixed APK signing key, so updates install over the top |
-| `tools/gen-icons.mjs` | Draws all app and launcher icons from code |
-| `tools/patch-signing.mjs` | Points the generated Android project at the key |
-| `docs/` | The reasoning and sources behind each feature |
+| `native/nightlight/` | A Capacitor plugin: the system-wide blue-light filter. |
+| `  Curve.java` | Colour temperature and the schedule. Pure, so it can be run on a desktop JVM. |
+| `  OverlayService.java` | The foreground service that owns the schedule and repaints. |
+| `  HardwareTint.java` | Android's own Night Light, driven directly where the permission allows. |
+| `  NightLightPlugin.java` | The bridge. Configuration in, status out, nothing else. |
+| `  BootReceiver.java` | Puts the filter back after a reboot. |
 
-## Adding a feature
+This is a plugin package rather than a script that patches the generated
+project, because `android/` is regenerated on every build and would throw such
+edits away. `package.json` pulls it in with a `file:` dependency and Capacitor
+does the rest. [`docs/NIGHTLIGHT.md`](NIGHTLIGHT.md) explains why the schedule
+lives in Java, and why there are two filters rather than one.
 
-1. A folder under `www/js/`, following rule 2 above.
-2. An entry in `FEATURES` in `hub.js` for the section tile.
-3. A line in `todayTasks` in `hub.js` if it owes you something daily.
-4. Routes in `ROUTES` and `NAV` in `app.js`.
-5. Its slice of the store, added to `blank()` and `hydrate()` in `store.js`.
-   Keep it additive: `hydrate` merges saved state over the blank shape, so new
-   fields appear on old saves instead of coming back `undefined`.
-6. Its modules added to `ASSETS` in `sw.js`, or it will not work offline.
-7. A theme block in `styles.css` and a case in the router's section switch.
+## Wind-down
 
-33 modules, 7901 lines.
+| File | Lines | What it is |
+|---|---|---|
+| `js/breathe/program.js` | 203 | The patterns, the timeline, the nightly record and the streak. |
+| `js/breathe/session.js` | 309 | The five minutes: the audio timeline, the buzzes, the orb. |
+| `js/breathe/home.js` | 185 | Section home, the record, and wind-down settings. |
+
+The record lives on the section home rather than in a `tracking.js` of its own,
+which is the one place this feature departs from the shape of the other three.
+There is a single number worth keeping — whether you did it — so a second screen
+to hold one heatmap would be a room with nothing in it.
+[`docs/WINDDOWN.md`](WINDDOWN.md) explains the physiology and why the screen
+goes black rather than off.

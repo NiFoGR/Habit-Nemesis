@@ -2,7 +2,7 @@
   "name": "nifo-app",
   "version": "0.1.0",
   "private": true,
-  "description": "NiFo \u2014 a personal app of features that make life measurably better. First feature: pelvic floor (kegel) training.",
+  "description": "NiFo, a personal app of features that make life measurably better. Kegels, PE, prayer and Bible reading.",
   "type": "module",
   "scripts": {
     "dev": "node tools/serve.mjs",
@@ -13,8 +13,10 @@
   },
   "dependencies": {
     "@capacitor/android": "^7.0.0",
+    "@capacitor/app": "^7.0.0",
     "@capacitor/core": "^7.0.0",
-    "@capacitor/local-notifications": "^7.0.0"
+    "@capacitor/local-notifications": "^7.0.0",
+    "nifo-nightlight": "file:./native/nightlight"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.0.0"
