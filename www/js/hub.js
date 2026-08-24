@@ -94,12 +94,34 @@ const FEATURES = [
    the moment a habit gets dropped. This answers the question instead: here is
    what is outstanding today, and the one button that starts it. */
 
-/** Everything still owed today, across every feature, most urgent first. */
+/** Everything still owed today, in the order a day actually runs.
+ *
+ *  The morning rule opens the list and the night rule closes it, with
+ *  everything that has no fixed hour in between. That is not cosmetic: the two
+ *  rules bracket the day, so a list that buried the morning behind three
+ *  training rows was asking you to scroll past the first thing you owe, and
+ *  putting the night rule anywhere but last read as though something came
+ *  after it. */
 function todayTasks(state) {
-  const out = [];
+  const rule = (slot) => {
+    const kept = prayProgram.dayState()[slot];
+    return {
+      id: `pray-${slot}`,
+      icon: slot === 'morning' ? 'sun' : 'moon',
+      label: PRAY_RULES[slot].label,
+      detail: kept
+        ? `Kept ${new Date(kept).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
+        : `${slot === 'morning' ? state.pray.settings.morningAt : state.pray.settings.eveningAt} · ${prayProgram.minutes(slot)} min`,
+      done: !!kept,
+      href: `#/bible/pray?slot=${slot}`,
+      cta: PRAY_RULES[slot].label,
+    };
+  };
+
+  const out = [rule('morning')];
+
   const plan = program.planForToday(state);
   const left = Math.max(0, plan.target - plan.doneToday);
-
   out.push({
     id: 'kegels',
     icon: 'target',
@@ -132,21 +154,6 @@ function todayTasks(state) {
     });
   }
 
-  for (const slot of prayProgram.SLOTS) {
-    const kept = prayProgram.dayState()[slot];
-    out.push({
-      id: `pray-${slot}`,
-      icon: slot === 'morning' ? 'sun' : 'moon',
-      label: PRAY_RULES[slot].label,
-      detail: kept
-        ? `Kept ${new Date(kept).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
-        : `${slot === 'morning' ? state.pray.settings.morningAt : state.pray.settings.eveningAt} · ${prayProgram.minutes(slot)} min`,
-      done: !!kept,
-      href: `#/bible/pray?slot=${slot}`,
-      cta: PRAY_RULES[slot].label,
-    });
-  }
-
   // Reading has no time of day attached, so it is one row that says where you
   // are rather than what is owed.
   const readToday = bibleProgram.dayRead();
@@ -176,6 +183,7 @@ function todayTasks(state) {
     });
   }
 
+  out.push(rule('evening'));
   return out;
 }
 
