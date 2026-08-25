@@ -366,8 +366,30 @@ export function parseBible(raw, onProgress = () => {}) {
       // a verse marker glued to a word is not a chapter opening
       if(/^\d/.test(rest)) continue;
       seen.add(n);
-      const prev=out[i-1];
-      out[i-1]='';
+      // The line the cap belongs in front of is the nearest one with text on
+      // it, not necessarily i-1. A page break often falls between them, and
+      // merging with the blank left the chapter with no verse-1 marker at all.
+      // The synthesiser downstream then invented a zero-length verse 1 sitting
+      // exactly where the previous chapter's last verse began, so that last
+      // verse came out empty and its text was served as this chapter's first:
+      // Genesis 1:31 vanished and turned up inside 2:1.
+      let p=i-1;
+      while(p>0 && !out[p].trim()) p--;
+      let prev=out[p];
+      // Skipping a blank is only right when what is behind it really is the
+      // run-on of this chapter's first verse. Sometimes it is a page number
+      // and a section heading instead - Genesis 11 has "The Tower of Babel"
+      // and a bare "2" above the cap - and taking those prefixed the chapter
+      // with "12" rather than "1" and cost the first three verses. So when a
+      // blank was crossed, the candidate has to look like a sentence that was
+      // still running: a heading has no verse marker in it and no full stop
+      // at its end.
+      if(p<i-1){
+        const t=prev.trim();
+        const runOn=/\d[A-Za-z]/.test(prev) || (/[^.!?”"]\s*$/.test(prev) && t.split(/\s+/).length>8);
+        if(!t || /^\d{1,4}$/.test(t) || !runOn) prev='';
+      }
+      if(prev) out[p]='';
       out[i] = rest.length<=40 ? weave(rest, prev) : `${prev} ${rest}`;
       // verse 1 has no marker of its own; the drop cap was it
       out[i] = '1' + out[i].replace(/^\s+/,'');
