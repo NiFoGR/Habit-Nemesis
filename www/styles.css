@@ -1414,3 +1414,37 @@ body.blacked .br-orb { opacity: 0.09; }
 }
 
 .nl-strip + .nl-axis { margin-bottom: 4px; }
+
+/* ---- study notes ----
+   The commentary is the point of a study Bible, but it must not turn the
+   reading column into a conversation. So a noted verse only marks its number,
+   and the note opens beneath that verse when the number is tapped. */
+.verse.noted b.vnum {
+  cursor: pointer;
+  border-bottom: 1px dotted currentColor;
+  padding-bottom: 1px;
+}
+.verse.noted b.vnum::after {
+  content: '\00b7';           /* a dot, not an icon: it sits inside running text */
+  margin-left: 1px;
+  font-weight: 700;
+}
+.verse.noted b.vnum.open { color: var(--text); }
+
+.vnote {
+  margin: -2px 0 14px;
+  padding: 10px 12px;
+  border-left: 2px solid var(--accent);
+  background: var(--surface-2);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-size: 0.9rem;
+  line-height: 1.62;
+  color: var(--muted);
+}
+.vnote-ref {
+  display: inline-block;
+  margin-right: 8px;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
