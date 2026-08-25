@@ -75,7 +75,7 @@ export function renderSettings(mount) {
       <section class="card">
         <div class="h-row">${icon('warmth', 16)}<h2>Night light</h2></div>
         <p class="small muted">${nl.enabled
-          ? `Warming from ${escapeHtml(nl.wakeAt)} to ${nl.nightKelvin}K by ${escapeHtml(nl.sleepAt)}.`
+          ? `Warming from ${escapeHtml(nl.wakeAt)}, reaching ${nl.nightKelvin}K by ${escapeHtml(nl.sleepAt)}.`
           : 'Off. Takes the blue out of the screen as the evening goes on.'}</p>
         <a class="btn ghost wide linkbtn" href="#/settings/night">${nl.enabled ? 'Adjust' : 'Set it up'}</a>
       </section>

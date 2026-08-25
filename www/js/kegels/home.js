@@ -38,7 +38,7 @@ export function renderKegels(mount) {
   for (let i = 6; i >= 0; i--) {
     const key = store.addDays(store.dayKey(), -i);
     const on = store.sessionsOn(key);
-    days.push({ key, cls: on.some((x) => x.type !== 'release') ? 'good' : on.length ? 'rest' : i === 0 ? 'today' : 'none' });
+    days.push({ key, cls: on.some((x) => x.type !== 'release') ? 'good' : on.length ? 'rest' : i === 0 ? 'now' : 'none' });
   }
   const weekScored = state.sessions.filter((x) => x.ts >= Date.now() - 7 * 864e5 && x.countsForPromotion !== false && x.type !== 'release');
   const weekAvg = weekScored.length ? Math.round(weekScored.reduce((a, x) => a + x.score, 0) / weekScored.length) : null;
