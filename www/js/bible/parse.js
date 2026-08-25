@@ -357,7 +357,17 @@ export function parseBible(raw, onProgress = () => {}) {
     const out=body.slice();
     const wanted=new Set(chapterNumbers);
     const seen=new Set();
+    // Study articles are set between verses, and their numbered lines look
+    // exactly like a chapter opening. One of them - "4 perception of what is
+    // good..." - claimed Genesis 4, which marked the chapter done so its real
+    // opening was never reached and its first verse was lost. An article runs
+    // from its heading until scripture resumes with a verse marker, and
+    // nothing inside that stretch is a chapter opening.
+    let inArticle=false;
     for(let i=1;i<out.length;i++){
+      if(isArticleHead(out[i])) { inArticle=true; continue; }
+      if(inArticle && /(?<![0-9:.–—-])\d{1,3}[A-Za-z“‘]/.test(out[i])) inArticle=false;
+      if(inArticle) continue;
       const m=out[i].match(/^(\d{1,3})[ \t]+(\S.*)$/);
       if(!m) continue;
       const n=+m[1];
