@@ -21,6 +21,24 @@ import { reviewDue } from './kegels/review.js';
 
 /** Each feature supplies its own hub tile status, so the hub does not need to
  *  know anything about how a feature works. */
+// Every tile's trend line takes the accent its own tile is painted with,
+// which styles.css sets per section. These used to be four literals here -
+// two of them raw hex - so a tile's line and its icon were coloured in two
+// different files and drifted apart.
+const TILE = 'var(--tile, var(--accent))';
+
+/** Which section a Today row belongs to, taken from where it goes. Colour on
+ *  the hub means "which part of the app this is", so the Bible row and the
+ *  Bible tile have to agree; before this the row was teal and the tile was
+ *  terracotta, on the same screen, for the same word. */
+function sectionOf(href = '') {
+  if (href.startsWith('#/bible')) return 'bible';
+  if (href.startsWith('#/pe')) return 'pe';
+  if (href.startsWith('#/breathe')) return 'breathe';
+  if (href.startsWith('#/kegels') || href.startsWith('#/session')) return 'kegels';
+  return '';
+}
+
 const FEATURES = [
   {
     id: 'kegels',
@@ -40,7 +58,7 @@ const FEATURES = [
     },
     spark() {
       const scored = store.get().sessions.filter((x) => x.countsForPromotion !== false && x.type !== 'release').slice(-14);
-      return sparkline(scored.map((x) => x.score), { color: 'var(--accent)' });
+      return sparkline(scored.map((x) => x.score), { color: TILE });
     },
   },
   {
@@ -62,7 +80,7 @@ const FEATURES = [
       ];
     },
     spark() {
-      return sparkline(store.get().pe.measurements.map((m) => m.bpel), { color: 'var(--violet)' });
+      return sparkline(store.get().pe.measurements.map((m) => m.bpel), { color: TILE });
     },
   },
   {
@@ -82,9 +100,7 @@ const FEATURES = [
       ];
     },
     spark() {
-      // The hub is on its own palette, so this names the Bible section's gold
-      // directly rather than reaching for a token that is not defined here.
-      return sparkline(bibleProgram.history(4).map((d) => d.n), { color: '#d9b061' });
+      return sparkline(bibleProgram.history(4).map((d) => d.n), { color: TILE });
     },
   },
   {
@@ -104,9 +120,7 @@ const FEATURES = [
       ];
     },
     spark() {
-      // Same reasoning as the Bible's gold above: the hub palette has no token
-      // for this section's indigo, so it is named outright.
-      return sparkline(breatheProgram.history(4).map((d) => d.ms / 60000), { color: '#8aa4e8' });
+      return sparkline(breatheProgram.history(4).map((d) => d.ms / 60000), { color: TILE });
     },
   },
 ];
@@ -240,7 +254,7 @@ export function renderHub(mount) {
   const kStreak = store.streak();
 
   mount.innerHTML = `
-    <div class="screen">
+    <div class="screen hub">
       <header class="hub-head">
         <div class="brand-row">${logoMark(28)}<h1>NiFo</h1></div>
         <button class="icon-btn" data-nav="settings" aria-label="Settings">${icon('settings')}</button>
@@ -258,7 +272,7 @@ export function renderHub(mount) {
       ${!state.settings.tutorialDone ? `<a class="notice action" href="#/tutorial">${icon('help', 16)} Start here. How to do a kegel.</a>` : ''}
 
       <div class="task-list">
-        ${tasks.map((t) => `<a class="task ${t.done ? 'done' : ''}" href="${t.href}">
+        ${tasks.map((t) => `<a class="task ${sectionOf(t.href)} ${t.done ? 'done' : ''}" href="${t.href}">
           <span class="task-ico">${t.done ? icon('check', 18) : icon(t.icon, 18)}</span>
           <span class="task-text"><b>${escapeHtml(t.label)}</b><i>${escapeHtml(t.detail)}</i></span>
           ${t.frac ? `<span class="task-mini"><i style="width:${(t.frac * 100).toFixed(0)}%"></i></span>` : ''}

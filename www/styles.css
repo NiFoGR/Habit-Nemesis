@@ -115,7 +115,11 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 
 .pill {
   font-size: 0.72rem; padding: 4px 9px; border-radius: 999px;
-  background: none; color: var(--accent);
+  background: none;
+  /* Falls back to the page accent, but inside a hub tile or a Today row it
+     picks up that section's --tile, so a pill is never a different colour
+     from the card it sits in. */
+  color: var(--tile, var(--accent));
   border: 1px solid var(--line);
 }
 .pill.done { color: var(--good); }
@@ -627,11 +631,22 @@ input[type="range"] {
 
 /* feature tiles get their mark back, as a stroke icon rather than a glyph */
 .feature { position: relative; }
-.feature-icon { display: flex; color: var(--accent); margin-bottom: 10px; }
-.feature.pe .feature-icon { color: var(--violet); }
+/* Each tile carries its own section's accent, and carries it in one place.
+   Before this the icon and the trend line on the same tile could disagree:
+   the icon came from CSS, where only PE had a rule so PE was violet and the
+   other three fell through to the hub's teal, while the line came from a
+   colour hard-coded in hub.js, so the Bible was a teal book above a gold
+   line. One token per tile now feeds both, and the values are the accents
+   those sections actually use when you open them, so the hub reads as an
+   index rather than four unrelated colours. */
+.feature.kegels,  .task.kegels  { --tile: #22d3c5; }
+.feature.pe,      .task.pe      { --tile: #a78bfa; }
+.feature.bible,   .task.bible   { --tile: #d08a6a; }
+.feature.breathe, .task.breathe { --tile: #8aa4e8; }
+
+.feature-icon { display: flex; color: var(--tile, var(--accent)); margin-bottom: 10px; }
 .feature-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
-.feature-head .ico { color: var(--accent); }
-.feature.pe .feature-head .ico { color: var(--violet); }
+.feature-head .ico { color: var(--tile, var(--accent)); }
 .feature-spark { margin-top: 12px; opacity: 0.85; }
 
 /* section headings with an icon */
@@ -748,14 +763,14 @@ input[type="range"] {
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 13px 14px;
 }
 .task:active { background: var(--surface-2); }
-.task-ico { display: flex; color: var(--accent); }
+.task-ico { display: flex; color: var(--tile, var(--accent)); }
 .task.done { opacity: 0.55; }
 .task.done .task-ico { color: var(--good); }
 .task-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
 .task-text b { font-size: 0.95rem; font-weight: 600; }
 .task-text i { font-style: normal; font-size: 0.78rem; color: var(--muted); }
 .task-mini { flex: 0 0 46px; height: 5px; background: var(--line); border-radius: 5px; overflow: hidden; }
-.task-mini i { display: block; height: 100%; background: var(--accent); }
+.task-mini i { display: block; height: 100%; background: var(--tile, var(--accent)); }
 
 .btn-row { display: flex; gap: 8px; margin-top: 10px; }
 .btn-row .btn { margin-top: 0; }
@@ -1433,3 +1448,30 @@ body.blacked .br-orb { opacity: 0.09; }
   color: var(--accent);
   font-variant-numeric: tabular-nums;
 }
+
+/* ---- the hub is deliberately colourless ----
+   Colour in this app means "you are inside this section". The hub points at
+   all of them, so giving it their four accents at once made the index compete
+   with the thing it indexes - it read as four apps stacked up rather than one
+   app's front page. Neutral here, colour the moment you open something.
+
+   The tokens are still per-section underneath; the hub simply overrides them,
+   so nothing has to be special-cased in JavaScript and the section pages are
+   untouched. */
+.screen.hub .feature,
+.screen.hub .task { --tile: var(--text); }
+
+/* Pills stay quiet: at full text weight a row of them shouts louder than the
+   heading above it. */
+.screen.hub .pill { color: var(--muted); }
+.screen.hub .pill.done { color: var(--text); }
+
+.screen.hub .feature-spark { opacity: 0.42; }
+.screen.hub .task-mini i { background: var(--muted); }
+.screen.hub .ring-fill { stroke: var(--text); }
+
+/* The one call to action keeps its weight by inverting rather than by
+   colouring: near-white on the page ground. */
+.screen.hub .btn.primary { background: var(--text); color: var(--bg); }
+.screen.hub .notice.action { border-color: var(--line); }
+.screen.hub .notice.action .ico { color: var(--muted); }
