@@ -4,13 +4,13 @@
    Flat surfaces, but the brand ramp is used deliberately on rings and charts
    so the app looks like its own logo rather than a generic dark theme. */
 :root {
-  --bg: #0b0f14;
-  --bg-2: #0e141b;
-  --surface: #131b24;
-  --surface-2: #18222e;
-  --line: #223040;
-  --text: #e8eef5;
-  --muted: #8ea3b8;
+  --bg: #0a0c10;
+  --bg-2: #0e1116;
+  --surface: #141821;
+  --surface-2: #1a1f29;
+  --line: #262c38;
+  --text: #e6eaf0;
+  --muted: #97a1b0;
   --accent: #22d3c5;
   --violet: #a78bfa;
   --good: #4ade80;
@@ -20,6 +20,11 @@
   --brand: linear-gradient(120deg, #22d3c5, #a78bfa);
   --radius: 10px;
   --pad: 16px;
+  /* Native controls follow this. Without it a checkbox renders as a white
+     platform box on a near-black card, because accent-color only takes effect
+     once the box is checked; the same went for select menus, the time picker
+     and the scrollbars. */
+  color-scheme: dark;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
 }
@@ -356,17 +361,26 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 .heatmap i, .hm-key i { width: 13px; height: 13px; border-radius: 3px; display: block; }
 .heatmap i.none { background: var(--surface-2); }
 .heatmap i.future { background: transparent; border: 1px dashed var(--line); }
-/* Today, with nothing on it yet. Without this the cell is invisible rather
-   than empty, and the grid looks like it ends yesterday. */
-.heatmap i.today { background: transparent; border: 1px dashed var(--line); }
-.heatmap i.l1 { background: rgba(34, 211, 197, 0.22); }
-.heatmap i.l2 { background: rgba(34, 211, 197, 0.44); }
-.heatmap i.l3 { background: rgba(34, 211, 197, 0.7); }
+/* Today, with nothing on it yet: without this the cell is invisible rather
+   than empty and the grid looks like it ends yesterday.
+   Called "now" and not "today" because .today is already the hub's Today
+   card - a block with its own padding and layout. A 13px heatmap cell that
+   also carried class="today" inherited all of it and rendered 34px square,
+   shouldering its column out of the grid. */
+.heatmap i.now { background: transparent; border: 1px dashed var(--line); }
+/* Mixed from --accent rather than written as a literal teal, so a section
+   only has to set its accent and the ramp follows. Each themed section used
+   to restate all four steps in its own colour. */
+.heatmap i.l1 { background: color-mix(in srgb, var(--accent) 22%, var(--surface-2)); }
+.heatmap i.l2 { background: color-mix(in srgb, var(--accent) 46%, var(--surface-2)); }
+.heatmap i.l3 { background: color-mix(in srgb, var(--accent) 72%, var(--surface-2)); }
 .heatmap i.l4 { background: var(--accent); }
 .heatmap i.rest { background: var(--calm); opacity: 0.75; }
 .hm-key { display: flex; align-items: center; gap: 5px; margin-top: 8px; color: var(--muted); font-size: 0.72rem; }
-.hm-key i.none { background: var(--surface-2); } .hm-key i.l1 { background: rgba(34,211,197,0.22); }
-.hm-key i.l2 { background: rgba(34,211,197,0.44); } .hm-key i.l3 { background: rgba(34,211,197,0.7); }
+.hm-key i.none { background: var(--surface-2); }
+.hm-key i.l1 { background: color-mix(in srgb, var(--accent) 22%, var(--surface-2)); }
+.hm-key i.l2 { background: color-mix(in srgb, var(--accent) 46%, var(--surface-2)); }
+.hm-key i.l3 { background: color-mix(in srgb, var(--accent) 72%, var(--surface-2)); }
 .hm-key i.l4 { background: var(--accent); } .hm-key i.rest { background: var(--calm); opacity: 0.75; }
 
 .timeline { list-style: none; margin: 0; padding: 0; }
@@ -656,7 +670,12 @@ input[type="range"] {
 /* ---------- simplified nav bits ---------- */
 
 .linkbtn { text-align: center; text-decoration: none; display: block; }
-.linkrow { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; margin: 22px 0 8px; }
+/* Four links have to sit on one line at 390px. A wrapping flex row put the
+   last one alone underneath, which reads as a different kind of link; an even
+   grid keeps them a single group. */
+.linkrow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; justify-items: center; margin: 22px 0 8px; }
+.linkrow a { justify-content: center; text-align: center; }
+@media (max-width: 359px) { .linkrow { grid-template-columns: repeat(2, 1fr); row-gap: 16px; } }
 .linkrow a { color: var(--muted); text-decoration: none; font-size: 0.86rem; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
 .linkrow a:active { color: var(--text); }
 
@@ -664,7 +683,7 @@ input[type="range"] {
 .week-strip i { flex: 1; height: 6px; border-radius: 3px; background: var(--line); }
 .week-strip i.good { background: var(--accent); }
 .week-strip i.rest { background: var(--calm); }
-.week-strip i.today { background: var(--muted); }
+.week-strip i.now { background: var(--muted); }
 
 .eq-row { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
 .eq-row button {
@@ -910,23 +929,22 @@ input[type="range"] {
    typeface are what change. Tokens are swapped on the body by the router, so
    every existing component picks the section up without knowing about it. */
 
-body[data-section="kegels"] {
-  --accent: #22d3c5;
-  --bg: #0a0e13;
-  --bg-2: #0d131a;
-  --surface: #121a22;
-  --surface-2: #17212c;
-  --line: #1f2c3a;
-}
+/* ---- section accents ----
+   One base palette, four accents.
+
+   Every section used to redefine the whole surface ramp as well as the accent,
+   which gave five different backgrounds across 27 screens and made the hub -
+   the screen you return to constantly - the lightest thing in the app. Moving
+   between sections read as moving between apps.
+
+   Now only the accent changes. The greys are the ones defined at :root and are
+   never overridden, so a card is the same card everywhere and the hub belongs
+   to the same app as the pages it opens. */
+body[data-section="kegels"] { --accent: #22d3c5; }
 
 body[data-section="pe"] {
   --accent: #a78bfa;
   --violet: #a78bfa;
-  --bg: #0b0912;
-  --bg-2: #100d18;
-  --surface: #171327;
-  --surface-2: #1d1830;
-  --line: #2b2442;
 }
 
 /* Prayer is deliberately the darkest and the quietest: near-black ground, warm
@@ -1102,20 +1120,17 @@ body[data-section="pe"] {
    reading rather than for counting reps. */
 
 body[data-section="bible"] {
-  --accent: #cc6a63;
-  --violet: #b8524b;
-  --bg: #08060a;
-  --bg-2: #0b090d;
-  --surface: #14100f;
-  --surface-2: #1a1514;
-  --line: #2a2220;
-  --text: #ece3dd;
-  --muted: #948580;
+  --accent: #d08a6a;
+  --violet: #c2705a;
   --good: #a8b586;
-  --danger: #e8635b;
 }
 
-body[data-section="bible"] .screen {
+/* The serif is for scripture, not for the whole section. Setting it on
+   .screen put Georgia on every button, pill and settings row in the Bible and
+   was half of why that section read as a different app. */
+body[data-section="bible"] .verses,
+body[data-section="bible"] .vnote,
+body[data-section="bible"] .prayer-text {
   font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
 }
 body[data-section="bible"] h1,
@@ -1130,16 +1145,6 @@ body[data-section="bible"] .h-row .pill { margin-left: auto; }
 .screen.bible .tiny { font-size: 0.74rem; }
 .pill.tiny { font-size: 0.64rem; padding: 1px 6px; }
 
-/* The shared heatmap ramp is a hard-coded teal, so each themed section that
-   uses it has to restate the ramp in its own colour. */
-body[data-section="bible"] .heatmap i.l1,
-body[data-section="bible"] .hm-key i.l1 { background: color-mix(in srgb, var(--accent) 22%, var(--surface-2)); }
-body[data-section="bible"] .heatmap i.l2,
-body[data-section="bible"] .hm-key i.l2 { background: color-mix(in srgb, var(--accent) 46%, var(--surface-2)); }
-body[data-section="bible"] .heatmap i.l3,
-body[data-section="bible"] .hm-key i.l3 { background: color-mix(in srgb, var(--accent) 72%, var(--surface-2)); }
-body[data-section="bible"] .heatmap i.l4,
-body[data-section="bible"] .hm-key i.l4 { background: var(--accent); }
 
 /* The rule cards moved into the Bible section with the rest of prayer, so the
    styles they were sharing with the old prayer home live here now. */
@@ -1283,27 +1288,7 @@ body[data-section="bible"] .rule-card.live { border-color: var(--accent); }
 /* Indigo on near-black. The section is used lying down in an unlit room, so it
    runs darker than the other three and its accent is the dimmest of the four:
    every value here is a light source pointed at your face at bedtime. */
-body[data-section="breathe"] {
-  --accent: #8aa4e8;
-  --violet: #a78bfa;
-  --bg: #06070d;
-  --bg-2: #090b12;
-  --surface: #101321;
-  --surface-2: #161a2b;
-  --line: #232840;
-  --text: #e4e8f5;
-  --muted: #8b93ad;
-}
-/* The shared heatmap ramp is a hard-coded teal, so each themed section that
-   uses it has to restate the ramp in its own colour. */
-body[data-section="breathe"] .heatmap i.l1,
-body[data-section="breathe"] .hm-key i.l1 { background: color-mix(in srgb, var(--accent) 22%, var(--surface-2)); }
-body[data-section="breathe"] .heatmap i.l2,
-body[data-section="breathe"] .hm-key i.l2 { background: color-mix(in srgb, var(--accent) 46%, var(--surface-2)); }
-body[data-section="breathe"] .heatmap i.l3,
-body[data-section="breathe"] .hm-key i.l3 { background: color-mix(in srgb, var(--accent) 72%, var(--surface-2)); }
-body[data-section="breathe"] .heatmap i.l4,
-body[data-section="breathe"] .hm-key i.l4 { background: var(--accent); }
+body[data-section="breathe"] { --accent: #8aa4e8; }
 
 .br-mark {
   width: 58px; height: 58px; border-radius: 50%;
@@ -1414,3 +1399,37 @@ body.blacked .br-orb { opacity: 0.09; }
 }
 
 .nl-strip + .nl-axis { margin-bottom: 4px; }
+
+/* ---- study notes ----
+   The commentary is the point of a study Bible, but it must not turn the
+   reading column into a conversation. So a noted verse only marks its number,
+   and the note opens beneath that verse when the number is tapped. */
+.verse.noted b.vnum {
+  cursor: pointer;
+  border-bottom: 1px dotted currentColor;
+  padding-bottom: 1px;
+}
+.verse.noted b.vnum::after {
+  content: '\00b7';           /* a dot, not an icon: it sits inside running text */
+  margin-left: 1px;
+  font-weight: 700;
+}
+.verse.noted b.vnum.open { color: var(--text); }
+
+.vnote {
+  margin: -2px 0 14px;
+  padding: 10px 12px;
+  border-left: 2px solid var(--accent);
+  background: var(--surface-2);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-size: 0.9rem;
+  line-height: 1.62;
+  color: var(--muted);
+}
+.vnote-ref {
+  display: inline-block;
+  margin-right: 8px;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}

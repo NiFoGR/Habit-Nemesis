@@ -173,8 +173,11 @@ export function parseBible(raw, onProgress = () => {}) {
    *  "Inandthedarkness". The same segmentation used to join broken words puts
    *  these back apart, and it only runs on a long token that is not itself a
    *  word, so ordinary long words are never touched. */
-  function unjam(token){
-    if (token.length < 12 || anyFreq(token) > 40) return null;
+  // `min` exists for the drop-cap unweave, which needs to test short runs like
+  // "kingcame". The frequency guard below is what keeps a real word ("prepared")
+  // from being torn in half, so lowering the length alone is safe.
+  function unjam(token, min=12){
+    if (token.length < min || anyFreq(token) > 40) return null;
     const n=token.length;
     const best=new Array(n+1).fill(-Infinity);
     const from=new Array(n+1).fill(-1);
@@ -266,11 +269,105 @@ export function parseBible(raw, onProgress = () => {}) {
    *  "again He entered Capernaum"). Where the cap sits on a full text line, that
    *  line is already in place and the line above simply precedes it. Length
    *  separates the two reliably. */
+  /** Puts the words that sat beside a drop cap back where they belong.
+   *
+   *  A drop cap is two or three lines tall, so more than one line of text sits
+   *  beside it, and the exporter emits all of them as one run with the words
+   *  INTERLEAVED: the first word of the upper fragment, then the first of the
+   *  lower, then the second of the upper, and so on. Genesis 1 came out as
+   *  "Inandthedarkness", which is "In the" woven through "and darkness", and
+   *  concatenating it whole produced "In and the darkness beginning God made
+   *  heaven and earth" - verse 1 scrambled and verse 2 missing two words.
+   *
+   *  Unweaving is just taking alternate words. The odd ones are the fragment
+   *  from the line above the cap and go in front of it; the even ones are from
+   *  the line below and go after it:
+   *
+   *    "In the seventeenth year of Pekah ... became" + "king of"   (4Ki 16:1)
+   *    "It happened after this that Nahash ... Hanun his" + "son"  (1Ch 19:1)
+   *
+   *  A cap holding a single word weaves to itself with nothing trailing, which
+   *  is the same result the old concatenation gave, so the common case is
+   *  unchanged. Only a cap the exporter actually jammed is unwoven, because a
+   *  cap that already has spaces was never interleaved. */
+  /** Last resort when the unjammer cannot break a woven cap at all.
+   *
+   *  It fails on runs whose words it does not know - "Itprepared",
+   *  "Inkingtheofseventeenth" - and then the whole jam is left sitting at the
+   *  front of verse 1. But the first word of a chapter is nearly always one of
+   *  a short list of openers, so peeling that off and unjamming what is left
+   *  usually succeeds where unjamming the whole run did not. A capital letter
+   *  part way in ("ItAdullamite") is an even plainer break. */
+  // "The" is deliberately absent: it is a prefix of Then, There, These and
+  // They, and peeling it turned every "Then" chapter opening into "The".
+  const OPENER=/^(In|It|And|Thus|Now|So|After|When|Behold|But|Woe|Hear|Take)(?=[a-z])/;
+  /** The words left after the opener is peeled. A short run is put through the
+   *  splitter directly rather than through unjamLine, which only looks at runs
+   *  of twelve letters or more and so left "kingcame" and "wentthose" whole -
+   *  carrying them out of the front of the verse and into the middle of a
+   *  sentence, where they stop looking like damage. The splitter's own
+   *  frequency guard is what keeps an ordinary word like "prepared" intact. */
+  function splitTail(tail){
+    // Punctuation inside the run is already a boundary the splitter cannot
+    // use, because it only reads letters: "Ox,those" is two fragments and
+    // says so.
+    const byPunct=tail.split(/(?<=[,.;:])(?=[A-Za-z])/).filter(Boolean);
+    if(byPunct.length>1) return byPunct;
+    const parts=unjam(tail.toLowerCase(), 6);
+    return parts && parts.length>1 ? parts : [tail];
+  }
+
+  function peelOpener(rest){
+    const cap=rest.match(/^([A-Z][a-z]+)([A-Z][a-z].*)$/);
+    if(cap) return [cap[1], ...splitTail(cap[2])];
+    // "Ithe..." is "I" woven with "the", not "It" woven with "he". Both parse,
+    // but a fragment starting "the" is far commoner than one starting "he",
+    // and the epistles open in the first person: Romans 11:1 is "I say then",
+    // 2 Timothy 4:1 is "I charge you therefore". Peeling "It" there produced
+    // "It say then", which is wrong and, worse, reads as though it were right.
+    if(/^Ithe[a-z]/.test(rest)){
+      const parts=splitTail(rest.slice(1));
+      if(parts.length>1) return ['I', ...parts];
+    }
+    const m=rest.match(OPENER);
+    if(!m) return [];
+    const tail=rest.slice(m[1].length);
+    if(tail.length<4) return [];
+    return [m[1], ...splitTail(tail)];
+  }
+
+  function weave(rest, prev){
+    if(/\s/.test(rest)) return `${rest} ${prev}`;
+    let words=unjamLine(rest).split(/\s+/).filter(Boolean);
+    // Two pieces is what a mis-split of one real word looks like, so a weave
+    // has to show at least three. Without this the unjammer's occasional bad
+    // guess at a long ordinary word would be woven apart as though it were
+    // two fragments.
+    if(words.length<3) words=[];
+    // Only a run long enough to be two fragments is worth peeling, which keeps
+    // short real words ("Then", "Thus", "Concerning") out of this entirely.
+    if(!words.length && rest.length>=10) words=peelOpener(rest);
+    if(words.length<2) return `${rest} ${prev}`;
+    const head=words.filter((_,k)=>k%2===0).join(' ');
+    const tail=words.filter((_,k)=>k%2===1).join(' ');
+    return tail ? `${head} ${prev} ${tail}` : `${head} ${prev}`;
+  }
+
   function reflowChapterOpenings(body, chapterNumbers){
     const out=body.slice();
     const wanted=new Set(chapterNumbers);
     const seen=new Set();
+    // Study articles are set between verses, and their numbered lines look
+    // exactly like a chapter opening. One of them - "4 perception of what is
+    // good..." - claimed Genesis 4, which marked the chapter done so its real
+    // opening was never reached and its first verse was lost. An article runs
+    // from its heading until scripture resumes with a verse marker, and
+    // nothing inside that stretch is a chapter opening.
+    let inArticle=false;
     for(let i=1;i<out.length;i++){
+      if(isArticleHead(out[i])) { inArticle=true; continue; }
+      if(inArticle && /(?<![0-9:.–—-])\d{1,3}[A-Za-z“‘]/.test(out[i])) inArticle=false;
+      if(inArticle) continue;
       const m=out[i].match(/^(\d{1,3})[ \t]+(\S.*)$/);
       if(!m) continue;
       const n=+m[1];
@@ -279,9 +376,31 @@ export function parseBible(raw, onProgress = () => {}) {
       // a verse marker glued to a word is not a chapter opening
       if(/^\d/.test(rest)) continue;
       seen.add(n);
-      const prev=out[i-1];
-      out[i-1]='';
-      out[i] = rest.length<=40 ? `${rest} ${prev}` : `${prev} ${rest}`;
+      // The line the cap belongs in front of is the nearest one with text on
+      // it, not necessarily i-1. A page break often falls between them, and
+      // merging with the blank left the chapter with no verse-1 marker at all.
+      // The synthesiser downstream then invented a zero-length verse 1 sitting
+      // exactly where the previous chapter's last verse began, so that last
+      // verse came out empty and its text was served as this chapter's first:
+      // Genesis 1:31 vanished and turned up inside 2:1.
+      let p=i-1;
+      while(p>0 && !out[p].trim()) p--;
+      let prev=out[p];
+      // Skipping a blank is only right when what is behind it really is the
+      // run-on of this chapter's first verse. Sometimes it is a page number
+      // and a section heading instead - Genesis 11 has "The Tower of Babel"
+      // and a bare "2" above the cap - and taking those prefixed the chapter
+      // with "12" rather than "1" and cost the first three verses. So when a
+      // blank was crossed, the candidate has to look like a sentence that was
+      // still running: a heading has no verse marker in it and no full stop
+      // at its end.
+      if(p<i-1){
+        const t=prev.trim();
+        const runOn=/\d[A-Za-z]/.test(prev) || (/[^.!?”"]\s*$/.test(prev) && t.split(/\s+/).length>8);
+        if(!t || /^\d{1,4}$/.test(t) || !runOn) prev='';
+      }
+      if(prev) out[p]='';
+      out[i] = rest.length<=40 ? weave(rest, prev) : `${prev} ${rest}`;
       // verse 1 has no marker of its own; the drop cap was it
       out[i] = '1' + out[i].replace(/^\s+/,'');
     }

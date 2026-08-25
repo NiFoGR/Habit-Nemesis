@@ -94,7 +94,7 @@ export function history(weeks = 13) {
     const key = store.addDays(store.dayKey(), -i);
     const d = days[key] || {};
     const kept = SLOTS.filter((s) => d[s]).length;
-    out.push({ key, kept, cls: kept === 2 ? 'full' : kept === 1 ? 'half' : i === 0 ? 'today' : 'none' });
+    out.push({ key, kept, cls: kept === 2 ? 'full' : kept === 1 ? 'half' : i === 0 ? 'now' : 'none' });
   }
   return out;
 }
