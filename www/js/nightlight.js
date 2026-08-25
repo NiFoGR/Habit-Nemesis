@@ -360,13 +360,36 @@ export async function renderNightlightSettings(mount) {
       <section class="card">
         <div class="h-row">${icon('help', 16)}<h2>The honest version</h2></div>
         <p class="fineprint">An overlay covers the screen in amber. That takes blue out of bright pixels correctly, and lifts black pixels slightly towards amber, which is the wrong direction. No app can avoid it: windows are blended over one another by the system, and no app can ask for a multiply.</p>
-        <p class="fineprint">Android's own Night Light does not have that problem, because it is a real colour transform on the display. NiFo will drive it instead, automatically, if you grant one permission from a computer, once:</p>
-        <p class="fineprint"><code>adb shell pm grant ${escapeHtml(st?.packageName || 'gr.nifo.app')} android.permission.WRITE_SECURE_SETTINGS</code></p>
-        <p class="fineprint">Nothing needs switching on afterwards; the next minute takes the better road. Note that the system filter cannot go as warm as the overlay, usually stopping near 2600K.</p>
+        <p class="fineprint">Android's own Night Light does not have that problem, because it is a real colour transform on the display. NiFo will drive it instead, automatically, once this permission is granted. It is granted once and survives reboots and app updates.</p>
+        <p class="fineprint"><code id="nlGrant">adb shell pm grant ${escapeHtml(st?.packageName || 'gr.nifo.app')} android.permission.WRITE_SECURE_SETTINGS</code></p>
+        <button class="btn ghost wide" id="nlCopy">${icon('key', 16)}<span>Copy the command</span></button>
+        <p class="fineprint"><b>From a computer:</b> plug the phone in with USB debugging on, and run it.</p>
+        <p class="fineprint"><b>From this phone alone:</b> <code>adb</code> is a desktop tool, so it needs something on the phone to stand in for one. Turn on Developer options, then Wireless debugging, and use Shizuku (free) or LADB (paid) to run the line above against this phone. Both exist for exactly this.</p>
+        <p class="fineprint"><b>Or do nothing.</b> The overlay above is a real filter and works on every app. This only buys you black staying black, and a slightly narrower range: the system filter usually stops near 2600K where the overlay reaches 1900K.</p>
       </section>
     </div>`;
 
   /* ---- wiring ---- */
+
+  // Copying beats retyping a 78-character command, and on a phone it is the
+  // difference between doing this and not bothering.
+  const copyBtn = mount.querySelector('#nlCopy');
+  if (copyBtn) copyBtn.addEventListener('click', async () => {
+    const text = mount.querySelector('#nlGrant')?.textContent?.trim() || '';
+    try {
+      await navigator.clipboard.writeText(text);
+      toast('Command copied');
+    } catch {
+      // Clipboard access needs a secure context and can still be refused, so
+      // fall back to selecting it, which leaves the user one long-press away.
+      const r = document.createRange();
+      r.selectNodeContents(mount.querySelector('#nlGrant'));
+      const sel = getSelection();
+      sel.removeAllRanges();
+      sel.addRange(r);
+      toast('Selected. Long-press to copy.');
+    }
+  });
 
   const set = (patch) => {
     store.update((s) => Object.assign(s.nightlight, patch));

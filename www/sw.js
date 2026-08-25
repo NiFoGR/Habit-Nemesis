@@ -1,7 +1,9 @@
 // Offline-first service worker. The app is fully usable with no connection ,
 // which matters, because you should be able to train anywhere.
-// Bump CACHE when shipping changes so old assets are dropped.
-const CACHE = 'nifo-v12';
+// Bump CACHE to drop everything already stored. Note that the app's own code
+// no longer depends on this being remembered: see the fetch handler, which
+// revalidates code against the network and keeps the cache for offline only.
+const CACHE = 'nifo-v13';
 
 const ASSETS = [
   './',
@@ -245,22 +247,44 @@ self.addEventListener('activate', (e) => {
   );
 });
 
+/* Scripture and the study notes never change except when the app itself is
+   rebuilt, and they are megabytes, so they are worth serving from the cache
+   without asking. Everything else is the app's own code. */
+const IMMUTABLE = /\/bible\/[^/]*\.json$|\/bible\/notes\/[^/]*\.json$/;
+
+function put(request, response) {
+  if (!response.ok) return;
+  const copy = response.clone();
+  caches.open(CACHE).then((c) => c.put(request, copy));
+}
+
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+  const url = new URL(e.request.url);
+  const mine = url.origin === location.origin;
+
+  if (mine && IMMUTABLE.test(url.pathname)) {
+    e.respondWith(
+      caches.match(e.request).then((hit) => hit || fetch(e.request).then((res) => { put(e.request, res); return res; }))
+    );
+    return;
+  }
+
+  /* The app's own markup, code and styles go to the network first.
+     This used to be cache-first for everything, which is a trap in an app
+     shipped inside an APK: the cache is only ever rebuilt when CACHE changes,
+     so a release that edits styles.css but not sw.js is invisible on a phone
+     that already has a copy. That is exactly what happened - two builds in a
+     row shipped a redesigned hub that nobody could see, because the worker
+     kept serving the previous CSS from a cache whose name had not moved.
+     Remembering to bump a constant every release is not a mechanism.
+
+     Going to the network first costs nothing here: on the APK the "network"
+     is the bundled asset next to this file. The cache stays as the offline
+     answer, which is what it was actually for. */
   e.respondWith(
-    caches.match(e.request).then(
-      (hit) =>
-        hit ||
-        fetch(e.request)
-          .then((res) => {
-            // Cache same-origin successes so a first online visit primes everything.
-            if (res.ok && new URL(e.request.url).origin === location.origin) {
-              const copy = res.clone();
-              caches.open(CACHE).then((c) => c.put(e.request, copy));
-            }
-            return res;
-          })
-          .catch(() => caches.match('./index.html'))
-    )
+    fetch(e.request)
+      .then((res) => { if (mine) put(e.request, res); return res; })
+      .catch(() => caches.match(e.request).then((hit) => hit || caches.match('./index.html')))
   );
 });
