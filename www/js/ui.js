@@ -120,6 +120,13 @@ export function onSegment(root, name, fn) {
 export function sparkline(values, { color = 'var(--accent)', w = 120, h = 34, fill = true } = {}) {
   const vals = values.filter((v) => Number.isFinite(v));
   if (vals.length < 2) return '';
+  // Nothing ever happened, so draw nothing. A per-day series is zero-filled
+  // rather than empty, so without this a section you have never touched gets a
+  // confident straight line across its tile — which reads as steady activity
+  // and is the exact opposite of the truth. Sections whose series is genuinely
+  // empty already render no line, so this also stops two tiles from carrying a
+  // graph while the other two do not.
+  if (vals.every((v) => v === 0)) return '';
   const min = Math.min(...vals);
   const max = Math.max(...vals);
   const flat = max - min < 1e-9;
