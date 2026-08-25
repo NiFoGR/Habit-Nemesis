@@ -162,7 +162,7 @@ export function history(weeks = 13) {
     out.push({
       key,
       ms: d?.ms || 0,
-      cls: !d ? (i === 0 ? 'today' : 'none') : mins >= 10 ? 'l4' : mins >= 5 ? 'l3' : mins >= 3 ? 'l2' : 'l1',
+      cls: !d ? (i === 0 ? 'now' : 'none') : mins >= 10 ? 'l4' : mins >= 5 ? 'l3' : mins >= 3 ? 'l2' : 'l1',
     });
   }
   return out;

@@ -20,6 +20,11 @@
   --brand: linear-gradient(120deg, #22d3c5, #a78bfa);
   --radius: 10px;
   --pad: 16px;
+  /* Native controls follow this. Without it a checkbox renders as a white
+     platform box on a near-black card, because accent-color only takes effect
+     once the box is checked; the same went for select menus, the time picker
+     and the scrollbars. */
+  color-scheme: dark;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
 }
@@ -356,9 +361,13 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 .heatmap i, .hm-key i { width: 13px; height: 13px; border-radius: 3px; display: block; }
 .heatmap i.none { background: var(--surface-2); }
 .heatmap i.future { background: transparent; border: 1px dashed var(--line); }
-/* Today, with nothing on it yet. Without this the cell is invisible rather
-   than empty, and the grid looks like it ends yesterday. */
-.heatmap i.today { background: transparent; border: 1px dashed var(--line); }
+/* Today, with nothing on it yet: without this the cell is invisible rather
+   than empty and the grid looks like it ends yesterday.
+   Called "now" and not "today" because .today is already the hub's Today
+   card - a block with its own padding and layout. A 13px heatmap cell that
+   also carried class="today" inherited all of it and rendered 34px square,
+   shouldering its column out of the grid. */
+.heatmap i.now { background: transparent; border: 1px dashed var(--line); }
 /* Mixed from --accent rather than written as a literal teal, so a section
    only has to set its accent and the ramp follows. Each themed section used
    to restate all four steps in its own colour. */
@@ -674,7 +683,7 @@ input[type="range"] {
 .week-strip i { flex: 1; height: 6px; border-radius: 3px; background: var(--line); }
 .week-strip i.good { background: var(--accent); }
 .week-strip i.rest { background: var(--calm); }
-.week-strip i.today { background: var(--muted); }
+.week-strip i.now { background: var(--muted); }
 
 .eq-row { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
 .eq-row button {
