@@ -5,7 +5,11 @@
 // cannot do that. In the browser everything here is a silent no-op and the
 // caller falls back to the in-page notification.
 
-const isNative = () => !!window.Capacitor?.isNativePlatform?.();
+/** True in the installed APK, false in any browser. Exported because a handful
+ *  of web APIs are present in the WebView and quietly do nothing there, and a
+ *  caller that cannot tell the difference has no way to offer a route that
+ *  works. `ui.js`'s saveFile is the one that cares. */
+export const isNative = () => !!window.Capacitor?.isNativePlatform?.();
 const plugin = () => window.Capacitor?.Plugins?.LocalNotifications;
 
 export const hasAlarms = () => isNative() && !!plugin();

@@ -7,7 +7,7 @@ import * as db from './db.js';
 import * as vault from './vault.js';
 import { withVault } from './pin.js';
 import { icon } from '../icons.js';
-import { escapeHtml, toast } from '../ui.js';
+import { escapeHtml, toast, saveFile } from '../ui.js';
 import { leaveTo, replaceWith } from '../back.js';
 
 let urls = []; // object URLs to revoke when leaving
@@ -154,11 +154,11 @@ async function viewer(mount, id, items) {
     </div>`;
 
   mount.querySelector('#back').addEventListener('click', () => grid(mount));
+  // The decrypted bytes, not the object URL. saveFile's share route needs real
+  // content to build a File from, and a blob: URL means nothing outside this
+  // page; `blob` is already here, so there is nothing to fetch back.
   mount.querySelector('#save').addEventListener('click', () => {
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `nifo-${store.dayKey(new Date(it.ts))}.jpg`;
-    a.click();
+    saveFile(`nifo-${store.dayKey(new Date(it.ts))}.jpg`, blob, 'image/jpeg');
   });
   mount.querySelector('#del').addEventListener('click', async () => {
     if (!confirm('Delete this photo? The measurements from that day are kept.')) return;

@@ -90,16 +90,20 @@ const MOVES = {
  * thing that put it there: render it a second time - and the router will, on a
  * reload, or when a navigation resolves twice - and it finds nothing owed and
  * throws you off it. Worse, a reload while the result was up lost it for good.
+ * Marking on the way out fixes both directions. `leaveResult` is the router's,
+ * the same way the gallery's object URLs are.
  *
- * Marking on the way out fixes both directions, and the feats it was carrying
- * go back on the queue if you leave without revealing, so nothing is ever
- * announced to an empty room. `leaveResult` is the router's, the same way the
- * gallery's object URLs are. */
+ * Leaving *is* seeing, feats included. The version in between put unrevealed
+ * feats back on the queue so none was "announced to an empty room", and that
+ * made the grid unreachable: #/hub sends you here while anything is queued, so
+ * backing out put the queue back and the next #/hub sent you straight in
+ * again, for ever. Nothing is lost by dropping them, because feats.check()
+ * writes the feat to the record as it earns it - the queue is the confetti,
+ * not the trophy, and the Cabinet has it either way. */
 let showing = null;
 
 export function leaveResult() {
   if (showing?.res) arena.markSeen(showing.res.key);
-  if (showing && !showing.revealed && showing.fresh.length) queued = showing.fresh.concat(queued);
   showing = null;
 }
 

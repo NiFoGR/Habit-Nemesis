@@ -1,4 +1,7 @@
-// Small shared helpers: feedback, formatting and dependency-free SVG charts.
+// Small shared helpers: feedback, formatting, saving a file, and
+// dependency-free SVG charts.
+
+import { isNative } from './native.js';
 
 /* ---------------- whether the app is allowed to make a noise ----------------
    Two switches, held here rather than read here. This module is imported *by*
@@ -476,6 +479,69 @@ export function ringSvg(fraction, label, sub, { size = 168, color = null } = {})
     </svg>
     <div class="ringwrap-core"><b>${label}</b><span>${sub}</span></div>
   </div>`;
+}
+
+/* ---------------- handing a file to the user ----------------
+   `<a download>` is the whole story on a desktop and none of it on a phone.
+   The APK's WebView has no download handler at all, so the anchor click
+   returned, the toast said "downloaded", and nothing had happened anywhere -
+   which is what "I clicked export and I cannot find it" was. iOS in standalone
+   mode is nearly as bad: it opens the blob in a viewer you cannot save from.
+
+   So there are three routes, tried in the order that a phone can actually
+   use, and the toast names the one that ran rather than guessing.
+     1. The share sheet, if the platform can share a real file. This is the
+        good answer on iOS and in a mobile browser: Files, Drive, a message.
+     2. A download, in a browser only. Skipped in the APK precisely because it
+        is the route that fails silently there.
+     3. The clipboard, which works everywhere and cannot fail quietly.
+
+   Returns what happened, so a caller that wants to say more can. */
+export async function saveFile(name, text, mime = 'application/json') {
+  // `text` is a string for the exports and a Blob for a gallery photo.
+  const file = (() => {
+    try {
+      return new File([text], name, { type: mime });
+    } catch {
+      return null;
+    }
+  })();
+
+  if (file && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: name });
+      toast('Saved');
+      return 'shared';
+    } catch (e) {
+      // Dismissing the share sheet is an answer, not a failure to fall through.
+      if (e?.name === 'AbortError') return 'cancelled';
+    }
+  }
+
+  if (!isNative()) {
+    const url = URL.createObjectURL(new Blob([text], { type: mime }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast(`Saved to your downloads as ${name}`);
+    return 'downloaded';
+  }
+
+  // Text only: a photo on the clipboard as the string "[object Blob]" is worse
+  // than an honest refusal.
+  if (typeof text === 'string') {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast('Copied to the clipboard. Paste it somewhere that keeps it.');
+      return 'copied';
+    } catch {
+      /* falls through to the same message */
+    }
+  }
+  toast('Could not save that here. Open NiFo in a browser and save from there.');
+  return 'failed';
 }
 
 /* ---------------- the sheet ----------------

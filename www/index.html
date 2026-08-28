@@ -19,7 +19,21 @@
   <title>NiFo</title>
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icons/icon-192.png">
-  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <!-- iPhone. Added to the Home Screen, iOS reads these rather than the
+       manifest on anything before 16.4, and the icon it takes is this one:
+       180 square and opaque, because iOS composites transparency onto white
+       and then rounds the corners itself.
+       `black-translucent` puts the app behind the status bar and the home
+       indicator, which is only safe because every screen already pads itself
+       with --safe-t and --safe-b. If a screen ever appears with its title
+       under the clock, that pair is what to look at, not this tag.
+       `mobile-web-app-capable` is the standard spelling of the same thing and
+       is here only because Chrome warns when it finds the Apple one alone. -->
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="NiFo">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>

@@ -36,6 +36,8 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 | `js/back.js` | 213 | What Back means: the corner arrow, the hardware button, history. |
 | `js/icons.js` | 129 | The inline SVG icon set and the logo mark. |
 | `js/lock.js` | 70 | The optional PIN gate. Owns whether the app is unlocked. |
+| `js/nifo.js` | 53 | Whether this install has the five preloaded sections. |
+| `js/intro.js` | 146 | The introduction, shown once on a new install. |
 | `js/names.js` | 10 | What each section is called, under discreet mode. |
 | `js/native.js` | 136 | Capacitor bridge for real Android alarms. |
 | `js/nightlight.js` | 474 | The night light: the bridge, its settings screen, the browser fallback. |
@@ -43,6 +45,13 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 | `js/tabs.js` | 74 | The bottom bar: Cabinet, Grid, Arena. Drawn once, never rebuilt. |
 | `js/store.js` | 948 | localStorage persistence and the input sanitiser. |
 | `js/ui.js` | 523 | Shared helpers: formatting, haptics, notifications, SVG charts, the sheet. |
+
+**A new install does not have the five.** `nifo.js` holds that, and it is a
+structural fact about the tree rather than a setting: with it locked,
+`habits/program.js` returns no linked rows, the router answers only the three
+rooms and Settings, and Settings drops its Sections list. The door is one
+button at the foot of Settings and it takes one attempt. `intro.js` is what a
+locked install is shown instead, once.
 
 ## Kegels
 
@@ -152,6 +161,8 @@ app options**, on `settings.js`, because the grid is the app.
 | `js/arena/result.js` | 252 | Telling you what happened — the full screen, and the one-line feat pop. |
 | `js/arena/cabinet.js` | 147 | The Cabinet: cups, feats, years, and the lines you left. |
 | `js/arena/feats.js` | 339 | Forty predicates over the record. The one catalogue. |
+| `js/arena/crest.js` | 45 | The seven division crests: one file of artwork per rung, in `www/img/`. |
+| `js/arena/moment.js` | 183 | The Arc's three ceremonies: it opens, you qualify, you win. |
 
 Two rooms of the three, and the split is what stopped either being a stack of
 cards: **Arena** is *now* — the division, this week's match, the cup that is

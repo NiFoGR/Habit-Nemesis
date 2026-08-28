@@ -145,6 +145,11 @@ const out = (name, buf) => {
 out('icon-192.png', drawIcon(192, { maskable: false }));
 out('icon-512.png', drawIcon(512, { maskable: false }));
 out('icon-maskable-512.png', drawIcon(512, { maskable: true }));
+// iOS composites an apple-touch-icon onto white and rounds the corners itself,
+// so it gets the maskable draw: an opaque square with the mark inset. Handing
+// it icon-192.png instead means a transparent corner turning white and then
+// being rounded a second time.
+out('apple-touch-icon.png', drawIcon(180, { maskable: true }));
 
 // --android also stamps the launcher icons into the generated native project,
 // which Capacitor otherwise ships with its own default logo.

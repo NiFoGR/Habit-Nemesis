@@ -158,6 +158,21 @@ function rowHtml(habit, days, s, { reorder = false, groupOptions = () => '' } = 
    cell tapped on the grid updates this element in place instead of rebuilding
    the screen, so the arc animates to its new length, which is the whole point
    of not redrawing. */
+/** The two readings at the top of the grid, in one place because they are the
+ *  same fact twice: a header drawn one way on render and patched another way
+ *  on a tap is exactly the kind of disagreement this screen is not allowed to
+ *  have.
+ *
+ *  Nothing due is not the same as everything done. A grid with no rows on it
+ *  used to say "All done today" over a full green ring, which was a lie told
+ *  to the one person guaranteed to see it: someone who has just installed the
+ *  app and has not added anything yet. */
+function dueHead(due) {
+  if (!due.total) return { text: 'Nothing here yet', frac: 0 };
+  if (due.pending.length) return { text: `${due.pending.length} left today`, frac: due.done / due.total };
+  return { text: 'All done today', frac: 1 };
+}
+
 function headRing(frac) {
   const f = Math.max(0, Math.min(frac, 1));
   const r = 20;
@@ -223,9 +238,9 @@ function redraw(mount) {
   mount.innerHTML = `
     <div class="screen home">
       <header class="grid-head">
-        ${headRing(due.total ? due.done / due.total : 1)}
+        ${headRing(dueHead(due).frac)}
         <div class="gh-text">
-          <h1 id="dueLine">${due.pending.length ? `${due.pending.length} left today` : 'All done today'}</h1>
+          <h1 id="dueLine">${dueHead(due).text}</h1>
           <p>${escapeHtml(new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }))}</p>
         </div>
         <div class="head-actions">
@@ -347,11 +362,11 @@ function patchRowRing(row, habit) {
  *  disagrees with itself. */
 function patchTotals(mount, wasDone) {
   const due = habits.dueToday();
+  const { text, frac: f } = dueHead(due);
   const line = mount.querySelector('#dueLine');
-  if (line) line.textContent = due.pending.length ? `${due.pending.length} left today` : 'All done today';
+  if (line) line.textContent = text;
 
   const fill = mount.querySelector('.gh-ring-fill');
-  const f = due.total ? due.done / due.total : 1;
   if (fill) {
     fill.setAttribute('stroke-dashoffset', (ringLen(20) * (1 - Math.min(f, 1))).toFixed(1));
     fill.setAttribute('stroke', f >= 1 ? 'var(--good)' : 'var(--accent)');

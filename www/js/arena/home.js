@@ -288,6 +288,7 @@ export function renderArena(mount) {
       <section class="ar-hero rung-${rung}">
         <span class="ar-crest">${crest(rung, 92)}</span>
         <h1 class="ar-rank">${escapeHtml(st.division.name)}</h1>
+        <p class="ar-blurb">${escapeHtml(st.division.blurb)}</p>
         ${ladder(a.division)}
         ${st.month.empty
           ? `<p class="ar-monthline"><span class="muted">${st.placed ? 'nothing scored this month yet' : 'placement month'}</span></p>`

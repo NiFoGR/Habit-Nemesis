@@ -21,15 +21,24 @@ the Arc is a bracket laid over the same weeks.
 
 ## The divisions
 
-| Division | Month score |
-|---|---|
-| Top G | 92% |
-| Locked In | 84% |
-| Menace | 74% |
-| Contender | 60% |
-| Prospect | 45% |
-| NPC | 25% |
-| Bottom G | — |
+| Division | Month score | Crest |
+|---|---|---|
+| Top G | 92% | gold, crowned |
+| Locked In | 84% | red |
+| Menace | 74% | purple |
+| Contender | 60% | gold |
+| Prospect | 45% | silver |
+| NPC | 25% | orange |
+| Bottom G | — | pink, dashed |
+
+The crests are artwork — one file per rung in `www/img/`, drawn by hand and
+cropped, rather than something `crest.js` builds. There was a version that
+built them out of chevrons, laurels and a crown in the app's single accent, so
+that rank read as *shape* and the app kept one theme. It looked correct and it
+was wrong: a rank badge is the one thing on screen whose entire job is to be a
+picture of where you are, and a drawn one cannot land a joke. Each rung carries
+a one-line blurb in the same spirit, shown under the name on the Arena's hero
+and nowhere else.
 
 At the end of a month: **at or above the next division's bar** promotes you,
 **at or above your own** holds you, **below it** relegates you one step.

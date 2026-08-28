@@ -34,6 +34,7 @@ import * as pray from '../pray/program.js';
 import * as breathe from '../breathe/program.js';
 import { fmtHours } from '../ui.js';
 import { cancelAlarms, scheduleMany, ALARM_HABIT_BASE, ALARM_HABIT_SLOTS } from '../native.js';
+import { nifoUnlocked } from '../nifo.js';
 
 /* ---------------- the palette ----------------
    A habit's colour is stored as an id from this list rather than as a hex
@@ -438,6 +439,11 @@ function safely(fn, fallback) {
  *  a bug however defensible the rule behind it. */
 export function linkedHabits() {
   const st = store.get();
+  // A locked install does not have the five at all, so there is nothing to
+  // read: not hidden rows, not rows scored out of sight. This is checked ahead
+  // of the setting rather than folded into it because the two mean different
+  // things - one is "I turned these off", the other is "these are not mine".
+  if (!nifoUnlocked()) return [];
   if (!settings().showLinked) return [];
   return LINKED.map((l) => {
     const days = l.days(st);

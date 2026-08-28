@@ -90,6 +90,10 @@ html, body {
   color: var(--text);
   font: 16px/1.5 var(--sans);
   overscroll-behavior-y: none;
+  /* iOS inflates text in a rotated view unless it is told not to, which is how
+     a grid sized to seven columns comes back as five and a half. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 /* The background goes on body alone, deliberately.
@@ -1918,11 +1922,20 @@ body.blacked .br-orb { opacity: 0.09; }
 .ar-hero.rung-3 { --lift: 3; } .ar-hero.rung-4 { --lift: 4; } .ar-hero.rung-5 { --lift: 5; }
 .ar-hero.rung-6 { --lift: 6; }
 
-.ar-crest { display: block; color: var(--accent); margin-bottom: 2px; }
-.ar-crest .crest { margin: 0 auto; display: block; }
+.ar-crest { display: block; margin-bottom: 2px; }
+.crest { display: block; object-fit: contain; -webkit-user-select: none; user-select: none; }
+.ar-crest .crest { margin: 0 auto; }
 .ar-rank {
   font-size: var(--f-hero); line-height: 1.05; letter-spacing: -0.035em;
-  margin: 0 0 14px;
+  margin: 0 0 4px;
+}
+/* The one line in the app allowed to be rude. Small, muted, and never wrapped
+   into a paragraph: the moment it needs two lines it has stopped being a
+   caption on a picture and become an explanation, which is what this hero had
+   too much of before. */
+.ar-blurb {
+  margin: 0 0 14px; font-size: var(--f-micro); color: var(--muted);
+  letter-spacing: 0.01em;
 }
 .ar-hero.rung-6 .ar-rank {
   background: var(--brand); -webkit-background-clip: text; background-clip: text; color: transparent;
@@ -2543,3 +2556,77 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 @media (prefers-reduced-motion: reduce) {
   .mo-card { opacity: 1; }
 }
+
+/* ---------- the introduction ----------
+   One idea per page and mostly a picture, so the page is a column with the art
+   given the room and the words given a width they cannot exceed. The art box
+   has a floor under its height rather than taking what it is given, because
+   five pages whose headings sit at five different heights read as five
+   unrelated screens rather than as one thing being turned over. */
+
+/* The one screen in the app that owns the whole window: there is no bottom bar
+   on it and nothing below it to scroll to, so a Next button floating in the
+   middle of a half-empty page is just a page that has not been laid out. Full
+   height, the words centred in what is left, the button on the floor. */
+.screen.intro { min-height: 100dvh; display: flex; flex-direction: column; }
+.intro .screen-head { justify-content: space-between; margin-bottom: 12px; }
+.intro-body {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 8px 0 26px;
+}
+.intro-art {
+  display: grid; place-items: center;
+  width: 100%; min-height: 190px; margin-bottom: 22px;
+}
+.intro-title { font-size: var(--f-hero); line-height: 1.05; letter-spacing: -0.035em; margin: 0 0 10px; }
+.intro-line { max-width: 30ch; color: var(--muted); font-size: 0.95rem; margin: 0; }
+
+.intro-logo { filter: drop-shadow(0 0 26px rgba(34, 211, 197, 0.28)); }
+.intro-crest { filter: drop-shadow(0 6px 22px rgba(0, 0, 0, 0.5)); }
+.intro-icon { color: var(--accent); filter: drop-shadow(0 0 26px rgba(34, 211, 197, 0.3)); }
+
+/* The bar at the bottom, drawn at rest so the page can point at it. Not the
+   real .tabbar: that one is fixed to the viewport and there is only ever one. */
+.intro-rooms { display: flex; gap: 18px; align-items: flex-end; }
+.intro-rooms i {
+  display: grid; justify-items: center; gap: 6px;
+  font-style: normal; color: var(--faint);
+}
+.intro-rooms i b { font-size: var(--f-micro); font-weight: 600; letter-spacing: 0.04em; }
+.intro-rooms i.on { color: var(--accent); }
+
+/* Built from the grid's own classes, so what you are told to tap looks like
+   the thing you then tap. Only the sizing is overridden. */
+.intro-grid { width: 100%; margin: 0; pointer-events: none; }
+.intro-grid .hg-cell { min-height: 34px; }
+.intro-grid .hg-row { min-height: 44px; }
+/* Today's cell on the top row: the one the sentence is about. */
+.hg-cell.intro-tap {
+  opacity: 1; color: var(--accent);
+  background: rgba(34, 211, 197, 0.14);
+  animation: intro-tap 1.9s var(--ease) infinite;
+}
+@keyframes intro-tap {
+  0%, 62%, 100% { transform: scale(1); }
+  70% { transform: scale(0.88); }
+  80% { transform: scale(1.06); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hg-cell.intro-tap { animation: none; }
+}
+
+/* ---------- the quiet row at the foot of Settings ----------
+   Two things that are not settings: a screen you can replay, and a door. Both
+   are deliberately the smallest text on the page. The door is not hidden - it
+   says what it is - it just does not ask to be found. */
+.set-tail {
+  display: flex; justify-content: center; gap: 22px;
+  margin-top: 22px; padding-top: 4px;
+}
+.tail-btn {
+  background: none; border: 0; padding: 6px 2px;
+  color: var(--faint); font: inherit; font-size: 0.74rem;
+  text-decoration: none; cursor: pointer;
+}
+.tail-btn:active { color: var(--muted); }

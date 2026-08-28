@@ -12,6 +12,8 @@
 //   arena/cabinet.js  the Cabinet: what you have done, for ever
 //   settings.js       app-wide settings
 //   lock.js           the optional PIN gate
+//   nifo.js           whether this install has the five preloaded sections
+//   intro.js          the introduction, shown once on a new install
 //   names.js          what each section is called
 //   kegels/ pe/ bible/ breathe/ habits/ one folder per feature
 //                     (pray/ is part of bible/)
@@ -59,6 +61,8 @@ import * as breatheProgram from './breathe/program.js';
 import * as nightlight from './nightlight.js';
 import { renderSettings } from './settings.js';
 import { lockActive, renderLock, relock } from './lock.js';
+import { nifoUnlocked } from './nifo.js';
+import { renderIntro, introDue } from './intro.js';
 import { initBack, navigate, replaceWith } from './back.js';
 import { initTabs, syncTabs } from './tabs.js';
 import * as vault from './pe/vault.js';
@@ -157,6 +161,7 @@ const ROUTES = {
   '#/breathe/run': () => runBreathe(),
   '#/breathe/settings': () => renderBreatheSettings(app),
   '#/settings/night': () => nightlight.renderNightlightSettings(app),
+  '#/intro': () => renderIntro(app),
 };
 
 const NAV = {
@@ -173,7 +178,10 @@ const NAV = {
   arena: '#/arena', cabinet: '#/cabinet',
   'cabinet-feats': '#/cabinet/feats', 'cabinet-year': '#/cabinet/year',
   nightlight: '#/settings/night',
+  intro: '#/intro',
 };
+
+const OPEN_WHEN_LOCKED = ['#/hub', '#/habits', '#/arena', '#/cabinet', '#/settings', '#/intro'];
 
 let lastHash = '';
 
@@ -195,6 +203,20 @@ function route() {
   if (lockActive()) return renderLock(app, route);
 
   const [path, query] = location.hash.split('?');
+
+  // A new install is introduced before it is used. Nothing else has happened
+  // yet, so this can sit ahead of every other interception below.
+  if (introDue() && path !== '#/intro') return replaceWith('#/intro');
+
+  // What a locked install can reach, written as the list of what is open
+  // rather than the list of what is shut. The five sections are eleven route
+  // prefixes between them and would grow again with the next screen; the three
+  // rooms, Settings and the introduction do not. Getting this wrong in the
+  // open direction shows a stranger a pelvic floor programme and in the closed
+  // direction shows them the grid, so it is written to fail closed.
+  if (!nifoUnlocked() && !OPEN_WHEN_LOCKED.some((p) => path === p || path.startsWith(p + '/'))) {
+    return replaceWith('#/hub');
+  }
   // There used to be a token set per section, swapped on the body here, so
   // every section had its own accent. Six accents made the app read as six
   // apps, and it meant colour answered "where am I" instead of "what state is
@@ -244,9 +266,11 @@ document.addEventListener('click', (e) => {
 // rather than on a second copy of the form.
 //
 // The Arena's result screen is here for a third reason again: it is shown once
-// and marks itself seen as it draws, so an entry for it on the back stack is an
-// entry that renders an empty screen and bounces you out of it.
-const EPHEMERAL = ['#/session', '#/bible/pray', '#/pe/timer', '#/pe/measure', '#/pocket', '#/breathe/run', '#/habits/edit', '#/arena/result', '#/arena/moment'];
+// and consumes what put it there as you leave, so an entry for it on the back
+// stack is an entry that renders an empty screen and bounces you out of it.
+// The introduction is the same shape: finishing it is what makes it stop
+// happening, so there must be nothing behind you to walk back into.
+const EPHEMERAL = ['#/session', '#/bible/pray', '#/pe/timer', '#/pe/measure', '#/pocket', '#/breathe/run', '#/habits/edit', '#/arena/result', '#/arena/moment', '#/intro'];
 
 // The Arena's books are closed before anything renders, so the first screen
 // after a week ends is the result of it rather than a grid with a number that
@@ -309,9 +333,13 @@ route();
 // The prayer and reading reminders must survive a reinstall of the app's own
 // state, so they are re-armed from settings on every launch rather than only
 // when the times are edited.
-prayProgram.syncAlarms();
-bibleProgram.syncAlarm();
-breatheProgram.syncAlarm();
+// Three of these belong to sections a locked install does not have, so it has
+// nothing to be reminded of. The habits' own reminders are everyone's.
+if (nifoUnlocked()) {
+  prayProgram.syncAlarms();
+  bibleProgram.syncAlarm();
+  breatheProgram.syncAlarm();
+}
 habitsProgram.syncAlarms();
 // The Arc's three: the day a cup opens, the day its group stage ends, and the
 // evening before a round you are in finishes. Re-armed here because a launch
@@ -326,3 +354,10 @@ nightlight.init();
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
 }
+
+// Everything is on the device, which means the browser is allowed to throw it
+// away to reclaim space. Asking marks the origin as worth keeping where the
+// browser supports it, and is a no-op where it does not - Safari among them,
+// which is the reason the iPhone answer is "add it to the Home Screen": an
+// installed PWA is not subject to the seven-day eviction a tab is.
+navigator.storage?.persist?.().catch(() => {});

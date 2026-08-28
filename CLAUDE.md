@@ -61,14 +61,35 @@ recedes. This is not licence to decorate: it is licence for hierarchy.
 **One theme.** One accent, one sans, one set of state colours. Colour answers
 *what state is this in* — done, due, missed — and nothing else. It does not
 answer "which section am I in": that experiment ran for five sections and made
-the app read as five apps. The two exceptions are both deliberate: a habit's
-own colour, which you chose and which carries information the shape does not,
-and the serif, which appears only on scripture and prayer text because reading
-1,344 chapters in a UI sans is worse.
+the app read as five apps. Three exceptions, all deliberate: a habit's own
+colour, which you chose and which carries information the shape does not; the
+serif, which appears only on scripture and prayer text because reading 1,344
+chapters in a UI sans is worse; and the seven division crests, which are
+artwork rather than something the app draws. The crests had a version built out
+of chevrons and laurels in the one accent, on exactly the reasoning above, and
+it was the wrong call: a rank badge is the single thing on screen whose whole
+job is to be a picture of where you stand, and a drawn one cannot carry a
+joke.
 
 **Everything on the device.** No account, no server, no analytics. Saved state
 is never trusted: it comes back through `hydrate()` in `store.js`, which
 coerces every value to the type and range it is supposed to be.
+
+**A new install is only the three rooms.** The five that came with this app —
+kegels, PE, the Bible, prayer, the wind-down — are what it is *for*, not what
+it *is*, and the person installing it may be someone they have nothing to say
+to. So they are behind one button at the foot of Settings, and that button
+takes one attempt. This is not security and must never be written as though it
+were: the PIN is a constant in `nifo.js` like any other. It exists so the app
+can be handed to a friend. `intro.js` is what a new install is shown instead.
+
+Two consequences worth holding on to. Whatever is added, ask what a locked
+install sees — the router is an allow-list of the open routes for exactly that
+reason, so a new section has to be let in on purpose rather than leaking by
+default. And `hydrate()` defaults both of these fields the *opposite* way to
+`blank()`: reaching hydrate at all means a saved state exists, so it is an
+install already in use, and an update must not take the five off a phone that
+has been running them for months.
 
 ## Where things are
 

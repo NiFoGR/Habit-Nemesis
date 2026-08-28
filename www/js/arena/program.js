@@ -20,15 +20,21 @@ import * as native from '../native.js';
 /* ---------------- the ladder ---------------- */
 
 /** Low to high. `bar` is the month score that holds you in the division, and
- *  reaching the one above promotes you. */
+ *  reaching the one above promotes you.
+ *
+ *  `blurb` is one line, and it is the only place in the app that is allowed to
+ *  be rude to you. It used to be two sentences of description, which read as
+ *  the app explaining your own score back to you; a rank is funnier and shorter
+ *  when it just says the thing. `js/arena/crest.js` holds the matching artwork,
+ *  one file per rung. */
 export const DIVISIONS = [
   { id: 'bottom', name: 'Bottom G', bar: 0, blurb: 'You have the app. That is the whole of it so far.' },
-  { id: 'npc', name: 'NPC', bar: 0.25, blurb: 'Going through the motions. Some days happen to you.' },
-  { id: 'prospect', name: 'Prospect', bar: 0.45, blurb: 'Putting work in. Not yet reliable, but it is there.' },
-  { id: 'contender', name: 'Contender', bar: 0.6, blurb: 'You are in it now. A bad week costs you something.' },
-  { id: 'menace', name: 'Menace', bar: 0.74, blurb: 'Dangerous. Most weeks go your way and everyone can tell.' },
-  { id: 'locked', name: 'Locked In', bar: 0.84, blurb: 'A good week is just a week. This is the standard now.' },
-  { id: 'topg', name: 'Top G', bar: 0.92, blurb: 'You do not miss. Two days a month, at the very most.' },
+  { id: 'npc', name: 'NPC', bar: 0.25, blurb: 'BiGgEr aNd StRoNgEr ThAn MiKe MeNtZeR' },
+  { id: 'prospect', name: 'Prospect', bar: 0.45, blurb: 'Something is happening. Not reliably.' },
+  { id: 'contender', name: 'Contender', bar: 0.6, blurb: 'You are in it now. A bad week costs you.' },
+  { id: 'menace', name: 'Menace', bar: 0.74, blurb: 'Most weeks go your way and it shows.' },
+  { id: 'locked', name: 'Locked In', bar: 0.84, blurb: 'How about, fucking eat more?' },
+  { id: 'topg', name: 'Top G', bar: 0.92, blurb: 'You do not miss. Two days a month, at most.' },
 ];
 
 export const divisionOf = (id) => DIVISIONS.find((d) => d.id === id) || DIVISIONS[1];

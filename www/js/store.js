@@ -47,6 +47,12 @@ function blank() {
       appLock: false, // require the PIN to open the whole app, not just the gallery
       tutorialDone: false, // the one-off technique walkthrough
       weeklyReviewSeen: '', // dayKey of the last weekly review dismissed
+      // 0 locked, 1 unlocked, 2 answered wrong and gone for good. See nifo.js.
+      // A fresh install starts locked: the five preloaded sections are what
+      // this app is *for*, not what it *is*, and the person who installs it
+      // may be someone the five have nothing to say to.
+      nifoOnly: 0,
+      onboarded: false, // the introduction has been seen at least once
     },
     program: {
       level: 1,
@@ -365,6 +371,14 @@ function hydrate(saved) {
       appLock: bool(ss.appLock),
       tutorialDone: bool(ss.tutorialDone),
       weeklyReviewSeen: /^\d{4}-\d{2}-\d{2}$/.test(ss.weeklyReviewSeen) ? ss.weeklyReviewSeen : '',
+      // Both default the other way here than in blank(), and that is the whole
+      // point of them living in hydrate rather than being read raw: reaching
+      // this function at all means there was already a saved state, so this is
+      // an install that has been in use. Taking the five away from it, or
+      // walking it through an introduction to an app it has been running for
+      // months, would both be the update breaking something that worked.
+      nifoOnly: int(ss.nifoOnly, 0, 2, 1),
+      onboarded: ss.onboarded !== false,
     },
     program: {
       level: int(sp.level, 1, 104, 1),
