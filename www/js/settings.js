@@ -35,6 +35,7 @@ function settingsNav() {
     <a href="#/pe/settings">${icon('trend', 18)}<span><b>${escapeHtml(peName())}</b><i>Units, session defaults, check-in day</i></span></a>
     <a href="#/bible/settings">${icon('scripture', 18)}<span><b>Bible and prayer</b><i>Text size, reminder, the rule's times and language</i></span></a>
     <a href="#/breathe/settings">${icon('breath', 18)}<span><b>Wind-down</b><i>Pattern, length, pacing, reminder</i></span></a>
+    <a href="#/habits/settings">${icon('habits', 18)}<span><b>Habits</b><i>The day boundary, what a tap does, groups, the archive</i></span></a>
   </div>`;
 }
 
@@ -108,7 +109,7 @@ export function renderSettings(mount) {
 
       <section class="card danger">
         <div class="h-row">${icon('warn', 16)}<h2>Reset</h2></div>
-        <p class="small muted">Erases every session, measurement, prayer day, chapter read and badge. No undo. Export a backup first.</p>
+        <p class="small muted">Erases every session, measurement, prayer day, chapter read, habit and badge. No undo. Export a backup first.</p>
         <button class="btn danger" id="reset">Erase all data</button>
       </section>
 

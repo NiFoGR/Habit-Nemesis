@@ -381,3 +381,47 @@ export function ringSvg(fraction, label, sub, { size = 168, color = null } = {})
     <div class="ringwrap-core"><b>${label}</b><span>${sub}</span></div>
   </div>`;
 }
+
+/* ---------------- the sheet ----------------
+   A modal, which the app went five features without needing. Habits needs
+   three: the frequency picker, the value keypad and the type chooser, all of
+   which are questions asked in the middle of a screen you must not lose your
+   place on.
+
+   It mounts as the first child of `#app` rather than on `<body>`, which is the
+   whole trick: `back.js` answers a back gesture by clicking the first
+   `#app [data-back]` in document order, and a bare `data-back` means "this
+   screen handles back itself". So a sheet in that position takes the hardware
+   button, the browser's back and the scrim tap through one path, and the
+   underlying screen's corner arrow is left alone underneath it. */
+
+export function openSheet(html, { onClose } = {}) {
+  const app = document.getElementById('app');
+  const scrim = document.createElement('div');
+  scrim.className = 'sheet-scrim';
+  scrim.setAttribute('data-back', '');
+  scrim.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">${html}</div>`;
+  app.insertBefore(scrim, app.firstChild);
+
+  let closed = false;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    document.removeEventListener('keydown', onKey);
+    scrim.remove();
+    onClose?.();
+  };
+  function onKey(e) {
+    if (e.key === 'Escape') close();
+  }
+  // Only a tap on the scrim itself, and only a click whose target is the scrim
+  // — which is also what back.js's synthetic click produces.
+  scrim.addEventListener('click', (e) => {
+    if (e.target === scrim) close();
+  });
+  document.addEventListener('keydown', onKey);
+
+  const el = scrim.firstElementChild;
+  el.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', close));
+  return { el, close };
+}

@@ -643,6 +643,11 @@ input[type="range"] {
 .feature.pe,      .task.pe      { --tile: #a78bfa; }
 .feature.bible,   .task.bible   { --tile: #d08a6a; }
 .feature.breathe, .task.breathe { --tile: #8aa4e8; }
+/* Habits is the sixth, and the last hue left that means nothing else. Teal,
+   violet, clay and indigo are the four sections; green is --good and gold is
+   --warn, and a section accent that also means "done" or "careful" is read as
+   one. Rose collides with nothing, and the per-habit colours sit inside it. */
+.feature.habits,  .task.habits  { --tile: #e0729c; }
 
 .feature-icon { display: flex; color: var(--tile, var(--accent)); margin-bottom: 10px; }
 .feature-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
@@ -1475,3 +1480,313 @@ body.blacked .br-orb { opacity: 0.09; }
 .screen.hub .btn.primary { background: var(--text); color: var(--bg); }
 .screen.hub .notice.action { border-color: var(--line); }
 .screen.hub .notice.action .ico { color: var(--muted); }
+
+/* ==========================================================================
+   Habits
+   ==========================================================================
+   The sixth room, and the only one whose contents the app does not know in
+   advance. So it has two levels of colour rather than one: the section accent,
+   which says where you are, and a colour per habit, which is how you find a
+   row without reading it. Everything below is built so the second never fights
+   the first - the habit colour appears on names, rings, cells and calendars,
+   and never on a control. */
+
+body[data-section="habits"] { --accent: #e0729c; }
+
+.habits-today { margin-bottom: 12px; }
+
+/* ---------- the toolbar above the grid ---------- */
+
+.hg-tools { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.chipbtn {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--surface); border: 1px solid var(--line); color: var(--muted);
+  border-radius: 999px; padding: 7px 13px; font-size: 0.8rem; cursor: pointer;
+}
+.chipbtn:active { background: var(--surface-2); }
+.chipbtn.on { color: var(--accent); border-color: var(--accent); }
+.chipbtn .ico { width: 15px; height: 15px; }
+.h-row .chipbtn { margin-left: auto; }
+
+/* ---------- the grid ----------
+   Rows are habits and columns are days, which means the widths have to survive
+   both a long habit name and seven columns on a 360px phone. The cells are
+   given a maximum rather than a fixed width and the name takes what is left,
+   so nothing scrolls sideways and nothing is clipped. */
+
+.hgrid { display: grid; gap: 6px; margin-bottom: 18px; }
+
+.hg-head, .hg-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) repeat(var(--cols, 4), minmax(0, 40px));
+  align-items: center;
+  gap: 2px;
+}
+
+.hg-head { padding: 0 10px; color: var(--muted); }
+.hg-head i { font-style: normal; text-align: center; line-height: 1.1; }
+.hg-head i b { display: block; font-size: 0.58rem; letter-spacing: 0.06em; font-weight: 600; }
+.hg-head i em { font-style: normal; font-size: 0.76rem; }
+.hg-head i.now { color: var(--text); }
+
+.hg-row {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 6px 10px; min-height: 48px;
+}
+/* A linked row is a reading, not a control. The cells still draw so the row
+   lines up with the ones above it, but they cannot be pressed: of two records
+   of the same morning, the editable one is always the one that ends up wrong. */
+.hg-row.linked { background: none; border-style: dashed; }
+.hg-row.linked .hg-cell { pointer-events: none; }
+.hg-row.dragging { opacity: 0.6; border-color: var(--accent); }
+
+/* The name has to survive four day columns on a 360px phone, so it takes
+   whatever the cells leave and gives up the rest to an ellipsis. Five columns
+   is a setting rather than the default for exactly this reason: at five,
+   "Calisthenics" becomes "Calisth...". */
+.hg-name {
+  display: flex; align-items: center; gap: 8px; min-width: 0;
+  text-decoration: none; color: inherit; font-size: 0.9rem; font-weight: 600;
+  padding: 6px 0;
+}
+.hg-name > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hg-row { font-size: 0.9rem; }
+.hg-ring, .hg-link-ico { width: 20px; height: 20px; flex: 0 0 20px; display: block; }
+.hg-link-ico { display: grid; place-items: center; }
+
+.hg-cell {
+  display: grid; place-items: center;
+  min-height: 40px; padding: 0;
+  background: none; border: 0; border-radius: 8px;
+  color: var(--muted); opacity: 0.45; cursor: pointer;
+}
+.hg-cell.on { opacity: 1; }
+.hg-cell.no { opacity: 1; color: var(--danger); }
+.hg-cell.skip { opacity: 0.8; color: var(--calm); }
+/* A day inside a "three times a week" window that you did not do today. It is
+   not a tick, because you did not do it; it is not nothing either, because the
+   habit is being kept. A ring, not a fill. */
+.hg-cell.carried { opacity: 1; }
+.hg-cell.carried::after {
+  content: ''; width: 13px; height: 13px; border-radius: 50%;
+  border: 1.5px dashed currentColor; opacity: 0.7;
+}
+.hg-cell.carried .ico, .hg-cell.carried .hg-q { display: none; }
+.hg-cell.future { visibility: hidden; }
+.hg-cell:active { background: var(--surface-2); }
+.hg-q { font-size: 0.95rem; font-weight: 700; }
+
+.hg-cell.num { line-height: 1.05; opacity: 1; overflow: hidden; }
+.hg-cell.num b { font-size: 0.82rem; font-weight: 600; }
+.hg-cell.num i { font-style: normal; font-size: 0.52rem; color: var(--muted); display: block;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.hg-cell.num:not(.on):not(.part) { color: var(--muted); opacity: 0.45; }
+
+.hg-group { display: flex; align-items: center; gap: 8px; margin: 14px 0 2px; }
+.hg-group-btn {
+  display: flex; align-items: center; gap: 7px;
+  background: none; border: 0; padding: 0; cursor: pointer;
+  color: var(--muted); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.1em;
+}
+.hg-group-btn b { font-weight: 600; }
+.hg-group .ico { color: var(--muted); }
+.hg-rows { display: grid; gap: 6px; }
+.linked-rows { opacity: 0.85; }
+
+/* ---------- reordering ---------- */
+
+.hgrid.reordering .hg-row { display: flex; gap: 10px; }
+.hg-drag {
+  background: none; border: 0; color: var(--muted); padding: 4px; cursor: grab;
+  touch-action: none; /* or the browser scrolls instead of letting us drag */
+}
+.hg-move { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.hg-group-pick {
+  background: var(--surface-2); color: var(--text); border: 1px solid var(--line);
+  border-radius: 8px; padding: 6px 6px; font-size: 0.74rem; max-width: 108px;
+}
+.icon-btn.small { width: 32px; height: 32px; flex: 0 0 32px; border-radius: 8px; }
+.icon-btn.small .ico { width: 15px; height: 15px; }
+.icon-btn.small.danger { color: var(--danger); border-color: rgba(248, 113, 113, 0.35); }
+
+/* ---------- the sheet ----------
+   Bottom-anchored on a phone, because that is where your thumb is, and centred
+   from tablet width up, where a strip across the bottom of a wide screen looks
+   like a mistake. */
+
+.sheet-scrim {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex; align-items: flex-end; justify-content: center;
+  animation: fade 0.14s ease;
+}
+.sheet {
+  width: 100%; max-width: 520px; max-height: 88vh; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 16px 16px 0 0;
+  padding: 20px var(--pad) calc(var(--safe-b) + 20px);
+}
+.sheet h2 { font-size: 1.15rem; margin-bottom: 6px; }
+.sheet .btn-row { margin-top: 16px; }
+.sheet .btn.wide { margin-top: 16px; }
+@media (min-width: 620px) {
+  .sheet-scrim { align-items: center; }
+  .sheet { border-radius: 16px; padding-bottom: 20px; }
+}
+
+/* ---------- choosing a kind, a colour, a frequency ---------- */
+
+.type-cards { display: grid; gap: 10px; margin: 14px 0 4px; }
+.type-card {
+  display: block; text-decoration: none; color: inherit;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 16px;
+}
+.type-card:active { border-color: var(--accent); }
+.type-card b { display: block; font-size: 1.1rem; margin-bottom: 4px; }
+.type-card span { color: var(--muted); font-size: 0.84rem; }
+
+.swatch {
+  width: 34px; height: 34px; border-radius: 9px; border: 2px solid transparent; cursor: pointer;
+  padding: 0;
+}
+.swatch.on { border-color: var(--text); }
+.swatch.big { width: 46px; height: 46px; flex: 0 0 46px; border-radius: 10px; border-color: var(--line); }
+.swatch-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-top: 14px; justify-items: center; }
+
+.freq-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 0.92rem;
+}
+.freq-row input[type="radio"] { width: 20px; height: 20px; accent-color: var(--accent); flex: 0 0 auto; }
+.freq-num {
+  width: 62px; background: var(--surface-2); color: var(--text);
+  border: 1px solid var(--line); border-radius: 8px; padding: 8px; font-size: 0.95rem;
+  text-align: center;
+}
+
+.day-chips { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 14px 0 4px; }
+.day-chip {
+  padding: 11px 0; border-radius: 9px; border: 1px solid var(--line);
+  background: var(--surface-2); color: var(--muted); font-size: 0.82rem; cursor: pointer;
+}
+.day-chip.on { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); color: var(--accent); border-color: var(--accent); }
+
+.pickrow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 14px 0; }
+.pick {
+  padding: 13px 0; border-radius: 9px; border: 1px solid var(--line);
+  background: var(--surface-2); color: var(--text); font-size: 0.95rem; cursor: pointer;
+}
+.pick.on { border-color: var(--accent); color: var(--accent); }
+
+/* The habit form's own fields. Everywhere else in the app a text input sits
+   inside a .measure-row, which stretches it; these stand on their own. */
+.screen.habits .field input[type="text"],
+.screen.habits .field input[type="number"] {
+  width: 100%; background: var(--surface-2); color: var(--text);
+  border: 1px solid var(--line); border-radius: 10px; padding: 12px;
+  font-size: 0.95rem; font-family: inherit;
+}
+.screen.habits .field label { margin-bottom: 8px; }
+.screen.habits .notes { width: 100%; }
+.screen.habits .setting input[type="number"] {
+  background: var(--surface-2); color: var(--text); border: 1px solid var(--line);
+  border-radius: 10px; padding: 9px 10px; font-size: 0.9rem; width: 108px; text-align: right;
+}
+
+/* A settings-style row that opens something rather than setting it. */
+.rowbtn {
+  display: flex; align-items: center; gap: 14px; width: 100%;
+  padding: 12px 0; border: 0; border-bottom: 1px solid var(--line);
+  background: none; color: inherit; text-align: left; cursor: pointer;
+}
+.rowbtn:last-of-type { border-bottom: 0; }
+.rowbtn span { flex: 1; }
+.rowbtn b { display: block; font-size: 0.94rem; font-weight: 600; }
+.rowbtn i { display: block; font-style: normal; color: var(--muted); font-size: 0.78rem; margin-top: 2px; }
+.rowbtn .ico { color: var(--muted); }
+
+.grp-list { display: grid; gap: 8px; margin: 12px 0; }
+.grp-row { display: flex; align-items: center; gap: 6px; }
+.grp-row input {
+  flex: 1; min-width: 0; background: var(--surface-2); color: var(--text);
+  border: 1px solid var(--line); border-radius: 9px; padding: 10px; font-size: 0.9rem;
+}
+
+.arch-list { display: grid; gap: 8px; }
+.arch-row {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px;
+}
+.arch-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.arch-text b { font-size: 0.94rem; }
+.arch-text i { font-style: normal; color: var(--muted); font-size: 0.76rem; }
+.arch-row .small-btn { padding: 9px 14px; font-size: 0.82rem; }
+
+/* ---------- one habit's own screen ---------- */
+
+.habit-hero { margin-bottom: 16px; }
+.habit-hero h2 { font-size: 1.25rem; margin-bottom: 6px; }
+.habit-hero p { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.habit-hero .ico { width: 14px; height: 14px; }
+
+.screen-head .btn.small-btn { padding: 10px 15px; font-size: 0.86rem; margin-top: 0; }
+
+.chart-period {
+  margin-left: auto; background: var(--surface-2); color: var(--text);
+  border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font-size: 0.78rem;
+}
+
+/* The calendar. Weeks as columns and weekdays as rows, the same shape as every
+   other heatmap in the app, with the dates written in and the habit's own
+   colour rather than the section accent. */
+.hcal { display: flex; gap: 8px; }
+.hcal-body { display: flex; gap: 3px; overflow-x: auto; flex: 1; padding-bottom: 4px; }
+.hcal-col { display: flex; flex-direction: column; gap: 3px; flex: 0 0 auto; }
+.hcal-mon {
+  height: 15px; font-size: 0.66rem; color: var(--muted); white-space: nowrap;
+  overflow: visible; display: block;
+}
+.hc-cell {
+  width: 26px; height: 26px; border-radius: 6px; border: 0;
+  background: var(--surface-2); color: var(--muted);
+  font-size: 0.66rem; font-variant-numeric: tabular-nums;
+  display: grid; place-items: center; padding: 0; cursor: default;
+}
+.hcal .hc-cell { cursor: pointer; }
+.hc-cell.on { background: var(--hc, var(--accent)); color: #0a0c10; font-weight: 600; }
+.hc-cell.carried { background: color-mix(in srgb, var(--hc, var(--accent)) 30%, var(--surface-2)); color: var(--text); }
+.hc-cell.skip { background: var(--surface-2); color: var(--calm); box-shadow: inset 0 0 0 1px var(--calm); }
+.hc-cell.lapse { color: var(--danger); box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.4); }
+.hc-cell.now { outline: 1px solid var(--muted); outline-offset: 1px; }
+.hc-cell.future { visibility: hidden; }
+.hcal-side { display: flex; flex-direction: column; gap: 3px; flex: 0 0 auto; }
+.hcal-side i {
+  height: 26px; display: flex; align-items: center;
+  font-style: normal; font-size: 0.66rem; color: var(--muted);
+}
+.hm-key .hc-cell { width: 13px; height: 13px; border-radius: 3px; }
+
+.streak-list { display: grid; gap: 7px; }
+.streak-row { display: flex; align-items: center; gap: 9px; font-size: 0.72rem; color: var(--muted); }
+.streak-row > span:first-child, .streak-row > span:last-child { flex: 0 0 68px; }
+.streak-row > span:last-child { text-align: right; }
+.streak-bar { flex: 1; background: var(--surface-2); border-radius: 6px; overflow: hidden; }
+.streak-bar i {
+  display: flex; align-items: center; justify-content: center;
+  height: 22px; min-width: 22px; border-radius: 6px;
+  font-style: normal; font-size: 0.74rem; font-weight: 700; color: #0a0c10;
+}
+
+/* Weekday against month. The dot's diameter carries the count, which is the
+   one encoding that reads at this size: seven rows of bars would be a wall. */
+.freq-grid { display: grid; gap: 4px; }
+.fq-row { display: flex; align-items: center; gap: 4px; }
+.fq-row i { flex: 1; height: 17px; position: relative; }
+.fq-row i::after {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  width: var(--d); height: var(--d); margin: calc(var(--d) / -2) 0 0 calc(var(--d) / -2);
+  border-radius: 50%; background: currentColor;
+}
+.fq-row > span { flex: 0 0 30px; font-size: 0.66rem; color: var(--muted); text-align: right; }
+.fq-row.months em { flex: 1; font-style: normal; font-size: 0.6rem; color: var(--muted); text-align: center; }

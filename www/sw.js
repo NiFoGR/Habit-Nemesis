@@ -3,7 +3,7 @@
 // Bump CACHE to drop everything already stored. Note that the app's own code
 // no longer depends on this being remembered: see the fetch handler, which
 // revalidates code against the network and keeps the cache for offline only.
-const CACHE = 'nifo-v13';
+const CACHE = 'nifo-v14';
 
 const ASSETS = [
   './',
@@ -51,6 +51,12 @@ const ASSETS = [
   './js/pray/prayers.js',
   './js/pray/program.js',
   './js/pray/session.js',
+
+  // habits
+  './js/habits/program.js',
+  './js/habits/home.js',
+  './js/habits/edit.js',
+  './js/habits/tracking.js',
 
   // wind-down
   './js/breathe/program.js',

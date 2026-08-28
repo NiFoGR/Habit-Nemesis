@@ -11,6 +11,7 @@ import * as peProgram from './pe/program.js';
 import * as prayProgram from './pray/program.js';
 import * as bibleProgram from './bible/program.js';
 import * as breatheProgram from './breathe/program.js';
+import * as habitsProgram from './habits/program.js';
 import { RULES as PRAY_RULES } from './pray/prayers.js';
 import { fmtHours, fmtDuration, ringSvg, escapeHtml, sparkline } from './ui.js';
 import { icon, logoMark } from './icons.js';
@@ -33,6 +34,7 @@ const TILE = 'var(--tile, var(--accent))';
  *  terracotta, on the same screen, for the same word. */
 function sectionOf(href = '') {
   if (href.startsWith('#/bible')) return 'bible';
+  if (href.startsWith('#/habits')) return 'habits';
   if (href.startsWith('#/pe')) return 'pe';
   if (href.startsWith('#/breathe')) return 'breathe';
   if (href.startsWith('#/kegels') || href.startsWith('#/session')) return 'kegels';
@@ -123,6 +125,25 @@ const FEATURES = [
       return sparkline(breatheProgram.history(4).map((d) => d.ms / 60000), { color: TILE });
     },
   },
+  {
+    id: 'habits',
+    icon: 'habits',
+    route: '#/habits',
+    name: () => 'Habits',
+    blurb: 'Whatever else you hold yourself to, on a grid you tap once a day',
+    pills() {
+      const due = habitsProgram.dueToday();
+      const best = habitsProgram.active().reduce((a, h) => Math.max(a, habitsProgram.summary(h).streak), 0);
+      return [
+        { text: due.total ? (due.pending.length ? `${due.done}/${due.total} today` : 'All done today') : 'None yet', done: due.total > 0 && !due.pending.length },
+        due.total ? { text: `${due.total} habit${due.total === 1 ? '' : 's'}`, ghost: true } : null,
+        best ? { text: `${best}d streak`, ghost: true } : null,
+      ];
+    },
+    spark() {
+      return sparkline(habitsProgram.recentCounts(14), { color: TILE });
+    },
+  },
 ];
 
 /* ---------------- Today ----------------
@@ -210,6 +231,26 @@ function todayTasks(state) {
     href: `#/bible/reader?book=${pos.book}&ch=${pos.ch}`,
     cta: 'Read',
   });
+
+  // Habits are one row and not one row each. The point of this screen is the
+  // half-dozen things the app itself asks of you every day; fourteen habits
+  // spread across it would bury all six, and the ring above would stop meaning
+  // anything. The row opens the grid, which is where marking them belongs.
+  const habitDue = habitsProgram.dueToday();
+  if (habitDue.total) {
+    out.push({
+      id: 'habits',
+      icon: 'habits',
+      label: 'Habits',
+      detail: habitDue.pending.length
+        ? `${habitDue.pending.length} left · ${habitDue.pending[0].name}${habitDue.pending.length > 1 ? ' and others' : ''}`
+        : `All ${habitDue.total} done`,
+      done: !habitDue.pending.length,
+      href: '#/habits',
+      cta: 'Mark habits',
+      frac: habitDue.total ? habitDue.done / habitDue.total : 1,
+    });
+  }
 
   const due = peProgram.measurementDue();
   if (due.due && state.pe.settings.safetyAck) {

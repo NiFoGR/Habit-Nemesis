@@ -12,6 +12,13 @@ const CANON_LIMITS = BOOKS.map((b) => [b.id, b.chapters.length]);
 // module: the sanitiser cannot depend on a feature that depends on it.
 const BREATHE_PATTERNS = ['exhale', 'coherent', '478'];
 
+// Same reasoning for the habit palette and the two kinds of habit. A colour is
+// stored as an id from a closed set rather than as a hex string, because it is
+// interpolated into a `style` attribute; a free-text colour would be a hole.
+const HABIT_COLOURS = ['teal', 'mint', 'lime', 'amber', 'orange', 'clay', 'rose', 'red', 'violet', 'indigo', 'sky', 'slate'];
+const HABIT_KINDS = ['yesno', 'number'];
+const HABIT_TARGET_TYPES = ['atleast', 'atmost'];
+
 const KEY = 'nifo.state.v1';
 const SCHEMA = 1;
 
@@ -114,6 +121,30 @@ function blank() {
       days: {}, // dayKey -> { at, ms, pattern }
       streak: 0,
       best: 0,
+    },
+
+    // Sixth feature: habits. The general-purpose room, and the only section
+    // whose contents you define yourself, so nearly every field here is a
+    // setting rather than a constant. `entries` is keyed by habit id and then
+    // by day, because the only questions ever asked of it are "what was this
+    // habit on this day" and "every day of this habit", and a map answers both
+    // without a scan. Streaks and scores are computed rather than stored: the
+    // past is editable here, so a cached streak would go stale the moment you
+    // corrected last Tuesday.
+    habits: {
+      settings: {
+        firstDay: 1, // 0 = Sunday
+        dayStartHour: 0, // 3 = a new day begins at 03:00, for this section only
+        shortPress: true, // a single tap marks, instead of press-and-hold
+        skipDays: false, // toggle again for a skip: keeps the score and the streak
+        unknownMarks: false, // draw days with no data differently from lapses
+        reverseDays: false, // the grid runs oldest to newest
+        columns: 4, // day columns on the grid
+        showLinked: true, // the other five features, read-only, at the top
+      },
+      groups: [], // { id, name, order, collapsed }
+      items: [], // the habits themselves
+      entries: {}, // habitId -> { dayKey: value }, -1 skip, 0 lapse, else done
     },
 
     // The night light. App-wide rather than a section, so it has no `days` and
@@ -336,6 +367,7 @@ function hydrate(saved) {
     pray: cleanPray(saved.pray, base.pray),
     bible: cleanBible(saved.bible, base.bible),
     breathe: cleanBreathe(saved.breathe, base.breathe),
+    habits: cleanHabits(saved.habits, base.habits),
     nightlight: cleanNightlight(saved.nightlight, base.nightlight),
   };
 }
@@ -449,6 +481,100 @@ function cleanBreathe(sb, base) {
     days,
     streak: int(src.streak, 0, 100000, 0),
     best: int(src.best, 0, 100000, 0),
+  };
+}
+
+/** The habits slice.
+ *
+ *  The only slice whose *shape* is user-defined, which makes it the one most
+ *  worth checking. Three rules run through it:
+ *
+ *  An id that does not match the pattern drops the habit rather than being
+ *  regenerated. Everywhere else in this file a bad id is replaced with a fresh
+ *  one, which is right for a session, because a session carries its own data.
+ *  A habit does not: its record lives in `entries` under that id, so handing
+ *  it a new one would silently orphan every day ever marked on it.
+ *
+ *  A day key that is not a date drops the entry rather than falling back to
+ *  today. `dateKey()` defaults, which is right for a session that has to land
+ *  somewhere; here it would pile a whole file of junk onto this morning.
+ *
+ *  Entries whose habit no longer exists are dropped, so deleting a habit
+ *  cannot leave a record behind for a later habit to inherit by id collision.
+ */
+function cleanHabits(sh, base) {
+  const src = sh && typeof sh === 'object' ? sh : {};
+  const hs = src.settings && typeof src.settings === 'object' ? src.settings : {};
+  const habitId = (v) => (typeof v === 'string' && /^h_[A-Za-z0-9_-]{1,40}$/.test(v) ? v : null);
+  const groupId = (v) => (typeof v === 'string' && /^g_[A-Za-z0-9_-]{1,40}$/.test(v) ? v : null);
+
+  const groups = arr(src.groups, 30)
+    .map((g) => {
+      const gid = groupId(g?.id);
+      return gid ? { id: gid, name: str(g?.name, 40), order: int(g?.order, 0, 1000, 0), collapsed: bool(g?.collapsed) } : null;
+    })
+    .filter(Boolean);
+  const groupIds = new Set(groups.map((g) => g.id));
+
+  const items = arr(src.items, 100)
+    .map((h) => {
+      const hid = habitId(h?.id);
+      if (!hid) return null;
+      // A frequency of n in d is meaningless with n above d: it would ask for
+      // more days than the window holds. So the numerator is capped by it.
+      const den = int(h?.freq?.den, 1, 365, 1);
+      return {
+        id: hid,
+        name: str(h?.name, 60),
+        question: str(h?.question, 120),
+        notes: str(h?.notes, 500),
+        colour: oneOf(h?.colour, HABIT_COLOURS, 'teal'),
+        kind: oneOf(h?.kind, HABIT_KINDS, 'yesno'),
+        unit: str(h?.unit, 20),
+        target: num(h?.target, 0, 1e9) ?? 0,
+        targetType: oneOf(h?.targetType, HABIT_TARGET_TYPES, 'atleast'),
+        freq: { num: int(h?.freq?.num, 1, den, 1), den },
+        group: groupIds.has(h?.group) ? h.group : '',
+        remindAt: timeStr(h?.remindAt),
+        remindDays: arr(h?.remindDays, 7)
+          .map((d) => int(d, 0, 6, null))
+          .filter((d) => d !== null),
+        archived: bool(h?.archived),
+        createdAt: num(h?.createdAt, 0, 4e12) ?? Date.now(),
+        order: int(h?.order, 0, 1000, 0),
+      };
+    })
+    .filter((h) => h && h.name);
+  const itemIds = new Set(items.map((h) => h.id));
+
+  const entries = {};
+  const rawEntries = src.entries && typeof src.entries === 'object' ? src.entries : {};
+  for (const [hid, days] of Object.entries(rawEntries).slice(0, 100)) {
+    if (!itemIds.has(hid) || !days || typeof days !== 'object') continue;
+    const kept = {};
+    for (const [k, v] of Object.entries(days).slice(0, 20000)) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(k)) continue;
+      const n = numIn(v, -1, 1e9);
+      if (n === null) continue;
+      kept[k] = n;
+    }
+    if (Object.keys(kept).length) entries[hid] = kept;
+  }
+
+  return {
+    settings: {
+      firstDay: int(hs.firstDay, 0, 6, base.settings.firstDay),
+      dayStartHour: int(hs.dayStartHour, 0, 6, base.settings.dayStartHour),
+      shortPress: hs.shortPress !== false,
+      skipDays: bool(hs.skipDays),
+      unknownMarks: bool(hs.unknownMarks),
+      reverseDays: bool(hs.reverseDays),
+      columns: int(hs.columns, 3, 7, base.settings.columns),
+      showLinked: hs.showLinked !== false,
+    },
+    groups,
+    items,
+    entries,
   };
 }
 

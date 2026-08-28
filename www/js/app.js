@@ -10,7 +10,8 @@
 //   settings.js       app-wide settings
 //   lock.js           the optional PIN gate
 //   names.js          what each section is called
-//   kegels/ pe/ bible/ breathe/ one folder per feature (pray/ is part of bible/)
+//   kegels/ pe/ bible/ breathe/ habits/ one folder per feature
+//                     (pray/ is part of bible/)
 //
 // docs/CODEMAP.md has the full map.
 
@@ -39,6 +40,10 @@ import { renderRead } from './bible/read.js';
 import { renderBookContext } from './bible/book.js';
 import { renderBibleTracking } from './bible/tracking.js';
 import * as bibleProgram from './bible/program.js';
+import { renderHabits, renderHabitSettings, renderArchive } from './habits/home.js';
+import { renderHabitEdit } from './habits/edit.js';
+import { renderHabitDetail } from './habits/tracking.js';
+import * as habitsProgram from './habits/program.js';
 import { renderBreatheHome, renderBreatheSettings } from './breathe/home.js';
 import { startBreathe } from './breathe/session.js';
 import * as breatheProgram from './breathe/program.js';
@@ -121,6 +126,11 @@ const ROUTES = {
   '#/bible/settings': () => renderBibleSettings(app),
   '#/bible/pray': (params) => runRule(params),
   '#/bible/prayers': () => renderMyPrayers(app),
+  '#/habits': () => renderHabits(app),
+  '#/habits/habit': (params) => renderHabitDetail(app, params.get('id')),
+  '#/habits/edit': (params) => renderHabitEdit(app, { id: params.get('id'), kind: params.get('kind') }),
+  '#/habits/settings': () => renderHabitSettings(app),
+  '#/habits/archive': () => renderArchive(app),
   '#/breathe': () => renderBreatheHome(app),
   '#/breathe/run': () => runBreathe(),
   '#/breathe/settings': () => renderBreatheSettings(app),
@@ -137,6 +147,7 @@ const NAV = {
   'bible-track': '#/bible/track', 'bible-settings': '#/bible/settings',
   'bible-prayers': '#/bible/prayers',
   breathe: '#/breathe', 'breathe-settings': '#/breathe/settings',
+  habits: '#/habits', 'habits-settings': '#/habits/settings', 'habits-archive': '#/habits/archive',
   nightlight: '#/settings/night',
 };
 
@@ -160,6 +171,7 @@ function route() {
   document.body.dataset.section = path.startsWith('#/pe') ? 'pe'
     : path.startsWith('#/bible') ? 'bible'
     : path.startsWith('#/breathe') ? 'breathe'
+    : path.startsWith('#/habits') ? 'habits'
     : ['#/kegels', '#/kegels/settings', '#/session', '#/track', '#/guide', '#/roadmap', '#/review', '#/pocket', '#/tutorial'].includes(path) ? 'kegels'
     : 'hub';
   // The progress gallery and the monthly check-in's camera are the two screens
@@ -179,10 +191,14 @@ document.addEventListener('click', (e) => {
   navigate(NAV[nav.dataset.nav] || '#/hub');
 });
 
-// Screens that start running the moment you arrive. Leaving one replaces it
-// instead of stacking on top, so Back cannot walk into a session you have just
-// finished and set it going again.
-const EPHEMERAL = ['#/session', '#/bible/pray', '#/pe/timer', '#/pe/measure', '#/pocket', '#/breathe/run'];
+// Screens that must not be left on the back stack. Mostly those that start
+// running the moment you arrive, so Back cannot walk into a session you have
+// just finished and set it going again.
+//
+// The habit form is here for the neighbouring reason: it is finished by its own
+// Save button, and coming out of it has to land on the grid you were adding to
+// rather than on a second copy of the form.
+const EPHEMERAL = ['#/session', '#/bible/pray', '#/pe/timer', '#/pe/measure', '#/pocket', '#/breathe/run', '#/habits/edit'];
 
 // Today is the default screen, settled before back.js takes its bearings below.
 // replaceState rather than assignment: landing on the app should not leave a
@@ -227,6 +243,7 @@ route();
 prayProgram.syncAlarms();
 bibleProgram.syncAlarm();
 breatheProgram.syncAlarm();
+habitsProgram.syncAlarms();
 
 // The night light is the same story: the APK's filter service keeps its own
 // copy of the schedule, and this is what puts the two back in step after a
