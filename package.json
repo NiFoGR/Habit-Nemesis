@@ -2,7 +2,7 @@
   "name": "nifo-app",
   "version": "0.1.0",
   "private": true,
-  "description": "NiFo, a personal app of features that make life measurably better. Kegels, PE, prayer and Bible reading.",
+  "description": "NiFo, a personal app of features that make life measurably better. Kegels, PE, prayer, Bible reading and habits.",
   "type": "module",
   "scripts": {
     "dev": "node tools/serve.mjs",

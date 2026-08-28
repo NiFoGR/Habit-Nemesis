@@ -208,3 +208,81 @@ morning which half of one practice you wanted.
 3. **Search across the imported text**, which IndexedDB makes cheap.
 4. **Reading-time estimates per chapter**, from verse counts.
 5. **A note per chapter**, kept with the day it was read.
+
+
+---
+
+# Habits
+
+The sixth feature, and a port rather than an invention: Loop Habit Tracker's
+model, moved into NiFo's shape. Loop's model is right and there was no reason
+to build a worse one from scratch.
+
+## The core insight
+
+Every other feature in this app encodes a practice. Habits encodes only the
+shape of a question asked once a day and leaves the question to you, which
+means the design problem is the opposite of the usual one: not "what should
+this do" but "what must it refuse to decide for you". The answer turned out to
+be almost nothing. Name, question, colour, unit, target, whether the target is
+a floor or a ceiling, frequency, group, position in the list, reminder, and the
+value on any past day are all editable at any time.
+
+That is only affordable because **nothing derived is stored**. Scores and
+streaks are recomputed on every read, so changing a habit's frequency re-reads
+its whole history under the new rule rather than leaving a number behind that
+was true under the old one. Every other section caches its streak, which is
+safe there because the past is written once by a session that has just ended.
+
+## What got built
+
+### The model
+- Four states in a cell, not two: done, a recorded lapse, a skip, and nothing
+  recorded. The last two are settings, because most days do not need the
+  distinction and the ones that do need it badly.
+- Frequency as a fraction, n in d. Five rows in the picker, one pair of numbers
+  behind them.
+- Loop's exponential score, unchanged. Thirteen-day half-life for a daily
+  habit; rarer habits decay and build more slowly in proportion.
+- Ceiling targets, for the habits where the win is a low number.
+- Skips leave the score untouched and keep the streak running through them,
+  measured in calendar days.
+
+### The screens
+- The grid: rows, day columns, one tap. Drag to reorder, arrows for anyone who
+  would rather not, groups with a score of their own.
+- One habit in full: overview, score, history, calendar, every streak, and the
+  weekday-by-month bubble chart that tells you a habit has quietly become a
+  weekend-only habit.
+- The calendar is writable. A tracker you cannot correct stops being a record
+  of what happened and becomes a record of what you remembered to press.
+
+### The join with the rest of the app
+- The five other features appear along the top of the grid, read-only, filled
+  from their own records.
+- One Today row on the hub, not one per habit.
+
+## Deliberately rejected
+
+- **Importing from Loop.** The full backup is a SQLite file, and reading one
+  would mean shipping a database engine into an app with no build step. CSV
+  export stays, as the way out; there is no way in, by choice.
+- **One Today row per habit.** Fourteen habits would bury the six things the
+  app itself asks of you, and the ring above them would stop meaning anything.
+- **Editable linked rows.** Of two records of the same morning, the editable
+  one is always the one that ends up wrong.
+- **Loop's interval snapping.** The trailing window says nearly the same thing
+  in a sentence you can hold in your head. They disagree only in the run-up to
+  the first satisfied day.
+- **A percentage of days kept.** It weighs a lapse in March exactly as it
+  weighs one this morning, and stops moving at all once a year is behind it.
+
+## Backlog
+
+- A weekly habit review, in the shape of the kegel one: what slipped, what
+  held, one sentence.
+- Correlations across sections. Does the wind-down streak move with the ones on
+  this grid? The data is all in one store already.
+- Notes on a day, not only on a habit.
+- A home-screen widget, which is the one thing the source app does that this
+  cannot.

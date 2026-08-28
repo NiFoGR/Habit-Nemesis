@@ -62,6 +62,23 @@ const PATHS = {
   warmth:
     '<circle cx="12" cy="12" r="4.6"/><path d="M12 7.4a4.6 4.6 0 0 0 0 9.2z" fill="currentColor" stroke="none"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M18.8 5.2l-1.4 1.4M6.6 17.4l-1.4 1.4"/>',
   external: '<path d="M14 4h6v6"/><path d="M20 4l-8 8"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+  // Habits. A checklist rather than a calendar or a tick: the section is a
+  // list of things you answer for, and both of the obvious alternatives are
+  // already taken by the reading heatmaps and the done state.
+  habits: '<path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6.2l1.4 1.4L7.6 4.9"/><path d="M3.5 12.2l1.4 1.4 2.7-2.7"/><path d="M3.5 18.2l1.4 1.4 2.7-2.7"/>',
+  pencil: '<path d="M4 20.5h4l10.5-10.5-4-4L4 16.5z"/><path d="M14.5 6l4 4"/>',
+  trash: '<path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 12.5h9L17.5 7"/><path d="M10.5 11v5M13.5 11v5"/>',
+  archive: '<rect x="3" y="4" width="18" height="5" rx="1.2"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9"/><path d="M10 13h4"/>',
+  // Two dashes and a bar: a skip is a day you stepped over, not one you failed.
+  skip: '<path d="M5 6l8 6-8 6z"/><path d="M18 6v12"/>',
+  // The list-with-handles used to enter reorder mode.
+  reorder: '<path d="M9 6h12M9 12h12M9 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>',
+  // The filter mark from the toolbar: three rules, narrowing.
+  filter: '<path d="M4 6h16M7 12h10M10 18h4"/>',
+  arrowUp: '<path d="M12 19V5"/><path d="M6 11l6-6 6 6"/>',
+  caretUp: '<path d="M6 14.5l6-6 6 6"/>',
+  caretDown: '<path d="M6 9.5l6 6 6-6"/>',
+  arrowDown: '<path d="M12 5v14"/><path d="M6 13l6 6 6-6"/>',
 };
 
 /** icon('back') → inline SVG string. */
@@ -69,14 +86,27 @@ export function icon(name, size = 20) {
   return svg(PATHS[name] || PATHS.target, size);
 }
 
-/** The NiFo mark itself, the same arc-and-dot as the launcher icon. */
+/** The NiFo mark: three bars, rising.
+ *
+ *  The old mark was a broken progress ring with a dot in it, drawn when the app
+ *  was one feature and that feature was a contraction you held. The app is now
+ *  a grid of things you keep, so the mark is the shape of a habit going up:
+ *  three strokes, like the three strokes of the N beside it, each taller than
+ *  the last. It survives being 16px in a tab and being cropped to a circle by
+ *  a launcher, which the ring and its dot did not.
+ *
+ *  The gradient is the one place the teal-to-violet ramp still lives. Every
+ *  other surface in the app takes the single flat accent.
+ */
 export function logoMark(size = 26) {
+  // Unique per call: two copies of the same gradient id on one page is invalid
+  // markup, and Safari resolves both to whichever it saw first.
+  const id = `nifoG${Math.random().toString(36).slice(2, 7)}`;
+  const bar = (x, y) => `<rect x="${x}" y="${y}" width="7.5" height="${34 - y}" rx="3.75" fill="url(#${id})"/>`;
   return `<svg width="${size}" height="${size}" viewBox="0 0 40 40" fill="none" aria-hidden="true" class="logo-mark">
-    <defs><linearGradient id="nifoG" x1="0" y1="0" x2="1" y2="1">
+    <defs><linearGradient id="${id}" x1="0" y1="1" x2="1" y2="0">
       <stop offset="0%" stop-color="#22d3c5"/><stop offset="100%" stop-color="#a78bfa"/>
     </linearGradient></defs>
-    <circle cx="20" cy="20" r="14" stroke="url(#nifoG)" stroke-width="5.5"
-            stroke-linecap="round" stroke-dasharray="79 88" transform="rotate(-72 20 20)"/>
-    <circle cx="20" cy="20" r="4" fill="#f0fdfa"/>
+    ${bar(4.5, 22)}${bar(16.25, 14.5)}${bar(28, 6)}
   </svg>`;
 }

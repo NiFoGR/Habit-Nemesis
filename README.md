@@ -14,9 +14,11 @@ Runs entirely on the phone. No account, no server, no analytics, nothing leaves 
 
 **Feature 5 - Night light:** the screen's colour temperature on a curve through the day, across the whole phone rather than just this app. Neutral in the morning, warming so slowly you never catch it happening, fully warm by bedtime. A Capacitor plugin drives Android's own Night Light where it is allowed to and falls back to an overlay where it is not. [`docs/NIGHTLIGHT.md`](docs/NIGHTLIGHT.md).
 
-The home screen is a **Today** list: what is outstanding across all four features, and one button for the most urgent thing.
+**Feature 6 - Habits:** everything else you hold yourself to, on a grid you tap once a day. Yes/no habits and measurable ones, a target that can be a floor or a ceiling, and a frequency that is a fraction rather than a weekday pattern - three times a week is not late on the fourth day. An exponential score with a thirteen-day half-life instead of a percentage of days kept, so a lapse in March does not weigh the same as one this morning. Skips that keep the streak running, a calendar you can correct, groups with a score of their own, and the rest of NiFo along the top of the grid, read-only so there is never a second copy of the same morning. [`docs/HABITS.md`](docs/HABITS.md).
 
-Each section has its own palette. Kegels is teal on cool graphite, PE violet on deep plum, Bible the deep red of a Gospel book with a serif face, Wind-down indigo on near-black because it is used in an unlit room. One skeleton, four rooms.
+**The home screen is the grid.** Every commitment you have is a row: the five the app itself asks of you, and every habit you added. Two rules and no exceptions - *the name goes there* (tapping "Kegels" opens the Kegels section) and *the cell does it* (tapping today starts the session, or marks the day). Only today acts; the days behind it are the record. There is no menu above it and no dashboard beside it, because both were the same list a third time.
+
+**One theme.** One accent, one sans, one set of state colours, so colour answers *what state is this in* and never *which section am I in* - the app spent five sections proving that the second reading makes one app look like five. Two deliberate exceptions: a habit's own colour, which you chose, and the serif, which appears only on scripture and prayer text because reading 1,344 chapters in a UI sans is worse.
 
 ---
 
@@ -149,13 +151,28 @@ Reasoning, safety numbers and sources: [`docs/PE_PROGRAM.md`](docs/PE_PROGRAM.md
 
 **One tap to goarch.org** for the day's readings, the calendar, fasts and saints.
 
+## What is in the Habits feature
+
+**A grid, and one tap.** Rows are habits, columns are the last few days, and how many days, which way round they run, and whether a tap or a press-and-hold marks them are all yours to set. A cell holds four states, not two: done, a lapse you recorded, a day you skipped, and a day nothing was ever recorded on. The last two are optional, because most days do not need the distinction and the ones that do need it badly.
+
+**Everything about a habit can be changed afterwards**, including the things that change what the record means - the frequency, the target, whether the target is a floor or a ceiling. Scores and streaks are computed from the entries on every read rather than stored, so editing a habit re-reads its whole history under the new rules instead of leaving behind a number that was true under the old ones. Reorder by dragging or with arrows, group and regroup, archive without losing the record, and correct any past day from the calendar.
+
+**A score that behaves like a habit does.** Loop Habit Tracker's exponential average, unchanged: a thirteen-day half-life, so thirteen days in a row is exactly 50% and a week off decays the score rather than resetting it. A percentage of days kept cannot do that, and cannot be moved at all once a year of data is behind it.
+
+**A frequency is a fraction.** Every day, every third day, three times a week, ten times a month, three times in fourteen days - all the same pair of numbers. A habit that asks for three days in seven is not late on the fourth.
+
+**Measurable habits with a ceiling.** How many litres, how many pages - and, the other way round, at most this many calories. The score is full while you stay under the cap and falls away above it, which is the shape of anything you are trying to do less of.
+
+**The rest of NiFo, along the top, read-only.** Kegels, PE, the Bible, the rule and the wind-down, filled from their own records. That is the answer to putting a habit tracker inside an app that already tracks five things: without it you would keep two records of the same morning and they would disagree by Friday.
+
+[`docs/HABITS.md`](docs/HABITS.md) has the maths.
+
 ## Layout
 
 ```
 www/               the entire app, plain ES modules, no build
   js/
     app.js         route table, shell state, boot
-    hub.js         the Today screen and the feature registry
     settings.js    app-wide settings
     lock.js        the optional PIN gate
     names.js       what each section is called
@@ -164,6 +181,7 @@ www/               the entire app, plain ES modules, no build
     icons.js       the inline SVG icon set
     native.js      real Android alarms via Capacitor
     nightlight.js  the night light bridge, settings and browser fallback
+    habits/        the grid, which is the home screen
     kegels/        the Kegels feature
     pe/            the PE feature
     bible/         the Bible feature and reader
@@ -181,17 +199,19 @@ docs/
   PE_PROGRAM.md    PE limits, projection maths and sources
   BIBLE.md         the parser, what it recovers, and why the text is bundled
   WINDDOWN.md      the physiology, and why the screen goes black not off
+  HABITS.md        the scoring maths, the frequency model, the day boundary
   NIGHTLIGHT.md    why the schedule is native, and the two filters
   BRAINSTORM.md    feature design notes and the backlog
 ```
 
 **[`docs/CODEMAP.md`](docs/CODEMAP.md) is the map.** One folder per feature,
 the same filenames in each, and a setting lives where the thing it affects
-lives.
+lives. [`CLAUDE.md`](CLAUDE.md) is the standing brief: **simple and effective**,
+which in practice has meant deleting more than adding.
 
 ## Adding the next feature
 
-`FEATURES` in `www/js/hub.js` is the registry the section tiles render from, and `todayTasks()` beside it builds the Today list. A new feature is an entry in both, plus a module that renders into `#app` and a route in `ROUTES`. Keep the store schema additive, `hydrate()` in `store.js` merges saved state over the blank shape, so new fields appear on old saves instead of coming back `undefined`.
+A feature is a folder under `www/js/`, a route in `ROUTES` in `app.js`, its own slice of the store, and - if it is something you owe daily - an entry in `LINKED` in `www/js/habits/program.js`, which is what puts it on the home grid as a row with a start button. Keep the store schema additive: `hydrate()` in `store.js` merges saved state over the blank shape, so new fields appear on old saves instead of coming back `undefined`. And read [`CLAUDE.md`](CLAUDE.md) first - the last three good changes to this app all removed a screen.
 
 ---
 

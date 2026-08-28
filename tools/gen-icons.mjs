@@ -1,5 +1,5 @@
 // Generates the PWA / launcher icons as PNGs with zero dependencies.
-// Draws the NiFo mark: a glowing progress ring on a dark rounded field.
+// Draws the NiFo mark: three rising bars on a dark rounded field.
 // Run: node tools/gen-icons.mjs
 import { deflateSync } from 'node:zlib';
 import { writeFileSync, mkdirSync } from 'node:fs';
@@ -53,23 +53,49 @@ const clamp01 = (t) => (t < 0 ? 0 : t > 1 ? 1 : t);
 // Smooth coverage for antialiasing: 1 inside, 0 outside, ramped over ~1px.
 const band = (d, edge, soft = 1.2) => clamp01((edge - d) / soft + 0.5);
 
+/** A rounded vertical bar, as antialiased coverage at (x, y).
+ *  Distance to a rounded rectangle: clamp the point into the bar's inner box
+ *  and measure how far outside it fell. */
+function barCoverage(x, y, bx, by, bw, bh) {
+  const rad = bw / 2;
+  const cx = Math.min(Math.max(x, bx + rad), bx + bw - rad);
+  const cy = Math.min(Math.max(y, by + rad), by + bh - rad);
+  return band(Math.hypot(x - cx, y - cy), rad);
+}
+
+/** The NiFo mark: three bars, rising.
+ *
+ *  The old mark was a progress ring with a dot in it, from when the app was one
+ *  feature and that feature was a contraction you held. The app is a grid of
+ *  things you keep now, so the mark is a habit going up. It also survives being
+ *  cropped to a circle, which a ring never does: crop a ring and you get a
+ *  ring, crop three bars and you still get three bars.
+ */
 function drawIcon(size, { maskable, foreground = false }) {
   const px = Buffer.alloc(size * size * 4);
   const c = size / 2;
   // Maskable icons get cropped by the launcher, so the artwork shrinks into the
   // safe zone; adaptive foreground layers are cropped hardest of all.
-  const scale = foreground ? 0.44 : maskable ? 0.62 : 0.78;
-  const rOuter = (size / 2) * scale;
-  const ringW = rOuter * 0.26;
-  const rMid = rOuter - ringW / 2;
-  const dot = rOuter * 0.2;
+  const scale = foreground ? 0.46 : maskable ? 0.64 : 0.8;
+  const art = size * scale;            // the mark's own square
+  const x0 = c - art / 2;
+  const y0 = c - art / 2;
+
+  // Three bars on a common baseline, each taller than the last. Geometry is in
+  // fractions of the art square so it matches the SVG mark in icons.js exactly.
+  const BARS = [
+    { x: 0.0125, top: 0.4 },
+    { x: 0.3437, top: 0.2125 },
+    { x: 0.675, top: 0.05 },
+  ];
+  const BAR_W = 0.2125;
+  const BASE = 0.95;
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const i = (y * size + x) * 4;
       const dx = x + 0.5 - c;
       const dy = y + 0.5 - c;
-      const dist = Math.hypot(dx, dy);
 
       // Background: deep slate, slightly lit from the top-left.
       const grad = clamp01((x + y) / (size * 2));
@@ -87,32 +113,18 @@ function drawIcon(size, { maskable, foreground = false }) {
         a = Math.round(255 * band(Math.hypot(qx, qy), rad));
       }
 
-      // The ring: teal at the top sweeping to violet, with a gap at the bottom
-      // like a progress arc that is nearly closed.
-      const ringCov = band(Math.abs(dist - rMid), ringW / 2);
-      const ang = Math.atan2(dy, dx); // -PI..PI, -PI/2 is up
-      let t = (ang + Math.PI / 2) / (Math.PI * 2);
-      if (t < 0) t += 1;
-      const gapStart = 0.9;
-      const gapCov = t > gapStart ? clamp01((t - gapStart) * 26) : 0;
-      const cov = ringCov * (1 - gapCov);
-      if (cov > 0) {
-        const rr = lerp(34, 167, t);
-        const gg = lerp(211, 139, t);
-        const bb = lerp(198, 250, t);
-        r = lerp(r, rr, cov);
-        g = lerp(g, gg, cov);
-        b = lerp(b, bb, cov);
+      for (const bar of BARS) {
+        const bx = x0 + bar.x * art;
+        const by = y0 + bar.top * art;
+        const cov = barCoverage(x + 0.5, y + 0.5, bx, by, BAR_W * art, (BASE - bar.top) * art);
+        if (cov <= 0) continue;
+        // The ramp runs left to right across the mark, so the tallest bar is
+        // the violet end: the same direction the SVG gradient runs.
+        const t = clamp01((bar.x + BAR_W / 2));
+        r = lerp(r, lerp(34, 167, t), cov);
+        g = lerp(g, lerp(211, 139, t), cov);
+        b = lerp(b, lerp(197, 250, t), cov);
         if (foreground) a = Math.max(a, Math.round(255 * cov));
-      }
-
-      // Centre dot: the "held" contraction.
-      const dotCov = band(dist, dot);
-      if (dotCov > 0) {
-        r = lerp(r, 240, dotCov);
-        g = lerp(g, 253, dotCov);
-        b = lerp(b, 250, dotCov);
-        if (foreground) a = Math.max(a, Math.round(255 * dotCov));
       }
 
       px[i] = Math.round(r);
