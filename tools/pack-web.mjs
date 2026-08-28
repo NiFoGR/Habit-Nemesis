@@ -48,6 +48,28 @@ async function measure(dir) {
   return { bytes, files };
 }
 
+// Asserted rather than trusted. This build exists to be published, so "no
+// scripture in it" is the one property that must not be able to quietly stop
+// being true - a copy step that changes shape, a filter that stops matching, a
+// file that lands somewhere new. Checked by looking, not by reasoning about
+// the filter above, and loud enough to fail a deploy.
+async function scriptureIn(dir, hits = []) {
+  for (const e of await readdir(dir, { withFileTypes: true })) {
+    const p = new URL(e.name + (e.isDirectory() ? '/' : ''), dir);
+    if (e.isDirectory()) await scriptureIn(p, hits);
+    else if (/\.json$/.test(e.name) && fileURLToPath(p).includes('/bible/')) hits.push(fileURLToPath(p));
+  }
+  return hits;
+}
+
+const leaked = await scriptureIn(out);
+if (leaked.length) {
+  console.error(`\nREFUSING: ${leaked.length} scripture file(s) reached dist-web/, starting with`);
+  console.error(`  ${leaked[0]}`);
+  console.error('docs/BIBLE.md says why this build must not carry them.');
+  process.exit(1);
+}
+
 const { bytes, files } = await measure(out);
 console.log(`dist-web/  ${files} files, ${(bytes / 1048576).toFixed(1)} MB`);
 console.log('No scripture in it: an install from this build has no Bible section to open.');

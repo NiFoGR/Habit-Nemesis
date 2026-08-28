@@ -33,7 +33,8 @@ Home Screen. That build has no scripture in it, on purpose.
 ### Why a hosted copy is never `www/` itself
 
 There used to be a route where GitHub Pages served `www/` whole. That is gone
-and it must stay gone.
+and it must stay gone. Pages itself is back — see below — publishing the packed
+copy instead.
 
 `www/bible/` holds the full text of the Orthodox Study Bible. Shipping that
 inside an APK you install on your own phone is a personal copy of a book you
@@ -59,14 +60,25 @@ An iPhone cannot sideload, so Add to Home Screen is the only route there is,
 and it is a good one: it installs as a real app, full screen, offline, with its
 own icon.
 
+**The easy way: GitHub Pages.** `.github/workflows/pages.yml` builds the packed
+copy and deploys it on every push to the default branch. Switch Pages on once,
+under **Settings → Pages → Source: GitHub Actions**, and the app lives at
+`https://nifogr.github.io/NiFo-App/` from then on. Send that link.
+
+That workflow can only ever publish `dist-web/`, and two independent checks
+fail the deploy if a scripture file reaches it — one inside `pack-web.mjs`, one
+in the step beside the upload.
+
+**By hand, to any host:**
+
 ```bash
 npm run pack:web          # writes dist-web/, about 1 MB
 node tools/serve.mjs 8080 dist-web   # to check it first
 ```
 
-Then put `dist-web/` behind **HTTPS** — any static host, unlisted — open it in
-Safari, and **Share → Add to Home Screen**. HTTPS is not optional: a service
-worker will not register without it and the app will not work offline.
+Then put `dist-web/` behind **HTTPS** — any static host — open it in Safari,
+and **Share → Add to Home Screen**. HTTPS is not optional: a service worker
+will not register without it and the app will not work offline.
 
 What an iPhone does not get, because Safari does not have them: real alarms
 that fire with the app closed (the reminders become in-app notifications only),

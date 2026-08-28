@@ -173,12 +173,20 @@ entry says so rather than picking a side.
   fall behind on; the book has an order of its own and the reader follows it.
 * **A verse-level tracker.** A chapter is the honest unit.
 * **Silently dropping a verse the parser missed.** It is marked.
-* **The text in a public place.** It is in this repository because this
-  repository is private. It has never been, and must never be, in a GitHub
-  Pages deployment or any other public surface. Note that Pages is public even
-  when the repository is private, so `.github/workflows/pages.yml` was deleted
-  outright rather than disabled: a workflow that is merely switched off is one
-  click away from publishing the whole translation.
+* **The text in a public place.** It has never been, and must never be, in a
+  GitHub Pages deployment or any other public surface. Note that Pages is
+  public even when the repository is private.
+
+  `.github/workflows/pages.yml` was deleted outright rather than disabled for
+  exactly that reason, because the version that existed then uploaded `www`
+  and a workflow merely switched off is one click from publishing the whole
+  translation. It is back now, and what changed is that it no longer has the
+  text to publish: it deploys `dist-web/`, built by `tools/pack-web.mjs`,
+  which is `www/` with `www/bible/` left out. Two things enforce that rather
+  than describe it — the script walks its own output and exits non-zero if a
+  single scripture file reached it, and the workflow repeats the check in the
+  step next to the upload, because the script and the workflow can be broken
+  by the same careless commit but not by the same careless line.
 
 ## Sources
 
