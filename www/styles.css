@@ -1,25 +1,70 @@
-/* NiFo, phone-first dark UI. One stylesheet, no framework. */
+/* NiFo, phone-first dark UI. One stylesheet, no framework.
 
-/* Palette taken from the app icon: teal sweeping to violet on deep slate.
-   Flat surfaces, but the brand ramp is used deliberately on rings and charts
-   so the app looks like its own logo rather than a generic dark theme. */
+   One theme. Not one theme per section: for a while every section swapped the
+   accent on the body, which meant colour answered "where am I" and nothing
+   else could use it. Six accents later the app read as six apps sharing a
+   skeleton. Now there is a single accent, and colour answers the only question
+   worth spending it on: what state is this in - done, due, missed.
+
+   The one exception is a habit's own colour, which you choose, and which is
+   the only colour in the app carrying information the shape does not. */
 :root {
+  /* ---- ground ---- */
   --bg: #0a0c10;
   --bg-2: #0e1116;
   --surface: #141821;
   --surface-2: #1a1f29;
   --line: #262c38;
+  --line-soft: #1d2330;
   --text: #e6eaf0;
   --muted: #97a1b0;
-  --accent: #22d3c5;
-  --violet: #a78bfa;
-  --good: #4ade80;
-  --warn: #fbbf24;
-  --danger: #f87171;
-  --calm: #38bdf8;
+  --faint: #6b7686;
+
+  /* ---- meaning ---- */
+  --accent: #22d3c5;   /* the app, and anything you can act on */
+  --violet: #a78bfa;   /* the far end of the brand ramp, for the mark only */
+  --good: #4ade80;     /* done */
+  --warn: #fbbf24;     /* careful */
+  --danger: #f87171;   /* wrong, or gone */
+  --calm: #38bdf8;     /* skipped, rested, deliberately not counted */
   --brand: linear-gradient(120deg, #22d3c5, #a78bfa);
-  --radius: 10px;
+
+  /* ---- type ----
+     A scale, not thirty ad-hoc rem values. Every size in the app comes from
+     one of these seven, which is most of what makes a screen look designed
+     rather than accumulated. */
+  --f-display: 1.75rem;
+  --f-title: 1.3rem;
+  --f-head: 1.05rem;
+  --f-body: 0.95rem;
+  --f-small: 0.84rem;
+  --f-fine: 0.76rem;
+  --f-micro: 0.66rem;
+  --w-normal: 400;
+  --w-medium: 600;
+  --w-bold: 700;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  /* The only second face in the app, and only ever on scripture and prayer.
+     Reading 1,344 chapters in a UI sans is worse, and that is a reading tool
+     rather than a decoration. It appears nowhere else - not on headings, not
+     on buttons, not on the section's own furniture. */
+  --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+
+  /* ---- shape ---- */
+  --radius: 12px;
+  --radius-sm: 9px;
+  --radius-pill: 999px;
   --pad: 16px;
+  --gap: 10px;
+
+  /* ---- motion ----
+     One duration and one curve, used everywhere. Motion in this app is only
+     ever there to make a change legible - what moved, and where it went - so
+     it is short enough not to be waited on. */
+  --t-fast: 0.12s;
+  --t-base: 0.2s;
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+
   /* Native controls follow this. Without it a checkbox renders as a white
      platform box on a near-black card, because accent-color only takes effect
      once the box is checked; the same went for select menus, the time picker
@@ -29,12 +74,16 @@
   --safe-t: env(safe-area-inset-top, 0px);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  :root { --t-fast: 0.001s; --t-base: 0.001s; }
+}
+
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 html, body {
   margin: 0;
   color: var(--text);
-  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font: 16px/1.5 var(--sans);
   overscroll-behavior-y: none;
 }
 
@@ -77,7 +126,7 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
   margin-bottom: 18px;
 }
 .screen-head h1 { flex: 1; text-align: center; font-size: 1.15rem; }
-.hub-head { justify-content: space-between; align-items: flex-start; }
+.hub-head { justify-content: space-between; align-items: center; }
 
 .icon-btn {
   width: 40px; height: 40px;
@@ -93,33 +142,10 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 .icon-btn:active { background: var(--surface-2); }
 .icon-btn.ghost { border-color: transparent; background: none; pointer-events: none; }
 
-/* ---------- hub ---------- */
-
-.feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-.feature {
-  grid-column: span 2;
-  display: block;
-  text-decoration: none;
-  color: inherit;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 18px;
-}
-.feature:active { transform: scale(0.995); }
-.feature h2 { margin: 0 0 4px; font-size: 1.1rem; }
-.feature p { color: var(--muted); font-size: 0.88rem; }
-.feature-icon { display: none; }
-.feature-foot { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
-
-
 .pill {
-  font-size: 0.72rem; padding: 4px 9px; border-radius: 999px;
+  font-size: var(--f-fine); padding: 4px 9px; border-radius: var(--radius-pill);
   background: none;
-  /* Falls back to the page accent, but inside a hub tile or a Today row it
-     picks up that section's --tile, so a pill is never a different colour
-     from the card it sits in. */
-  color: var(--tile, var(--accent));
+  color: var(--accent);
   border: 1px solid var(--line);
 }
 .pill.done { color: var(--good); }
@@ -629,31 +655,6 @@ input[type="range"] {
 .hub-head .brand-row { display: flex; align-items: center; gap: 10px; }
 .hub-head h1 { font-size: 1.35rem; }
 
-/* feature tiles get their mark back, as a stroke icon rather than a glyph */
-.feature { position: relative; }
-/* Each tile carries its own section's accent, and carries it in one place.
-   Before this the icon and the trend line on the same tile could disagree:
-   the icon came from CSS, where only PE had a rule so PE was violet and the
-   other three fell through to the hub's teal, while the line came from a
-   colour hard-coded in hub.js, so the Bible was a teal book above a gold
-   line. One token per tile now feeds both, and the values are the accents
-   those sections actually use when you open them, so the hub reads as an
-   index rather than four unrelated colours. */
-.feature.kegels,  .task.kegels  { --tile: #22d3c5; }
-.feature.pe,      .task.pe      { --tile: #a78bfa; }
-.feature.bible,   .task.bible   { --tile: #d08a6a; }
-.feature.breathe, .task.breathe { --tile: #8aa4e8; }
-/* Habits is the sixth, and the last hue left that means nothing else. Teal,
-   violet, clay and indigo are the four sections; green is --good and gold is
-   --warn, and a section accent that also means "done" or "careful" is read as
-   one. Rose collides with nothing, and the per-habit colours sit inside it. */
-.feature.habits,  .task.habits  { --tile: #e0729c; }
-
-.feature-icon { display: flex; color: var(--tile, var(--accent)); margin-bottom: 10px; }
-.feature-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
-.feature-head .ico { color: var(--tile, var(--accent)); }
-.feature-spark { margin-top: 12px; opacity: 0.85; }
-
 /* section headings with an icon */
 .h-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .h-row h2 { margin: 0; }
@@ -725,8 +726,6 @@ input[type="range"] {
 @media (min-width: 760px) {
   :root { --pad: 24px; }
   .screen, .report { max-width: 880px; }
-  .feature-grid { grid-template-columns: repeat(3, 1fr); }
-  .feature { grid-column: span 3; }
   .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
   .gal-grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
   .ring { width: min(52vw, 340px); height: min(52vw, 340px); }
@@ -735,8 +734,6 @@ input[type="range"] {
 
 @media (min-width: 1040px) {
   .screen, .report { max-width: 1080px; }
-  .feature-grid { grid-template-columns: repeat(4, 1fr); }
-  .feature { grid-column: span 2; }
   .stat-grid, .stat-grid.four { grid-template-columns: repeat(4, 1fr); }
   .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
   .player { max-width: 720px; margin: 0 auto; }
@@ -756,26 +753,6 @@ input[type="range"] {
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
-
-/* ---------- Today (the hub) ---------- */
-
-.hub-today { margin-bottom: 14px; }
-.sec-head { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 26px 0 10px; font-weight: 600; }
-
-.task-list { display: grid; gap: 8px; margin-bottom: 16px; }
-.task {
-  display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit;
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 13px 14px;
-}
-.task:active { background: var(--surface-2); }
-.task-ico { display: flex; color: var(--tile, var(--accent)); }
-.task.done { opacity: 0.55; }
-.task.done .task-ico { color: var(--good); }
-.task-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
-.task-text b { font-size: 0.95rem; font-weight: 600; }
-.task-text i { font-style: normal; font-size: 0.78rem; color: var(--muted); }
-.task-mini { flex: 0 0 46px; height: 5px; background: var(--line); border-radius: 5px; overflow: hidden; }
-.task-mini i { display: block; height: 100%; background: var(--tile, var(--accent)); }
 
 .btn-row { display: flex; gap: 8px; margin-top: 10px; }
 .btn-row .btn { margin-top: 0; }
@@ -960,12 +937,7 @@ input[type="range"] {
    Now only the accent changes. The greys are the ones defined at :root and are
    never overridden, so a card is the same card everywhere and the hub belongs
    to the same app as the pages it opens. */
-body[data-section="kegels"] { --accent: #22d3c5; }
 
-body[data-section="pe"] {
-  --accent: #a78bfa;
-  --violet: #a78bfa;
-}
 
 /* Prayer is deliberately the darkest and the quietest: near-black ground, warm
    gold instead of a cool accent, and a serif face. It should not look like the
@@ -1135,41 +1107,28 @@ body[data-section="pe"] {
 /* ==========================================================================
    Bible
    ==========================================================================
-   The fourth room. Prayer took the gold and the serif; this takes the deep
-   red of a Gospel book and keeps the serif, because both sections are for
-   reading rather than for counting reps. */
+   No longer a room of its own. The section used to redefine the accent, the
+   good colour and the heading weights, which is how four sections turned into
+   four apps. One thing survives, and it is a reading tool rather than a
+   decoration: the serif, on scripture and prayer text only. */
 
-body[data-section="bible"] {
-  --accent: #d08a6a;
-  --violet: #c2705a;
-  --good: #a8b586;
+/* Never on .screen: putting it there put Georgia on every button, pill and
+   settings row in the section, which was half of why it read as a different
+   app. Only the words you actually sit and read. */
+.verses,
+.vnote,
+.prayer-text {
+  font-family: var(--serif);
 }
 
-/* The serif is for scripture, not for the whole section. Setting it on
-   .screen put Georgia on every button, pill and settings row in the Bible and
-   was half of why that section read as a different app. */
-body[data-section="bible"] .verses,
-body[data-section="bible"] .vnote,
-body[data-section="bible"] .prayer-text {
-  font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
-}
-body[data-section="bible"] h1,
-body[data-section="bible"] h2,
-body[data-section="bible"] h3 { letter-spacing: 0; font-weight: 600; }
-body[data-section="bible"] .btn { font-family: inherit; letter-spacing: 0.01em; }
-body[data-section="bible"] .btn.primary { color: #14100a; }
 /* A count on a card heading belongs at the far end of the row, not next to
    the title, so the eye can run down a column of them. */
-body[data-section="bible"] .h-row .pill { margin-left: auto; }
+.screen.bible .h-row .pill { margin-left: auto; }
 
 .screen.bible .tiny { font-size: 0.74rem; }
 .pill.tiny { font-size: 0.64rem; padding: 1px 6px; }
 
 
-/* The rule cards moved into the Bible section with the rest of prayer, so the
-   styles they were sharing with the old prayer home live here now. */
-body[data-section="bible"] .rule-card { border-color: var(--line); }
-body[data-section="bible"] .rule-card.live { border-color: var(--accent); }
 
 /* ---------- bible: today's reading ---------- */
 
@@ -1308,7 +1267,6 @@ body[data-section="bible"] .rule-card.live { border-color: var(--accent); }
 /* Indigo on near-black. The section is used lying down in an unlit room, so it
    runs darker than the other three and its accent is the dimmest of the four:
    every value here is a light source pointed at your face at bedtime. */
-body[data-section="breathe"] { --accent: #8aa4e8; }
 
 .br-mark {
   width: 58px; height: 58px; border-radius: 50%;
@@ -1454,33 +1412,6 @@ body.blacked .br-orb { opacity: 0.09; }
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- the hub is deliberately colourless ----
-   Colour in this app means "you are inside this section". The hub points at
-   all of them, so giving it their four accents at once made the index compete
-   with the thing it indexes - it read as four apps stacked up rather than one
-   app's front page. Neutral here, colour the moment you open something.
-
-   The tokens are still per-section underneath; the hub simply overrides them,
-   so nothing has to be special-cased in JavaScript and the section pages are
-   untouched. */
-.screen.hub .feature,
-.screen.hub .task { --tile: var(--text); }
-
-/* Pills stay quiet: at full text weight a row of them shouts louder than the
-   heading above it. */
-.screen.hub .pill { color: var(--muted); }
-.screen.hub .pill.done { color: var(--text); }
-
-.screen.hub .feature-spark { opacity: 0.42; }
-.screen.hub .task-mini i { background: var(--muted); }
-.screen.hub .ring-fill { stroke: var(--text); }
-
-/* The one call to action keeps its weight by inverting rather than by
-   colouring: near-white on the page ground. */
-.screen.hub .btn.primary { background: var(--text); color: var(--bg); }
-.screen.hub .notice.action { border-color: var(--line); }
-.screen.hub .notice.action .ico { color: var(--muted); }
-
 /* ==========================================================================
    Habits
    ==========================================================================
@@ -1491,9 +1422,34 @@ body.blacked .br-orb { opacity: 0.09; }
    the first - the habit colour appears on names, rings, cells and calendars,
    and never on a control. */
 
-body[data-section="habits"] { --accent: #e0729c; }
 
-.habits-today { margin-bottom: 12px; }
+/* ---------- the home screen ----------
+   The grid is the app's front door, so it gets an app header rather than a
+   back arrow, and the day's ring above it counts every row on screen. */
+
+.head-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+.hub-head .brand-row h1 { font-size: var(--f-title); letter-spacing: -0.02em; }
+.home-today { margin-bottom: 14px; }
+.screen.home .btn.ghost.wide { margin-top: 18px; }
+
+/* The line under a row's name. On one of the five it is that section saying
+   what is still outstanding, which is the whole of what the old Today list
+   did, in the row that now replaces it. */
+.hg-label { display: grid; gap: 1px; min-width: 0; }
+.hg-label b,
+.hg-label i {
+  display: block; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.hg-label b { font-weight: var(--w-medium); font-size: var(--f-body); }
+.hg-label i { font-style: normal; font-size: var(--f-fine); color: var(--muted); }
+
+/* Today, on one of the five, is that section's start button: tapping it opens
+   the session rather than marking anything. So it is drawn as something to
+   press, not as a day you failed to tick. */
+.hg-cell.go { opacity: 1; }
+.hg-cell.go .ico { opacity: 0.9; }
+
 
 /* ---------- the toolbar above the grid ---------- */
 
@@ -1518,7 +1474,7 @@ body[data-section="habits"] { --accent: #e0729c; }
 
 .hg-head, .hg-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) repeat(var(--cols, 4), minmax(0, 40px));
+  grid-template-columns: minmax(0, 1fr) repeat(var(--cols, 4), minmax(0, 36px));
   align-items: center;
   gap: 2px;
 }
@@ -1533,11 +1489,11 @@ body[data-section="habits"] { --accent: #e0729c; }
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 6px 10px; min-height: 48px;
 }
-/* A linked row is a reading, not a control. The cells still draw so the row
-   lines up with the ones above it, but they cannot be pressed: of two records
-   of the same morning, the editable one is always the one that ends up wrong. */
-.hg-row.linked { background: none; border-style: dashed; }
-.hg-row.linked .hg-cell { pointer-events: none; }
+/* One of the five. A first-class row: today starts the thing, and only the
+   days behind it are a reading of that section's own record rather than
+   something you can edit here. Of two editable copies of one morning, the one
+   you can reach from the grid is always the one that ends up wrong. */
+.hg-row.linked .hg-cell:not(.go) { pointer-events: none; }
 .hg-row.dragging { opacity: 0.6; border-color: var(--accent); }
 
 /* The name has to survive four day columns on a 360px phone, so it takes
@@ -1790,3 +1746,46 @@ body[data-section="habits"] { --accent: #e0729c; }
 }
 .fq-row > span { flex: 0 0 30px; font-size: 0.66rem; color: var(--muted); text-align: right; }
 .fq-row.months em { flex: 1; font-style: normal; font-size: 0.6rem; color: var(--muted); text-align: center; }
+
+/* ==========================================================================
+   Motion
+   ==========================================================================
+   One duration, one curve, and only on properties that are cheap to animate.
+   Motion here is never decoration: it exists so a change is legible - what
+   moved, and where it went. Anything longer than --t-base is something you
+   end up waiting for, which is the opposite of smooth.
+
+   The reduced-motion query at the top of the file collapses every duration to
+   nothing, so this whole block turns itself off rather than being overridden
+   rule by rule. */
+
+.btn, .chipbtn, .icon-btn, .hg-cell, .hg-row, .task, .pill, .swatch,
+.day-chip, .pick, .type-card, .rowbtn, .set-nav a, .arch-row, .hc-cell {
+  transition: background-color var(--t-fast) var(--ease),
+              border-color var(--t-fast) var(--ease),
+              color var(--t-fast) var(--ease),
+              opacity var(--t-fast) var(--ease),
+              transform var(--t-fast) var(--ease);
+}
+
+/* Press feedback, on everything you can press, at one depth. Before this some
+   controls scaled, some changed background and most did nothing, so the app
+   felt inert in some places and springy in others. */
+.btn:active, .chipbtn:active, .icon-btn:active,
+.type-card:active, .pick:active, .day-chip:active { transform: scale(0.97); }
+.hg-cell:active, .hc-cell:active { transform: scale(0.88); }
+.hg-row:active { transform: scale(0.995); }
+
+/* A screen arriving. Short, and only on the container, so it costs one
+   composited layer rather than one per row. */
+.screen { animation: screen-in var(--t-base) var(--ease); }
+@keyframes screen-in { from { opacity: 0; transform: translateY(4px); } }
+
+/* The grid changing width when you change the day count: the rows stay put
+   and the columns grow, which is the one transition in the app worth having,
+   because it is the same rows either way. */
+.hgrid { transition: none; }
+.hg-row, .hg-head { transition: grid-template-columns var(--t-base) var(--ease); }
+
+.sheet { animation: sheet-in var(--t-base) var(--ease); }
+@keyframes sheet-in { from { transform: translateY(12px); opacity: 0; } }

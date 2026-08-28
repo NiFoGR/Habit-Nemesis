@@ -86,14 +86,27 @@ export function icon(name, size = 20) {
   return svg(PATHS[name] || PATHS.target, size);
 }
 
-/** The NiFo mark itself, the same arc-and-dot as the launcher icon. */
+/** The NiFo mark: three bars, rising.
+ *
+ *  The old mark was a broken progress ring with a dot in it, drawn when the app
+ *  was one feature and that feature was a contraction you held. The app is now
+ *  a grid of things you keep, so the mark is the shape of a habit going up:
+ *  three strokes, like the three strokes of the N beside it, each taller than
+ *  the last. It survives being 16px in a tab and being cropped to a circle by
+ *  a launcher, which the ring and its dot did not.
+ *
+ *  The gradient is the one place the teal-to-violet ramp still lives. Every
+ *  other surface in the app takes the single flat accent.
+ */
 export function logoMark(size = 26) {
+  // Unique per call: two copies of the same gradient id on one page is invalid
+  // markup, and Safari resolves both to whichever it saw first.
+  const id = `nifoG${Math.random().toString(36).slice(2, 7)}`;
+  const bar = (x, y) => `<rect x="${x}" y="${y}" width="7.5" height="${34 - y}" rx="3.75" fill="url(#${id})"/>`;
   return `<svg width="${size}" height="${size}" viewBox="0 0 40 40" fill="none" aria-hidden="true" class="logo-mark">
-    <defs><linearGradient id="nifoG" x1="0" y1="0" x2="1" y2="1">
+    <defs><linearGradient id="${id}" x1="0" y1="1" x2="1" y2="0">
       <stop offset="0%" stop-color="#22d3c5"/><stop offset="100%" stop-color="#a78bfa"/>
     </linearGradient></defs>
-    <circle cx="20" cy="20" r="14" stroke="url(#nifoG)" stroke-width="5.5"
-            stroke-linecap="round" stroke-dasharray="79 88" transform="rotate(-72 20 20)"/>
-    <circle cx="20" cy="20" r="4" fill="#f0fdfa"/>
+    ${bar(4.5, 22)}${bar(16.25, 14.5)}${bar(28, 6)}
   </svg>`;
 }

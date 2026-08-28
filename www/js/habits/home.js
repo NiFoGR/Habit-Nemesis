@@ -1,26 +1,33 @@
-// The habits section: the grid, its settings, and the archive.
+// The home screen: the grid.
 //
-// The grid is the whole feature in one screen. Rows are habits, columns are the
-// last few days, and a cell is one tap. Everything else here exists to keep
-// that screen yours: reorder by dragging, group and regroup, choose how many
-// days are shown and which way round they run, and decide what a tap even
-// means - a tick, a tick and a lapse, or a tick and a skip.
+// This is the whole app in one screen. Rows are the things you keep - the five
+// the app itself asks of you and every one you added - columns are the last few
+// days, and a cell is one tap. There is no menu above it and no dashboard
+// beside it, because both were the same list a third time.
 //
-// The five other features appear at the top of the grid read-only, filled from
-// their own records. They are the answer to the obvious objection to a habit
-// tracker inside an app that already tracks five things: without them you would
-// keep two records of the same morning and they would disagree by Friday.
+// Two rules, and they hold for every row without exception:
+//
+//   The name goes there.  Tapping "Kegels" opens the Kegels section; tapping a
+//                         habit opens its own screen.
+//   The cell does it.     Tapping today on Kegels starts a session; on a habit
+//                         it marks the day.
+//
+// Only today acts. A past cell on one of the five is a reading of that
+// section's own record and cannot be edited here, because two editable copies
+// of one morning disagree by Friday.
 
 import * as store from '../store.js';
 import * as habits from './program.js';
 import { escapeHtml, ringSvg, toast, openSheet, haptic } from '../ui.js';
-import { icon } from '../icons.js';
-import { kegelName, peName } from '../names.js';
+import { icon, logoMark } from '../icons.js';
+import { navigate } from '../back.js';
 import { openTypePicker } from './edit.js';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const WEEKDAYS_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const LONG_PRESS_MS = 420;
+
+const rowColour = (habit) => (habit.colour ? habits.hexOf(habit.colour) : 'var(--accent)');
 
 /** The small ring beside a habit's name: its score, in its own colour.
  *  `ringSvg` is the 168px one from the report screen and carries a gradient,
@@ -42,31 +49,42 @@ function miniRing(frac, colour) {
 function cellHtml(habit, key, sum, s) {
   const d = sum.index.get(key);
   const raw = d?.raw;
-  const colour = habits.hexOf(habit.colour);
+  const colour = rowColour(habit);
   const future = key > habits.today();
   if (future) return `<button class="hg-cell future" data-day="${key}" disabled aria-hidden="true"></button>`;
 
+  // One of the five: only today does anything, and what it does is start the
+  // thing. Everything behind today is that section's record, shown not edited.
+  const go = habit.linked && key === habits.today() && habit.action
+    ? ` data-go="${escapeHtml(habit.action)}"`
+    : '';
   const label = `${habit.name}, ${key}`;
   if (raw === habits.SKIP) {
-    return `<button class="hg-cell skip" data-day="${key}" aria-label="${escapeHtml(label)}: skipped">${icon('skip', 15)}</button>`;
+    return `<button class="hg-cell skip" data-day="${key}"${go} aria-label="${escapeHtml(label)}: skipped">${icon('skip', 15)}</button>`;
   }
   if (habit.kind === 'number') {
     const has = typeof raw === 'number';
     const met = !!d?.hit;
-    return `<button class="hg-cell num ${met ? 'on' : has ? 'part' : ''}" data-day="${key}"
+    return `<button class="hg-cell num ${met ? 'on' : has ? 'part' : ''}" data-day="${key}"${go}
       style="${met ? `color:${colour}` : ''}" aria-label="${escapeHtml(label)}">
       <b>${has ? escapeHtml(fmtNumber(raw)) : '–'}</b><i>${escapeHtml(habit.unit || '')}</i></button>`;
   }
   if (raw === habits.YES) {
-    return `<button class="hg-cell on" data-day="${key}" style="color:${colour}" aria-label="${escapeHtml(label)}: done">${icon('check', 18)}</button>`;
+    return `<button class="hg-cell on" data-day="${key}"${go} style="color:${colour}" aria-label="${escapeHtml(label)}: done">${icon('check', 18)}</button>`;
   }
   if (raw === habits.NO) {
-    return `<button class="hg-cell no" data-day="${key}" aria-label="${escapeHtml(label)}: missed">${icon('close', 16)}</button>`;
+    return `<button class="hg-cell no" data-day="${key}"${go} aria-label="${escapeHtml(label)}: missed">${icon('close', 16)}</button>`;
   }
   // Nothing recorded. A satisfied day inside a "three times a week" window is
   // still shown as carried rather than as done, because you did not do it
   // today and a tick would say you had.
   const carried = d?.satisfied ? ' carried' : '';
+  // One of the five, still owed today: this cell starts it, so it is drawn as
+  // something to press rather than as a day you have already failed to tick.
+  if (go) {
+    return `<button class="hg-cell go" data-day="${key}"${go} style="color:${colour}"
+      aria-label="Start ${escapeHtml(habit.name)}">${icon('play', 15)}</button>`;
+  }
   return `<button class="hg-cell${carried}" data-day="${key}" aria-label="${escapeHtml(label)}: not recorded">${
     s.unknownMarks ? '<span class="hg-q">?</span>' : icon('close', 16)
   }</button>`;
@@ -85,13 +103,21 @@ function headCell(key) {
 
 function rowHtml(habit, days, s, { reorder = false, groupOptions = () => '' } = {}) {
   const sum = habits.summary(habit);
-  const colour = habits.hexOf(habit.colour);
-  const href = `#/habits/habit?id=${encodeURIComponent(habit.id)}`;
+  // The five the app asks of you take the accent; the ones you made take the
+  // colour you chose. Colour on this screen therefore means "mine", which is
+  // the only thing left for it to mean once the section palettes are gone.
+  const colour = rowColour(habit);
+  // The name goes there: a habit to its own screen, one of the five to its
+  // section. Never to the same place as the cell beside it.
+  const href = habit.linked ? habit.href : `#/habits/habit?id=${encodeURIComponent(habit.id)}`;
   return `<div class="hg-row ${habit.linked ? 'linked' : ''}" data-id="${escapeHtml(habit.id)}">
     ${reorder && !habit.linked ? `<button class="hg-drag" aria-label="Reorder ${escapeHtml(habit.name)}">${icon('reorder', 16)}</button>` : ''}
     <a class="hg-name" href="${href}">
-      ${habit.linked ? `<span class="hg-link-ico" style="color:${colour}">${icon(habit.icon, 16)}</span>` : miniRing(sum.score, colour)}
-      <span style="color:${colour}">${escapeHtml(habit.name)}</span>
+      ${habit.linked ? `<span class="hg-link-ico" style="color:${colour}">${icon(habit.icon, 17)}</span>` : miniRing(sum.score, colour)}
+      <span class="hg-label">
+        <b${habit.linked ? '' : ` style="color:${colour}"`}>${escapeHtml(habit.name)}</b>
+        ${habit.detail ? `<i>${escapeHtml(habit.detail)}</i>` : ''}
+      </span>
     </a>
     ${reorder && !habit.linked
       ? `<div class="hg-move">
@@ -107,11 +133,12 @@ function rowHtml(habit, days, s, { reorder = false, groupOptions = () => '' } = 
 
 let reorderMode = false;
 
-/** The router calls this, and it always arrives with the grid in its normal
- *  state: reorder mode is a thing you are doing, not a preference, and coming
- *  back from a habit's own screen to a grid full of arrows and no cells reads
- *  as a bug. Redraws from inside the screen go through `redraw` instead. */
-export function renderHabits(mount) {
+/** The home screen. The router calls this, and it always arrives with the grid
+ *  in its normal state: reorder mode is a thing you are doing, not a
+ *  preference, and coming back from a habit's own screen to a grid full of
+ *  arrows and no cells reads as a bug. Redraws from inside the screen go
+ *  through `redraw` instead. */
+export function renderHome(mount) {
   reorderMode = false;
   redraw(mount);
 }
@@ -152,58 +179,44 @@ function redraw(mount) {
     .join('');
 
   mount.innerHTML = `
-    <div class="screen habits">
-      <header class="screen-head">
-        <button class="icon-btn" data-back="hub" aria-label="Back">${icon('back')}</button>
-        <h1>Habits</h1>
-        <button class="icon-btn" id="addBtn" aria-label="New habit">${icon('plus')}</button>
-        <button class="icon-btn" data-nav="habits-settings" aria-label="Settings">${icon('settings')}</button>
+    <div class="screen home">
+      <header class="hub-head">
+        <div class="brand-row">${logoMark(26)}<h1>NiFo</h1></div>
+        <div class="head-actions">
+          <button class="icon-btn" id="addBtn" aria-label="New habit">${icon('plus')}</button>
+          <a class="icon-btn linkbtn" href="#/settings" aria-label="Settings">${icon('settings')}</a>
+        </div>
       </header>
 
-      ${list.length
-        ? `<div class="today habits-today">
-            <div class="today-left">
-              <h2>${due.pending.length ? `${due.pending.length} left today` : 'All done today'}</h2>
-              <p class="muted small">${list.length} habit${list.length === 1 ? '' : 's'}${
-                s.dayStartHour ? ` · the day turns at ${String(s.dayStartHour).padStart(2, '0')}:00` : ''
-              }</p>
-            </div>
-            ${ringSvg(due.total ? due.done / due.total : 1, `${due.done}/${due.total}`, 'today', { size: 88 })}
-          </div>
+      <div class="today home-today">
+        <div class="today-left">
+          <h2>${due.pending.length ? `${due.pending.length} left today` : 'All done today'}</h2>
+          <p class="muted small">${escapeHtml(new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }))}</p>
+        </div>
+        ${ringSvg(due.total ? due.done / due.total : 1, `${due.done}/${due.total}`, 'today', { size: 84 })}
+      </div>
 
-          <div class="hg-tools">
-            <button class="chipbtn ${reorderMode ? 'on' : ''}" id="reorderBtn">${icon('reorder', 15)}<span>${reorderMode ? 'Done' : 'Reorder'}</span></button>
-            <button class="chipbtn" id="colsBtn">${icon('calendar', 15)}<span>${s.columns} days</span></button>
-            <button class="chipbtn" id="groupBtn">${icon('filter', 15)}<span>Groups</span></button>
-          </div>
+      <div class="hg-tools">
+        <button class="chipbtn ${reorderMode ? 'on' : ''}" id="reorderBtn">${icon('reorder', 15)}<span>${reorderMode ? 'Done' : 'Reorder'}</span></button>
+        <button class="chipbtn" id="colsBtn">${icon('calendar', 15)}<span>${s.columns} day${s.columns === 1 ? '' : 's'}</span></button>
+        <button class="chipbtn" id="groupBtn">${icon('filter', 15)}<span>Groups</span></button>
+      </div>
 
-          <div class="hgrid ${reorderMode ? 'reordering' : ''}" style="--cols:${reorderMode ? 1 : s.columns}">
-            ${reorderMode ? '' : head}
-            ${linked.length && !reorderMode
-              ? `<div class="hg-group"><span class="hg-group-btn"><b>From the rest of NiFo</b></span>
-                   <span class="pill ghost">read-only</span></div>
-                 <div class="hg-rows linked-rows">${linked.map((h) => rowHtml(h, days, s)).join('')}</div>`
-              : ''}
-            ${groupSections}
-          </div>`
-        : `<div class="empty-state">
-            ${icon('habits', 34)}
-            <h2>Nothing here yet</h2>
-            <p class="muted">A habit is a question you answer every day. Name it, say how often, and it appears in the grid tomorrow morning whether you want it to or not.</p>
-            <a class="btn primary linkbtn" href="#/habits/edit">Create your first habit</a>
-          </div>`}
+      <div class="hgrid ${reorderMode ? 'reordering' : ''}" style="--cols:${reorderMode ? 1 : s.columns}">
+        ${reorderMode ? '' : head}
+        ${linked.length && !reorderMode
+          ? `<div class="hg-rows">${linked.map((h) => rowHtml(h, days, s)).join('')}</div>`
+          : ''}
+        ${groupSections}
+      </div>
 
-      ${list.length
-        ? `<div class="linkrow">
-            <a href="#/habits/edit">New habit</a>
-            <a href="#/habits/archive">Archive</a>
-            <a href="#/habits/settings">Settings</a>
-          </div>`
-        : ''}
+      <button class="btn ghost wide" id="addBtn2">${icon('plus', 16)}<span>New habit</span></button>
+
+      <div id="installSlot"></div>
     </div>`;
 
-  mount.querySelector('#addBtn')?.addEventListener('click', openTypePicker);
-  if (!list.length) return;
+  mount.querySelectorAll('#addBtn, #addBtn2').forEach((b) => b.addEventListener('click', openTypePicker));
+  mountInstall();
   wireGrid(mount, days);
 }
 
@@ -273,6 +286,8 @@ function wireCells(grid, mount, s) {
   let held = false;
 
   const act = (cell) => {
+    // One of the five: today's cell is the section's own start button.
+    if (cell.dataset.go) return navigate(cell.dataset.go);
     const row = cell.closest('.hg-row');
     if (!row || row.classList.contains('linked')) return;
     const habit = habits.byId(row.dataset.id);
@@ -288,6 +303,9 @@ function wireCells(grid, mount, s) {
   grid.addEventListener('click', (e) => {
     const cell = e.target.closest('.hg-cell');
     if (!cell) return;
+    // Starting a session is navigation, not marking, so it never waits for a
+    // long press even when marking does.
+    if (cell.dataset.go) return navigate(cell.dataset.go);
     // A long press has already acted; the click that follows it must not undo
     // that by cycling a second time.
     if (held) {
@@ -474,132 +492,6 @@ function openGroupSheet(mount) {
   draw();
 }
 
-/* ---------------- settings ---------------- */
-
-export function renderHabitSettings(mount) {
-  const s = habits.settings();
-
-  mount.innerHTML = `
-    <div class="screen habits">
-      <header class="screen-head">
-        <button class="icon-btn" data-back="habits" aria-label="Back">${icon('back')}</button>
-        <h1>Habits</h1>
-        <span class="icon-btn ghost"></span>
-      </header>
-
-      <section class="card">
-        <div class="h-row">${icon('calendar', 16)}<h2>The day</h2></div>
-        <label class="setting">
-          <span><b>First day of the week</b><i>Where the calendar and the weekly buckets start.</i></span>
-          <select id="firstDay">
-            ${WEEKDAYS_LONG.map((d, i) => `<option value="${i}" ${s.firstDay === i ? 'selected' : ''}>${d}</option>`).join('')}
-          </select>
-        </label>
-        <label class="setting">
-          <span><b>A new day begins at</b><i>Past midnight, so something ticked at 01:00 belongs to the night you were still up for. This section only: the other five record against midnight.</i></span>
-          <select id="dayStart">
-            ${[0, 1, 2, 3, 4, 5, 6].map((h) => `<option value="${h}" ${s.dayStartHour === h ? 'selected' : ''}>${h === 0 ? 'Midnight' : `${String(h).padStart(2, '0')}:00`}</option>`).join('')}
-          </select>
-        </label>
-        <label class="setting">
-          <span><b>Days on screen</b><i>Columns in the grid.</i></span>
-          <select id="columns">
-            ${[3, 4, 5, 6, 7].map((n) => `<option value="${n}" ${s.columns === n ? 'selected' : ''}>${n}</option>`).join('')}
-          </select>
-        </label>
-        <label class="setting toggle">
-          <span><b>Oldest first</b><i>Days run left to right instead of newest on the left.</i></span>
-          <input type="checkbox" id="reverseDays" ${s.reverseDays ? 'checked' : ''}>
-        </label>
-      </section>
-
-      <section class="card">
-        <div class="h-row">${icon('flash', 16)}<h2>Marking</h2></div>
-        <label class="setting toggle">
-          <span><b>Toggle with a short press</b><i>One tap marks a day. Turn it off and a cell needs holding, which is what you want if you keep catching them while scrolling.</i></span>
-          <input type="checkbox" id="shortPress" ${s.shortPress ? 'checked' : ''}>
-        </label>
-        <label class="setting toggle">
-          <span><b>Skip days</b><i>Tap again for a skip instead of clearing. A skip leaves the score exactly where it was and keeps the streak running through it: it is for the days that genuinely did not count.</i></span>
-          <input type="checkbox" id="skipDays" ${s.skipDays ? 'checked' : ''}>
-        </label>
-        <label class="setting toggle">
-          <span><b>Question marks for missing data</b><i>Tells a day you never answered apart from a day you answered no. With this on, tap twice to record a real lapse.</i></span>
-          <input type="checkbox" id="unknownMarks" ${s.unknownMarks ? 'checked' : ''}>
-        </label>
-      </section>
-
-      <section class="card">
-        <div class="h-row">${icon('home', 16)}<h2>The rest of NiFo</h2></div>
-        <label class="setting toggle">
-          <span><b>Show the other five</b><i>${escapeHtml(kegelName())}, ${escapeHtml(peName())}, the Bible, the rule and the wind-down, at the top of the grid, filled from their own records and not tappable here.</i></span>
-          <input type="checkbox" id="showLinked" ${s.showLinked ? 'checked' : ''}>
-        </label>
-        <p class="fineprint">They are read-only on purpose. Two records of the same morning disagree within a week, and the one you can edit is always the one that ends up wrong.</p>
-      </section>
-
-      <section class="card">
-        <div class="h-row">${icon('images', 16)}<h2>Data</h2></div>
-        <p class="small muted">A spreadsheet of every habit against every day. The whole-app backup under Settings is the one that can be imported back; this one is for reading.</p>
-        <button class="btn wide" id="csv">Export as CSV</button>
-      </section>
-
-      <div class="linkrow">
-        <a href="#/habits/archive">Archive</a>
-        <a href="#/habits/edit">New habit</a>
-      </div>
-    </div>`;
-
-  const set = (key, value) =>
-    store.update((st) => {
-      st.habits.settings[key] = value;
-    });
-
-  mount.querySelector('#firstDay').addEventListener('change', (e) => set('firstDay', Number(e.target.value)));
-  mount.querySelector('#dayStart').addEventListener('change', (e) => {
-    set('dayStartHour', Number(e.target.value));
-    toast('Saved');
-  });
-  mount.querySelector('#columns').addEventListener('change', (e) => set('columns', Number(e.target.value)));
-  ['reverseDays', 'shortPress', 'skipDays', 'unknownMarks', 'showLinked'].forEach((id) =>
-    mount.querySelector(`#${id}`).addEventListener('change', (e) => set(id, e.target.checked))
-  );
-  mount.querySelector('#csv').addEventListener('click', exportCsv);
-}
-
-/** Every habit against every day, newest first. Quoted properly, because a
- *  habit called `Run, then stretch` would otherwise become two columns. */
-function exportCsv() {
-  const list = habits.active().concat(habits.archived());
-  if (!list.length) return toast('No habits to export');
-  const q = (v) => `"${String(v).replace(/"/g, '""')}"`;
-  const sums = list.map((h) => habits.summary(h));
-  const first = sums.reduce((a, s) => (s.days.length && (!a || s.days[0].key < a) ? s.days[0].key : a), null);
-  const rows = [['date', ...list.map((h) => h.name)].map(q).join(',')];
-  for (let key = habits.today(); first && key >= first; key = store.addDays(key, -1)) {
-    rows.push(
-      [
-        key,
-        ...sums.map((s) => {
-          const d = s.index.get(key);
-          if (!d || d.raw === undefined) return '';
-          if (d.raw === habits.SKIP) return 'skip';
-          return d.raw;
-        }),
-      ]
-        .map(q)
-        .join(',')
-    );
-  }
-  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `nifo-habits-${store.dayKey()}.csv`;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  toast('CSV downloaded');
-}
-
 /* ---------------- the archive ----------------
    Archiving is the answer to a habit you have finished with but whose record
    you would rather not delete. It leaves the grid and keeps everything. */
@@ -648,5 +540,31 @@ export function renderArchive(mount) {
       toast('Deleted');
       renderArchive(mount);
     });
+  });
+}
+
+/* ---------------- install prompt ----------------
+   Lives here because the slot it fills is on this screen. Chrome fires the
+   event once, whenever it feels like it, which may be before or after the home
+   screen has rendered, so the prompt is stashed and mounted from both
+   directions. Moved here wholesale when the hub became the grid. */
+
+let installPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  installPrompt = e;
+  mountInstall();
+});
+
+function mountInstall() {
+  const slot = document.getElementById('installSlot');
+  if (!slot || !installPrompt) return;
+  slot.innerHTML = '<button class="btn ghost wide" id="installBtn">Install NiFo to your home screen</button>';
+  slot.querySelector('#installBtn').addEventListener('click', async () => {
+    installPrompt.prompt();
+    await installPrompt.userChoice;
+    installPrompt = null;
+    slot.innerHTML = '';
   });
 }

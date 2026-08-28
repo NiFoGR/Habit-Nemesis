@@ -8,7 +8,8 @@
 import * as store from './store.js';
 import * as vault from './pe/vault.js';
 import { usage as photoUsage } from './pe/db.js';
-import { escapeHtml, toast } from './ui.js';
+import { escapeHtml, toast, openSheet } from './ui.js';
+import * as habits from './habits/program.js';
 import { icon } from './icons.js';
 import { kegelName, peName } from './names.js';
 import { markUnlocked } from './lock.js';
@@ -35,14 +36,16 @@ function settingsNav() {
     <a href="#/pe/settings">${icon('trend', 18)}<span><b>${escapeHtml(peName())}</b><i>Units, session defaults, check-in day</i></span></a>
     <a href="#/bible/settings">${icon('scripture', 18)}<span><b>Bible and prayer</b><i>Text size, reminder, the rule's times and language</i></span></a>
     <a href="#/breathe/settings">${icon('breath', 18)}<span><b>Wind-down</b><i>Pattern, length, pacing, reminder</i></span></a>
-    <a href="#/habits/settings">${icon('habits', 18)}<span><b>Habits</b><i>The day boundary, what a tap does, groups, the archive</i></span></a>
   </div>`;
 }
+
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export function renderSettings(mount) {
   const s = store.get().settings;
   const pe = store.get().pe.settings;
   const nl = store.get().nightlight;
+  const hs = habits.settings();
 
   mount.innerHTML = `
     <div class="screen">
@@ -56,6 +59,56 @@ export function renderSettings(mount) {
       ${settingsNav()}
 
       <h3 class="sec-head">Everywhere</h3>
+
+      <section class="card">
+        <div class="h-row">${icon('habits', 16)}<h2>The grid</h2></div>
+        <label class="setting">
+          <span><b>First day of the week</b><i>Where the calendar and the weekly buckets start.</i></span>
+          <select id="firstDay">
+            ${WEEKDAYS.map((d, i) => `<option value="${i}" ${hs.firstDay === i ? 'selected' : ''}>${d}</option>`).join('')}
+          </select>
+        </label>
+        <label class="setting">
+          <span><b>A new day begins at</b><i>Past midnight, so something ticked at 01:00 belongs to the night you were still up for. The grid only: sessions and readings record against midnight.</i></span>
+          <select id="dayStart">
+            ${[0, 1, 2, 3, 4, 5, 6].map((h) => `<option value="${h}" ${hs.dayStartHour === h ? 'selected' : ''}>${h === 0 ? 'Midnight' : `${String(h).padStart(2, '0')}:00`}</option>`).join('')}
+          </select>
+        </label>
+        <label class="setting">
+          <span><b>Days on screen</b><i>Columns in the grid.</i></span>
+          <select id="columns">
+            ${[1, 3, 4, 5, 6, 7].map((n) => `<option value="${n}" ${hs.columns === n ? 'selected' : ''}>${n}</option>`).join('')}
+          </select>
+        </label>
+        <label class="setting toggle">
+          <span><b>Oldest first</b><i>Days run left to right instead of newest on the left.</i></span>
+          <input type="checkbox" id="reverseDays" ${hs.reverseDays ? 'checked' : ''}>
+        </label>
+        <label class="setting toggle">
+          <span><b>Show the five</b><i>${escapeHtml(kegelName())}, ${escapeHtml(peName())}, the Bible, the rule and the wind-down, as rows on the grid. Turning them off does not turn the features off.</i></span>
+          <input type="checkbox" id="showLinked" ${hs.showLinked ? 'checked' : ''}>
+        </label>
+      </section>
+
+      <section class="card">
+        <div class="h-row">${icon('check', 16)}<h2>Marking</h2></div>
+        <label class="setting toggle">
+          <span><b>Toggle with a short press</b><i>One tap marks a day. Turn it off and a cell needs holding, which is what you want if you keep catching them while scrolling.</i></span>
+          <input type="checkbox" id="shortPress" ${hs.shortPress ? 'checked' : ''}>
+        </label>
+        <label class="setting toggle">
+          <span><b>Skip days</b><i>Tap again for a skip instead of clearing. A skip leaves the score exactly where it was and keeps the streak running through it: it is for the days that genuinely did not count.</i></span>
+          <input type="checkbox" id="skipDays" ${hs.skipDays ? 'checked' : ''}>
+        </label>
+        <label class="setting toggle">
+          <span><b>Question marks for missing data</b><i>Tells a day you never answered apart from a day you answered no. With this on, tap twice to record a real lapse.</i></span>
+          <input type="checkbox" id="unknownMarks" ${hs.unknownMarks ? 'checked' : ''}>
+        </label>
+        <div class="btn-row">
+          <a class="btn linkbtn" href="#/habits/archive">Archived habits</a>
+          <button class="btn" id="csv">Export habits as CSV</button>
+        </div>
+      </section>
 
       <section class="card">
         <div class="h-row">${icon('flash', 16)}<h2>Feedback</h2></div>
@@ -121,6 +174,21 @@ export function renderSettings(mount) {
       store.setSetting(key, get(e.target));
       toast('Saved');
     });
+  const setGrid = (key, value) =>
+    store.update((st) => {
+      st.habits.settings[key] = value;
+    });
+  mount.querySelector('#firstDay').addEventListener('change', (e) => setGrid('firstDay', Number(e.target.value)));
+  mount.querySelector('#dayStart').addEventListener('change', (e) => {
+    setGrid('dayStartHour', Number(e.target.value));
+    toast('Saved');
+  });
+  mount.querySelector('#columns').addEventListener('change', (e) => setGrid('columns', Number(e.target.value)));
+  ['reverseDays', 'showLinked', 'shortPress', 'skipDays', 'unknownMarks'].forEach((id) =>
+    mount.querySelector(`#${id}`).addEventListener('change', (e) => setGrid(id, e.target.checked))
+  );
+  mount.querySelector('#csv').addEventListener('click', exportCsv);
+
   bind('haptics', 'haptics', (e) => e.checked);
   bind('sound', 'sound', (e) => e.checked);
   bind('discreet', 'discreet', (e) => e.checked);
@@ -214,3 +282,35 @@ async function photoCount() {
   }
 }
 
+/** Every habit against every day, newest first. Quoted properly, because a
+ *  habit called `Run, then stretch` would otherwise become two columns. */
+function exportCsv() {
+  const list = habits.active().concat(habits.archived());
+  if (!list.length) return toast('No habits to export');
+  const q = (v) => `"${String(v).replace(/"/g, '""')}"`;
+  const sums = list.map((h) => habits.summary(h));
+  const first = sums.reduce((a, s) => (s.days.length && (!a || s.days[0].key < a) ? s.days[0].key : a), null);
+  const rows = [['date', ...list.map((h) => h.name)].map(q).join(',')];
+  for (let key = habits.today(); first && key >= first; key = store.addDays(key, -1)) {
+    rows.push(
+      [
+        key,
+        ...sums.map((s) => {
+          const d = s.index.get(key);
+          if (!d || d.raw === undefined) return '';
+          if (d.raw === habits.SKIP) return 'skip';
+          return d.raw;
+        }),
+      ]
+        .map(q)
+        .join(',')
+    );
+  }
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `nifo-habits-${store.dayKey()}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast('CSV downloaded');
+}

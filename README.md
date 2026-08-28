@@ -16,9 +16,9 @@ Runs entirely on the phone. No account, no server, no analytics, nothing leaves 
 
 **Feature 6 - Habits:** everything else you hold yourself to, on a grid you tap once a day. Yes/no habits and measurable ones, a target that can be a floor or a ceiling, and a frequency that is a fraction rather than a weekday pattern - three times a week is not late on the fourth day. An exponential score with a thirteen-day half-life instead of a percentage of days kept, so a lapse in March does not weigh the same as one this morning. Skips that keep the streak running, a calendar you can correct, groups with a score of their own, and the rest of NiFo along the top of the grid, read-only so there is never a second copy of the same morning. [`docs/HABITS.md`](docs/HABITS.md).
 
-The home screen is a **Today** list: what is outstanding across every feature, and one button for the most urgent thing. Habits are one row on it rather than one row each, because fourteen of them would bury the six things the app itself asks of you.
+**The home screen is the grid.** Every commitment you have is a row: the five the app itself asks of you, and every habit you added. Two rules and no exceptions - *the name goes there* (tapping "Kegels" opens the Kegels section) and *the cell does it* (tapping today starts the session, or marks the day). Only today acts; the days behind it are the record. There is no menu above it and no dashboard beside it, because both were the same list a third time.
 
-Each section has its own accent on one shared skeleton. Kegels teal, PE violet, Bible the deep red of a Gospel book with a serif face, Wind-down indigo because it is used in an unlit room, Habits rose - the last hue that means nothing else, since green is "done" and gold is "careful". One skeleton, five rooms.
+**One theme.** One accent, one sans, one set of state colours, so colour answers *what state is this in* and never *which section am I in* - the app spent five sections proving that the second reading makes one app look like five. Two deliberate exceptions: a habit's own colour, which you chose, and the serif, which appears only on scripture and prayer text because reading 1,344 chapters in a UI sans is worse.
 
 ---
 
@@ -173,7 +173,6 @@ Reasoning, safety numbers and sources: [`docs/PE_PROGRAM.md`](docs/PE_PROGRAM.md
 www/               the entire app, plain ES modules, no build
   js/
     app.js         route table, shell state, boot
-    hub.js         the Today screen and the feature registry
     settings.js    app-wide settings
     lock.js        the optional PIN gate
     names.js       what each section is called
@@ -182,12 +181,12 @@ www/               the entire app, plain ES modules, no build
     icons.js       the inline SVG icon set
     native.js      real Android alarms via Capacitor
     nightlight.js  the night light bridge, settings and browser fallback
+    habits/        the grid, which is the home screen
     kegels/        the Kegels feature
     pe/            the PE feature
     bible/         the Bible feature and reader
     pray/          the prayer rule, part of the Bible section
     breathe/       the wind-down
-    habits/        the habit grid
   bible/           the scripture itself, one JSON file per book, generated
   sw.js            offline service worker
 native/
@@ -207,11 +206,12 @@ docs/
 
 **[`docs/CODEMAP.md`](docs/CODEMAP.md) is the map.** One folder per feature,
 the same filenames in each, and a setting lives where the thing it affects
-lives.
+lives. [`CLAUDE.md`](CLAUDE.md) is the standing brief: **simple and effective**,
+which in practice has meant deleting more than adding.
 
 ## Adding the next feature
 
-`FEATURES` in `www/js/hub.js` is the registry the section tiles render from, and `todayTasks()` beside it builds the Today list. A new feature is an entry in both, plus a module that renders into `#app` and a route in `ROUTES`. Keep the store schema additive, `hydrate()` in `store.js` merges saved state over the blank shape, so new fields appear on old saves instead of coming back `undefined`.
+A feature is a folder under `www/js/`, a route in `ROUTES` in `app.js`, its own slice of the store, and - if it is something you owe daily - an entry in `LINKED` in `www/js/habits/program.js`, which is what puts it on the home grid as a row with a start button. Keep the store schema additive: `hydrate()` in `store.js` merges saved state over the blank shape, so new fields appear on old saves instead of coming back `undefined`. And read [`CLAUDE.md`](CLAUDE.md) first - the last three good changes to this app all removed a screen.
 
 ---
 

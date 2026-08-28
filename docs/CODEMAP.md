@@ -2,7 +2,7 @@
 
 Where everything is, so finding it does not mean reading it.
 
-Four rules the tree follows:
+Five rules the tree follows:
 
 1. **One folder per feature.** `kegels/`, `pe/`, `bible/`, `breathe/`, `habits/`.
    Anything at the top level of `js/` is shell, used by all of them. `pray/` is
@@ -14,7 +14,10 @@ Four rules the tree follows:
    `pe-program.js` at the root would not be.
 3. **A setting lives where the thing it affects lives.** App-wide options are
    in `settings.js`; per-section options are in that section's own screen.
-4. **Back is not a link.** Every screen marks its corner control with
+4. **One theme, and colour means state.** One accent, one sans. Colour says
+   done, due or missed — never which section you are in. The two exceptions
+   are a habit's own colour and the serif on scripture.
+5. **Back is not a link.** Every screen marks its corner control with
    `data-back`: with a nav key when it is plain navigation, bare when the
    screen handles Back itself. `back.js` reads that one attribute and answers
    for the arrow, the browser and the Android hardware button together.
@@ -28,15 +31,14 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/app.js` | 255 | Route table, shell state, boot. Nothing renders here. |
+| `js/app.js` | 251 | Route table, shell state, boot. Nothing renders here. |
 | `js/back.js` | 213 | What Back means: the corner arrow, the hardware button, history. |
-| `js/hub.js` | 379 | The Today screen, the feature registry, the install prompt. |
 | `js/icons.js` | 99 | The inline SVG icon set and the logo mark. |
 | `js/lock.js` | 70 | The optional PIN gate. Owns whether the app is unlocked. |
 | `js/names.js` | 10 | What each section is called, under discreet mode. |
 | `js/native.js` | 108 | Capacitor bridge for real Android alarms. |
 | `js/nightlight.js` | 474 | The night light: the bridge, its settings screen, the browser fallback. |
-| `js/settings.js` | 216 | App-wide settings: feedback, privacy, data, reset. |
+| `js/settings.js` | 316 | App-wide settings: the grid, marking, feedback, privacy, data, reset. |
 | `js/store.js` | 787 | localStorage persistence and the input sanitiser. |
 | `js/ui.js` | 427 | Shared helpers: formatting, haptics, notifications, SVG charts, the sheet. |
 
@@ -115,22 +117,27 @@ edits away. `package.json` pulls it in with a `file:` dependency and Capacitor
 does the rest. [`docs/NIGHTLIGHT.md`](NIGHTLIGHT.md) explains why the schedule
 lives in Java, and why there are two filters rather than one.
 
-## Habits
+## Habits, which is the home screen
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/habits/program.js` | 746 | The record, the frequency model, the score, the streaks, the charts. |
-| `js/habits/home.js` | 652 | The grid, marking, reordering, groups, settings and the archive. |
+| `js/habits/program.js` | 820 | The record, the frequency model, the score, the streaks, the charts, the five linked rows. |
+| `js/habits/home.js` | 570 | **The home screen.** The grid, marking, reordering, groups, the archive, the install prompt. |
 | `js/habits/edit.js` | 360 | Creating and editing: the type, colour, frequency and reminder pickers. |
 | `js/habits/tracking.js` | 312 | One habit in full, and the calendar you can write to. |
 
-The only section whose contents the app does not know in advance, which is why
-it is also the only one where nearly every field is a setting. Two things here
-are worth knowing before reading the code: **streaks and scores are computed on
-every read rather than stored**, because the past is editable from the calendar
-and a cached streak would go stale the moment you corrected it; and the five
-other features appear at the top of the grid **read-only**, filled from their
-own records, so there is never a second editable copy of the same morning.
+This folder is not a section any more, it is the front door: `#/hub` renders
+`renderHome` from `home.js`. There used to be a `hub.js` holding a Today list
+and a grid of section tiles above it; both were the same list the grid already
+was, so all three collapsed into one screen and `hub.js` was deleted.
+
+Three things are worth knowing before reading the code. **Streaks and scores
+are computed on every read rather than stored**, because the past is editable
+from the calendar and a cached streak would go stale the moment you corrected
+it. **The five other features are rows**, filled from their own records, where
+today's cell starts the thing and every cell behind it is read-only, so there
+is never a second editable copy of one morning. And **the grid's options are
+app options**, on `settings.js`, because the grid is the app.
 [`docs/HABITS.md`](HABITS.md) has the scoring maths and the frequency model.
 
 ## Wind-down

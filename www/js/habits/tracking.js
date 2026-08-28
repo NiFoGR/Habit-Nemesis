@@ -63,8 +63,12 @@ function periodSelect(id, value, options) {
 
 /* ---------------- the screen ---------------- */
 
+/** One habit's own screen. Only a habit you made: the five the app asks of you
+ *  have far richer screens of their own inside their sections, and a second,
+ *  thinner view of the same record is the exact thing this redesign removed
+ *  everywhere else. Their row's name goes to the section instead. */
 export function renderHabitDetail(mount, id) {
-  const habit = habits.byId(id) || habits.linkedHabits().find((h) => h.id === id);
+  const habit = habits.byId(id);
   if (!habit) {
     mount.innerHTML = `
       <div class="screen habits">
@@ -73,7 +77,7 @@ export function renderHabitDetail(mount, id) {
           <h1>Not found</h1><span class="icon-btn ghost"></span>
         </header>
         <div class="empty-state"><h2>That habit is gone</h2>
-          <p class="muted">It was deleted, or it is a linked row you have switched off.</p>
+          <p class="muted">It was deleted. The five the app asks of you keep their numbers in their own sections.</p>
           <a class="btn linkbtn" href="#/habits">Back to the grid</a></div>
       </div>`;
     return;
@@ -98,18 +102,14 @@ export function renderHabitDetail(mount, id) {
         <header class="screen-head">
           <button class="icon-btn" data-back="habits" aria-label="Back">${icon('back')}</button>
           <h1 style="color:${colour}">${escapeHtml(habit.name)}</h1>
-          ${habit.linked
-            ? `<a class="icon-btn linkbtn" href="${habit.href}" aria-label="Open section">${icon('external')}</a>`
-            : `<a class="icon-btn linkbtn" href="#/habits/edit?id=${encodeURIComponent(habit.id)}" aria-label="Edit">${icon('pencil')}</a>`}
+          <a class="icon-btn linkbtn" href="#/habits/edit?id=${encodeURIComponent(habit.id)}" aria-label="Edit">${icon('pencil')}</a>
         </header>
 
         <div class="habit-hero">
           <h2 style="color:${colour}">${escapeHtml(habit.question || habit.name)}</h2>
           <p class="muted small">
             ${icon('calendar', 14)} ${escapeHtml(habits.freqLabel(habit.freq))}
-            ${habit.linked
-              ? '· filled from its own section'
-              : `· ${icon('bell', 14)} ${habit.remindAt ? escapeHtml(habit.remindAt) : 'no reminder'}`}
+            · ${icon('bell', 14)} ${habit.remindAt ? escapeHtml(habit.remindAt) : 'no reminder'}
           </p>
         </div>
 
@@ -144,7 +144,7 @@ export function renderHabitDetail(mount, id) {
 
         <section class="card">
           <div class="h-row">${icon('calendar', 16)}<h2>Calendar</h2>
-            ${habit.linked ? '' : `<button class="chipbtn ${editing ? 'on' : ''}" id="editCal">${icon('pencil', 14)}<span>${editing ? 'Done' : 'Edit'}</span></button>`}</div>
+            <button class="chipbtn ${editing ? 'on' : ''}" id="editCal">${icon('pencil', 14)}<span>${editing ? 'Done' : 'Edit'}</span></button></div>
           ${calendarHtml(cal)}
           <div class="hm-key">
             <i class="hc-cell on"></i> done

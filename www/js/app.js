@@ -6,7 +6,7 @@
 // module and is called from ROUTES below.
 //
 // Where things are:
-//   hub.js            the Today screen and the feature registry
+//   habits/home.js    the home screen, which is the grid
 //   settings.js       app-wide settings
 //   lock.js           the optional PIN gate
 //   names.js          what each section is called
@@ -40,14 +40,13 @@ import { renderRead } from './bible/read.js';
 import { renderBookContext } from './bible/book.js';
 import { renderBibleTracking } from './bible/tracking.js';
 import * as bibleProgram from './bible/program.js';
-import { renderHabits, renderHabitSettings, renderArchive } from './habits/home.js';
+import { renderHome, renderArchive } from './habits/home.js';
 import { renderHabitEdit } from './habits/edit.js';
 import { renderHabitDetail } from './habits/tracking.js';
 import * as habitsProgram from './habits/program.js';
 import { renderBreatheHome, renderBreatheSettings } from './breathe/home.js';
 import { startBreathe } from './breathe/session.js';
 import * as breatheProgram from './breathe/program.js';
-import { renderHub } from './hub.js';
 import * as nightlight from './nightlight.js';
 import { renderSettings } from './settings.js';
 import { lockActive, renderLock, relock } from './lock.js';
@@ -100,7 +99,7 @@ function runBreathe() {
 /* ---------------- router ---------------- */
 
 const ROUTES = {
-  '#/hub': () => renderHub(app),
+  '#/hub': () => renderHome(app),
   '#/kegels': () => renderKegels(app),
   '#/session': runSession,
   '#/pocket': () => (activeSession = renderPocket(app)),
@@ -126,10 +125,11 @@ const ROUTES = {
   '#/bible/settings': () => renderBibleSettings(app),
   '#/bible/pray': (params) => runRule(params),
   '#/bible/prayers': () => renderMyPrayers(app),
-  '#/habits': () => renderHabits(app),
+  // The grid is the home screen. This stays as an alias so older links, a
+  // pinned shortcut or a notification cannot land on a route that is gone.
+  '#/habits': () => renderHome(app),
   '#/habits/habit': (params) => renderHabitDetail(app, params.get('id')),
   '#/habits/edit': (params) => renderHabitEdit(app, { id: params.get('id'), kind: params.get('kind') }),
-  '#/habits/settings': () => renderHabitSettings(app),
   '#/habits/archive': () => renderArchive(app),
   '#/breathe': () => renderBreatheHome(app),
   '#/breathe/run': () => runBreathe(),
@@ -147,7 +147,7 @@ const NAV = {
   'bible-track': '#/bible/track', 'bible-settings': '#/bible/settings',
   'bible-prayers': '#/bible/prayers',
   breathe: '#/breathe', 'breathe-settings': '#/breathe/settings',
-  habits: '#/habits', 'habits-settings': '#/habits/settings', 'habits-archive': '#/habits/archive',
+  habits: '#/habits', 'habits-archive': '#/habits/archive',
   nightlight: '#/settings/night',
 };
 
@@ -166,20 +166,16 @@ function route() {
   if (lockActive()) return renderLock(app, route);
 
   const [path, query] = location.hash.split('?');
-  // One token set per section, swapped on the body. The shell stays the same
-  // everywhere; only the palette and, for prayer, the type change.
-  document.body.dataset.section = path.startsWith('#/pe') ? 'pe'
-    : path.startsWith('#/bible') ? 'bible'
-    : path.startsWith('#/breathe') ? 'breathe'
-    : path.startsWith('#/habits') ? 'habits'
-    : ['#/kegels', '#/kegels/settings', '#/session', '#/track', '#/guide', '#/roadmap', '#/review', '#/pocket', '#/tutorial'].includes(path) ? 'kegels'
-    : 'hub';
+  // There used to be a token set per section, swapped on the body here, so
+  // every section had its own accent. Six accents made the app read as six
+  // apps, and it meant colour answered "where am I" instead of "what state is
+  // this in". One theme now, so there is nothing to swap.
   // The progress gallery and the monthly check-in's camera are the two screens
   // where a colour cast is not cosmetic: it would make a photo look like
   // progress, or hide it. The night light stands down for both.
   nightlight.suspend(path.startsWith('#/pe/gallery') || path.startsWith('#/pe/measure'));
 
-  const fn = ROUTES[path] || (() => renderHub(app));
+  const fn = ROUTES[path] || (() => renderHome(app));
   fn(new URLSearchParams(query || ''));
   if (path !== '#/session') window.scrollTo(0, 0);
 }

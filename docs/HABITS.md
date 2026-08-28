@@ -109,23 +109,30 @@ streak at all.
 ## The day boundary
 
 `dayStartHour` moves when a day begins, up to 06:00, so something ticked at
-01:00 belongs to the night you were still up for. **It shifts this section
-only.** The other five record against midnight and rewriting their history to
-agree would be a far bigger change than the setting is worth; the linked rows
-below are therefore read on their own boundary, which can disagree with the
+01:00 belongs to the night you were still up for. **It shifts the grid only.** Sessions and readings record against midnight, and rewriting their history to
+agree would be a far bigger change than the setting is worth; the five feature
+rows are therefore read on their own boundary, which can disagree with the
 grid's by a few hours around midnight.
 
-## The linked rows
+## The five feature rows
 
-The five other features appear at the top of the grid, read-only, filled from
-their own records: a day is done when there is a kegel session, a PE session, a
-chapter read, both halves of the rule, or a wind-down on it.
+The grid is the home screen, and the five other features are rows on it, filled
+from their own records: a day is done when there is a kegel session, a PE
+session, a chapter read, both halves of the rule, or a wind-down on it.
+
+Two rules govern every row, these included:
+
+- **The name goes there.** The Kegels row opens the Kegels section, where its
+  real numbers live. It does not open a habit-stats screen: that would be a
+  second, thinner view of a record the section already draws properly.
+- **The cell does it.** Today's cell starts the session, opens the reader,
+  begins the wind-down. Every cell behind today is read-only, because of two
+  editable copies of one morning, the one you can reach from the grid is
+  always the one that ends up wrong.
 
 This is the answer to the obvious objection to a habit tracker inside an app
-that already tracks five things. Without them you would keep two records of the
-same morning, and they would disagree by Friday. They are not tappable here for
-the same reason: of two records of one fact, the editable one is always the one
-that ends up wrong.
+that already tracks five things. Without these rows you would keep two records
+of the same morning; with them editable you would keep two *writers*.
 
 They read `store.get()` directly rather than importing each feature's program
 module. The store schema is the contract both already depend on, so the grid

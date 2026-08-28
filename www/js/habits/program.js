@@ -27,6 +27,12 @@
 
 import * as store from '../store.js';
 import { kegelName, peName } from '../names.js';
+import * as kegels from '../kegels/program.js';
+import * as pe from '../pe/program.js';
+import * as bible from '../bible/program.js';
+import * as pray from '../pray/program.js';
+import * as breathe from '../breathe/program.js';
+import { fmtHours } from '../ui.js';
 import { cancelAlarms, scheduleMany, ALARM_HABIT_BASE, ALARM_HABIT_SLOTS } from '../native.js';
 
 /* ---------------- the palette ----------------
@@ -336,39 +342,93 @@ export function freqLabel(freq) {
 // one pass over each log and then a lookup.
 export const LINKED = [
   {
-    id: 'link:kegels', colour: 'teal', icon: 'target', href: '#/kegels',
+    id: 'link:kegels', icon: 'target', href: '#/kegels',
     name: () => kegelName(),
     question: 'Did you train the pelvic floor?',
     days: (st) => new Set(st.sessions.map((s) => s.date)),
+    action: () => '#/session',
+    detail: () => {
+      const plan = kegels.planForToday();
+      if (plan.type === 'release') return 'Release day · down-training only';
+      const left = Math.max(0, plan.target - plan.doneToday);
+      if (plan.complete) return `Week ${plan.level} · done today`;
+      return `${left} left · week ${plan.level}`;
+    },
   },
   {
-    id: 'link:pe', colour: 'violet', icon: 'trend', href: '#/pe',
+    id: 'link:pe', icon: 'trend', href: '#/pe',
     name: () => peName(),
     question: 'Did you put the work in?',
     days: (st) => new Set(st.pe.sessions.map((s) => s.date)),
+    action: () => '#/pe/timer?type=stretch',
+    detail: () => {
+      const done = store
+        .get()
+        .pe.sessions.filter((s) => s.date === store.dayKey() && s.type === 'stretch')
+        .reduce((a, s) => a + s.durationSec * 1000, 0);
+      const goal = pe.DAILY_STRETCH_GOAL_MS;
+      return done >= goal ? 'Two hours done' : `${fmtHours(done)} of ${fmtHours(goal)}`;
+    },
   },
   {
-    id: 'link:bible', colour: 'clay', icon: 'scripture', href: '#/bible',
+    id: 'link:bible', icon: 'scripture', href: '#/bible',
     name: () => 'Bible',
     question: 'Did you read?',
     days: (st) => new Set(Object.entries(st.bible.days).filter(([, d]) => d?.chapters?.length).map(([k]) => k)),
+    action: () => {
+      const p = bible.position();
+      return `#/bible/reader?book=${p.book}&ch=${p.ch}`;
+    },
+    detail: () => {
+      const today = bible.dayRead();
+      if (today.any) return `${today.count} chapter${today.count === 1 ? '' : 's'} today`;
+      const p = bible.position();
+      return bible.refName(`${p.book}:${p.ch}`);
+    },
   },
   {
-    id: 'link:pray', colour: 'amber', icon: 'sun', href: '#/bible',
+    id: 'link:pray', icon: 'sun', href: '#/bible',
     name: () => 'The rule',
     question: 'Morning and night, both?',
     days: (st) => new Set(Object.entries(st.pray.days).filter(([, d]) => d && d.morning && d.evening).map(([k]) => k)),
+    // Whichever half is still owed. Both kept and it opens the morning again,
+    // which is the only harmless answer: praying twice is not an error.
+    action: () => `#/bible/pray?slot=${pray.dayState().morning ? 'evening' : 'morning'}`,
+    detail: () => {
+      const d = pray.dayState();
+      if (d.morning && d.evening) return 'Kept, both';
+      return d.morning ? 'Night owed' : 'Morning owed';
+    },
   },
   {
-    id: 'link:breathe', colour: 'indigo', icon: 'breath', href: '#/breathe',
+    id: 'link:breathe', icon: 'breath', href: '#/breathe',
     name: () => 'Wind-down',
     question: 'Did you breathe before sleep?',
     days: (st) => new Set(Object.keys(st.breathe.days)),
+    action: () => '#/breathe/run',
+    detail: () => {
+      const t = breathe.dayState();
+      if (t.done) return 'Done tonight';
+      const s = breathe.settings();
+      const p = breathe.PATTERNS[s.pattern];
+      return `${s.minutes} min · ${p ? p.short : 'paced breathing'}`;
+    },
   },
 ];
 
+/** A feature's own status, asked without letting it break the grid. A section
+ *  mid-migration should cost you its subtitle, not the whole home screen. */
+function safely(fn, fallback) {
+  try {
+    return fn();
+  } catch {
+    return fallback;
+  }
+}
+
 /** A linked source dressed as a habit, so every function below can take it
- *  without knowing the difference. `linked` marks it read-only. */
+ *  without knowing the difference. `linked` marks its past read-only: only
+ *  today's cell does anything, and what it does is start the thing. */
 export function linkedHabits() {
   if (!settings().showLinked) return [];
   const st = store.get();
@@ -382,7 +442,7 @@ export function linkedHabits() {
       name: l.name(),
       question: l.question,
       notes: '',
-      colour: l.colour,
+      colour: null, // the app's own rows take the accent, not a colour of their own
       kind: 'yesno',
       unit: '',
       target: 0,
@@ -393,6 +453,10 @@ export function linkedHabits() {
       createdAt: st.createdAt,
       order: -1,
       read: (key) => days.has(key),
+      // What today's cell does, and the line under the name. Both are computed
+      // rather than stored: they describe right now, not the record.
+      action: safely(l.action, null),
+      detail: safely(l.detail, ''),
     };
   });
 }
@@ -678,11 +742,15 @@ export function calendar(sum, weeks = 17) {
 
 /* ---------------- across all habits ---------------- */
 
-/** What the hub asks: how much of today is still outstanding. Linked rows are
- *  left out, because their own Today rows already say the same thing and
- *  counting them twice would make the ring lie. */
+/** How much of today is still outstanding, across the whole grid.
+ *
+ *  This counts the linked rows too, because the grid is now the home screen
+ *  and the ring above it has to mean the day rather than the part of the day
+ *  you happened to write yourself. When the linked rows are switched off they
+ *  are not on the grid, so they are not in the count either: the number always
+ *  describes what is actually on screen. */
 export function dueToday() {
-  const list = active();
+  const list = [...linkedHabits(), ...active()];
   let done = 0;
   const pending = [];
   for (const h of list) {
@@ -690,7 +758,7 @@ export function dueToday() {
     if (s.satisfiedToday || s.skippedToday) done++;
     else pending.push(h);
   }
-  return { total: list.length, done, pending };
+  return { total: list.length, done, pending, habits: active().length };
 }
 
 /** A group's score is the mean of its members'. An empty group scores nothing
