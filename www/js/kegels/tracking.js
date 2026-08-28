@@ -63,7 +63,7 @@ function sessionRow(s, idx) {
     <summary>
       <span class="log-date">${relDay(s.date)}</span>
       <span class="log-label">${label}</span>
-      <span class="log-score ${s.type === 'release' || s.countsForPromotion === false ? 'rest' : ''}">${s.type === 'release' || s.countsForPromotion === false ? '✓' : s.score}</span>
+      <span class="log-score ${s.type === 'release' || s.countsForPromotion === false ? 'rest' : ''}">${s.type === 'release' || s.countsForPromotion === false ? icon('check', 15) : s.score}</span>
     </summary>
     <div class="log-body">
       <div class="kv"><span>Grade</span><b>${s.type === 'release' ? 'Restored' : s.countsForPromotion === false ? 'Not scored' : `${g.letter} · ${g.label}`}${s.estimated && s.countsForPromotion !== false ? ' (estimated)' : ''}</b></div>
@@ -151,7 +151,7 @@ export function renderTracking(mount) {
 
       <section class="card">
         <div class="h-row">${icon('chart', 16)}<h2>Session scores</h2></div>
-        ${scores.length > 1 ? lineChart(scores, { color: 'var(--violet)' }) : '<div class="chart-empty">Not enough sessions yet</div>'}
+        ${scores.length > 1 ? lineChart(scores, { color: 'var(--accent)' }) : '<div class="chart-empty">Not enough sessions yet</div>'}
       </section>
 
       <section class="card">

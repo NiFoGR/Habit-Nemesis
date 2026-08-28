@@ -54,7 +54,7 @@ export function renderBibleHome(mount) {
       <div class="today bible-today">
         <div class="today-left">
           <h2>${escapeHtml(bible.refName(`${pos.book}:${pos.ch}`))}</h2>
-          <p class="muted small">${prog.read} of ${bible.TOTAL_CHAPTERS} chapters${streak ? ` · ${streak}d streak` : ''}</p>
+          <p class="muted small">${prog.read} of ${bible.TOTAL_CHAPTERS} chapters${streak ? ` · ${streak}d reading streak` : ''}</p>
         </div>
         ${ringSvg(prog.frac, `${Math.round(prog.frac * 100)}%`, 'read', { size: 92, color: 'var(--accent)' })}
       </div>
@@ -70,11 +70,11 @@ export function renderBibleHome(mount) {
           ${ruleCard('morning')}
           ${ruleCard('evening')}
         </div>
-        <p class="muted small">${prayStreak ? `${prayStreak} day streak` : 'Both are required. A day counts when both are kept.'}</p>
+        <p class="muted small">${prayStreak ? `${prayStreak} day rule streak` : 'Both are required. A day counts when both are kept.'}</p>
       </section>
 
       <a class="btn ghost linkbtn ext" href="${GOARCH}" target="_blank" rel="noopener noreferrer">
-        ${icon('book', 16)}<span>Readings and calendar at goarch.org</span>${icon('external', 14)}
+        ${icon('book', 16)}<span>Today's readings at goarch.org</span>${icon('external', 14)}
       </a>
 
       <div class="linkrow">

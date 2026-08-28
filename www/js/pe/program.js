@@ -37,7 +37,7 @@ export const TYPES = {
     id: 'pump',
     label: 'Pumping',
     icon: 'pump',
-    colour: 'var(--violet)',
+    colour: 'var(--accent)',
     defaultMin: 15,
     // No intensity field: a Hydromax has no gauge, so any number here would be
     // invented. Duration and set breaks are the parts that are real.
@@ -51,9 +51,9 @@ export const TYPES = {
  *  against them, but old entries still have to render with their own name
  *  rather than being silently relabelled as something the user never did. */
 const RETIRED = {
-  warmup: { id: 'warmup', label: 'Warm-up', icon: 'droplet', colour: 'var(--calm)', retired: true, defaultMin: 8, intensity: null, blurb: '', cue: '' },
-  jelq: { id: 'jelq', label: 'Jelqing', icon: 'stretch', colour: 'var(--calm)', retired: true, defaultMin: 10, intensity: null, blurb: '', cue: '' },
-  clamp: { id: 'clamp', label: 'Clamping', icon: 'warn', colour: 'var(--danger)', retired: true, defaultMin: 5, intensity: null, blurb: '', cue: '' },
+  warmup: { id: 'warmup', label: 'Warm-up', icon: 'droplet', colour: 'var(--muted)', retired: true, defaultMin: 8, intensity: null, blurb: '', cue: '' },
+  jelq: { id: 'jelq', label: 'Jelqing', icon: 'stretch', colour: 'var(--muted)', retired: true, defaultMin: 10, intensity: null, blurb: '', cue: '' },
+  clamp: { id: 'clamp', label: 'Clamping', icon: 'warn', colour: 'var(--muted)', retired: true, defaultMin: 5, intensity: null, blurb: '', cue: '' },
 };
 
 export const TYPE_LIST = Object.values(TYPES);

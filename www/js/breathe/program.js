@@ -23,7 +23,7 @@ import { scheduleDaily, cancelAlarm, ALARM_BREATHE } from '../native.js';
 export const PATTERNS = {
   exhale: {
     id: 'exhale',
-    label: 'Extended exhale',
+    label: 'Long exhale',
     short: '4 in, 8 out',
     inMs: 4000,
     holdMs: 0,

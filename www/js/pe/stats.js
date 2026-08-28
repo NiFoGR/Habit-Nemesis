@@ -161,7 +161,7 @@ export function renderStats(mount) {
 
       <section class="card">
         <div class="h-row">${icon('pump', 16)}<h2>Girth</h2></div>
-        ${sizeChart(ms.filter((m) => m.eg).map((m) => ({ ts: m.ts, value: m.eg })), proj, 'var(--violet)', 'eg')}
+        ${sizeChart(ms.filter((m) => m.eg).map((m) => ({ ts: m.ts, value: m.eg })), proj, 'var(--accent)', 'eg')}
       </section>
 
       ${proj ? `<section class="card projection">
@@ -199,10 +199,10 @@ export function renderStats(mount) {
           <div class="stat"><b>${girth.taper >= 0 ? '+' : '−'}${pe.fmtLength(Math.abs(girth.taper), undefined, 2)}</b><span>thickest − base</span></div>
         </div>
         ${girth.entries.length > 1 ? `${multiLine([
-          { colour: 'var(--violet)', points: girth.entries.map((m) => ({ ts: m.ts, value: m.eg })) },
-          { colour: 'var(--calm)', dashed: true, points: girth.entries.map((m) => ({ ts: m.ts, value: m.baseGirth })) },
+          { colour: 'var(--accent)', points: girth.entries.map((m) => ({ ts: m.ts, value: m.eg })) },
+          { colour: 'var(--muted)', dashed: true, points: girth.entries.map((m) => ({ ts: m.ts, value: m.baseGirth })) },
         ])}
-        <div class="legend"><i style="background:var(--violet)"></i> thickest <i style="background:var(--calm)"></i> base</div>
+        <div class="legend"><i style="background:var(--accent)"></i> thickest <i style="background:var(--muted)"></i> base</div>
         <p class="fineprint">Thickest ${girth.thickGain >= 0 ? '+' : '−'}${pe.fmtLength(Math.abs(girth.thickGain), undefined, 2)}, base ${girth.baseGain >= 0 ? '+' : '−'}${pe.fmtLength(Math.abs(girth.baseGain), undefined, 2)}. ${
           girth.taper > girth.taperFirst + 0.15
             ? 'The middle is growing faster than the base. Normal with pumping, worth watching if the gap widens.'

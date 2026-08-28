@@ -175,11 +175,14 @@ export function donut(parts, { size = 104, thickness = 13, centre = '' } = {}) {
   </div>`;
 }
 
-/** Vertical bars with labels, used for volume by day. */
-export function barChart(bars, { h = 120, unit = '' } = {}) {
+/** Vertical bars with labels, used for volume by day.
+ *  `colour` exists for the one caller that is not drawing in the app accent:
+ *  a habit's own screen, where every other mark takes the colour you chose for
+ *  it and a teal chart in the middle read as a piece of another screen. */
+export function barChart(bars, { h = 120, unit = '', colour = null } = {}) {
   if (!bars.length) return '<div class="chart-empty">Nothing logged in this period</div>';
   const max = Math.max(...bars.map((b) => b.value), 1);
-  return `<div class="barchart" style="--h:${h}px">${bars
+  return `<div class="barchart" style="--h:${h}px${colour ? `;--bar:${colour}` : ''}">${bars
     .map((b) => {
       const pctH = Math.max(b.value > 0 ? 3 : 0, (b.value / max) * 100);
       const stack = b.parts

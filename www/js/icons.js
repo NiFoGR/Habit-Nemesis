@@ -76,6 +76,10 @@ const PATHS = {
   // The filter mark from the toolbar: three rules, narrowing.
   filter: '<path d="M4 6h16M7 12h10M10 18h4"/>',
   arrowUp: '<path d="M12 19V5"/><path d="M6 11l6-6 6 6"/>',
+  // A key with a cross in it. The keypad used the ⌫ character, which is a
+  // glyph rather than an icon: a different shape on every device, and it
+  // cannot take the app's colours.
+  backspace: '<path d="M9 5h11a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H9l-6-7z"/><path d="M12 9.5l5 5M17 9.5l-5 5"/>',
   caretUp: '<path d="M6 14.5l6-6 6 6"/>',
   caretDown: '<path d="M6 9.5l6 6 6-6"/>',
   arrowDown: '<path d="M12 5v14"/><path d="M6 13l6 6 6-6"/>',

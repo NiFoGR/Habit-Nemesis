@@ -8,6 +8,7 @@
 import * as store from '../store.js';
 import * as program from './program.js';
 import { haptic, beep, fmtMs } from '../ui.js';
+import { icon } from '../icons.js';
 
 const R = 132;
 const CIRC = 2 * Math.PI * R;
@@ -32,7 +33,7 @@ export function startSession(mount, opts, onFinish) {
   mount.innerHTML = `
     <div class="player" id="player">
       <div class="player-top">
-        <button class="icon-btn" data-back id="quit" aria-label="End session">✕</button>
+        <button class="icon-btn" data-back id="quit" aria-label="End session">${icon('close')}</button>
         <div class="player-progress"><i id="prog"></i></div>
         <button class="icon-btn" id="pause" aria-label="Pause">❚❚</button>
       </div>
