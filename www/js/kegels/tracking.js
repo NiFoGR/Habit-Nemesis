@@ -5,6 +5,7 @@ import * as store from '../store.js';
 import * as program from './program.js';
 import { fmtMs, fmtDuration, lineChart, repBars, escapeHtml, relDay, ringSvg } from '../ui.js';
 import { icon } from '../icons.js';
+import * as feats from '../arena/feats.js';
 
 const WEEKS = 13; // a full 12-week block plus the current week
 
@@ -79,6 +80,14 @@ function sessionRow(s, idx) {
   </details>`;
 }
 
+/** How many of one section's feats are earned. The count lives here rather
+ *  than a second copy of the catalogue: the tracking screen says how the
+ *  kegel programme is going, and this is one line of that. */
+function sectionCount(section) {
+  const sec = feats.bySection().find((s) => s.section === section);
+  return sec ? `${sec.earned} of ${sec.items.length}` : '—';
+}
+
 export function renderTracking(mount) {
   const state = store.get();
   const sessions = state.sessions;
@@ -101,8 +110,6 @@ export function renderTracking(mount) {
     running = Math.max(running, s.totals?.longestHoldMs || 0);
     bestHoldSeries.push(running / 1000);
   }
-
-  const earned = program.BADGES.map((b) => ({ ...b, has: state.badges.includes(b.id) }));
 
   mount.innerHTML = `
     <div class="screen">
@@ -165,10 +172,10 @@ export function renderTracking(mount) {
       </section>
 
       <section class="card">
-        <div class="h-row">${icon('medal', 16)}<h2>Badges</h2></div>
-        <div class="badges">
-          ${earned.map((b) => `<div class="badge ${b.has ? 'has' : ''}" title="${escapeHtml(b.desc)}"><b>${b.has ? icon('medal', 20) : icon('lock', 20)}</b><span>${escapeHtml(b.name)}</span></div>`).join('')}
-        </div>
+        <div class="h-row">${icon('medal', 16)}<h2>Feats</h2></div>
+        <p class="muted small">One list for the whole app, held to one test: something you could say out loud to another person and have it mean something.</p>
+        <div class="kv"><span>Kegel feats earned</span><b>${sectionCount('Kegels')}</b></div>
+        <a class="btn ghost wide" href="#/arena/feats">${icon('medal', 16)}<span>All feats</span></a>
       </section>
 
       <section class="card">

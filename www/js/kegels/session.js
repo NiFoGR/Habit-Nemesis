@@ -7,6 +7,7 @@
 
 import * as store from '../store.js';
 import * as program from './program.js';
+import * as feats from '../arena/feats.js';
 import { haptic, beep, fmtMs } from '../ui.js';
 import { icon } from '../icons.js';
 
@@ -88,8 +89,9 @@ export function startSession(mount, opts, onFinish) {
 
   navigator.wakeLock?.request('screen').then((w) => (wakeLock = w)).catch(() => {});
 
-  const sound = () => state.settings.sound;
-  const buzz = (p) => state.settings.haptics && haptic(p);
+  // No local sound/haptics gate. `haptic` and `beep` honour the two settings
+  // themselves now, and reading them off the state captured when the session
+  // started meant changing one mid-session did nothing until the next one.
 
   function setRing(pct, cls) {
     const p = Math.max(0, Math.min(pct, 1));
@@ -146,7 +148,7 @@ export function startSession(mount, opts, onFinish) {
       setTargetMark(null);
       setRing(0, 'title');
       renderDots();
-      buzz('phase');
+      haptic('phase');
       t0 = performance.now();
       return;
     }
@@ -164,15 +166,15 @@ export function startSession(mount, opts, onFinish) {
       if (isAuto) {
         phase = 'timed';
         t0 = performance.now();
-        buzz('go');
-        if (sound()) beep(880);
+        haptic('go');
+        beep(880);
       } else {
         phase = 'await';
         t0 = performance.now();
         el.coreBig.textContent = '';
         el.coreSmall.textContent = 'press & hold';
-        buzz('go');
-        if (sound()) beep(880);
+        haptic('go');
+        beep(880);
       }
       return;
     }
@@ -189,7 +191,7 @@ export function startSession(mount, opts, onFinish) {
     setTargetMark(null);
     renderDots();
     t0 = performance.now();
-    if (step.kind === 'rest') buzz('rest');
+    if (step.kind === 'rest') haptic('rest');
   }
 
   function commitRep(actualMs) {
@@ -234,7 +236,7 @@ export function startSession(mount, opts, onFinish) {
       el.coreSmall.textContent = 'press & hold';
       if (left <= 0) {
         commitRep(0); // missed rep, recorded as missed
-        buzz('miss');
+        haptic('miss');
         advance();
       }
       return;
@@ -248,8 +250,8 @@ export function startSession(mount, opts, onFinish) {
       el.coreBig.textContent = (held / 1000).toFixed(1);
       el.coreSmall.textContent = p >= 1 ? 'strong, ease off when you fade' : `of ${(target / 1000).toFixed(0)}s`;
       if (p >= 1 && p < 1.03) {
-        buzz('hit');
-        if (sound()) beep(1320, 80);
+        haptic('hit');
+        beep(1320, 80);
       }
       const limit = step.kind === 'max' ? 120000 : target * OVERHOLD_LIMIT;
       if (held >= limit) release();
@@ -268,7 +270,7 @@ export function startSession(mount, opts, onFinish) {
     }
     phase = 'active';
     pressStart = performance.now();
-    buzz('press');
+    haptic('press');
     el.stage.classList.add('pressing');
     setTargetMark(1);
   }
@@ -285,7 +287,7 @@ export function startSession(mount, opts, onFinish) {
       return;
     }
     commitRep(Math.round(held));
-    buzz('done');
+    haptic('done');
     advance();
   }
 
@@ -402,7 +404,9 @@ export function startSession(mount, opts, onFinish) {
     const st = store.streak();
     if (st > s.prs.streak) s.prs.streak = st;
 
-    const badges = program.checkBadges(s);
+    // The session's own feats, checked here so the report can show them on
+    // the screen that earned them rather than a week later in the Arena.
+    const badges = feats.check();
     store.save();
 
     onFinish({ record, outcome, prs, badges, plan });
@@ -462,7 +466,7 @@ export function startSession(mount, opts, onFinish) {
       raf = requestAnimationFrame(loop);
     } else {
       el.coreBig.textContent = String(countdown);
-      buzz('tick');
+      haptic('tick');
     }
   }, 1000);
 

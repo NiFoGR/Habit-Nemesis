@@ -12,6 +12,7 @@ import * as store from '../store.js';
 import * as habits from './program.js';
 import { escapeHtml, barChart, lineChart, openSheet, haptic, fmtDate } from '../ui.js';
 import { icon } from '../icons.js';
+import { announce } from '../arena/result.js';
 
 const SCORE_PERIODS = {
   day: { label: 'Day', buckets: 30 },
@@ -246,6 +247,7 @@ function wireCalendarEdit(mount, habit, refresh) {
     if (habit.kind === 'number') return openPastValue(habit, key, refresh);
     haptic('tick');
     habits.setValue(habit.id, key, habits.nextValue(habit, key));
+    announce();
     refresh();
   });
 }
@@ -267,6 +269,7 @@ function openPastValue(habit, key, refresh) {
   input.focus();
   const done = (v) => {
     habits.setValue(habit.id, key, v);
+    announce();
     sheet.close();
     refresh();
   };

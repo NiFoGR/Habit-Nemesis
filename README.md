@@ -93,7 +93,7 @@ Hold `Space` instead of pressing the screen when testing on a desktop.
 
 **The debrief.** At the end of every session you get a plain-language account of what just happened in your body, your numbers against your last session, any personal bests, where that puts you on the level ladder, and a closing line that cites your own data rather than cheerleading.
 
-**Tracking.** A 13-week consistency heatmap, hold quality over time, personal-best progression, session scores, level history, badges, a per-rep breakdown of every logged session, and a single Pelvic Floor Index out of 1000 combining strength, volume, level and adherence.
+**Tracking.** A 13-week consistency heatmap, hold quality over time, personal-best progression, session scores, level history, a per-rep breakdown of every logged session, and a single Pelvic Floor Index out of 1000 combining strength, volume, level and adherence.
 
 **Pocket mode.** The same session paced entirely by vibration, with a near-black screen you can leave face down, for a desk, a bus, a queue. Distinct buzz patterns for squeeze, quick flick, release and new block. There is no input, so there is no per-rep measurement: those sessions are scored from your own rating, marked estimated everywhere they appear, and never set a personal best.
 
@@ -129,7 +129,7 @@ Hold `Space` instead of pressing the screen when testing on a desktop.
 
 **Girth map.** Thickest-point girth against base girth over time, with the gap between them called out, because pumping tends to move the middle before the base.
 
-**Everything tracked forever**, with 7d / 30d / 90d / 6m / 1y / all-time selectors across the charts, plus achievements, insights drawn from your actual numbers, and a full session log.
+**Everything tracked forever**, with 7d / 30d / 90d / 6m / 1y / all-time selectors across the charts, plus insights drawn from your actual numbers, and a full session log.
 
 Reasoning, safety numbers and sources: [`docs/PE_PROGRAM.md`](docs/PE_PROGRAM.md).
 
@@ -167,6 +167,24 @@ Reasoning, safety numbers and sources: [`docs/PE_PROGRAM.md`](docs/PE_PROGRAM.md
 
 [`docs/HABITS.md`](docs/HABITS.md) has the maths.
 
+## What is in the Arena
+
+**Your week is a match, and your opponent is you.** Monday to Sunday, every row on the grid, scored as the percentage of what was due that you actually did - against a real week out of your own history. There are no invented rivals and no other people, which is the only reason beating one means anything, and the reason you can tap any of them and look at the grid they played.
+
+**Four opponents, all of them you.** Your Nemesis is the best week you have ever had. Last Month You is this week, one month back. Your Worst Self is your worst of the last thirteen, and losing to him is meant to sting. The Standard is your division's bar with a face on it, and stands in whenever the record cannot supply a real week yet.
+
+**Seven divisions, settled monthly.** Bottom G, NPC, Prospect, Contender, Menace, Locked In, Top G. A month is the mean of its weeks; clear the next bar and you go up, fall below your own and you go down. Your first full month is a placement season and cannot relegate you.
+
+**The Arc.** Four cups a year on the seasons - Winter, Spring, Summer, Autumn. A group stage against five past selves, top three through, then a quarter-final against your best week of the last Arc, a semi against your best of the year, and a final against your Nemesis. Winning one takes the best week of your life in the last week of the season. Trophies are kept, and so are the defeats.
+
+**The roster locks on Monday**, which is the rule that took the most argument. A habit added on Wednesday goes on the grid at once and starts counting next week, because otherwise adding one mid-week changes the denominator of a match already in progress and you lose a fixture for the crime of getting more ambitious. Archiving works the same way in reverse, so you cannot dump the row you are failing.
+
+**Feats, not achievements.** Forty of them across every feature, held to one test: could you say it out loud to another person and have it mean something? *Held a contraction for sixty seconds* passes. *Opened the app seven days running* does not. That retired both catalogues of badges the app used to have.
+
+**The Year.** Twelve months on a fixed scale, the division you finished each in, the four Arcs, your best and worst week, and the rows that actually carried the year.
+
+[`docs/ARENA.md`](docs/ARENA.md) has all of it, including the arguments that were lost.
+
 ## Layout
 
 ```
@@ -182,6 +200,7 @@ www/               the entire app, plain ES modules, no build
     native.js      real Android alarms via Capacitor
     nightlight.js  the night light bridge, settings and browser fallback
     habits/        the grid, which is the home screen
+    arena/         the competitive layer, which is a reading of the grid
     kegels/        the Kegels feature
     pe/            the PE feature
     bible/         the Bible feature and reader
@@ -192,7 +211,8 @@ www/               the entire app, plain ES modules, no build
 native/
   nightlight/      Capacitor plugin: the system-wide blue-light filter
 signing/           the fixed APK key, so updates install over the top
-tools/             icon generation, signing patch, dev server, data extraction
+tools/             icon generation, signing patch, dev server, data extraction,
+                   `npm run check:arena` for the Arena's calendar maths
 docs/
   CODEMAP.md       where every file is and what it does
   KEGEL_PROGRAM.md the kegel protocol and where it comes from
@@ -200,6 +220,7 @@ docs/
   BIBLE.md         the parser, what it recovers, and why the text is bundled
   WINDDOWN.md      the physiology, and why the screen goes black not off
   HABITS.md        the scoring maths, the frequency model, the day boundary
+  ARENA.md         weeks, divisions, arcs, feats, and the roster lock
   NIGHTLIGHT.md    why the schedule is native, and the two filters
   BRAINSTORM.md    feature design notes and the backlog
 ```

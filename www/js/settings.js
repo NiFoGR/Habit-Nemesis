@@ -117,7 +117,7 @@ export function renderSettings(mount) {
           <input type="checkbox" id="haptics" ${s.haptics ? 'checked' : ''}>
         </label>
         <label class="setting toggle">
-          <span><b>Sound cues</b><i>A tone when a rep starts and when you reach the target.</i></span>
+          <span><b>Sound</b><i>Tones in a session, and when a week in the Arena is won or lost.</i></span>
           <input type="checkbox" id="sound" ${s.sound ? 'checked' : ''}>
         </label>
         <label class="setting toggle">

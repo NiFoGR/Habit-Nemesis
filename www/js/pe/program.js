@@ -1,5 +1,5 @@
 // PE domain logic: session types, safety limits, volume maths, the growth
-// projection and achievements.
+// projection, and the day-by-day totals the feats read.
 //
 // Grounding (sources in docs/PE_PROGRAM.md):
 //  - Traction is the only method with real clinical trial data. RestoreX at
@@ -378,72 +378,25 @@ export function measurementDue() {
   return { due: false, daysSince, next: Math.max(1, 28 - daysSince) };
 }
 
-/* ---------------- achievements ---------------- */
+/* ---------------- stretch, by day ----------------
+   The fifteen PE achievements that used to live here are gone, along with the
+   fifteen kegel badges in the other program file. They were two catalogues
+   that did not know about each other, neither visible outside its own section,
+   and a third of each was a trophy for opening the app. They are one list now,
+   in arena/feats.js, held to one rule: could you say it out loud to another
+   person and have it mean something. Everything worth keeping was carried over
+   and recomputes from this same data, so nothing had to be migrated.
 
-export const ACHIEVEMENTS = [
-  { id: 'pe_first', name: 'Day one', desc: 'Logged your first session', test: (p) => p.sessions.length >= 1 },
-  { id: 'pe_baseline', name: 'Baseline set', desc: 'Recorded your first measurement', test: (p) => p.measurements.length >= 1 },
-  { id: 'pe_photo', name: 'On the record', desc: 'Saved your first progress photo', test: (p) => p.measurements.some((m) => m.photoId) },
-  { id: 'pe_2h', name: 'Full two hours', desc: 'Stretched two hours in one day', test: (p) => dailyStretchTotals(p).some((v) => v >= 2 * 3600000) },
-  { id: 'pe_2h_week', name: 'A full week at target', desc: 'Two hours a day, seven days running', test: (p) => dailyStretchTotals(p).slice(-7).length === 7 && dailyStretchTotals(p).slice(-7).every((v) => v >= 2 * 3600000) },
-  { id: 'pe_week', name: '7-day streak', desc: 'A full week without missing', test: () => peStreak() >= 7 },
-  { id: 'pe_month', name: '30-day streak', desc: 'A month of consistency', test: () => peStreak() >= 30 },
-  { id: 'pe_10h', name: '10 hours under tension', desc: 'Ten lifetime hours of stretching', test: (p) => lifetime(p, 'stretch') >= 36e6 },
-  { id: 'pe_50h', name: '50 hours under tension', desc: 'Fifty lifetime hours of stretching', test: (p) => lifetime(p, 'stretch') >= 18e7 },
-  { id: 'pe_bpfsl', name: 'Responder', desc: 'Hit a 5% BPFSL jump in one session', test: (p) => p.sessions.some((s) => s.bpfslBefore && s.bpfslAfter && s.bpfslAfter / s.bpfslBefore >= 1.05) },
-  { id: 'pe_cm', name: 'First centimetre', desc: 'Gained 1 cm of bone-pressed length', test: (p) => gain(p, 'bpel') >= 1 },
-  { id: 'pe_girth', name: 'Thicker', desc: 'Gained 0.5 cm of girth', test: (p) => gain(p, 'eg') >= 0.5 },
-  { id: 'pe_combo', name: 'Multitasker', desc: 'Ran kegels during a pump session', test: (p) => p.sessions.some((s) => s.kegelCycles > 0) },
-  { id: 'pe_decon', name: 'Took the week off', desc: 'Completed a deliberate decon break', test: (p) => hasDecon(p) },
-  { id: 'pe_sixmonths', name: 'Half a year in', desc: 'Six months between your first and latest measurement', test: (p) => p.measurements.length > 1 && monthsBetween(p.measurements[0].ts, p.measurements[p.measurements.length - 1].ts) >= 6 },
-];
+   This helper stayed because two of those feats need it. */
 
-/** Stretch milliseconds per day, oldest first, used by the goal achievements. */
-function dailyStretchTotals(pe) {
+/** Stretch milliseconds per day, oldest first. */
+export function dailyStretchTotals(pe = store.get().pe) {
   const byDay = new Map();
   for (const s of pe.sessions) {
     if (s.type !== 'stretch') continue;
     byDay.set(s.date, (byDay.get(s.date) || 0) + s.durationSec * 1000);
   }
   return [...byDay.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([, v]) => v);
-}
-
-function lifetime(pe, type) {
-  return pe.sessions.filter((s) => s.type === type).reduce((a, s) => a + (s.durationSec || 0) * 1000, 0);
-}
-
-function gain(pe, key) {
-  const vals = pe.measurements.filter((m) => m[key]);
-  if (vals.length < 2) return 0;
-  return vals[vals.length - 1][key] - vals[0][key];
-}
-
-/** A decon break is 5+ clear days between sessions, after a real training
- *  block, not just a gap because life happened early on. */
-function hasDecon(pe) {
-  const days = pe.sessions.map((s) => s.ts).sort((a, b) => a - b);
-  if (days.length < 10) return false;
-  for (let i = 1; i < days.length; i++) {
-    const gapDays = (days[i] - days[i - 1]) / 864e5;
-    if (gapDays >= 5 && gapDays <= 21 && i >= 8) return true;
-  }
-  return false;
-}
-
-export function checkAchievements(state = store.get()) {
-  const earned = [];
-  for (const a of ACHIEVEMENTS) {
-    if (state.pe.achievements.includes(a.id)) continue;
-    try {
-      if (a.test(state.pe)) {
-        state.pe.achievements.push(a.id);
-        earned.push(a);
-      }
-    } catch {
-      /* never let an achievement test break a save */
-    }
-  }
-  return earned;
 }
 
 /* ---------------- insights ---------------- */

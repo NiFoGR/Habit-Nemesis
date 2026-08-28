@@ -29,6 +29,13 @@ Two rules, no exceptions:
 - **The cell does it.** Tapping today starts the session, or marks the day.
   Only today acts; the days behind it are a record.
 
+**The Arena is a reading of the grid, not a section.** It has one door — the
+season line under the today card — and it is not on the grid and not in a menu,
+because a competitive layer that needed its own tile would be the hub coming
+back under a new name. Every opponent in it is a real week out of your own
+record; there are no invented rivals, which is the only thing that makes
+beating one mean anything.
+
 **One theme.** One accent, one sans, one set of state colours. Colour answers
 *what state is this in* — done, due, missed — and nothing else. It does not
 answer "which section am I in": that experiment ran for five sections and made
@@ -63,7 +70,9 @@ Prefer the rule that does not need to know the count.
 
 ## Before you push
 
-There is no build step and no test runner. What there is:
+There is no build step and one check, `npm run check:arena`, which asserts the
+Arena's calendar maths in bare node because that is the one corner of the app
+whose answers cannot be read off a screen. Everything else is:
 
 - `node tools/serve.mjs` and drive it in a real browser. Chromium and
   Playwright are the way this has been checked: walk every route, click every
@@ -72,5 +81,8 @@ There is no build step and no test runner. What there is:
 - Check the things a screen cannot tell you it got wrong: two screens
   disagreeing about the same number, a class rendered that the stylesheet never
   defines, `NaN` or `undefined` reaching the page.
+- Anything the app does at a moment it was not opened by hand — a result on
+  launch, a sound, a buzz — has had no user gesture, and a phone refuses to
+  vibrate or start an `AudioContext` without one. Put it behind a tap.
 - Adding a file means adding it to `ASSETS` in `www/sw.js` **and** bumping
   `CACHE`. Forgetting the bump ships code nobody can see.

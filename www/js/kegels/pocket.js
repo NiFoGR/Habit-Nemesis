@@ -15,6 +15,7 @@
 
 import * as store from '../store.js';
 import * as program from './program.js';
+import { announce } from '../arena/result.js';
 import { fmtClock, haptic, toast } from '../ui.js';
 import { icon } from '../icons.js';
 import { navigate, leaveTo } from '../back.js';
@@ -233,7 +234,7 @@ export function renderPocket(mount) {
     if (record.score > s.prs.score) s.prs.score = record.score;
     const st = store.streak();
     if (st > s.prs.streak) s.prs.streak = st;
-    program.checkBadges(s);
+    announce();
     store.save();
 
     haptic('done');

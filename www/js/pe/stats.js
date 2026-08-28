@@ -1,10 +1,11 @@
 // The numbers screen: size over time with a projection, training volume,
-// BPFSL response, insights, achievements and the full session log.
+// BPFSL response, insights, feats and the full session log.
 
 import * as store from '../store.js';
 import * as pe from './program.js';
 import { escapeHtml, fmtHours, fmtClock, segmented, onSegment, barChart, relDay, lineChart, multiLine, scatter } from '../ui.js';
 import { icon } from '../icons.js';
+import * as feats from '../arena/feats.js';
 
 let period = '30d';
 
@@ -115,6 +116,11 @@ function volumeBars(sessions, periodId) {
 }
 
 /* ---------------- screen ---------------- */
+
+function peFeats() {
+  const sec = feats.bySection().find((x) => x.section === 'PE');
+  return sec ? `${sec.earned} of ${sec.items.length}` : '—';
+}
 
 export function renderStats(mount) {
   const state = store.get();
@@ -251,13 +257,10 @@ export function renderStats(mount) {
       </section>` : ''}
 
       <section class="card">
-        <div class="h-row">${icon('medal', 16)}<h2>Achievements</h2></div>
-        <div class="badges">
-          ${pe.ACHIEVEMENTS.map((a) => {
-            const has = s.achievements.includes(a.id);
-            return `<div class="badge ${has ? 'has' : ''}" title="${escapeHtml(a.desc)}"><b>${has ? icon('medal', 20) : icon('lock', 20)}</b><span>${escapeHtml(a.name)}</span></div>`;
-          }).join('')}
-        </div>
+        <div class="h-row">${icon('medal', 16)}<h2>Feats</h2></div>
+        <p class="muted small">One list for the whole app, held to one test: something you could say out loud to another person and have it mean something.</p>
+        <div class="kv"><span>PE feats earned</span><b>${peFeats()}</b></div>
+        <a class="btn ghost wide" href="#/arena/feats">${icon('medal', 16)}<span>All feats</span></a>
       </section>
 
       <section class="card">
