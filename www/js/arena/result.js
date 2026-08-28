@@ -16,7 +16,7 @@ import * as arena from './program.js';
 import * as feats from './feats.js';
 import { escapeHtml, chime, celebrate, haptic } from '../ui.js';
 import { icon } from '../icons.js';
-import { navigate } from '../back.js';
+import { navigate, replaceWith } from '../back.js';
 
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 
@@ -84,16 +84,44 @@ const MOVES = {
   placed: { word: 'Placed', chime: 'promote', haptic: 'promote' },
 };
 
-export function renderResult(mount) {
-  const res = arena.unseenResults();
-  const fresh = queued;
-  queued = [];
-  if (!res && !fresh.length) return navigate('#/arena');
+/* Marked seen on the way OUT, not on the way in.
+ *
+ * The first version marked it as it drew, which meant the screen ate the very
+ * thing that put it there: render it a second time - and the router will, on a
+ * reload, or when a navigation resolves twice - and it finds nothing owed and
+ * throws you off it. Worse, a reload while the result was up lost it for good.
+ * Marking on the way out fixes both directions. `leaveResult` is the router's,
+ * the same way the gallery's object URLs are.
+ *
+ * Leaving *is* seeing, feats included. The version in between put unrevealed
+ * feats back on the queue so none was "announced to an empty room", and that
+ * made the grid unreachable: #/hub sends you here while anything is queued, so
+ * backing out put the queue back and the next #/hub sent you straight in
+ * again, for ever. Nothing is lost by dropping them, because feats.check()
+ * writes the feat to the record as it earns it - the queue is the confetti,
+ * not the trophy, and the Cabinet has it either way. */
+let showing = null;
 
-  // Seen the moment it is drawn, not when the button is pressed. Backing out
-  // of a screen that had not marked itself seen would land on the grid, which
-  // would send you straight back into it, for ever.
-  if (res) arena.markSeen(res.key);
+export function leaveResult() {
+  if (showing?.res) arena.markSeen(showing.res.key);
+  showing = null;
+}
+
+export function renderResult(mount) {
+  if (!showing) {
+    const res = arena.unseenResults();
+    const fresh = queued;
+    queued = [];
+    // Nothing owed. That happens for one real reason: the app was closed on
+    // this screen, so the next launch restores the hash and arrives here with
+    // the announcement already made. Replace rather than navigate, and go to
+    // the grid rather than the Arena - a launch lands on the grid, always, and
+    // a screen that should not have existed must not sit on the back stack.
+    if (!res && !fresh.length) return replaceWith('#/hub');
+    showing = { res, fresh, revealed: false };
+  }
+  const { res, fresh } = showing;
+  if (showing.revealed) return drawFull(mount, res, fresh);
 
   // The result is behind one tap, and that is not ceremony for its own sake.
   // A screen reached by the app opening has had no gesture on it, so a phone
@@ -112,7 +140,10 @@ export function renderResult(mount) {
       </section>
     </div>`;
 
-  mount.querySelector('#reveal').addEventListener('click', () => drawFull(mount, res, fresh));
+  mount.querySelector('#reveal').addEventListener('click', () => {
+    showing.revealed = true;
+    drawFull(mount, res, fresh);
+  });
 }
 
 function drawFull(mount, res, fresh) {
@@ -168,6 +199,8 @@ function drawFull(mount, res, fresh) {
           </section>`
         : ''}
 
+      ${res && arena.isBestWeek(res.key) ? noteBlock(res.key) : ''}
+
       <button class="btn primary big" id="onward" data-back>${escapeHtml(res ? 'Into the week' : 'Good')}</button>
       <a class="btn ghost wide" href="#/arena">${icon('trophy', 16)}<span>The Arena</span></a>
     </div>`;
@@ -183,8 +216,41 @@ function drawFull(mount, res, fresh) {
     setTimeout(() => celebrate(hero, { count: 22, spread: 130, colour: 'var(--good)' }), 120);
   }
 
+  wireNote(mount, res);
   mount.querySelector('#onward').addEventListener('click', () => navigate('#/hub'));
   window.scrollTo(0, 0);
+}
+
+/* ---------------- a line for whoever has to beat it ----------------
+   Offered on the week that becomes your best, and read back to you by that
+   same week when it turns up as your Nemesis. It is the only free text in the
+   Arena and it is the only thing in here that is not a number, which is the
+   point: a number cannot say anything to you. */
+
+function noteBlock(key) {
+  const existing = arena.noteFor(key);
+  return `<section class="card note-ask" id="noteAsk">
+    <h2>Your best week</h2>
+    <p class="muted small">You have never had a better one. Leave a line for whoever has to beat it — because that will be you, and he will be reading it.</p>
+    <input type="text" id="noteText" maxlength="${arena.MAX_NOTE}" autocomplete="off"
+      placeholder="Beat that." value="${escapeHtml(existing)}">
+    <button class="btn" id="noteSave">${existing ? 'Change it' : 'Leave it'}</button>
+  </section>`;
+}
+
+function wireNote(mount, res) {
+  const save = mount.querySelector('#noteSave');
+  if (!save || !res) return;
+  const field = mount.querySelector('#noteText');
+  save.addEventListener('click', () => {
+    arena.setNote(res.key, field.value);
+    haptic('press');
+    const box = mount.querySelector('#noteAsk');
+    box.innerHTML = field.value.trim()
+      ? `<h2>Left on the record</h2><p class="said-quote">“${escapeHtml(field.value.trim().slice(0, arena.MAX_NOTE))}”</p>
+         <p class="muted small">He will see it the next time this week comes up as your Nemesis.</p>`
+      : '<h2>Nothing said</h2><p class="muted small">The week stands on its own, then.</p>';
+  });
 }
 
 function arcBlock(arc) {

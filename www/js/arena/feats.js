@@ -206,15 +206,15 @@ export const FEATS = [
     blurb: 'All 76 books. Genesis 1 to Revelation 22.',
     now: booksDone, at: BOOKS.length },
 
-  /* --- The rule --- */
-  { id: 'rule40', section: 'The rule', icon: 'sun', name: 'Forty days',
+  /* --- Prayer --- */
+  { id: 'rule40', section: 'Prayer', icon: 'sun', name: 'Forty days',
     blurb: 'Morning and night, both kept, forty days running.',
     now: () => longestRun(ruleKept), at: 40, unit: ' d' },
-  { id: 'rule100', section: 'The rule', icon: 'sun', name: 'A hundred days',
+  { id: 'rule100', section: 'Prayer', icon: 'sun', name: 'A hundred days',
     blurb: 'Morning and night, both kept, a hundred days running.',
     now: () => longestRun(ruleKept), at: 100, unit: ' d' },
-  { id: 'rule1000', section: 'The rule', icon: 'medal', name: 'A thousand rules',
-    blurb: 'A thousand halves of the rule kept, all told.',
+  { id: 'rule1000', section: 'Prayer', icon: 'medal', name: 'A thousand prayers',
+    blurb: 'A thousand mornings and nights kept, all told.',
     now: () => Object.values(store.get().pray.days).reduce((a, d) => a + (d.morning ? 1 : 0) + (d.evening ? 1 : 0), 0), at: 1000 },
 
   /* --- Wind-down --- */

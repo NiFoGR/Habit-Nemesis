@@ -1,4 +1,4 @@
-// Bible tracking: the heatmap, progress through the canon, the rule, and the log.
+// Bible tracking: the heatmap, progress through the canon, prayer, and the log.
 //
 // Same shape as the other three sections, deliberately. A thirteen-week grid
 // answers "am I actually doing this" faster than any number, and the section
@@ -67,13 +67,13 @@ export function renderBibleTracking(mount) {
       </section>
 
       <section class="card">
-        <div class="h-row">${icon('sun', 16)}<h2>The rule</h2>
+        <div class="h-row">${icon('sun', 16)}<h2>Prayer</h2>
           <span class="pill ghost">${pray.streak()}d streak</span></div>
         <div class="stat-grid">
           <div class="stat"><b>${pray.totals(30).full}</b><span>full days, 30d</span></div>
           <div class="stat"><b>${pray.totals(30).morning}</b><span>mornings</span></div>
           <div class="stat"><b>${pray.totals(30).evening}</b><span>nights</span></div>
-          <div class="stat"><b>${pray.lifetime()}</b><span>rules kept</span></div>
+          <div class="stat"><b>${pray.lifetime()}</b><span>prayers kept</span></div>
         </div>
         <div class="heatmap">
           ${(() => { const h = pray.history(13); const cols = [];

@@ -15,19 +15,26 @@
 
 import * as store from '../store.js';
 import * as habits from '../habits/program.js';
+import * as native from '../native.js';
 
 /* ---------------- the ladder ---------------- */
 
 /** Low to high. `bar` is the month score that holds you in the division, and
- *  reaching the one above promotes you. */
+ *  reaching the one above promotes you.
+ *
+ *  `blurb` is one line, and it is the only place in the app that is allowed to
+ *  be rude to you. It used to be two sentences of description, which read as
+ *  the app explaining your own score back to you; a rank is funnier and shorter
+ *  when it just says the thing. `js/arena/crest.js` holds the matching artwork,
+ *  one file per rung. */
 export const DIVISIONS = [
   { id: 'bottom', name: 'Bottom G', bar: 0, blurb: 'You have the app. That is the whole of it so far.' },
-  { id: 'npc', name: 'NPC', bar: 0.25, blurb: 'Going through the motions. Some days happen to you.' },
-  { id: 'prospect', name: 'Prospect', bar: 0.45, blurb: 'Putting work in. Not yet reliable, but it is there.' },
-  { id: 'contender', name: 'Contender', bar: 0.6, blurb: 'You are in it now. A bad week costs you something.' },
-  { id: 'menace', name: 'Menace', bar: 0.74, blurb: 'Dangerous. Most weeks go your way and everyone can tell.' },
-  { id: 'locked', name: 'Locked In', bar: 0.84, blurb: 'A good week is just a week. This is the standard now.' },
-  { id: 'topg', name: 'Top G', bar: 0.92, blurb: 'You do not miss. Two days a month, at the very most.' },
+  { id: 'npc', name: 'NPC', bar: 0.25, blurb: 'BiGgEr aNd StRoNgEr ThAn MiKe MeNtZeR' },
+  { id: 'prospect', name: 'Prospect', bar: 0.45, blurb: 'Something is happening. Not reliably.' },
+  { id: 'contender', name: 'Contender', bar: 0.6, blurb: 'You are in it now. A bad week costs you.' },
+  { id: 'menace', name: 'Menace', bar: 0.74, blurb: 'Most weeks go your way and it shows.' },
+  { id: 'locked', name: 'Locked In', bar: 0.84, blurb: 'How about, fucking eat more?' },
+  { id: 'topg', name: 'Top G', bar: 0.92, blurb: 'You do not miss. Two days a month, at most.' },
 ];
 
 export const divisionOf = (id) => DIVISIONS.find((d) => d.id === id) || DIVISIONS[1];
@@ -58,6 +65,10 @@ export function divisionForScore(score) {
  *  case the rule exists for. */
 export const VOID_CELLS = 4;
 export const VOID_DAYS = 3;
+
+/** The version of the scoring rule the stored record was computed under.
+ *  Bumping it re-scores every week that was never played. See `rescore`. */
+const SCORING = 1;
 const MAX_BACKFILL_WEEKS = 130;
 
 const asDate = (key) => {
@@ -153,16 +164,39 @@ export function scoreWeek(key) {
   let due = 0;
   for (const h of roster) {
     const sum = habits.summary(h);
-    let rDone = 0;
-    let rDue = 0;
-    for (const day of weekDays(key)) {
-      if (day > today) continue; // the future is not owed yet
-      const d = sum?.index.get(day);
-      if (d?.skipped) continue;
-      rDue++;
-      days.add(day);
-      if (d?.satisfied) rDone++;
+    // The days of this week that have happened and that you have not stepped
+    // over. A skip removes the day from both halves, here as everywhere.
+    const live = weekDays(key).filter((d) => d <= today && !sum?.index.get(d)?.skipped);
+    for (const d of live) days.add(d);
+    const { num, den } = h.freq || { num: 1, den: 1 };
+
+    let rDone;
+    let rDue;
+    if (den > 1) {
+      // A habit that asks for five days in seven owes five cells over the
+      // week, not seven, and it does not care which five.
+      //
+      // The obvious version of this - count the days the habits engine calls
+      // satisfied - is wrong here, and wrong in a way that took a real week to
+      // notice. That engine's window is trailing: a Monday can only be carried
+      // by the seven days *before* it, which are last week's. So the same five
+      // days scored 100% done Monday to Friday and 71% done Wednesday to
+      // Sunday, and a brand new habit was punished for its first week no
+      // matter what you did. The window is right for a running score, which
+      // has to answer "are you keeping up" without looking into the future.
+      // It is wrong for a fixed week, which can see the whole of itself.
+      //
+      // Floored, so slack is real: five in seven means two days off, and being
+      // at nothing on Monday is not yet being behind. The quota catches up as
+      // the week does, and by Sunday it is exactly the five.
+      rDue = Math.floor((num * live.length) / den);
+      const hits = live.filter((d) => sum?.index.get(d)?.hit).length;
+      rDone = Math.min(hits, rDue);
+    } else {
+      rDue = live.length;
+      rDone = live.filter((d) => sum?.index.get(d)?.satisfied).length;
     }
+
     if (rDue) rows.push({ id: h.id, name: h.name, colour: h.colour, linked: !!h.linked, done: rDone, due: rDue });
     done += rDone;
     due += rDue;
@@ -315,6 +349,14 @@ export function arcLabel(arc) {
   return arc.id === 'winter' ? `${arc.name} ${arc.year}/${String(arc.year + 1).slice(2)}` : `${arc.name} ${arc.year}`;
 }
 
+/** Weeks of off-season at the end of every quarter.
+ *
+ *  The four arcs tile the year with no gap between them, which meant you were
+ *  always in a cup and so a cup was never something you *entered*. Two weeks
+ *  where there is no tournament at all is what buys the countdown its meaning:
+ *  the Arc goes off the screen entirely, and comes back as a date. */
+export const ARC_BREAK = 2;
+
 /** Every week of an arc, in order. */
 export function arcWeeks(arc) {
   const months = arc.id === 'winter'
@@ -323,20 +365,47 @@ export function arcWeeks(arc) {
   return months.flatMap(weeksOfMonth);
 }
 
-/** Where a given week sits in its arc. The last three are the knockout. */
+/** The weeks an arc is actually played over: the quarter, less the break at
+ *  the end of it. Floored at four so a short quarter cannot produce a season
+ *  with no group stage in it. */
+export function arcSeason(arc) {
+  const weeks = arcWeeks(arc);
+  return weeks.slice(0, Math.max(4, weeks.length - ARC_BREAK));
+}
+
+/** The group stage: the season, less its last three weeks. */
+export const arcGroupWeeks = (arc) => arcSeason(arc).slice(0, -3);
+
+/** Where a given week sits in its arc. The last three of the season are the
+ *  knockout; anything past the season is the break. */
 export function arcStage(key) {
   const arc = arcOfMonth(monthOfWeek(key));
   const weeks = arcWeeks(arc);
-  const i = weeks.indexOf(key);
-  if (i < 0) return { arc, weeks, stage: null, index: -1 };
-  const fromEnd = weeks.length - 1 - i;
+  const season = arcSeason(arc);
+  const i = season.indexOf(key);
+  if (i < 0) return { arc, weeks, season, stage: 'break', index: -1 };
+  const fromEnd = season.length - 1 - i;
   const stage = fromEnd === 0 ? 'final' : fromEnd === 1 ? 'sf' : fromEnd === 2 ? 'qf' : 'group';
-  return { arc, weeks, stage, index: i };
+  return { arc, weeks, season, stage, index: i };
+}
+
+/** The arc after this one. The mirror of previousArc, and winter is the
+ *  awkward one for the same reason. */
+export function nextArc(arc) {
+  if (arc.id === 'autumn') return { ...ARCS[0], year: arc.year };
+  if (arc.id === 'winter') return { ...ARCS[1], year: arc.year + 1 };
+  const i = ARCS.findIndex((a) => a.id === arc.id);
+  return { ...ARCS[i + 1], year: arc.year };
 }
 
 /** `name` is the round, `who` is who you are playing. They are two different
  *  things and conflating them put the word "Final" where the opponent's name
  *  goes, so the scoreboard read 100% You against 100% Final. */
+export const blankArc = () => ({
+  qualified: null, qf: null, sf: null, final: null, won: false,
+  note: '', sawOpen: false, sawGroup: false, sawCup: false,
+});
+
 export const KNOCKOUT = {
   qf: { id: 'qf', name: 'Quarter-final', who: "Last Arc's best", opponent: 'your best week of the last Arc' },
   sf: { id: 'sf', name: 'Semi-final', who: "This year's best", opponent: 'your best week of this year' },
@@ -357,7 +426,7 @@ function bestOf(keys, exclude) {
  *  after losing the semi. */
 export function arcFixture(key) {
   const { arc, stage } = arcStage(key);
-  if (!stage || stage === 'group') return null;
+  if (stage !== 'qf' && stage !== 'sf' && stage !== 'final') return null;
   const st = store.get().arena.arcs[arcKey(arc)];
   if (!st?.qualified) return null;
   if (stage === 'sf' && st.qf !== 'won') return null;
@@ -366,7 +435,7 @@ export function arcFixture(key) {
   const round = KNOCKOUT[stage];
   let w = null;
   if (stage === 'qf') {
-    const prev = arcWeeks(previousArc(arc));
+    const prev = arcSeason(previousArc(arc));
     w = bestOf(prev, key);
   } else if (stage === 'sf') {
     const year = String(asDate(weekStart(key)).getFullYear());
@@ -402,7 +471,7 @@ export function previousArc(arc) {
  *  so the table has a range and not just five copies of your best fortnight. */
 export function groupTable(arc = arcOfMonth(currentMonth())) {
   const weeks = arcWeeks(arc);
-  const groupWeeks = weeks.slice(0, Math.max(0, weeks.length - 3));
+  const groupWeeks = arcGroupWeeks(arc);
   const before = playedWeeks().filter((w) => !weeks.includes(w.key)).sort((a, b) => b.score - a.score);
 
   const rivals = [];
@@ -421,6 +490,316 @@ export function groupTable(arc = arcOfMonth(currentMonth())) {
 
   const place = table.findIndex((r) => r.you) + 1;
   return { arc, table, place, qualifies: place <= 3, groupWeeks, played: mine.length };
+}
+
+/* ---------------- where the cup is up to ----------------
+   One question, asked by every screen that shows the Arc, so no screen has to
+   assemble the answer for itself and then disagree with the next one.
+
+   The phases are deliberately not the same list as the stages. A stage is
+   where the calendar is; a phase is where *you* are, and the two part company
+   the moment you are knocked out - the semi-final still happens, you are just
+   not in it. */
+
+const DAY = 864e5;
+
+/** Whole days from today to a day key, never negative. */
+export function daysUntil(key) {
+  const today = habits.today();
+  if (key <= today) return 0;
+  let n = 0;
+  let k = today;
+  while (k < key && n < 400) {
+    n++;
+    k = store.addDays(k, 1);
+  }
+  return n;
+}
+
+export function arcRecord(arc) {
+  return store.get().arena.arcs[arcKey(arc)] || blankArc();
+}
+
+/** Everything the Arc is, right now. */
+export function arcState(key = currentWeek()) {
+  const { arc, stage, season } = arcStage(key);
+  const rec = arcRecord(arc);
+  const group = arcGroupWeeks(arc);
+  const out =
+    rec.qualified === false || rec.qf === 'lost' || rec.sf === 'lost' || rec.final === 'lost';
+
+  const phase = rec.final === 'won' ? 'champion' : stage === 'break' ? 'break' : out ? 'out' : stage;
+
+  // Where the next one begins. During the break that is the next arc; while
+  // you are out of this one it is still the next one, because this one is over
+  // for you whatever the calendar thinks.
+  const upcoming = nextArc(arc);
+  const opensOn = weekStart(arcSeason(upcoming)[0] || arcWeeks(upcoming)[0]);
+
+  const played = group.filter((w) => w < key).length;
+  return {
+    arc,
+    key: arcKey(arc),
+    label: arcLabel(arc),
+    trophy: `${arc.name} Trophy`,
+    stage,
+    phase,
+    rec,
+    season,
+    group,
+    // group progress
+    played,
+    groupLeft: Math.max(0, group.length - played),
+    // the knockout, when you are in one
+    round: KNOCKOUT[stage] || null,
+    fixture: phase === 'qf' || phase === 'sf' || phase === 'final' ? arcFixture(key) : null,
+    // how it ended, when it has
+    lostAt: rec.final === 'lost' ? 'final' : rec.sf === 'lost' ? 'sf' : rec.qf === 'lost' ? 'qf' : null,
+    // the countdown
+    next: upcoming,
+    nextLabel: arcLabel(upcoming),
+    opensOn,
+    opensIn: daysUntil(opensOn),
+  };
+}
+
+/** The full-screen moment owed to you, if any. Each fires once and says so. */
+export function arcMoment() {
+  const st = arcState();
+  const { rec } = st;
+  if (st.phase === 'champion' && !rec.sawCup) return { kind: 'cup', arc: st };
+  if (st.stage === 'break') return null;
+  if (!rec.sawOpen && st.stage !== 'break') return { kind: 'open', arc: st };
+  if (rec.qualified !== null && !rec.sawGroup) return { kind: 'group', arc: st };
+  return null;
+}
+
+export function markArcSeen(key, which) {
+  store.update((sst) => {
+    const rec = (sst.arena.arcs[key] ||= blankArc());
+    if (which === 'open') rec.sawOpen = true;
+    if (which === 'group') rec.sawGroup = true;
+    if (which === 'cup') rec.sawCup = true;
+  });
+}
+
+/* ---------------- shouting through the door ----------------
+   Three alarms, and every one of them is a fact rather than a guess. The
+   temptation was to schedule the whole bracket in advance - the semi starts
+   Monday, the final starts Monday - and it is the wrong call: those depend on
+   winning, and a phone that announces a final you were knocked out of is worse
+   than a phone that says nothing.
+
+   So: the day a cup opens, the day the group ends, and the evening before a
+   round you are actually in finishes. Re-armed on every launch, which is
+   exactly when what is true has changed. Real Android alarms in the APK, and a
+   silent no-op in a browser. */
+
+function alarmPlan() {
+  const st = arcState();
+  const out = [];
+  const at = (dayKey, hour, minute = 0) => {
+    const [y, m, d] = dayKey.split('-').map(Number);
+    return new Date(y, m - 1, d, hour, minute, 0, 0).getTime();
+  };
+
+  if (st.phase === 'break' || st.phase === 'out') {
+    out.push({
+      slot: 0,
+      at: at(st.opensOn, 9),
+      title: `The ${st.next.name} opens today`,
+      body: 'Six of you, three go through. Your first week starts now.',
+    });
+  }
+
+  // The Monday the group ends is the Monday the quarter-final begins, and it is
+  // a date rather than an outcome: it is true whether or not you are in it.
+  if (st.phase === 'group') {
+    const qfWeek = st.season[st.season.length - 3];
+    if (qfWeek) {
+      out.push({
+        slot: 1,
+        at: at(weekStart(qfWeek), 9),
+        title: `${st.arc.name}: the group stage is over`,
+        body: 'Top three go through. Open the Arena to see whether you are one of them.',
+      });
+    }
+  }
+
+  // The evening before a round you are in ends. No score in the body: it would
+  // be the score at the moment the alarm was set, which by Saturday is days old.
+  if (st.fixture) {
+    const sunday = weekEnd(currentWeek());
+    out.push({
+      slot: 2,
+      at: at(store.addDays(sunday, -1), 18),
+      title: `The ${st.round.name.toLowerCase()} ends tomorrow`,
+      body: `You are playing ${st.fixture.name}. One day left to take it.`,
+    });
+  }
+
+  return out;
+}
+
+export async function syncAlarms() {
+  if (!native.hasAlarms()) return;
+  const plan = alarmPlan();
+  const ids = Array.from({ length: native.ALARM_ARENA_SLOTS }, (_, i) => native.ALARM_ARENA_BASE + i);
+  await native.cancelAlarms(ids);
+  const now = Date.now();
+  for (const a of plan) {
+    if (a.at <= now) continue;
+    await native.scheduleAlarm(native.ALARM_ARENA_BASE + a.slot, a.at, a.title, a.body);
+  }
+}
+
+/** What would be scheduled, for the settings screen and for testing: an alarm
+ *  that only exists inside the APK is otherwise unverifiable from a browser. */
+export const plannedAlarms = () => alarmPlan();
+
+/* ---------------- what you said at the time ----------------
+   A line left on the week you set your best, read back to you by the week
+   itself when it turns up as your Nemesis. It is the only free text anywhere
+   in the Arena and it earns its place: every other opponent here is a number,
+   and a number cannot say anything to you. */
+
+export const MAX_NOTE = 140;
+
+export const noteFor = (key) => store.get().arena.weeks[key]?.note || '';
+
+export function setNote(key, text) {
+  store.update((st) => {
+    if (st.arena.weeks[key]) st.arena.weeks[key].note = String(text || '').slice(0, MAX_NOTE).trim();
+  });
+}
+
+export function setArcNote(key, text) {
+  store.update((st) => {
+    if (st.arena.arcs[key]) st.arena.arcs[key].note = String(text || '').slice(0, MAX_NOTE).trim();
+  });
+}
+
+/** Is this week the best on the record? The question the offer to leave a line
+ *  is asked on, so it has to mean "nothing else comes close to it", not merely
+ *  "it was good". */
+export function isBestWeek(key) {
+  const w = storedWeeks()[key];
+  if (!w || w.result === 'void' || w.due < VOID_CELLS) return false;
+  return playedWeeks().every((x) => x.key === key || x.score <= w.score);
+}
+
+/** Every line you have left, newest first. */
+export function notes() {
+  const a = store.get().arena;
+  const fromWeeks = Object.entries(a.weeks)
+    .filter(([, w]) => w.note)
+    .map(([key, w]) => ({ kind: 'week', key, at: key, note: w.note, score: w.score }));
+  const fromArcs = Object.entries(a.arcs)
+    .filter(([, x]) => x.note)
+    .map(([key, x]) => ({ kind: 'arc', key, at: key, note: x.note }));
+  return [...fromWeeks, ...fromArcs].sort((x, y) => (x.at < y.at ? 1 : -1));
+}
+
+/* ---------------- years ----------------
+   Not calendar years. A year here is 365 days from the day the record starts,
+   which is why it is written like a season - 26/27 - and why the first one
+   cannot be looked at until it has actually been lived. A calendar year would
+   hand somebody who installed in November a six-week "year" to review, and the
+   whole point of the thing is that it is a long time.
+
+   The anchor is stored rather than derived. Derived from the earliest recorded
+   day it would move every boundary backwards the first time an old date was
+   corrected from the calendar, and a year that has already been unlocked would
+   lock itself again. */
+
+export const YEAR_DAYS = 365;
+
+/** The day the record starts. Fixed on first sync and never recomputed. */
+export function anchorDay() {
+  const st = store.get();
+  if (st.arena.anchor) return st.arena.anchor;
+  const first = firstRecordDay();
+  return first || store.dayKey(new Date(st.createdAt));
+}
+
+/** The earliest day anything was recorded on, across every row. */
+function firstRecordDay() {
+  let earliest = null;
+  for (const h of [...habits.linkedHabits(), ...habits.all()]) {
+    const sum = habits.summary(h);
+    const first = sum?.days.find((d) => d.raw !== undefined);
+    if (first && (!earliest || first.key < earliest)) earliest = first.key;
+  }
+  return earliest;
+}
+
+/** 26/27, or just 26 for the rare year that begins on New Year's Day. */
+export function yearLabel(from, to) {
+  const a = from.slice(2, 4);
+  const b = to.slice(2, 4);
+  return a === b ? a : `${a}/${b}`;
+}
+
+/** Year `n`, counting from zero. */
+export function yearAt(n) {
+  const from = store.addDays(anchorDay(), YEAR_DAYS * n);
+  const to = store.addDays(from, YEAR_DAYS - 1);
+  return { n, from, to, label: yearLabel(from, to), open: to < habits.today() };
+}
+
+/** Which year is running now. */
+export function currentYearIndex() {
+  const today = habits.today();
+  const anchor = anchorDay();
+  let n = 0;
+  // Counted rather than divided: the day keys are calendar dates, so a
+  // difference in milliseconds is an hour out twice a year.
+  while (n < 200 && store.addDays(anchor, YEAR_DAYS * (n + 1)) <= today) n++;
+  return n;
+}
+
+/** Every year, oldest first, the one running included and marked shut. */
+export function years() {
+  const now = currentYearIndex();
+  return Array.from({ length: now + 1 }, (_, n) => yearAt(n));
+}
+
+/** Days until the year running now is over and can be looked at. */
+export function daysLeftInYear() {
+  const y = yearAt(currentYearIndex());
+  const today = habits.today();
+  let n = 0;
+  let k = today;
+  while (k <= y.to && n < YEAR_DAYS + 2) {
+    n++;
+    k = store.addDays(k, 1);
+  }
+  return n;
+}
+
+/** Every week that falls inside a year, by the Thursday rule. */
+export function weeksOfYear(y) {
+  return Object.keys(store.get().arena.weeks)
+    .filter((k) => {
+      const thu = store.addDays(weekStart(k), 3);
+      return thu >= y.from && thu <= y.to;
+    })
+    .sort();
+}
+
+/** The twelve months a year covers, oldest first, as 'YYYY-MM'. */
+export function monthsOfYear(y) {
+  const out = [];
+  let m = y.from.slice(0, 7);
+  const last = y.to.slice(0, 7);
+  let guard = 24;
+  while (guard-- > 0) {
+    out.push(m);
+    if (m === last) break;
+    const [yy, mm] = m.split('-').map(Number);
+    m = mm === 12 ? `${yy + 1}-01` : `${yy}-${String(mm + 1).padStart(2, '0')}`;
+  }
+  return out;
 }
 
 /* ---------------- standing ---------------- */
@@ -508,6 +887,8 @@ function backfill(st) {
     key = nextWeek(key);
   }
   st.arena.backfilled = true;
+  // Fixed here and never again: every year boundary is measured from it.
+  if (!st.arena.anchor) st.arena.anchor = firstRecordDay() || store.dayKey(new Date(st.createdAt));
   return first;
 }
 
@@ -553,7 +934,7 @@ function closeWeeks(st, events) {
     };
     if (opp.knockout) {
       const arc = arcOfMonth(monthOfWeek(key));
-      const rec = (st.arena.arcs[arcKey(arc)] ||= { qualified: null, qf: null, sf: null, final: null, won: false });
+      const rec = (st.arena.arcs[arcKey(arc)] ||= blankArc());
       rec[opp.knockout] = won ? 'won' : 'lost';
       if (opp.knockout === 'final' && won) rec.won = true;
       events.push({ kind: 'arc', round: opp.knockout, won, arc, week: key, score: s.score, oppScore: opp.score, oppName: opp.name });
@@ -571,13 +952,53 @@ function closeWeeks(st, events) {
  *  yet at the moment it was needed. */
 function settleGroup(st, key, events) {
   const { arc, stage } = arcStage(key);
-  if (!stage || stage === 'group') return;
+  if (stage !== 'qf' && stage !== 'sf' && stage !== 'final') return;
   const k = arcKey(arc);
-  const rec = (st.arena.arcs[k] ||= { qualified: null, qf: null, sf: null, final: null, won: false });
+  const rec = (st.arena.arcs[k] ||= blankArc());
   if (rec.qualified !== null) return;
   const table = groupTable(arc);
   rec.qualified = table.qualifies;
   events.push({ kind: 'group', arc, qualified: rec.qualified, place: table.place, table: table.table });
+}
+
+/** Bring an old record up to the current scoring rule.
+ *
+ *  It has run once, for the change that stopped a habit asking for five days
+ *  in seven being scored out of seven. Weeks the Arena scored out of older
+ *  data are recomputed; weeks that were actually played are not, because a
+ *  result is a historical fact and stands even when the rule that produced it
+ *  has since been corrected. A month made only of re-scored weeks goes back
+ *  with them, along with the division those months placed you in, because none
+ *  of it was ever a match either. */
+function rescore(st) {
+  if (!st.arena.anchor) st.arena.anchor = firstRecordDay() || store.dayKey(new Date(st.createdAt));
+  if (st.arena.scoring >= SCORING) return;
+  st.arena.scoring = SCORING;
+
+  const played = new Set(
+    Object.entries(st.arena.weeks)
+      .filter(([, w]) => w.result === 'won' || w.result === 'lost')
+      .map(([k]) => k)
+  );
+
+  for (const key of Object.keys(st.arena.weeks)) {
+    if (played.has(key)) continue;
+    const s = scoreWeek(key);
+    if (s.due === 0) {
+      delete st.arena.weeks[key];
+      continue;
+    }
+    st.arena.weeks[key] = { ...st.arena.weeks[key], score: s.score, due: s.due, done: s.done, result: s.void ? 'void' : 'record' };
+  }
+
+  // Standings derived from nothing but re-scored weeks are re-derived. A month
+  // holding a real match keeps its verdict, and so does everything after it.
+  const stale = Object.keys(st.arena.months).filter((m) => !weeksOfMonth(m).some((w) => played.has(w)));
+  if (stale.length === Object.keys(st.arena.months).length) {
+    st.arena.division = 'npc';
+    st.arena.placed = false;
+  }
+  for (const m of stale) delete st.arena.months[m];
 }
 
 /** Group qualification for the arc being played now, for the case where no
@@ -586,10 +1007,9 @@ function closeGroups(st, events) {
   const arc = arcOfMonth(currentMonth());
   for (const a of [previousArc(arc), arc]) {
     const k = arcKey(a);
-    const weeks = arcWeeks(a);
-    const groupWeeks = weeks.slice(0, Math.max(0, weeks.length - 3));
+    const groupWeeks = arcGroupWeeks(a);
     if (!groupWeeks.length || !weekClosed(groupWeeks[groupWeeks.length - 1])) continue;
-    const rec = (st.arena.arcs[k] ||= { qualified: null, qf: null, sf: null, final: null, won: false });
+    const rec = (st.arena.arcs[k] ||= blankArc());
     if (rec.qualified !== null) continue;
     const table = groupTable(a);
     rec.qualified = table.qualifies;
@@ -640,6 +1060,7 @@ export function sync() {
   const events = [];
   store.update((st) => {
     if (!st.arena.backfilled) backfill(st);
+    rescore(st);
     closeWeeks(st, events);
     closeGroups(st, events);
     closeMonths(st, events);

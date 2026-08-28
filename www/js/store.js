@@ -47,6 +47,12 @@ function blank() {
       appLock: false, // require the PIN to open the whole app, not just the gallery
       tutorialDone: false, // the one-off technique walkthrough
       weeklyReviewSeen: '', // dayKey of the last weekly review dismissed
+      // 0 locked, 1 unlocked, 2 answered wrong and gone for good. See nifo.js.
+      // A fresh install starts locked: the five preloaded sections are what
+      // this app is *for*, not what it *is*, and the person who installs it
+      // may be someone the five have nothing to say to.
+      nifoOnly: 0,
+      onboarded: false, // the introduction has been seen at least once
     },
     program: {
       level: 1,
@@ -181,6 +187,16 @@ function blank() {
       months: {}, // 'YYYY-MM' -> { score, w, l, from, to, move }
       arcs: {}, // 'YYYY-season' -> { qualified, qf, sf, final, won }
       feats: {}, // featId -> the timestamp it was first earned
+      // The day the record starts, fixed once. Everything year-shaped is
+      // measured from here - a year is 365 days from it, not a calendar year -
+      // so it must not drift. Deriving it from the earliest recorded day would
+      // move every year boundary backwards the first time you corrected an old
+      // date from the calendar.
+      anchor: '',
+      // Which rule the stored scores were computed under. Bumping it re-scores
+      // every week that was never actually played; `rescore` in
+      // arena/program.js says why a played one is left alone.
+      scoring: 0,
       seenWeek: '', // the last closed week whose result screen was shown
       backfilled: false, // the one-time sweep that gives the Arena a history
     },
@@ -355,6 +371,14 @@ function hydrate(saved) {
       appLock: bool(ss.appLock),
       tutorialDone: bool(ss.tutorialDone),
       weeklyReviewSeen: /^\d{4}-\d{2}-\d{2}$/.test(ss.weeklyReviewSeen) ? ss.weeklyReviewSeen : '',
+      // Both default the other way here than in blank(), and that is the whole
+      // point of them living in hydrate rather than being read raw: reaching
+      // this function at all means there was already a saved state, so this is
+      // an install that has been in use. Taking the five away from it, or
+      // walking it through an introduction to an app it has been running for
+      // months, would both be the update breaking something that worked.
+      nifoOnly: int(ss.nifoOnly, 0, 2, 1),
+      onboarded: ss.onboarded !== false,
     },
     program: {
       level: int(sp.level, 1, 104, 1),
@@ -558,6 +582,10 @@ function cleanArena(sa, base) {
       oppScore: v.oppScore == null ? null : pctOf(v.oppScore),
       result: oneOf(v.result, ['won', 'lost', 'void', 'record'], null),
       arc: oneOf(v.arc, ['group', 'qf', 'sf', 'final'], null),
+      // A line you left on the week you set your best, for whoever has to beat
+      // it. It is the only free text in the Arena, so it is capped hard and
+      // every screen that shows it escapes it.
+      note: str(v.note, 140),
     };
   }
 
@@ -586,13 +614,24 @@ function cleanArena(sa, base) {
       sf: round(v.sf),
       final: round(v.final),
       won: bool(v.won),
+      note: str(v.note, 140),
+      // Which of the arc's three ceremonies have been shown. Each is a
+      // full-screen moment that fires once, so what is stored is that you have
+      // seen it, not that it happened - the record already says that.
+      sawOpen: bool(v.sawOpen),
+      sawGroup: bool(v.sawGroup),
+      sawCup: bool(v.sawCup),
     };
   }
 
   const feats = {};
   const rawFeats = src.feats && typeof src.feats === 'object' ? src.feats : {};
   for (const [k, v] of Object.entries(rawFeats).slice(0, 200)) {
-    if (!/^[a-z][a-z0-9_-]{1,40}$/.test(k)) continue;
+    // Capitals allowed. They were not, and the catalogue is full of them -
+    // beatNemesis, perfectWeek, divTopG - so every camel-cased feat you earned
+    // was thrown away by the sanitiser on the next launch and had to be earned
+    // again. Silent, and only visible as a count that would not go up.
+    if (!/^[A-Za-z][A-Za-z0-9_-]{1,40}$/.test(k)) continue;
     const ts = num(v, 0, 4e12);
     if (ts != null) feats[k] = ts;
   }
@@ -604,6 +643,8 @@ function cleanArena(sa, base) {
     months,
     arcs,
     feats,
+    anchor: /^\d{4}-\d{2}-\d{2}$/.test(src.anchor) ? src.anchor : '',
+    scoring: int(src.scoring, 0, 1000, 0),
     seenWeek: /^\d{4}-W\d{2}$/.test(src.seenWeek) ? src.seenWeek : '',
     backfilled: bool(src.backfilled),
   };

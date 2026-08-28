@@ -18,8 +18,8 @@
 
 import * as store from '../store.js';
 import * as habits from './program.js';
-import { escapeHtml, ringSvg, toast, openSheet, haptic } from '../ui.js';
-import { icon, logoMark } from '../icons.js';
+import { escapeHtml, toast, openSheet, haptic, chime, celebrate } from '../ui.js';
+import { icon } from '../icons.js';
 import { navigate } from '../back.js';
 import { openTypePicker } from './edit.js';
 import * as arena from '../arena/program.js';
@@ -53,7 +53,7 @@ function miniRing(frac, colour) {
   const off = c * (1 - Math.max(0, Math.min(frac, 1)));
   return `<svg class="hg-ring" viewBox="0 0 24 24" aria-hidden="true">
     <circle cx="12" cy="12" r="${r}" fill="none" stroke="var(--line)" stroke-width="3"/>
-    <circle cx="12" cy="12" r="${r}" fill="none" stroke="${colour}" stroke-width="3" stroke-linecap="round"
+    <circle class="hg-ring-fill" cx="12" cy="12" r="${r}" fill="none" stroke="${colour}" stroke-width="3" stroke-linecap="round"
       stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 12 12)"/>
   </svg>`;
 }
@@ -147,45 +147,43 @@ function rowHtml(habit, days, s, { reorder = false, groupOptions = () => '' } = 
   </div>`;
 }
 
-/* ---------------- the season line ----------------
-   The only door into the Arena, and deliberately the only one: the Arena is
-   not a section, it is a reading of the grid, so it hangs off the grid rather
-   than sitting beside it in a menu the app spent a version getting rid of.
+/* ---------------- the header ----------------
+   The today card is gone, and with it the last bordered box above the grid.
+   Its three facts - how many are left, what day it is, how far round the ring
+   is - are the header now. The ring carries no number of its own: a "5" inside
+   it beside a "6 left today" is two numbers for one fact, which is the mistake
+   this app keeps having to un-make.
 
-   It goes under the today card and not inside it. Today's card answers "what
-   is left today"; this answers "how is the week going", and folding the second
-   into the first is how the old hub ended up being a list of everything twice. */
-function seasonLine() {
-  const key = arena.currentWeek();
-  const live = arena.scoreWeek(key);
-  const opp = arena.fixtureFor(key);
-  const st = arena.standing();
-  const left = arena.daysLeftInWeek();
+   Drawn here rather than through ringSvg because this one has to *sweep*. A
+   cell tapped on the grid updates this element in place instead of rebuilding
+   the screen, so the arc animates to its new length, which is the whole point
+   of not redrawing. */
+/** The two readings at the top of the grid, in one place because they are the
+ *  same fact twice: a header drawn one way on render and patched another way
+ *  on a tap is exactly the kind of disagreement this screen is not allowed to
+ *  have.
+ *
+ *  Nothing due is not the same as everything done. A grid with no rows on it
+ *  used to say "All done today" over a full green ring, which was a lie told
+ *  to the one person guaranteed to see it: someone who has just installed the
+ *  app and has not added anything yet. */
+function dueHead(due) {
+  if (!due.total) return { text: 'Nothing here yet', frac: 0 };
+  if (due.pending.length) return { text: `${due.pending.length} left today`, frac: due.done / due.total };
+  return { text: 'All done today', frac: 1 };
+}
 
-  // Nothing due yet is not "losing 0 to 25". A week that is not a fixture says
-  // so, because a fresh install being told it is behind is a lie about a match
-  // that has not started.
-  if (live.void) {
-    return `<a class="season-line new" href="#/arena">
-      <span class="sl-mark">${icon('trophy', 18)}</span>
-      <span class="sl-text"><b>The Arena</b><i>Your first week is being played</i></span>
-      <span class="sl-go">${icon('caretUp', 14)}</span>
-    </a>`;
-  }
-
-  const gap = live.score - opp.score;
-  const state = gap > 0 ? 'ahead' : gap < 0 ? 'behind' : 'level';
-  return `<a class="season-line ${state}" href="#/arena">
-    <span class="sl-mark">${icon('crown', 18)}</span>
-    <span class="sl-text">
-      <b>${escapeHtml(st.division.name)}</b>
-      <i>${st.month.empty ? 'placement month' : `${st.month.w}W–${st.month.l}L`} · ${left === 1 ? 'last day' : `${left} days left`}</i>
-    </span>
-    <span class="sl-match">
-      <b>${Math.round(live.score * 100)}</b><em>${icon('versus', 12)}</em><b class="them">${Math.round(opp.score * 100)}</b>
-    </span>
-    <span class="sl-go">${icon('caretUp', 14)}</span>
-  </a>`;
+function headRing(frac) {
+  const f = Math.max(0, Math.min(frac, 1));
+  const r = 20;
+  const c = 2 * Math.PI * r;
+  return `<svg class="gh-ring" width="46" height="46" viewBox="0 0 46 46" aria-hidden="true">
+    <circle cx="23" cy="23" r="${r}" fill="none" stroke="var(--line)" stroke-width="4"/>
+    <circle class="gh-ring-fill" cx="23" cy="23" r="${r}" fill="none"
+      stroke="${f >= 1 ? 'var(--good)' : 'var(--accent)'}" stroke-width="4" stroke-linecap="round"
+      stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - f)).toFixed(1)}"
+      transform="rotate(-90 23 23)"/>
+  </svg>`;
 }
 
 /* ---------------- the grid ---------------- */
@@ -208,7 +206,6 @@ function redraw(mount) {
   const linked = habits.linkedHabits();
   const list = habits.active();
   const due = habits.dueToday();
-  const run = habits.bestRun();
   const days = s.reverseDays ? habits.recentDays(s.columns) : habits.recentDays(s.columns).reverse();
   const groupOptions = (current) =>
     `<option value="" ${current ? '' : 'selected'}>No group</option>${habits
@@ -229,7 +226,7 @@ function redraw(mount) {
               <button class="hg-group-btn" data-toggle="${escapeHtml(group.id)}">
                 ${icon(collapsed ? 'caretDown' : 'caretUp', 14)}<b>${escapeHtml(group.name)}</b>
               </button>
-              ${score == null ? '' : `<span class="pill ghost">${Math.round(score * 100)}%</span>`}
+              ${score == null ? '' : `<span class="pill ghost" data-group-score="${escapeHtml(group.id)}">${Math.round(score * 100)}%</span>`}
             </div>`
           : sections.length > 1 && rows.length
             ? '<div class="hg-group"><span class="hg-group-btn"><b>Everything else</b></span></div>'
@@ -240,24 +237,17 @@ function redraw(mount) {
 
   mount.innerHTML = `
     <div class="screen home">
-      <header class="hub-head">
-        <div class="brand-row">${logoMark(26)}<h1>NiFo</h1></div>
+      <header class="grid-head">
+        ${headRing(dueHead(due).frac)}
+        <div class="gh-text">
+          <h1 id="dueLine">${dueHead(due).text}</h1>
+          <p>${escapeHtml(new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }))}</p>
+        </div>
         <div class="head-actions">
           <button class="icon-btn" id="addBtn" aria-label="New habit">${icon('plus')}</button>
           <a class="icon-btn linkbtn" href="#/settings" aria-label="Settings">${icon('settings')}</a>
         </div>
       </header>
-
-      <div class="today home-today">
-        <div class="today-left">
-          <h2>${due.pending.length ? `${due.pending.length} left today` : 'All done today'}</h2>
-          <p class="muted small">${escapeHtml(new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }))}</p>
-          ${run ? `<p class="run-line">${icon('flame', 14)}<span><b>${run.days}</b> day${run.days === 1 ? '' : 's'} of ${escapeHtml(run.name)}</span></p>` : ''}
-        </div>
-        ${ringSvg(due.total ? due.done / due.total : 1, `${due.done}/${due.total}`, 'today', { size: 84 })}
-      </div>
-
-      ${seasonLine()}
 
       <div class="hg-tools">
         <button class="chipbtn ${reorderMode ? 'on' : ''}" id="reorderBtn">${icon('reorder', 15)}<span>${reorderMode ? 'Done' : 'Reorder'}</span></button>
@@ -339,6 +329,92 @@ function wireGrid(mount, days) {
   wireCells(grid, mount, s);
 }
 
+/* ---------------- one cell, changed ----------------
+   Marking a day used to call `redraw`, which rebuilt the whole screen's HTML.
+   Two things were wrong with that and only one of them was slow. It replayed
+   the screen's entry animation on every single tap, which is the flicker; and
+   it destroyed and recreated the very elements that were supposed to animate,
+   so the rings could never sweep to their new value - they could only appear
+   at it. Nothing that is replaced can move.
+
+   So one cell is swapped, its row's ring and the day's totals are nudged, and
+   everything else on screen is left alone. The click handler is delegated on
+   the grid, so the new node needs no wiring. */
+
+function nodeFrom(html) {
+  const t = document.createElement('template');
+  t.innerHTML = html.trim();
+  return t.content.firstElementChild;
+}
+
+const ringLen = (r) => 2 * Math.PI * r;
+
+/** The habit's own ring beside its name. */
+function patchRowRing(row, habit) {
+  const fill = row.querySelector('.hg-ring-fill');
+  if (!fill) return;
+  const f = Math.max(0, Math.min(habits.summary(habit).score, 1));
+  fill.setAttribute('stroke-dashoffset', (ringLen(9) * (1 - f)).toFixed(1));
+}
+
+/** What the header says, and what the group pills say. Both are readings of
+ *  the same record the cell just changed, so both move together or the screen
+ *  disagrees with itself. */
+function patchTotals(mount, wasDone) {
+  const due = habits.dueToday();
+  const { text, frac: f } = dueHead(due);
+  const line = mount.querySelector('#dueLine');
+  if (line) line.textContent = text;
+
+  const fill = mount.querySelector('.gh-ring-fill');
+  if (fill) {
+    fill.setAttribute('stroke-dashoffset', (ringLen(20) * (1 - Math.min(f, 1))).toFixed(1));
+    fill.setAttribute('stroke', f >= 1 ? 'var(--good)' : 'var(--accent)');
+  }
+  mount.querySelectorAll('[data-group-score]').forEach((el) => {
+    const score = habits.groupScore(el.dataset.groupScore);
+    el.textContent = score == null ? '' : `${Math.round(score * 100)}%`;
+  });
+
+  // The day closing out is the one moment on this screen worth a noise. Once a
+  // day, on the tap that earned it, and never on the way back down.
+  const done = due.total > 0 && due.pending.length === 0;
+  if (done && !wasDone) {
+    haptic('level');
+    chime('win');
+    const ring = mount.querySelector('.gh-ring');
+    if (ring) celebrate(ring, { count: 20, spread: 74, colour: 'var(--good)' });
+  }
+}
+
+/** Mark a day and show it, without redrawing anything that did not change. */
+function markCell(mount, habit, key, cell) {
+  const before = habits.dueToday();
+  const wasDone = before.total > 0 && before.pending.length === 0;
+  const wasOn = !!habits.summary(habit).index.get(key)?.hit;
+
+  habits.setValue(habit.id, key, habits.nextValue(habit, key));
+  announce();
+
+  const row = cell.closest('.hg-row');
+  const next = nodeFrom(cellHtml(habit, key, habits.summary(habit), habits.settings()));
+  cell.replaceWith(next);
+  if (row) patchRowRing(row, habit);
+  patchTotals(mount, wasDone);
+
+  // The reward, and only for the direction that deserves one: turning a day on
+  // gets the tick drawn and a handful of sparks in the habit's own colour.
+  // Turning it off, skipping it or clearing it gets the press and nothing else,
+  // because celebrating a miss is how a tracker starts lying to you.
+  const nowOn = !!habits.summary(habit).index.get(key)?.hit;
+  haptic(nowOn ? 'hit' : 'tick');
+  if (nowOn && !wasOn) {
+    next.classList.add('just-on');
+    celebrate(next, { count: 8, spread: 26, colour: rowColour(habit) });
+    next.addEventListener('animationend', () => next.classList.remove('just-on'), { once: true });
+  }
+}
+
 /* ---------------- marking ----------------
    Two ways in, because the setting says so. A short press is fast and is what
    you want at the end of a day; press-and-hold is what you want when the grid
@@ -358,10 +434,7 @@ function wireCells(grid, mount, s) {
     const key = cell.dataset.day;
     if (!key || key > habits.today()) return;
     if (habit.kind === 'number') return openValueSheet(mount, habit, key);
-    haptic('tick');
-    habits.setValue(habit.id, key, habits.nextValue(habit, key));
-    announce();
-    redraw(mount);
+    markCell(mount, habit, key, cell);
   };
 
   grid.addEventListener('click', (e) => {
@@ -421,10 +494,27 @@ function openValueSheet(mount, habit, key) {
   const input = sheet.el.querySelector('#val');
   input.focus();
   const done = (value) => {
+    // A measurable habit is marked from a sheet rather than by cycling the
+    // cell, but what happens on the grid behind it is the same event, so it
+    // takes the same path: one cell swapped, the totals nudged, no rebuild.
+    const before = habits.dueToday();
+    const wasDone = before.total > 0 && before.pending.length === 0;
+    const wasOn = !!habits.summary(habit).index.get(key)?.hit;
     habits.setValue(habit.id, key, value);
     announce();
     sheet.close();
-    redraw(mount);
+    const cell = mount.querySelector(`.hg-row[data-id="${CSS.escape(habit.id)}"] .hg-cell[data-day="${key}"]`);
+    if (!cell) return redraw(mount);
+    const next = nodeFrom(cellHtml(habit, key, habits.summary(habit), habits.settings()));
+    cell.replaceWith(next);
+    patchRowRing(next.closest('.hg-row'), habit);
+    patchTotals(mount, wasDone);
+    const nowOn = !!habits.summary(habit).index.get(key)?.hit;
+    if (nowOn && !wasOn) {
+      next.classList.add('just-on');
+      celebrate(next, { count: 8, spread: 26, colour: rowColour(habit) });
+      next.addEventListener('animationend', () => next.classList.remove('just-on'), { once: true });
+    }
   };
   sheet.el.querySelector('#save').addEventListener('click', () => {
     const v = Number(input.value);

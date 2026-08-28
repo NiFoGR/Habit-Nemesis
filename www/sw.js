@@ -3,9 +3,9 @@
 // Bump CACHE to drop everything already stored. Note that the app's own code
 // no longer depends on this being remembered: see the fetch handler, which
 // revalidates code against the network and keeps the cache for offline only.
-const CACHE = 'nifo-v17';
+const CACHE = 'nifo-v21';
 
-const ASSETS = [
+const SHELL = [
   './',
   './index.html',
   './styles.css',
@@ -22,6 +22,9 @@ const ASSETS = [
   './js/icons.js',
   './js/native.js',
   './js/nightlight.js',
+  './js/tabs.js',
+  './js/nifo.js',
+  './js/intro.js',
 
   // kegels
   './js/kegels/program.js',
@@ -63,6 +66,9 @@ const ASSETS = [
   './js/arena/result.js',
   './js/arena/year.js',
   './js/arena/feats.js',
+  './js/arena/cabinet.js',
+  './js/arena/crest.js',
+  './js/arena/moment.js',
 
   // wind-down
   './js/breathe/program.js',
@@ -82,8 +88,33 @@ const ASSETS = [
   './js/bible/book.js',
   './js/bible/tracking.js',
 
-  // scripture: bundled with the app, precached so reading works offline from
-  // the first launch rather than after the first time each book is touched
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/icon-maskable-512.png',
+  './icons/apple-touch-icon.png',
+
+  // The division crests. Artwork rather than something the app draws, so they
+  // are precached with everything else: a crest that arrives late leaves a
+  // hole where the whole point of the screen is.
+  './img/rank-0-bottom.webp',
+  './img/rank-1-npc.webp',
+  './img/rank-2-prospect.webp',
+  './img/rank-3-contender.webp',
+  './img/rank-4-menace.webp',
+  './img/rank-5-locked.webp',
+  './img/rank-6-topg.webp',
+];
+
+/* The scripture and the study notes: 154 files and several megabytes, and the
+   one part of this app that is not the app. Kept apart from SHELL for two
+   reasons. `addAll` is all-or-nothing, so with these in the same list a single
+   missing note file meant the whole worker failed to install and the app had
+   no offline mode at all - one bad file for the price of 154. And a build made
+   to hand to someone else does not carry them (`npm run pack:web`, and
+   docs/BIBLE.md says why), so on that build every one of these is a 404 by
+   design. Cached one at a time, best effort: what is there is stored, what is
+   not is simply not there. */
+const SCRIPTURE = [
   './bible/_meta.json',
   './bible/1ch.json',
   './bible/1co.json',
@@ -161,9 +192,6 @@ const ASSETS = [
   './bible/wis.json',
   './bible/zec.json',
   './bible/zep.json',
-
-  // the study notes, precached alongside the scripture: a study Bible whose
-  // commentary needs a connection is not much of one
   './bible/notes/_index.json',
   './bible/notes/1ch.json',
   './bible/notes/1co.json',
@@ -241,14 +269,21 @@ const ASSETS = [
   './bible/notes/wis.json',
   './bible/notes/zec.json',
   './bible/notes/zep.json',
-
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/icon-maskable-512.png',
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  e.waitUntil(
+    caches
+      .open(CACHE)
+      .then(async (c) => {
+        // The app itself must be complete or there is no offline mode worth
+        // having, so this half stays all-or-nothing and a missing file here is
+        // meant to fail loudly.
+        await c.addAll(SHELL);
+        await Promise.allSettled(SCRIPTURE.map((u) => c.add(u)));
+      })
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (e) => {

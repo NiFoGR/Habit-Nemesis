@@ -1,0 +1,20 @@
+{
+  "name": "nifo-systemui",
+  "version": "1.0.0",
+  "description": "Hides the Android navigation bar for NiFo, so the app's own bottom bar is the bottom of the screen. Swipe from the edge brings the system bar back transiently. The status bar is deliberately left alone.",
+  "main": "index.js",
+  "license": "UNLICENSED",
+  "capacitor": {
+    "android": {
+      "src": "android"
+    }
+  },
+  "files": [
+    "android/src/main/",
+    "android/build.gradle",
+    "index.js"
+  ],
+  "peerDependencies": {
+    "@capacitor/core": "^7.0.0"
+  }
+}

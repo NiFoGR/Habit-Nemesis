@@ -8,11 +8,12 @@
 import * as store from './store.js';
 import * as vault from './pe/vault.js';
 import { usage as photoUsage } from './pe/db.js';
-import { escapeHtml, toast, openSheet } from './ui.js';
+import { escapeHtml, toast, openSheet, saveFile, haptic } from './ui.js';
 import * as habits from './habits/program.js';
 import { icon } from './icons.js';
 import { kegelName, peName } from './names.js';
 import { markUnlocked } from './lock.js';
+import { nifoOffered, nifoUnlocked, tryNifoPin } from './nifo.js';
 
 /* ---------------- settings ----------------
    One rule decides what goes here: a setting lives where the thing it affects
@@ -27,14 +28,14 @@ import { markUnlocked } from './lock.js';
  *
  *  Prayer had a row of its own pointing at `#/pray/settings`, which is not in
  *  the route table and never was, so it fell through to the hub. There is no
- *  such screen to point it at either: the rule's settings live on the Bible
- *  screen, because the rule lives in the Bible section. One row, named for
+ *  such screen to point it at either: prayer's settings live on the Bible
+ *  screen, because prayer lives in the Bible section. One row, named for
  *  both. */
 function settingsNav() {
   return `<div class="set-nav">
     <a href="#/kegels/settings">${icon('target', 18)}<span><b>${escapeHtml(kegelName())}</b><i>Input, daily target, release day, reminder</i></span></a>
     <a href="#/pe/settings">${icon('trend', 18)}<span><b>${escapeHtml(peName())}</b><i>Units, session defaults, check-in day</i></span></a>
-    <a href="#/bible/settings">${icon('scripture', 18)}<span><b>Bible and prayer</b><i>Text size, reminder, the rule's times and language</i></span></a>
+    <a href="#/bible/settings">${icon('scripture', 18)}<span><b>Bible and prayer</b><i>Text size, reminder, prayer times and language</i></span></a>
     <a href="#/breathe/settings">${icon('breath', 18)}<span><b>Wind-down</b><i>Pattern, length, pacing, reminder</i></span></a>
   </div>`;
 }
@@ -55,8 +56,7 @@ export function renderSettings(mount) {
         <span class="icon-btn ghost"></span>
       </header>
 
-      <h3 class="sec-head">Sections</h3>
-      ${settingsNav()}
+      ${nifoUnlocked() ? `<h3 class="sec-head">Sections</h3>${settingsNav()}` : ''}
 
       <h3 class="sec-head">Everywhere</h3>
 
@@ -84,10 +84,10 @@ export function renderSettings(mount) {
           <span><b>Oldest first</b><i>Days run left to right instead of newest on the left.</i></span>
           <input type="checkbox" id="reverseDays" ${hs.reverseDays ? 'checked' : ''}>
         </label>
-        <label class="setting toggle">
-          <span><b>Show the five</b><i>${escapeHtml(kegelName())}, ${escapeHtml(peName())}, the Bible, the rule and the wind-down, as rows on the grid. Turning them off does not turn the features off.</i></span>
+        ${nifoUnlocked() ? `<label class="setting toggle">
+          <span><b>Show the five</b><i>${escapeHtml(kegelName())}, ${escapeHtml(peName())}, the Bible, prayer and the wind-down, as rows on the grid. Turning them off does not turn the features off.</i></span>
           <input type="checkbox" id="showLinked" ${hs.showLinked ? 'checked' : ''}>
-        </label>
+        </label>` : ''}
       </section>
 
       <section class="card">
@@ -152,7 +152,7 @@ export function renderSettings(mount) {
       <section class="card">
         <div class="h-row">${icon('images', 16)}<h2>Data</h2></div>
         <div class="kv"><span>On this device</span><b id="usage">checking</b></div>
-        <p class="fineprint">Everything lives on this phone. Reinstalling the app or clearing browser data wipes it, so export occasionally.</p>
+        <p class="fineprint">Everything lives on this phone. Reinstalling the app or clearing browser data wipes it, so export occasionally. Exporting opens your share sheet, so the file can go to Files, Drive or a message; in a browser it lands in your downloads.</p>
         <div class="btn-row">
           <button class="btn" id="exportBtn">Export backup</button>
           <button class="btn" id="importBtn">Import backup</button>
@@ -167,6 +167,10 @@ export function renderSettings(mount) {
       </section>
 
       <p class="fineprint centre">NiFo, everything on-device</p>
+      <div class="set-tail">
+        <a class="tail-btn" href="#/intro">Show the introduction again</a>
+        ${nifoOffered() ? '<button class="tail-btn" id="nifoOnly">nifo only</button>' : ''}
+      </div>
     </div>`;
 
   const bind = (id, key, get = (e) => e.value) =>
@@ -185,7 +189,9 @@ export function renderSettings(mount) {
   });
   mount.querySelector('#columns').addEventListener('change', (e) => setGrid('columns', Number(e.target.value)));
   ['reverseDays', 'showLinked', 'shortPress', 'skipDays', 'unknownMarks'].forEach((id) =>
-    mount.querySelector(`#${id}`).addEventListener('change', (e) => setGrid(id, e.target.checked))
+    // `?.`, because "Show the five" is not on the page at all on a locked
+    // install and a missing switch must not take the other four with it.
+    mount.querySelector(`#${id}`)?.addEventListener('change', (e) => setGrid(id, e.target.checked))
   );
   mount.querySelector('#csv').addEventListener('click', exportCsv);
 
@@ -210,6 +216,7 @@ export function renderSettings(mount) {
 
   showUsage(mount);
   wireBackup(mount);
+  mount.querySelector('#nifoOnly')?.addEventListener('click', askNifoPin);
 
   mount.querySelector('#reset').addEventListener('click', () => {
     if (confirm('Erase everything and start from scratch? This cannot be undone.')) {
@@ -218,6 +225,49 @@ export function renderSettings(mount) {
       location.hash = '#/hub';
     }
   });
+}
+
+/* ---------------- the door at the bottom ----------------
+   One attempt, and it says so before you type. That warning is not a courtesy
+   to whoever is guessing - it is the only thing that makes a single attempt
+   fair to the person who owns the phone and is entering it with cold hands.
+
+   The sheet never says what is behind it. "nifo only" is the whole of what
+   anyone is entitled to know, and listing the five here would be telling every
+   person who is not getting them exactly what they are not getting. */
+
+function askNifoPin() {
+  const sheet = openSheet(`
+    <h2>nifo only</h2>
+    <p class="warn-inline">One attempt. Wrong, and this is gone for good.</p>
+    <input type="password" id="nifoPin" inputmode="numeric" autocomplete="off" class="pin-input" placeholder="••••">
+    <div class="btn-row">
+      <button class="btn ghost" data-close>Not now</button>
+      <button class="btn primary" id="nifoGo">Enter</button>
+    </div>`);
+
+  const input = sheet.el.querySelector('#nifoPin');
+  const attempt = () => {
+    if (!input.value) return;
+    const ok = tryNifoPin(input.value);
+    sheet.close();
+    haptic(ok ? 'done' : 'miss');
+    if (!ok) {
+      toast('No.');
+      renderSettings(document.getElementById('app'));
+      return;
+    }
+    // Straight to the grid: five rows appearing on it is the answer, and a
+    // settings screen with one fewer button at the bottom of it is not.
+    toast('Unlocked');
+    location.hash = '#/hub';
+  };
+
+  sheet.el.querySelector('#nifoGo').addEventListener('click', attempt);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') attempt();
+  });
+  input.focus();
 }
 
 /** Storage is worth showing because it is the thing that fills up, and because
@@ -236,13 +286,7 @@ async function showUsage(mount) {
 
 function wireBackup(mount) {
   mount.querySelector('#exportBtn').addEventListener('click', () => {
-    const blob = new Blob([store.exportJson()], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `nifo-backup-${store.dayKey()}.json`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    toast('Backup downloaded');
+    saveFile(`nifo-backup-${store.dayKey()}.json`, store.exportJson());
   });
 
   const file = mount.querySelector('#importFile');
@@ -306,11 +350,5 @@ function exportCsv() {
         .join(',')
     );
   }
-  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `nifo-habits-${store.dayKey()}.csv`;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  toast('CSV downloaded');
+  saveFile(`nifo-habits-${store.dayKey()}.csv`, rows.join('\n'), 'text/csv');
 }

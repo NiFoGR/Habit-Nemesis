@@ -18,20 +18,24 @@ Runs entirely on the phone. No account, no server, no analytics, nothing leaves 
 
 **The home screen is the grid.** Every commitment you have is a row: the five the app itself asks of you, and every habit you added. Two rules and no exceptions - *the name goes there* (tapping "Kegels" opens the Kegels section) and *the cell does it* (tapping today starts the session, or marks the day). Only today acts; the days behind it are the record. There is no menu above it and no dashboard beside it, because both were the same list a third time.
 
-**One theme.** One accent, one sans, one set of state colours, so colour answers *what state is this in* and never *which section am I in* - the app spent five sections proving that the second reading makes one app look like five. Two deliberate exceptions: a habit's own colour, which you chose, and the serif, which appears only on scripture and prayer text because reading 1,344 chapters in a UI sans is worse.
+**One theme.** One accent, one sans, one set of state colours, so colour answers *what state is this in* and never *which section am I in* - the app spent five sections proving that the second reading makes one app look like five. Three deliberate exceptions: a habit's own colour, which you chose; the serif, which appears only on scripture and prayer text because reading 1,344 chapters in a UI sans is worse; and the seven division crests in the Arena, which are artwork rather than something the app draws, because a rank badge's whole job is to be a picture of where you stand.
 
 ---
 
 ## Getting it on your phone
 
-Build the APK and sideload it.
+**Your phone, Android:** build the APK and sideload it. That is the full
+version, with the scripture and the night light in it.
 
-### Why there is no web install
+**Anyone else, or an iPhone:** `npm run pack:web`, host `dist-web/`, Add to
+Home Screen. That build has no scripture in it, on purpose.
 
-There used to be a second route: GitHub Pages served `www/`, and Chrome on
-Android installed it as a PWA. That is gone, and it must stay gone.
+### Why a hosted copy is never `www/` itself
 
-`www/bible/` now holds the full text of the Orthodox Study Bible. Shipping that
+There used to be a route where GitHub Pages served `www/` whole. That is gone
+and it must stay gone.
+
+`www/bible/` holds the full text of the Orthodox Study Bible. Shipping that
 inside an APK you install on your own phone is a personal copy of a book you
 own. Publishing it to a website is redistributing a commercial translation, and
 **GitHub Pages is public even when the repository is private** — private Pages
@@ -41,6 +45,42 @@ copyright problem. [`docs/BIBLE.md`](docs/BIBLE.md) explains the line in full.
 
 If Pages was ever switched on for this repository, turn it off in
 **Settings → Pages → Source: None**.
+
+`npm run pack:web` is what makes a hosted copy legitimate: it writes
+`dist-web/`, which is `www/` with `www/bible/` left out. Nothing else changes,
+and nothing downstream has to know — `sw.js` keeps the scripture in a list of
+its own and precaches it best-effort, so on that build all 154 files are a 404
+by design and the app still installs and still works offline. An install from
+it is locked besides (below), so there is no Bible section there to open.
+
+### Giving it to someone else, or putting it on an iPhone
+
+An iPhone cannot sideload, so Add to Home Screen is the only route there is,
+and it is a good one: it installs as a real app, full screen, offline, with its
+own icon.
+
+```bash
+npm run pack:web          # writes dist-web/, about 1 MB
+node tools/serve.mjs 8080 dist-web   # to check it first
+```
+
+Then put `dist-web/` behind **HTTPS** — any static host, unlisted — open it in
+Safari, and **Share → Add to Home Screen**. HTTPS is not optional: a service
+worker will not register without it and the app will not work offline.
+
+What an iPhone does not get, because Safari does not have them: real alarms
+that fire with the app closed (the reminders become in-app notifications only),
+the night light, and the Android navigation-bar hiding. Everything else — the
+grid, the Arena, the Cabinet, the sessions, the vibration on newer phones — is
+the same app.
+
+**A new install is only the three rooms.** The five that came with this app
+are behind one small button at the foot of Settings, and that button takes a
+PIN and exactly one attempt: get it wrong and it is gone for good. So the
+person you hand it to gets the grid, the Arena and the Cabinet, which are the
+parts that work for anything, and is never shown a pelvic floor programme they
+did not ask for. `js/nifo.js` says how, and is honest that it is a door rather
+than a lock.
 
 ### Build an actual APK
 
@@ -145,7 +185,7 @@ Reasoning, safety numbers and sources: [`docs/PE_PROGRAM.md`](docs/PE_PROGRAM.md
 
 **A screen for every book, before you open it.** The same six questions for all 76: who wrote it, when, where it sits in the story, what it is for, what to watch for while you read, and how the Church reads it toward Christ. The four Gospels answer two more, which are the only two that actually distinguish four accounts of the same events: **who it was written for, and what only this one gives you.**
 
-**The rule, in the same room.** Morning and night, both required, in Greek and English, with the ancient core bundled and room for the prayers you say yourself from your own book. Streaks, per-slot streaks and a 13-week heatmap.
+**Prayer, in the same room.** Morning and night, both required, in Greek and English, with the ancient core bundled and room for the prayers you say yourself from your own book. Streaks, per-slot streaks and a 13-week heatmap.
 
 **What you have read.** Chapter by chapter, marked as you reach the end of one, with a heatmap, a streak, a bar per part of the canon and books finished. A chapter is the unit because it is the largest thing you can honestly say you either read or did not.
 
@@ -163,13 +203,13 @@ Reasoning, safety numbers and sources: [`docs/PE_PROGRAM.md`](docs/PE_PROGRAM.md
 
 **Measurable habits with a ceiling.** How many litres, how many pages - and, the other way round, at most this many calories. The score is full while you stay under the cap and falls away above it, which is the shape of anything you are trying to do less of.
 
-**The rest of NiFo, along the top, read-only.** Kegels, PE, the Bible, the rule and the wind-down, filled from their own records. That is the answer to putting a habit tracker inside an app that already tracks five things: without it you would keep two records of the same morning and they would disagree by Friday.
+**The rest of NiFo, along the top, read-only.** Kegels, PE, the Bible, prayer and the wind-down, filled from their own records. That is the answer to putting a habit tracker inside an app that already tracks five things: without it you would keep two records of the same morning and they would disagree by Friday.
 
 [`docs/HABITS.md`](docs/HABITS.md) has the maths.
 
 ## What is in the Arena
 
-**Your week is a match, and your opponent is you.** Monday to Sunday, every row on the grid, scored as the percentage of what was due that you actually did - against a real week out of your own history. There are no invented rivals and no other people, which is the only reason beating one means anything, and the reason you can tap any of them and look at the grid they played.
+**Your week is a match, and your opponent is you.** Monday to Sunday, every row on the grid, scored as the percentage of what was due that you actually did - against a real week out of your own history. A habit asking for five days in seven owes five cells, not seven, and does not care which five. There are no invented rivals and no other people, which is the only reason beating one means anything, and the reason you can tap any of them and look at the grid they played.
 
 **Four opponents, all of them you.** Your Nemesis is the best week you have ever had. Last Month You is this week, one month back. Your Worst Self is your worst of the last thirteen, and losing to him is meant to sting. The Standard is your division's bar with a face on it, and stands in whenever the record cannot supply a real week yet.
 
@@ -199,17 +239,19 @@ www/               the entire app, plain ES modules, no build
     icons.js       the inline SVG icon set
     native.js      real Android alarms via Capacitor
     nightlight.js  the night light bridge, settings and browser fallback
-    habits/        the grid, which is the home screen
-    arena/         the competitive layer, which is a reading of the grid
+    tabs.js        the bottom bar: Cabinet, Grid, Arena
+    habits/        the grid, which is where you land
+    arena/         the Arena, the Cabinet, the Arc and the feats
     kegels/        the Kegels feature
     pe/            the PE feature
     bible/         the Bible feature and reader
-    pray/          the prayer rule, part of the Bible section
+    pray/          prayer, part of the Bible section
     breathe/       the wind-down
   bible/           the scripture itself, one JSON file per book, generated
   sw.js            offline service worker
 native/
   nightlight/      Capacitor plugin: the system-wide blue-light filter
+  systemui/        Capacitor plugin: hides the Android navigation bar
 signing/           the fixed APK key, so updates install over the top
 tools/             icon generation, signing patch, dev server, data extraction,
                    `npm run check:arena` for the Arena's calendar maths

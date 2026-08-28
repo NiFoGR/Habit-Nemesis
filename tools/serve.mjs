@@ -1,10 +1,15 @@
-// Minimal static server for local development: node tools/serve.mjs [port]
+// Minimal static server for local development:
+//   node tools/serve.mjs [port] [dir]
+// `dir` is relative to the repo root and defaults to www/. Pass dist-web to
+// check what `npm run pack:web` produced, which is the build that has no
+// scripture in it and therefore the one where the service worker's
+// best-effort half is actually doing something.
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = fileURLToPath(new URL('../www/', import.meta.url));
+const ROOT = fileURLToPath(new URL(`../${process.argv[3] || 'www'}/`, import.meta.url));
 const PORT = Number(process.argv[2] || 8080);
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -13,6 +18,7 @@ const MIME = {
   '.png': 'image/png',
   '.json': 'application/json',
   '.webmanifest': 'application/manifest+json',
+  '.webp': 'image/webp',
 };
 
 createServer(async (req, res) => {

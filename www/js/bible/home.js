@@ -6,7 +6,7 @@
 // between them every morning.
 //
 // Reading comes first on the screen because it is the thing with no fixed
-// time. The rules sit under it with their own times and their own streak.
+// time. The two prayers sit under it with their own times and their own streak.
 
 import * as store from '../store.js';
 import * as bible from './program.js';
@@ -27,11 +27,11 @@ export function renderBibleHome(mount) {
   const prayStreak = pray.streak();
   const live = pray.currentSlot();
 
-  const ruleCard = (slot) => {
+  const prayerCard = (slot) => {
     const def = RULES[slot];
     const kept = today[slot];
     const at = slot === 'morning' ? store.get().pray.settings.morningAt : store.get().pray.settings.eveningAt;
-    return `<a class="rule-card ${kept ? 'kept' : ''} ${live === slot ? 'live' : ''}" href="#/bible/pray?slot=${slot}">
+    return `<a class="prayer-card ${kept ? 'kept' : ''} ${live === slot ? 'live' : ''}" href="#/bible/pray?slot=${slot}">
       <span class="rc-ico">${kept ? icon('check', 20) : icon(slot === 'morning' ? 'sun' : 'moon', 20)}</span>
       <span class="rc-text">
         <b>${escapeHtml(def.label)}</b>
@@ -64,13 +64,13 @@ export function renderBibleHome(mount) {
       </a>
 
       <section class="card">
-        <div class="h-row">${icon('sun', 16)}<h2>The rule</h2>
+        <div class="h-row">${icon('sun', 16)}<h2>Prayer</h2>
           <span class="pill ${today.complete ? 'done' : 'ghost'}">${today.kept}/2 today</span></div>
-        <div class="rule-list">
-          ${ruleCard('morning')}
-          ${ruleCard('evening')}
+        <div class="prayer-list">
+          ${prayerCard('morning')}
+          ${prayerCard('evening')}
         </div>
-        <p class="muted small">${prayStreak ? `${prayStreak} day rule streak` : 'Both are required. A day counts when both are kept.'}</p>
+        <p class="muted small">${prayStreak ? `${prayStreak} day prayer streak` : 'Both are required. A day counts when both are kept.'}</p>
       </section>
 
       <a class="btn ghost linkbtn ext" href="${GOARCH}" target="_blank" rel="noopener noreferrer">
@@ -116,7 +116,7 @@ export async function renderBibleSettings(mount) {
       </section>
 
       <section class="card">
-        <div class="h-row">${icon('sun', 16)}<h2>The rule</h2></div>
+        <div class="h-row">${icon('sun', 16)}<h2>Prayer</h2></div>
         <label class="setting">
           <span><b>Morning</b></span>
           <input type="time" id="morningAt" value="${escapeHtml(p.morningAt)}">

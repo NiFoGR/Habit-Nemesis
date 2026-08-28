@@ -5,7 +5,11 @@
 // cannot do that. In the browser everything here is a silent no-op and the
 // caller falls back to the in-page notification.
 
-const isNative = () => !!window.Capacitor?.isNativePlatform?.();
+/** True in the installed APK, false in any browser. Exported because a handful
+ *  of web APIs are present in the WebView and quietly do nothing there, and a
+ *  caller that cannot tell the difference has no way to offer a route that
+ *  works. `ui.js`'s saveFile is the one that cares. */
+export const isNative = () => !!window.Capacitor?.isNativePlatform?.();
 const plugin = () => window.Capacitor?.Plugins?.LocalNotifications;
 
 export const hasAlarms = () => isNative() && !!plugin();
@@ -94,6 +98,29 @@ export async function scheduleMany(list) {
   }
 }
 
+/* ---------------- the navigation bar ----------------
+   NiFo has its own bottom bar now, and two bars stacked at the bottom of a
+   phone is one too many. The system one goes, in the mode where a swipe from
+   the edge brings it back for a few seconds. The status bar is left alone: it
+   carries the clock and the battery and nothing of ours wants that strip.
+
+   Android drops the request every time the window loses focus, so this is
+   called again on every return to the foreground. Asking twice costs nothing. */
+
+const systemUi = () => window.Capacitor?.Plugins?.SystemUi;
+
+export async function hideNavBar() {
+  const p = systemUi();
+  if (!isNative() || !p) return false;
+  try {
+    await p.hideNavigationBar();
+    return true;
+  } catch {
+    // An older APK without the plugin is not a broken app, just a taller one.
+    return false;
+  }
+}
+
 // Fixed ids so re-scheduling replaces rather than stacks.
 export const ALARM_SESSION = 1001;
 export const ALARM_KEGEL_REMINDER = 2001;
@@ -106,3 +133,8 @@ export const ALARM_BREATHE = 5001;
 // Eight ids a habit: seven weekdays and the everyday collapse at the head.
 export const ALARM_HABIT_BASE = 6001;
 export const ALARM_HABIT_SLOTS = 40;
+// The Arena's own block: an arc opening, qualification night, each knockout
+// round, and the shout the day before a final. Fixed ids so re-scheduling on
+// every launch replaces rather than stacks, the same as the habit block.
+export const ALARM_ARENA_BASE = 7001;
+export const ALARM_ARENA_SLOTS = 8;

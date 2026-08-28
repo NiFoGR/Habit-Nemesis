@@ -8,7 +8,7 @@
 // A full prayer book is a modern compiled translation and is somebody's
 // copyright, so the app does not ship one. What it ships is the frame, plus
 // `custom` slots you fill from your own book. Anything you add is stored with
-// your data and appears in the rule exactly like the bundled texts.
+// your data and appears in the slot exactly like the bundled texts.
 
 /** @typedef {{id:string, title:{el:string,en:string}, el:string[], en:string[],
  *             repeat?:number, note?:string}} Prayer */

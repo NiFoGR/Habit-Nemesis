@@ -7,3 +7,6 @@ node_modules/
 *.apk
 *.log
 .DS_Store
+
+# The hostable copy of the app, built by tools/pack-web.mjs.
+dist-web/

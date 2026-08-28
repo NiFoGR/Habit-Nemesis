@@ -10,14 +10,16 @@
     "android:add": "cap add android",
     "android:sync": "cap sync android",
     "android:apk": "cap sync android && cd android && ./gradlew assembleDebug",
-    "check:arena": "node tools/check-arena.mjs"
+    "check:arena": "node tools/check-arena.mjs",
+    "pack:web": "node tools/pack-web.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.0.0",
     "@capacitor/app": "^7.0.0",
     "@capacitor/core": "^7.0.0",
     "@capacitor/local-notifications": "^7.0.0",
-    "nifo-nightlight": "file:./native/nightlight"
+    "nifo-nightlight": "file:./native/nightlight",
+    "nifo-systemui": "file:./native/systemui"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.0.0"

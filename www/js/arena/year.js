@@ -1,16 +1,21 @@
 // The Year.
 //
-// The review, not a second competition: the Arc is the competition and putting
-// another one on top of it would mean two tables saying the same thing four
-// times a year apart. This is the page you scroll in January, and everything
-// on it is a fact the record already holds - twelve months, four Arcs, the
-// best week and the worst, the rows that carried the year and the ones that
-// did not.
+// Not a calendar year: 365 days from the day the record starts, written like a
+// season - 26/27 - and locked until it has actually been lived. A calendar year
+// would hand somebody who installed in November a six-week "year" to review,
+// and the whole point of this screen is that it covers a long time.
 //
-// The months chart is drawn here rather than through the shared barChart,
-// which scales to its own tallest bar. For percentages that is a lie: a 44%
-// month beside a 46% one would draw as a near-miss of a full column. Nought to
-// a hundred, always, so a flat year looks flat.
+// It is a review, not a second competition. The Arc is the competition, and
+// putting another one on top of it would mean two tables saying the same thing
+// four times a year apart. Everything here is a fact the record already holds.
+//
+// The months chart is drawn here rather than through the shared barChart, which
+// scales to its own tallest bar. For percentages that is a lie: a 44% month
+// beside a 46% one would draw as a near-miss of a full column. Nought to a
+// hundred, always, so a flat year looks flat. It has as many columns as the
+// year has months, which for a 365-day span is thirteen - counted from the
+// data rather than assumed, because a layout that knows how many of something
+// there are breaks the first time that number changes.
 
 import * as store from '../store.js';
 import * as habits from '../habits/program.js';
@@ -21,28 +26,18 @@ import { icon } from '../icons.js';
 import { openWeekSheet } from './home.js';
 
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTH_LETTER = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+const shortMonth = (m) => MONTH_LETTER[Number(m.split('-')[1]) - 1];
 
-/** Years we have anything for, oldest first. Always includes this one, so the
- *  screen is never empty on the day you open it. */
-function years() {
-  const set = new Set([String(new Date().getFullYear())]);
-  for (const k of Object.keys(store.get().arena.weeks)) set.add(arena.monthOfWeek(k).slice(0, 4));
-  return [...set].sort();
-}
+export function renderYear(mount, want) {
+  const open = arena.years().filter((y) => y.open);
+  if (!open.length) return renderLocked(mount);
 
-let shown = null;
+  const n = Number(want);
+  const year = open.find((y) => y.n === n) || open[open.length - 1];
+  const at = open.findIndex((y) => y.n === year.n);
 
-export function renderYear(mount) {
-  const list = years();
-  const year = list.includes(shown) ? shown : list[list.length - 1];
-  shown = year;
-  const i = list.indexOf(year);
-
-  const weeks = Object.entries(store.get().arena.weeks)
-    .filter(([k]) => arena.monthOfWeek(k).startsWith(year))
-    .map(([key, w]) => ({ key, ...w }))
-    .sort((a, b) => (a.key < b.key ? -1 : 1));
+  const weeks = arena.weeksOfYear(year).map((key) => ({ key, ...store.get().arena.weeks[key] }));
   const scored = weeks.filter((w) => w.result !== 'void' && w.due >= arena.VOID_CELLS);
   const won = weeks.filter((w) => w.result === 'won').length;
   const lost = weeks.filter((w) => w.result === 'lost').length;
@@ -54,16 +49,20 @@ export function renderYear(mount) {
   mount.innerHTML = `
     <div class="screen">
       <header class="screen-head">
-        <button class="icon-btn" data-back="arena" aria-label="Back">${icon('back')}</button>
-        <h1>The Year</h1>
+        <button class="icon-btn" data-back="cabinet" aria-label="Back">${icon('back')}</button>
+        <h1>${escapeHtml(year.label)}</h1>
         <span class="icon-btn ghost"></span>
       </header>
 
-      <div class="yr-nav">
-        <button class="icon-btn" id="prevY" ${i <= 0 ? 'disabled' : ''} aria-label="Previous year">${icon('back', 18)}</button>
-        <b>${escapeHtml(year)}</b>
-        <button class="icon-btn flip" id="nextY" ${i >= list.length - 1 ? 'disabled' : ''} aria-label="Next year">${icon('back', 18)}</button>
-      </div>
+      <p class="yr-span">${escapeHtml(span(year))}</p>
+
+      ${open.length > 1
+        ? `<div class="yr-nav">
+            <button class="icon-btn" id="prevY" ${at <= 0 ? 'disabled' : ''} aria-label="Earlier year">${icon('back', 18)}</button>
+            <b>${escapeHtml(year.label)}</b>
+            <button class="icon-btn flip" id="nextY" ${at >= open.length - 1 ? 'disabled' : ''} aria-label="Later year">${icon('back', 18)}</button>
+          </div>`
+        : ''}
 
       ${scored.length
         ? `<div class="stat-grid three">
@@ -73,9 +72,8 @@ export function renderYear(mount) {
           </div>
 
           <section class="card">
-            <h2>The twelve months</h2>
+            <h2>Month by month</h2>
             ${monthChart(year)}
-            <p class="muted small">Each column is the mean of that month's weeks, on a fixed nought-to-a-hundred scale. The dotted line is the bar for the division you were in at the end of the year.</p>
           </section>
 
           <section class="card">
@@ -83,8 +81,8 @@ export function renderYear(mount) {
             ${ladderTrack(year)}
           </section>`
         : `<section class="card">
-            <h2>Nothing scored yet</h2>
-            <p class="muted small">A week enters the record the Monday after it ends. Come back when one has.</p>
+            <h2>Nothing scored</h2>
+            <p class="muted small">No week of this year made it onto the record.</p>
           </section>`}
 
       ${best && worst
@@ -108,16 +106,8 @@ export function renderYear(mount) {
       ${featsOfYear(year)}
     </div>`;
 
-  mount.querySelector('#prevY').addEventListener('click', () => {
-    shown = list[i - 1];
-    haptic('tick');
-    renderYear(mount);
-  });
-  mount.querySelector('#nextY').addEventListener('click', () => {
-    shown = list[i + 1];
-    haptic('tick');
-    renderYear(mount);
-  });
+  mount.querySelector('#prevY')?.addEventListener('click', () => hop(mount, open[at - 1]));
+  mount.querySelector('#nextY')?.addEventListener('click', () => hop(mount, open[at + 1]));
   mount.querySelectorAll('[data-week]').forEach((el) =>
     el.addEventListener('click', () => {
       haptic('tick');
@@ -126,37 +116,77 @@ export function renderYear(mount) {
   );
 }
 
+function hop(mount, year) {
+  if (!year) return;
+  haptic('tick');
+  renderYear(mount, year.n);
+}
+
+const span = (y) => {
+  const fmt = (k) => {
+    const [yy, mm, dd] = k.split('-').map(Number);
+    return new Date(yy, mm - 1, dd).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
+  };
+  return `${fmt(y.from)} – ${fmt(y.to)}`;
+};
+
+/** No year has finished yet. This is the countdown, and it is the whole screen:
+ *  a review you can open early is not a review, it is a dashboard. */
+function renderLocked(mount) {
+  const left = arena.daysLeftInYear();
+  const y = arena.yearAt(arena.currentYearIndex());
+  mount.innerHTML = `
+    <div class="screen">
+      <header class="screen-head">
+        <button class="icon-btn" data-back="cabinet" aria-label="Back">${icon('back')}</button>
+        <h1>The Year</h1>
+        <span class="icon-btn ghost"></span>
+      </header>
+      <section class="vault">
+        <span class="vault-lock">${icon('lock', 26)}</span>
+        <b class="vault-count">${left}</b>
+        <span class="vault-unit">day${left === 1 ? '' : 's'}</span>
+        <p class="vault-label">until <b>${escapeHtml(y.label)}</b> is sealed</p>
+        <p class="muted small">${escapeHtml(span(y))}</p>
+      </section>
+
+    </div>`;
+}
+
 function monthChart(year) {
   const months = store.get().arena.months;
-  const endDiv = lastDivisionOf(year);
-  const bar = arena.divisionOf(endDiv).bar;
+  const bar = arena.divisionOf(lastDivisionOf(year)).bar;
+  const cols = arena.monthsOfYear(year);
   return `<div class="yr-chart" style="--bar-line:${(bar * 100).toFixed(1)}%">
-    ${MONTHS.map((name, m) => {
-      const key = `${year}-${String(m + 1).padStart(2, '0')}`;
-      const rec = months[key];
-      const live = !rec && key === arena.currentMonth() ? arena.monthScore(key) : null;
-      const score = rec ? rec.score : live && !live.empty ? live.score : null;
-      const cls = score == null ? 'none' : rec?.move === 'up' || rec?.move === 'placed' ? 'up' : rec?.move === 'down' ? 'down' : live ? 'live' : 'held';
-      return `<div class="yr-col ${cls}" title="${escapeHtml(name)}${score == null ? '' : `: ${pct(score)}`}">
-        <span class="yr-fill" style="height:${score == null ? 0 : (score * 100).toFixed(1)}%"></span>
-        <i>${name[0]}</i>
-      </div>`;
-    }).join('')}
+    ${cols
+      .map((key) => {
+        const rec = months[key];
+        const live = !rec && key === arena.currentMonth() ? arena.monthScore(key) : null;
+        const score = rec ? rec.score : live && !live.empty ? live.score : null;
+        const cls = score == null ? 'none'
+          : rec?.move === 'up' || rec?.move === 'placed' ? 'up'
+            : rec?.move === 'down' ? 'down'
+              : live ? 'live' : 'held';
+        return `<div class="yr-col ${cls}" title="${escapeHtml(key)}${score == null ? '' : `: ${pct(score)}`}">
+          <span class="yr-fill" style="height:${score == null ? 0 : (score * 100).toFixed(1)}%"></span>
+          <i>${shortMonth(key)}</i>
+        </div>`;
+      })
+      .join('')}
   </div>`;
 }
 
-/** The division you finished each month in, as a track. Reads left to right
- *  like the months above it, so the two line up column for column. */
+/** The division you finished each month in, as a track. */
 function ladderTrack(year) {
   const months = store.get().arena.months;
-  const seen = MONTHS.map((name, m) => months[`${year}-${String(m + 1).padStart(2, '0')}`]).filter(Boolean);
-  if (!seen.length) return '<p class="muted small">No month has closed this year yet.</p>';
+  const seen = arena.monthsOfYear(year).map((m) => (months[m] ? { m, ...months[m] } : null)).filter(Boolean);
+  if (!seen.length) return '<p class="muted small">No month of this year closed.</p>';
   const first = arena.divisionOf(seen[0].from);
   const last = arena.divisionOf(seen[seen.length - 1].to);
   const high = seen.reduce((a, m) => Math.max(a, arena.divisionIndex(m.to)), 0);
   return `<div class="yr-track">
     ${seen
-      .map((m) => `<span class="yr-step ${m.move}" title="${escapeHtml(`${m.month}: ${m.move}`)}">
+      .map((m) => `<span class="yr-step ${m.move}" title="${escapeHtml(`${m.m}: ${m.move}`)}">
         ${icon(m.move === 'up' || m.move === 'placed' ? 'arrowUp' : m.move === 'down' ? 'arrowDown' : 'check', 13)}
         <i>${escapeHtml(arena.divisionOf(m.to).name)}</i>
       </span>`)
@@ -169,27 +199,34 @@ function ladderTrack(year) {
 
 function lastDivisionOf(year) {
   const months = store.get().arena.months;
-  const keys = Object.keys(months).filter((m) => m.startsWith(year)).sort();
-  return keys.length ? months[keys[keys.length - 1]].to : store.get().arena.division;
+  const mine = arena.monthsOfYear(year).filter((m) => months[m]);
+  return mine.length ? months[mine[mine.length - 1]].to : store.get().arena.division;
 }
 
 function arcRow(year) {
   const arcs = store.get().arena.arcs;
-  const mine = arena.ARCS.map((a) => ({ ...a, year: Number(year), rec: arcs[`${year}-${a.id}`] })).filter((a) => a.rec);
+  const mine = Object.entries(arcs)
+    .filter(([k]) => {
+      const weeks = arena.arcSeason(arcFromKey(k));
+      const first = weeks[0];
+      return first && first >= arena.weeksOfYear(year)[0] && first <= arena.weeksOfYear(year).slice(-1)[0];
+    })
+    .map(([k, rec]) => ({ k, rec, arc: arcFromKey(k) }));
   if (!mine.length) return '';
   return `<section class="card">
-    <h2>The Arcs</h2>
+    <h2>The cups</h2>
     <div class="yr-arcs">
       ${mine
-        .map((a) => {
-          const r = a.rec;
-          const state = r.won ? 'won' : r.qualified === false ? 'out' : r.final === 'lost' ? 'final' : r.sf === 'lost' ? 'sf' : r.qf === 'lost' ? 'qf' : 'open';
-          const label = { won: 'Won', out: 'Group stage', final: 'Runner-up', sf: 'Semi-final', qf: 'Quarter-final', open: 'In progress' }[state];
-          // Only two states get a look of their own: won, and lost in the final.
-          // The rest read as the label they carry.
-          return `<div class="yr-arc ${r.won ? 'won' : state === 'final' ? 'final' : ''}">
-            <span>${icon(r.won ? 'trophy' : 'ladder', 20)}</span>
-            <b>${escapeHtml(a.name)}</b>
+        .map(({ k, rec, arc }) => {
+          const state = rec.won ? 'won'
+            : rec.qualified === false ? 'out'
+              : rec.final === 'lost' ? 'final'
+                : rec.sf === 'lost' ? 'sf'
+                  : rec.qf === 'lost' ? 'qf' : 'open';
+          const label = { won: 'Won', out: 'Group stage', final: 'Runner-up', sf: 'Semi-final', qf: 'Quarter-final', open: 'Running' }[state];
+          return `<div class="yr-arc ${rec.won ? 'won' : state === 'final' ? 'final' : ''}" data-arc="${escapeHtml(k)}">
+            <span>${icon(rec.won ? 'trophy' : 'ladder', 20)}</span>
+            <b>${escapeHtml(arc.name)}</b>
             <i>${escapeHtml(label)}</i>
           </div>`;
         })
@@ -198,10 +235,17 @@ function arcRow(year) {
   </section>`;
 }
 
+/** '2026-summer' back into an arc object. */
+function arcFromKey(key) {
+  const [y, id] = key.split('-');
+  const arc = arena.ARCS.find((a) => a.id === id) || arena.ARCS[0];
+  return { ...arc, year: Number(y) };
+}
+
 /** The rows that made the year, summed across every week of it. This is the
- *  only place the app adds a habit up over a whole year, and it is worth it:
- *  a score is a decay curve and answers "lately", where this answers "all
- *  year", which are different questions and were being confused. */
+ *  only place the app adds a habit up over a whole year, and it is worth it: a
+ *  score is a decay curve and answers "lately", where this answers "all year",
+ *  which are different questions and were being confused. */
 function rowsOfYear(weeks) {
   if (!weeks.length) return '';
   const tally = new Map();
@@ -229,21 +273,22 @@ function rowsOfYear(weeks) {
         })
         .join('')}
     </div>
-    <p class="muted small">Every day the row was due, all year. Rows with fewer than twenty days are left out, because a habit added in December has nothing to say about the year.</p>
   </section>`;
 }
 
 function featsOfYear(year) {
+  const from = new Date(`${year.from}T00:00`).getTime();
+  const to = new Date(`${year.to}T23:59`).getTime();
   const earned = feats.FEATS.map((f) => ({ ...f, at: feats.earnedAt(f.id) }))
-    .filter((f) => f.at && new Date(f.at).getFullYear() === Number(year))
+    .filter((f) => f.at && f.at >= from && f.at <= to)
     .sort((a, b) => a.at - b.at);
   if (!earned.length) return '';
   return `<section class="card">
-    <h2>Feats of ${escapeHtml(year)}</h2>
+    <h2>Feats of ${escapeHtml(year.label)}</h2>
     ${earned
       .map((f) => `<div class="rs-feat">
         <span class="ft-ico on">${icon(f.icon, 18)}</span>
-        <span><b>${escapeHtml(f.name)}</b><i>${escapeHtml(new Date(f.at).toLocaleDateString(undefined, { day: 'numeric', month: 'long' }))}</i></span>
+        <span><b>${escapeHtml(f.name)}</b><i>${escapeHtml(new Date(f.at).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }))}</i></span>
       </div>`)
       .join('')}
   </section>`;

@@ -118,7 +118,7 @@ grid's by a few hours around midnight.
 
 The grid is the home screen, and the five other features are rows on it, filled
 from their own records: a day is done when there is a kegel session, a PE
-session, a chapter read, both halves of the rule, or a wind-down on it.
+session, a chapter read, both halves of the day's prayer, or a wind-down on it.
 
 Two rules govern every row, these included:
 

@@ -2,7 +2,7 @@
 //
 // One prayer at a time, Greek and English together by default. No score, no
 // grading, no streak pressure while you are in it. The only thing the app does
-// at the end is record that the rule was kept.
+// at the end is record that it was kept.
 
 import * as store from '../store.js';
 import * as pray from './program.js';
@@ -111,7 +111,7 @@ export function startRule(mount, slot, onDone) {
       draw();
     });
     mount.querySelector('#close').addEventListener('click', () => {
-      // Leaving early records nothing. The rule was either kept or it was not.
+      // Leaving early records nothing. It was either kept or it was not.
       if (i === 0 || confirm('Leave without finishing? Nothing will be recorded.')) leave(false);
     });
   }
@@ -127,7 +127,7 @@ export function startRule(mount, slot, onDone) {
   return { stop: cleanup };
 }
 
-/** The close of the rule. Short on purpose. */
+/** The close of it. Short on purpose. */
 function renderDone(mount, slot, onExit) {
   const def = ruleDef(slot);
   const today = pray.dayState();
@@ -142,7 +142,7 @@ function renderDone(mount, slot, onExit) {
 
       <div class="stat-grid">
         <div class="stat"><b>${s}</b><span>day streak</span></div>
-        <div class="stat"><b>${pray.lifetime()}</b><span>rules kept</span></div>
+        <div class="stat"><b>${pray.lifetime()}</b><span>prayers kept</span></div>
       </div>
 
       <button class="btn primary big" id="done">Done</button>
