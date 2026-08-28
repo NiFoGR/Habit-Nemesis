@@ -81,7 +81,7 @@ export function renderReport(mount, result, onDone) {
       </section>` : ''}
 
       ${badges.length ? `<section class="card">
-        ${badges.map((b) => `<div class="pr-row"><b>${icon('medal', 16)} ${escapeHtml(b.name)}</b><span>${escapeHtml(b.desc)}</span></div>`).join('')}
+        ${badges.map((b) => `<div class="pr-row"><b>${icon(b.icon || 'medal', 16)} ${escapeHtml(b.name)}</b><span>${escapeHtml(b.blurb)}</span></div>`).join('')}
       </section>` : ''}
 
       ${!isRelease && record.type !== 'quick' ? `<div class="prog-line">

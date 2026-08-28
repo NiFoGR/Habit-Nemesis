@@ -4,7 +4,8 @@ Where everything is, so finding it does not mean reading it.
 
 Five rules the tree follows:
 
-1. **One folder per feature.** `kegels/`, `pe/`, `bible/`, `breathe/`, `habits/`.
+1. **One folder per feature.** `kegels/`, `pe/`, `bible/`, `breathe/`, `habits/`,
+   `arena/`.
    Anything at the top level of `js/` is shell, used by all of them. `pray/` is
    not a feature of its own: the rule is part of the Bible section, and the
    folder holds the prayer texts and the guided rule it runs.
@@ -31,16 +32,16 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/app.js` | 251 | Route table, shell state, boot. Nothing renders here. |
+| `js/app.js` | 279 | Route table, shell state, boot. Nothing renders here. |
 | `js/back.js` | 213 | What Back means: the corner arrow, the hardware button, history. |
-| `js/icons.js` | 99 | The inline SVG icon set and the logo mark. |
+| `js/icons.js` | 129 | The inline SVG icon set and the logo mark. |
 | `js/lock.js` | 70 | The optional PIN gate. Owns whether the app is unlocked. |
 | `js/names.js` | 10 | What each section is called, under discreet mode. |
 | `js/native.js` | 108 | Capacitor bridge for real Android alarms. |
 | `js/nightlight.js` | 474 | The night light: the bridge, its settings screen, the browser fallback. |
 | `js/settings.js` | 316 | App-wide settings: the grid, marking, feedback, privacy, data, reset. |
-| `js/store.js` | 787 | localStorage persistence and the input sanitiser. |
-| `js/ui.js` | 427 | Shared helpers: formatting, haptics, notifications, SVG charts, the sheet. |
+| `js/store.js` | 912 | localStorage persistence and the input sanitiser. |
+| `js/ui.js` | 509 | Shared helpers: formatting, haptics, notifications, SVG charts, the sheet. |
 
 ## Kegels
 
@@ -48,12 +49,12 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 |---|---|---|
 | `js/kegels/home.js` | 239 | Kegels home, how-to, and Kegels settings. |
 | `js/kegels/pocket.js` | 264 | Vibration-only session pacing. |
-| `js/kegels/program.js` | 496 | The 104-week plan, scoring, progression, badges. |
+| `js/kegels/program.js` | 459 | The 104-week plan, scoring, progression. |
 | `js/kegels/report.js` | 99 | End-of-session debrief. |
 | `js/kegels/review.js` | 134 | The weekly review. |
 | `js/kegels/roadmap.js` | 134 | All 104 weeks and the six phases. |
 | `js/kegels/session.js` | 476 | The guided player and per-rep measurement. |
-| `js/kegels/tracking.js` | 186 | Heatmap, charts, session log. |
+| `js/kegels/tracking.js` | 193 | Heatmap, charts, session log. |
 | `js/kegels/tutorial.js` | 322 | Technique walkthrough, including the reverse kegel. |
 
 ## PE
@@ -67,8 +68,8 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 | `js/pe/home.js` | 124 | PE home and the one-time safety gate. |
 | `js/pe/measure.js` | 401 | The five-measurement monthly check-in. |
 | `js/pe/pin.js` | 140 | PIN keypad and unlock flow. |
-| `js/pe/program.js` | 492 | Session types, limits, projection, achievements. |
-| `js/pe/stats.js` | 309 | Charts, period selector, projection, log. |
+| `js/pe/program.js` | 445 | Session types, limits, projection. |
+| `js/pe/stats.js` | 312 | Charts, period selector, projection, log. |
 | `js/pe/timer.js` | 591 | Session runner, set breaks, kegels during pump. |
 | `js/pe/vault.js` | 162 | PIN-derived AES-GCM encryption. |
 
@@ -121,10 +122,10 @@ lives in Java, and why there are two filters rather than one.
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/habits/program.js` | 820 | The record, the frequency model, the score, the streaks, the charts, the five linked rows. |
-| `js/habits/home.js` | 570 | **The home screen.** The grid, marking, reordering, groups, the archive, the install prompt. |
+| `js/habits/program.js` | 842 | The record, the frequency model, the score, the streaks, the charts, the five linked rows. |
+| `js/habits/home.js` | 635 | **The home screen.** The grid, marking, reordering, groups, the archive, the install prompt. |
 | `js/habits/edit.js` | 360 | Creating and editing: the type, colour, frequency and reminder pickers. |
-| `js/habits/tracking.js` | 312 | One habit in full, and the calendar you can write to. |
+| `js/habits/tracking.js` | 313 | One habit in full, and the calendar you can write to. |
 
 This folder is not a section any more, it is the front door: `#/hub` renders
 `renderHome` from `home.js`. There used to be a `hub.js` holding a Today list
@@ -139,6 +140,31 @@ today's cell starts the thing and every cell behind it is read-only, so there
 is never a second editable copy of one morning. And **the grid's options are
 app options**, on `settings.js`, because the grid is the app.
 [`docs/HABITS.md`](HABITS.md) has the scoring maths and the frequency model.
+
+## The Arena, which is a reading of the grid
+
+| File | Lines | What it is |
+|---|---|---|
+| `js/arena/program.js` | 685 | Weeks, divisions, opponents, arcs, and the only part of the app that writes down what it could recompute. |
+| `js/arena/home.js` | 466 | The Arena in one scrolling screen, and every feat on another. |
+| `js/arena/year.js` | 250 | The Year: twelve months, four arcs, the rows that carried it. |
+| `js/arena/result.js` | 214 | Telling you what happened — the full screen, and the one-line feat pop. |
+| `js/arena/feats.js` | 339 | Forty predicates over the record. The one catalogue. |
+
+Not a section, and it is deliberately not on the grid: the Arena is a *reading*
+of the grid, so it hangs off it through the season line under the today card
+and nowhere else. There is no menu, because the app spent a version getting rid
+of one.
+
+Three things to know. **`program.js` stores what it could derive**, alone in
+this app, because a closed week's result is a historical fact rather than a
+view — recomputing it would let a frequency edited this morning rewrite a match
+won in March. **Nothing in `program.js` imports `feats.js`**, only the other
+way, so the cycle cannot form; the callers invoke both. And **the roster locks
+on Monday**, which is the rule that took the most argument and is the reason
+adding a habit on Wednesday cannot lose you a match you had already won.
+[`docs/ARENA.md`](ARENA.md) has all of it, and `npm run check:arena` asserts
+the parts that cannot be read off a screen.
 
 ## Wind-down
 

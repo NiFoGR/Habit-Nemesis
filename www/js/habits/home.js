@@ -22,6 +22,8 @@ import { escapeHtml, ringSvg, toast, openSheet, haptic } from '../ui.js';
 import { icon, logoMark } from '../icons.js';
 import { navigate } from '../back.js';
 import { openTypePicker } from './edit.js';
+import * as arena from '../arena/program.js';
+import { announce } from '../arena/result.js';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const WEEKDAYS_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -145,6 +147,47 @@ function rowHtml(habit, days, s, { reorder = false, groupOptions = () => '' } = 
   </div>`;
 }
 
+/* ---------------- the season line ----------------
+   The only door into the Arena, and deliberately the only one: the Arena is
+   not a section, it is a reading of the grid, so it hangs off the grid rather
+   than sitting beside it in a menu the app spent a version getting rid of.
+
+   It goes under the today card and not inside it. Today's card answers "what
+   is left today"; this answers "how is the week going", and folding the second
+   into the first is how the old hub ended up being a list of everything twice. */
+function seasonLine() {
+  const key = arena.currentWeek();
+  const live = arena.scoreWeek(key);
+  const opp = arena.fixtureFor(key);
+  const st = arena.standing();
+  const left = arena.daysLeftInWeek();
+
+  // Nothing due yet is not "losing 0 to 25". A week that is not a fixture says
+  // so, because a fresh install being told it is behind is a lie about a match
+  // that has not started.
+  if (live.void) {
+    return `<a class="season-line new" href="#/arena">
+      <span class="sl-mark">${icon('trophy', 18)}</span>
+      <span class="sl-text"><b>The Arena</b><i>Your first week is being played</i></span>
+      <span class="sl-go">${icon('caretUp', 14)}</span>
+    </a>`;
+  }
+
+  const gap = live.score - opp.score;
+  const state = gap > 0 ? 'ahead' : gap < 0 ? 'behind' : 'level';
+  return `<a class="season-line ${state}" href="#/arena">
+    <span class="sl-mark">${icon('crown', 18)}</span>
+    <span class="sl-text">
+      <b>${escapeHtml(st.division.name)}</b>
+      <i>${st.month.empty ? 'placement month' : `${st.month.w}W–${st.month.l}L`} · ${left === 1 ? 'last day' : `${left} days left`}</i>
+    </span>
+    <span class="sl-match">
+      <b>${Math.round(live.score * 100)}</b><em>${icon('versus', 12)}</em><b class="them">${Math.round(opp.score * 100)}</b>
+    </span>
+    <span class="sl-go">${icon('caretUp', 14)}</span>
+  </a>`;
+}
+
 /* ---------------- the grid ---------------- */
 
 let reorderMode = false;
@@ -213,6 +256,8 @@ function redraw(mount) {
         </div>
         ${ringSvg(due.total ? due.done / due.total : 1, `${due.done}/${due.total}`, 'today', { size: 84 })}
       </div>
+
+      ${seasonLine()}
 
       <div class="hg-tools">
         <button class="chipbtn ${reorderMode ? 'on' : ''}" id="reorderBtn">${icon('reorder', 15)}<span>${reorderMode ? 'Done' : 'Reorder'}</span></button>
@@ -315,6 +360,7 @@ function wireCells(grid, mount, s) {
     if (habit.kind === 'number') return openValueSheet(mount, habit, key);
     haptic('tick');
     habits.setValue(habit.id, key, habits.nextValue(habit, key));
+    announce();
     redraw(mount);
   };
 
@@ -376,6 +422,7 @@ function openValueSheet(mount, habit, key) {
   input.focus();
   const done = (value) => {
     habits.setValue(habit.id, key, value);
+    announce();
     sheet.close();
     redraw(mount);
   };

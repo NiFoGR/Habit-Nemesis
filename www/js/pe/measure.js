@@ -6,6 +6,7 @@
 
 import * as store from '../store.js';
 import * as pe from './program.js';
+import * as feats from '../arena/feats.js';
 import * as db from './db.js';
 import * as vault from './vault.js';
 import { withVault } from './pin.js';
@@ -332,7 +333,7 @@ export function renderMeasure(mount) {
       if (cmValues.bpel > st.pe.prs.bpel) st.pe.prs.bpel = cmValues.bpel;
       if (cmValues.eg > st.pe.prs.eg) st.pe.prs.eg = cmValues.eg;
       if (cmValues.bpfsl > st.pe.prs.bpfsl) st.pe.prs.bpfsl = cmValues.bpfsl;
-      const earned = pe.checkAchievements(st);
+      const earned = feats.check();
       store.save();
       haptic('level');
       renderResult(record, earned);
@@ -389,7 +390,7 @@ export function renderMeasure(mount) {
         </section>` : ''}
 
         ${earned.length ? `<section class="card">
-          ${earned.map((a) => `<div class="pr-row"><b>${icon('medal', 16)} ${escapeHtml(a.name)}</b><span>${escapeHtml(a.desc)}</span></div>`).join('')}
+          ${earned.map((a) => `<div class="pr-row"><b>${icon(a.icon || 'medal', 16)} ${escapeHtml(a.name)}</b><span>${escapeHtml(a.blurb)}</span></div>`).join('')}
         </section>` : ''}
 
         <button class="btn primary big" data-nav="pe-stats">Progress</button>

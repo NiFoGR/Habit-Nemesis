@@ -421,14 +421,6 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 .timeline span { flex: 1; color: var(--muted); }
 .timeline i { font-style: normal; color: var(--muted); font-size: 0.76rem; }
 
-.badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
-.badge { background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 10px 8px; text-align: center; opacity: 0.42; }
-.badge.has { opacity: 1; border-color: rgba(251, 191, 36, 0.4); }
-.badge b { display: flex; justify-content: center; }
-.badge.has .ico { color: var(--warn); }
-.badge .ico { color: var(--muted); }
-.badge span { display: block; font-size: 0.7rem; color: var(--muted); margin-top: 3px; }
-
 .log-row { border-bottom: 1px solid var(--line); }
 .log-row:last-child { border-bottom: 0; }
 .log-row summary { display: flex; align-items: center; gap: 10px; padding: 11px 0; cursor: pointer; list-style: none; font-size: 0.88rem; }
@@ -696,6 +688,10 @@ input[type="range"] {
 /* ---------- simplified nav bits ---------- */
 
 .linkbtn { text-align: center; text-decoration: none; display: block; }
+/* Except on an icon button, where `display: block` was quietly overriding the
+   grid that centres the glyph - so the settings gear sat nine pixels above the
+   plus sign beside it, on the home screen, for as long as both have existed. */
+.icon-btn.linkbtn { display: grid; place-items: center; }
 
 /* The section link rows. This was a four-column grid, on the reasoning that a
    wrapping row leaves the last link alone underneath and it reads as a
@@ -1817,3 +1813,380 @@ body.blacked .br-orb { opacity: 0.09; }
 
 .sheet { animation: sheet-in var(--t-base) var(--ease); }
 @keyframes sheet-in { from { transform: translateY(12px); opacity: 0; } }
+
+/* ==========================================================================
+   The Arena
+   ==========================================================================
+   No new palette. The one accent is you, --danger is the opponent, --good is
+   a win and --muted is everything that has not happened yet. Seven divisions
+   with seven colours would have been the section-palette mistake again, one
+   version later, so the ladder says how high you are by how much of it is lit.
+
+   Every count here is driven by the data. `.ar-ladder` lays out with `1fr`
+   per segment rather than a seven-column grid, `.ar-form` wraps, and the
+   bracket stacks: the one rule this stylesheet has learnt the hard way is that
+   a layout which knows how many of something there are breaks silently the
+   first time that number changes. */
+
+/* ---------- the season line, on the home screen ---------- */
+
+.season-line {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 12px; margin-bottom: 14px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: inherit; text-decoration: none;
+}
+.season-line:active { background: var(--surface-2); transform: scale(0.995); }
+.sl-mark { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px;
+  border-radius: 9px; background: var(--surface-2); color: var(--accent); }
+.sl-text { flex: 1; min-width: 0; }
+.sl-text b { display: block; font-size: var(--f-body); letter-spacing: -0.01em; }
+.sl-text i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); }
+.sl-match { display: flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
+.sl-match b { font-size: var(--f-head); color: var(--accent); }
+.sl-match b.them { color: var(--muted); }
+.sl-match em { color: var(--faint); display: grid; place-items: center; }
+.sl-go { color: var(--faint); display: grid; place-items: center; transform: rotate(90deg); }
+.season-line.behind .sl-mark { color: var(--warn); }
+.season-line.behind .sl-match b.them { color: var(--warn); }
+.season-line.ahead .sl-mark { color: var(--good); }
+.season-line.level .sl-mark { color: var(--accent); }
+.season-line.new .sl-text b { color: var(--accent); }
+
+/* ---------- rank ---------- */
+
+.ar-rank-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.ar-crown {
+  display: grid; place-items: center; width: 44px; height: 44px; flex: 0 0 44px;
+  border-radius: 12px; color: #04121a; background: var(--brand);
+}
+.ar-rank-name { min-width: 0; }
+.ar-rank-name b { display: block; font-size: var(--f-title); letter-spacing: -0.02em; }
+.ar-rank-name i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); line-height: 1.4; }
+
+/* One segment per division, however many there are. */
+.ar-ladder { display: flex; gap: 4px; margin: 0 0 14px; }
+.ar-ladder i { flex: 1 1 0; height: 5px; border-radius: 3px; background: var(--line); }
+.ar-ladder i.on { background: var(--accent); opacity: 0.42; }
+.ar-ladder i.here { opacity: 1; box-shadow: 0 0 10px rgba(34, 211, 197, 0.5); }
+
+/* The month, inside its own division: floor on the left, promotion on the
+   right. A nought-to-a-hundred bar put every threshold within a few pixels of
+   the last and made a whole month's work invisible. */
+.ar-bar {
+  position: relative; height: 8px; border-radius: 5px;
+  background: var(--surface-2); border: 1px solid var(--line);
+  margin: 18px 0 6px;
+}
+.ar-bar.plain { margin: 14px 0 8px; }
+.ar-bar-fill { height: 100%; border-radius: 5px; background: var(--accent); transition: width 0.6s var(--ease); }
+.ar-bar.down .ar-bar-fill { background: var(--warn); }
+.ar-bar.up .ar-bar-fill { background: var(--good); }
+/* Clamped away from both ends: at 0% and at 100% half the readout hung off
+   the side of the card. */
+.ar-bar-now {
+  position: absolute; top: -19px; transform: translateX(-50%);
+  font-size: var(--f-micro); color: var(--text); font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ar-bar-ends { display: flex; justify-content: space-between; gap: 10px; font-size: var(--f-micro); color: var(--faint); }
+.ar-monthline { margin: 12px 0 0; font-size: var(--f-small); }
+.ar-monthline b { font-variant-numeric: tabular-nums; }
+.ar-monthline span { display: block; font-size: var(--f-fine); }
+
+/* ---------- the week ---------- */
+
+.ar-week-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.ar-week-head h2 { margin: 0; }
+
+.ar-score { display: flex; align-items: stretch; gap: 8px; }
+.ar-side {
+  flex: 1 1 0; min-width: 0; text-align: center;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px 8px; color: inherit; font: inherit; cursor: pointer;
+}
+.ar-side b { display: block; font-size: var(--f-display); letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.ar-side span { display: block; margin-top: 5px; font-size: var(--f-fine); color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ar-side.me b { color: var(--accent); }
+.ar-side.them b { color: var(--muted); }
+.ar-side.them:active { background: var(--surface); transform: scale(0.98); }
+.ar-vs { display: grid; place-items: center; color: var(--faint); flex: 0 0 30px; }
+.ar-week.ahead .ar-side.me b { color: var(--good); }
+/* Not enough due yet to be a fixture. Neither side is winning, so neither
+   side is coloured. */
+.ar-week.void .ar-side b, .ar-week.void .ar-verdict b { color: var(--muted); }
+.ar-week.behind .ar-side.them b { color: var(--danger); }
+
+.ar-race { margin: 12px 0 8px; }
+.ar-race-bar { display: flex; height: 8px; border-radius: 5px; overflow: hidden; background: var(--surface-2); }
+.ar-race-bar i { display: block; transition: width 0.6s var(--ease); }
+.ar-race-bar i.me { background: var(--accent); }
+.ar-race-bar i.them { background: var(--line); }
+.ar-week.ahead .ar-race-bar i.me { background: var(--good); }
+.ar-week.behind .ar-race-bar i.them { background: var(--danger); opacity: 0.55; }
+
+.ar-verdict { display: flex; justify-content: space-between; gap: 10px; margin: 0 0 2px; font-size: var(--f-small); }
+.ar-verdict i { font-style: normal; color: var(--muted); font-size: var(--f-fine); }
+.ar-week.ahead .ar-verdict b { color: var(--good); }
+.ar-week.behind .ar-verdict b { color: var(--warn); }
+.ar-oppline { margin-bottom: 0; }
+
+/* Row by row. The same rows as the grid and in the same order, because the eye
+   has to be able to map one onto the other; what is new is the fraction. */
+.ar-rows { margin-top: 14px; border-top: 1px solid var(--line-soft); padding-top: 10px; }
+.ar-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: var(--f-small); }
+.ar-row-name { flex: 1 1 40%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ar-row-bar { flex: 1 1 40%; height: 6px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.ar-row-bar i { display: block; height: 100%; border-radius: 4px; background: var(--accent); transition: width var(--t-base) var(--ease); }
+.ar-row b { flex: 0 0 auto; font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 600; font-size: var(--f-fine); }
+
+/* ---------- form + the nemesis ---------- */
+
+.ar-form { display: flex; flex-wrap: wrap; gap: 6px; }
+.ar-chip {
+  flex: 0 0 auto; width: 46px; padding: 7px 0; text-align: center;
+  border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2);
+  color: var(--muted); cursor: pointer;
+}
+.ar-chip b { display: block; font-size: var(--f-small); }
+.ar-chip i { display: block; font-style: normal; font-size: var(--f-micro); color: var(--faint); font-variant-numeric: tabular-nums; }
+.ar-chip.won { border-color: rgba(74, 222, 128, 0.42); color: var(--good); }
+.ar-chip.lost { border-color: rgba(248, 113, 113, 0.36); color: var(--danger); }
+.ar-chip:active { transform: scale(0.95); }
+
+.ar-nemesis {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  margin-top: 10px; padding: 10px 12px;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
+  color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.ar-nemesis:active { transform: scale(0.99); }
+.ar-nico { display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 30px;
+  border-radius: 8px; background: var(--surface); color: var(--warn); }
+.ar-nico.good { color: var(--good); }
+.ar-nico.bad { color: var(--danger); }
+.ar-nname { flex: 1; min-width: 0; }
+.ar-nname b { display: block; font-size: var(--f-small); }
+.ar-nname i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ar-nscore { font-size: var(--f-head); color: var(--accent); font-variant-numeric: tabular-nums; }
+
+/* ---------- the arc ---------- */
+
+.ar-table { border-top: 1px solid var(--line-soft); }
+.ar-tr { display: flex; align-items: center; gap: 10px; padding: 9px 6px; border-bottom: 1px solid var(--line-soft); font-size: var(--f-small); }
+.ar-tr:last-child { border-bottom: 0; }
+.ar-tr .ar-pos { flex: 0 0 20px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.ar-tr .ar-tn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.ar-tr b { font-variant-numeric: tabular-nums; }
+.ar-tr.q { background: rgba(34, 211, 197, 0.05); }
+.ar-tr.q .ar-pos { color: var(--accent); }
+.ar-tr.you { background: rgba(34, 211, 197, 0.12); border-radius: 8px; }
+.ar-tr.you .ar-tn { color: var(--text); font-weight: 600; }
+.ar-tr.you b { color: var(--accent); }
+.ar-tr[data-week] { cursor: pointer; }
+.ar-tr[data-week]:active { transform: scale(0.995); }
+
+/* The three rounds stack. A three-column bracket at 360px gave each round
+   forty pixels and a name that wrapped to four lines. */
+.ar-bracket { display: grid; gap: 8px; }
+.ar-round {
+  padding: 11px 12px; border-radius: 10px;
+  background: var(--surface-2); border: 1px solid var(--line);
+}
+.ar-round b { display: block; font-size: var(--f-small); }
+.ar-round span { display: block; font-size: var(--f-fine); color: var(--muted); }
+.ar-round i { display: block; font-style: normal; font-size: var(--f-micro); color: var(--faint); margin-top: 3px; }
+.ar-round.won { border-color: rgba(74, 222, 128, 0.4); }
+.ar-round.won span { color: var(--good); }
+.ar-round.lost span { color: var(--danger); }
+.ar-round.here { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(34, 211, 197, 0.25); }
+.ar-round.here span { color: var(--accent); }
+
+.ar-cabinet { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+.ar-cup { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px;
+  border-radius: var(--radius-pill); border: 1px solid rgba(251, 191, 36, 0.4); color: var(--warn); }
+.ar-cup i { font-style: normal; font-size: var(--f-fine); }
+
+/* ---------- feats ---------- */
+
+.ar-next { margin-bottom: 4px; }
+.ar-nextrow { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+.ar-nextrow .ar-row-bar { flex: 0 0 64px; }
+.ar-nextrow .ar-nname i { font-size: var(--f-micro); }
+
+/* Three across on a normal phone, two on a narrow one, without either
+   number appearing anywhere: auto-fill works it out from the width it is
+   given. */
+.ft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(98px, 1fr)); gap: 8px; }
+.ft {
+  position: relative; padding: 12px 9px 10px; text-align: center; cursor: pointer;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
+  color: var(--muted); font: inherit;
+}
+.ft b { display: block; font-size: var(--f-micro); font-weight: 600; line-height: 1.25; margin-top: 6px; }
+/* No `margin: 0 auto` here. It centred the icon on a tile and then, in the
+   flex rows that reuse it, quietly ate all the free space and shoved the text
+   to the right edge - visibly only when the text was short enough to leave
+   any. The tile asks for the centring itself. */
+.ft-ico { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 34px;
+  border-radius: 10px; background: var(--surface); color: var(--faint); }
+.ft .ft-ico { margin: 0 auto; }
+.rs-feat > span:last-child { flex: 1; min-width: 0; }
+.ft-ico.on, .ft.on .ft-ico { color: #04121a; background: var(--accent); }
+.ft.on { border-color: rgba(34, 211, 197, 0.4); color: var(--text); }
+.ft:active { transform: scale(0.97); }
+.ft-tick { position: absolute; top: 7px; right: 7px; color: var(--accent); font-style: normal; display: grid; }
+.ft-locked { display: block; font-style: normal; font-size: var(--f-micro); color: var(--faint); margin-top: 5px; }
+.ft-bar { display: block; height: 3px; border-radius: 2px; background: var(--surface); margin-top: 7px; overflow: hidden; }
+.ft-bar i { display: block; height: 100%; background: var(--accent); opacity: 0.6; }
+.ft-big { display: grid; place-items: center; width: 60px; height: 60px; margin: 4px auto 12px;
+  border-radius: 18px; background: var(--surface-2); color: var(--faint); }
+.ft-big.on { background: var(--accent); color: #04121a; }
+.ft-when { color: var(--accent); font-size: var(--f-small); }
+.ar-sub { font-size: var(--f-small); color: var(--muted); margin: 16px 0 0; font-weight: 600; }
+.ar-sheet-score { text-align: center; margin: 14px 0 4px; }
+.ar-sheet-score b { display: block; font-size: var(--f-display); letter-spacing: -0.03em; }
+.ar-sheet-score span { font-size: var(--f-fine); color: var(--muted); }
+.ar-sheet-score.won b { color: var(--good); }
+.ar-sheet-score.lost b { color: var(--danger); }
+
+/* ---------- the result screen ----------
+   No header and no back arrow of its own: it is one moment with one way out,
+   and the extra top padding is what a screen with no header needs so the first
+   thing on it is not hard against the status bar. */
+
+.screen.result { padding-top: calc(var(--safe-t) + 30px); }
+.rs-hero { position: relative; text-align: center; padding: 26px 12px 22px; margin-bottom: 14px;
+  border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); }
+.rs-hero.won { border-color: rgba(74, 222, 128, 0.42); }
+.rs-hero.lost { border-color: rgba(248, 113, 113, 0.3); }
+/* The moment before. One line, one button, and nothing that gives it away. */
+.rs-hero.pending { padding: 40px 18px 30px; }
+.rs-hero.pending .rs-word { margin-bottom: 8px; }
+.rs-hero.pending .btn { margin-top: 22px; }
+.rs-word { font-size: var(--f-display); letter-spacing: -0.03em; margin: 0 0 16px; }
+.rs-hero.won .rs-word { color: var(--good); }
+.rs-hero.lost .rs-word { color: var(--danger); }
+.rs-score { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 12px; }
+.rs-score span { display: block; min-width: 0; }
+.rs-score b { display: block; font-size: 2rem; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.rs-score i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); margin-top: 5px; }
+.rs-score .me b { color: var(--accent); }
+.rs-score .them b { color: var(--muted); }
+.rs-score .vs { color: var(--faint); }
+
+.rs-detail .kv:last-child { border-bottom: 0; }
+.rs-arc { display: flex; align-items: center; gap: 14px; }
+.rs-arc b { display: block; font-size: var(--f-head); }
+.rs-arc i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); }
+.rs-cup { display: grid; place-items: center; width: 48px; height: 48px; flex: 0 0 48px;
+  border-radius: 14px; background: var(--surface-2); color: var(--faint); }
+.rs-arc.won { border-color: rgba(251, 191, 36, 0.42); }
+.rs-arc.won .rs-cup { background: var(--warn); color: #1a1200; }
+
+.rs-move h2 { font-size: var(--f-title); margin-bottom: 10px; }
+.rs-move.up h2, .rs-move.placed h2 { color: var(--good); }
+.rs-move.down h2 { color: var(--danger); }
+.rs-move-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.rs-div { padding: 6px 11px; border-radius: var(--radius-pill); border: 1px solid var(--line);
+  font-size: var(--f-small); color: var(--muted); }
+.rs-div.now { border-color: var(--accent); color: var(--accent); }
+.rs-div.gone { text-decoration: line-through; color: var(--faint); }
+.rs-arrow { display: grid; place-items: center; color: var(--muted); }
+.rs-feat { display: flex; align-items: center; gap: 11px; padding: 8px 0; }
+.rs-feat b { display: block; font-size: var(--f-small); }
+.rs-feat i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); }
+
+/* ---------- the one-line feat pop ---------- */
+
+.feat-pop {
+  position: fixed; left: 50%; top: calc(var(--safe-t) + 10px); z-index: 60;
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 14px 9px 10px; max-width: min(340px, calc(100vw - 28px));
+  background: var(--surface); border: 1px solid var(--accent); border-radius: var(--radius-pill);
+  color: var(--text); font: inherit; text-align: left; cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  transform: translate(-50%, -22px); opacity: 0;
+  transition: transform var(--t-base) var(--ease), opacity var(--t-base) var(--ease);
+}
+.feat-pop.in { transform: translate(-50%, 0); opacity: 1; }
+.fp-ico { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px;
+  border-radius: var(--radius-pill); background: var(--accent); color: #04121a; }
+.fp-text { min-width: 0; }
+.fp-text i { display: block; font-style: normal; font-size: var(--f-micro); color: var(--accent);
+  text-transform: uppercase; letter-spacing: 0.1em; }
+.fp-text b { display: block; font-size: var(--f-small); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- sparks ----------
+   A dozen dots that animate out on the compositor and delete themselves. No
+   canvas and no library: this is the whole of the app's celebration, it costs
+   one paint, and `prefers-reduced-motion` is honoured in celebrate() by never
+   creating them at all. */
+
+.sparks { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
+.sparks i {
+  position: absolute; left: 0; top: 0;
+  width: var(--w); height: var(--w); border-radius: 50%;
+  animation: spark var(--d) var(--ease) forwards;
+}
+@keyframes spark {
+  from { transform: translate(0, 0) scale(1); opacity: 1; }
+  to { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+}
+
+/* ---------- the year ---------- */
+
+.yr-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 14px; }
+.yr-nav b { font-size: var(--f-title); letter-spacing: -0.02em; min-width: 76px; text-align: center; }
+.yr-nav .icon-btn:disabled { opacity: 0.3; }
+.icon-btn.flip .ico { transform: rotate(180deg); }
+
+/* Nought to a hundred, always: a chart that scales to its own tallest bar
+   turns a flat year into a dramatic one. The dotted line is the division bar. */
+.yr-chart { position: relative; display: flex; align-items: flex-end; gap: 4px; height: 120px; margin-bottom: 10px; }
+.yr-chart::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: calc(var(--bar-line) * 0.86);
+  border-top: 1px dashed var(--line); pointer-events: none;
+}
+.yr-col { flex: 1 1 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+  height: 100%; gap: 4px; }
+.yr-fill { display: block; width: 100%; border-radius: 4px 4px 2px 2px; background: var(--line); min-height: 2px; }
+.yr-col.held .yr-fill { background: var(--accent); opacity: 0.55; }
+.yr-col.up .yr-fill { background: var(--good); }
+.yr-col.down .yr-fill { background: var(--warn); }
+.yr-col.live .yr-fill { background: var(--accent); }
+.yr-col.none .yr-fill { background: var(--line-soft); }
+.yr-col i { font-style: normal; font-size: var(--f-micro); color: var(--faint); }
+
+.yr-track { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.yr-step { display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px;
+  border-radius: var(--radius-pill); border: 1px solid var(--line); background: var(--surface-2); color: var(--muted); }
+.yr-step i { font-style: normal; font-size: var(--f-micro); }
+.yr-step.up, .yr-step.placed { border-color: rgba(74, 222, 128, 0.4); color: var(--good); }
+.yr-step.down { border-color: rgba(248, 113, 113, 0.36); color: var(--danger); }
+
+.yr-arcs { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+/* Name over label, not beside it. Side by side, "Spring Arc" and "Group
+   stage" shared 140px and both ellipsised down to "S..." and "Gro...". */
+.yr-arc { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 2px 10px;
+  padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: 10px; color: var(--muted); }
+.yr-arc > span:first-child { grid-row: span 2; display: grid; place-items: center; }
+.yr-arc b { min-width: 0; font-size: var(--f-fine); color: var(--text); }
+.yr-arc i { font-style: normal; font-size: var(--f-micro); }
+.yr-arc.won { border-color: rgba(251, 191, 36, 0.42); color: var(--warn); }
+.yr-arc.final { border-color: rgba(251, 191, 36, 0.2); }
+
+/* ---------- narrow phones ----------
+   At 340px the two scores and the divider stop fitting on one line beside a
+   long opponent name, and the feat tiles want to be two across rather than a
+   third of a tile short of three. */
+@media (max-width: 359px) {
+  .ar-side b { font-size: var(--f-title); }
+  .ar-vs { flex: 0 0 20px; }
+  .sl-text i { font-size: var(--f-micro); }
+  .yr-nav b { min-width: 60px; }
+}

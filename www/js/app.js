@@ -7,6 +7,7 @@
 //
 // Where things are:
 //   habits/home.js    the home screen, which is the grid
+//   arena/home.js     the Arena, reached from the grid's season line
 //   settings.js       app-wide settings
 //   lock.js           the optional PIN gate
 //   names.js          what each section is called
@@ -44,6 +45,9 @@ import { renderHome, renderArchive } from './habits/home.js';
 import { renderHabitEdit } from './habits/edit.js';
 import { renderHabitDetail } from './habits/tracking.js';
 import * as habitsProgram from './habits/program.js';
+import { renderArena, renderFeats } from './arena/home.js';
+import { renderYear } from './arena/year.js';
+import { renderResult, collect, hasResults } from './arena/result.js';
 import { renderBreatheHome, renderBreatheSettings } from './breathe/home.js';
 import { startBreathe } from './breathe/session.js';
 import * as breatheProgram from './breathe/program.js';
@@ -131,6 +135,10 @@ const ROUTES = {
   '#/habits/habit': (params) => renderHabitDetail(app, params.get('id')),
   '#/habits/edit': (params) => renderHabitEdit(app, { id: params.get('id'), kind: params.get('kind') }),
   '#/habits/archive': () => renderArchive(app),
+  '#/arena': () => renderArena(app),
+  '#/arena/feats': () => renderFeats(app),
+  '#/arena/year': () => renderYear(app),
+  '#/arena/result': () => renderResult(app),
   '#/breathe': () => renderBreatheHome(app),
   '#/breathe/run': () => runBreathe(),
   '#/breathe/settings': () => renderBreatheSettings(app),
@@ -148,6 +156,7 @@ const NAV = {
   'bible-prayers': '#/bible/prayers',
   breathe: '#/breathe', 'breathe-settings': '#/breathe/settings',
   habits: '#/habits', 'habits-archive': '#/habits/archive',
+  arena: '#/arena', 'arena-feats': '#/arena/feats', 'arena-year': '#/arena/year',
   nightlight: '#/settings/night',
 };
 
@@ -175,6 +184,11 @@ function route() {
   // progress, or hide it. The night light stands down for both.
   nightlight.suspend(path.startsWith('#/pe/gallery') || path.startsWith('#/pe/measure'));
 
+  // A week that ended is shown on the way to the grid, not instead of it: the
+  // grid is where you always land, so this is the one place that can catch you
+  // without hijacking a deep link into a session or a notification.
+  if (path === '#/hub' && hasResults()) return replaceWith('#/arena/result');
+
   const fn = ROUTES[path] || (() => renderHome(app));
   fn(new URLSearchParams(query || ''));
   if (path !== '#/session') window.scrollTo(0, 0);
@@ -194,7 +208,16 @@ document.addEventListener('click', (e) => {
 // The habit form is here for the neighbouring reason: it is finished by its own
 // Save button, and coming out of it has to land on the grid you were adding to
 // rather than on a second copy of the form.
-const EPHEMERAL = ['#/session', '#/bible/pray', '#/pe/timer', '#/pe/measure', '#/pocket', '#/breathe/run', '#/habits/edit'];
+//
+// The Arena's result screen is here for a third reason again: it is shown once
+// and marks itself seen as it draws, so an entry for it on the back stack is an
+// entry that renders an empty screen and bounces you out of it.
+const EPHEMERAL = ['#/session', '#/bible/pray', '#/pe/timer', '#/pe/measure', '#/pocket', '#/breathe/run', '#/habits/edit', '#/arena/result'];
+
+// The Arena's books are closed before anything renders, so the first screen
+// after a week ends is the result of it rather than a grid with a number that
+// has quietly moved. It writes only when something has actually finished.
+collect();
 
 // Today is the default screen, settled before back.js takes its bearings below.
 // replaceState rather than assignment: landing on the app should not leave a
@@ -212,7 +235,12 @@ initBack({
 // off the app switcher preview and out of a phone handed to someone else.
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
+    // A phone left open across Sunday midnight would otherwise sit on last
+    // week's fixture until it was force-quit. sync() writes only when a week
+    // has actually ended, so this costs nothing on every other return.
+    collect();
     if (lockActive()) route();
+    else if (location.hash.startsWith('#/hub') && hasResults()) replaceWith('#/arena/result');
     return;
   }
   // Backgrounding re-arms the app lock, that is the whole point of it. A

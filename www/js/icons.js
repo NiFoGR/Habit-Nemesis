@@ -83,6 +83,19 @@ const PATHS = {
   caretUp: '<path d="M6 14.5l6-6 6 6"/>',
   caretDown: '<path d="M6 9.5l6 6 6-6"/>',
   arrowDown: '<path d="M12 5v14"/><path d="M6 13l6 6 6-6"/>',
+
+  /* ---- the Arena ---- */
+  // A cup with handles and a base. The medal above is a disc on a ribbon and
+  // reads as a participation badge at 16px, which is the one thing an Arc
+  // trophy must not look like.
+  trophy: '<path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5v1.5A3.5 3.5 0 0 0 8 11M17 6h2.5v1.5A3.5 3.5 0 0 1 16 11"/><path d="M12 14v3M8.5 20h7M9.5 20l.6-3h3.8l.6 3"/>',
+  // Two chevrons meeting: a fixture, not a fight. It sits between your score
+  // and your opponent's and has to read at 14px on a phone.
+  versus: '<path d="M4 5l5 7-5 7"/><path d="M20 5l-5 7 5 7"/>',
+  // A crown for the division you are in. Three points and a band.
+  crown: '<path d="M4 17h16"/><path d="M4 17L3 7l5 4 4-6 4 6 5-4-1 10z"/>',
+  // A ladder: the divisions, seen as the thing you climb.
+  ladder: '<path d="M7 3v18M17 3v18"/><path d="M7 8h10M7 12h10M7 16h10"/>',
 };
 
 /** icon('back') → inline SVG string. */

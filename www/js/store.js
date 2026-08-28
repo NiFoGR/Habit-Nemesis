@@ -1,7 +1,7 @@
 // Persistence layer. Everything lives on-device in localStorage, no accounts,
 // no network, nothing leaves the phone.
 
-import { toast } from './ui.js';
+import { toast, setFeedback } from './ui.js';
 import { BOOKS } from './bible/canon.js';
 
 // The sanitiser needs to know how many chapters each book has, so a saved file
@@ -19,6 +19,11 @@ const HABIT_COLOURS = ['teal', 'mint', 'lime', 'amber', 'orange', 'clay', 'rose'
 const HABIT_KINDS = ['yesno', 'number'];
 const HABIT_TARGET_TYPES = ['atleast', 'atmost'];
 
+// The ladder, listed here for the same reason as the habit palette: the
+// sanitiser cannot import the feature whose data it is checking, because that
+// feature imports the store. Order matters - it is the ladder, low to high.
+const ARENA_DIVISIONS = ['bottom', 'npc', 'prospect', 'contender', 'menace', 'locked', 'topg'];
+
 const KEY = 'nifo.state.v1';
 const SCHEMA = 1;
 
@@ -29,7 +34,12 @@ function blank() {
     settings: {
       inputMode: 'hold', // 'hold' = press-and-hold tracking, 'auto' = hands-free
       haptics: true,
-      sound: false,
+      // App-wide, and on. It used to mean only the session player's per-rep
+      // tone, which is why it was off: a beep every three seconds is a thing
+      // you switch off. The Arena's motifs are the opposite - a few seconds,
+      // once a week, on a screen you opened on purpose - so the honest default
+      // for the pair of them is on, with one switch that still kills both.
+      sound: true,
       discreet: false, // renames the Kegels section to "Core Training"
       restDay: 0, // 0 = Sunday
       dailyTarget: 2, // sessions per day the program asks for
@@ -48,7 +58,11 @@ function blank() {
     },
     sessions: [],
     prs: { maxHoldMs: 0, tutMs: 0, score: 0, streak: 0 },
-    badges: [],
+    // There is no `badges` array any more, and no `pe.achievements`. Both were
+    // lists of ids handed out by whichever screen happened to be open, which
+    // meant a badge earned while the app was shut was never earned at all.
+    // arena/feats.js is a set of predicates over this same state, so it needs
+    // to store only the date each was first noticed.
 
     // Second feature: PE training. Kept in its own slice so the two features
     // never tread on each other's data.
@@ -66,7 +80,6 @@ function blank() {
       },
       sessions: [],
       measurements: [],
-      achievements: [],
       eq: [], // weekly erection-quality self-ratings, 1-10
       prs: { sessionMs: 0, weekMs: 0, bpel: 0, eg: 0, bpfsl: 0, streak: 0 },
       vault: null, // { salt, iv, check } once a gallery PIN is set
@@ -145,6 +158,31 @@ function blank() {
       groups: [], // { id, name, order, collapsed }
       items: [], // the habits themselves
       entries: {}, // habitId -> { dayKey: value }, -1 skip, 0 lapse, else done
+    },
+
+    // Seventh feature: the Arena. The competitive layer - a weekly match, a
+    // monthly division, a seasonal cup, and the feats.
+    //
+    // This is the one slice that stores things it could in principle derive,
+    // and the distinction is deliberate. A closed week's result is a historical
+    // fact: recomputing it would let a habit's frequency changed today rewrite
+    // a match won in March, and would let the calendar's edit-the-past turn a
+    // defeat into a victory. Standings are the same kind of fact. Everything
+    // live - this week's running score, the group table, the next fixture - is
+    // still computed on read.
+    arena: {
+      division: 'npc', // where you currently sit on the ladder
+      placed: false, // the first completed month places you and cannot relegate
+      // 'YYYY-Www' -> { score, done, due, opponent, oppName, oppScore, result, arc }
+      // result: 'won' | 'lost' | 'void' | 'record' | null. 'record' is a week
+      // scored out of habit data older than the Arena - a performance, and a
+      // possible opponent, but never a result, because no match was played.
+      weeks: {},
+      months: {}, // 'YYYY-MM' -> { score, w, l, from, to, move }
+      arcs: {}, // 'YYYY-season' -> { qualified, qf, sf, final, won }
+      feats: {}, // featId -> the timestamp it was first earned
+      seenWeek: '', // the last closed week whose result screen was shown
+      backfilled: false, // the one-time sweep that gives the Arena a history
     },
 
     // The night light. App-wide rather than a section, so it has no `days` and
@@ -306,7 +344,10 @@ function hydrate(saved) {
     settings: {
       inputMode: oneOf(ss.inputMode, ['hold', 'auto'], base.settings.inputMode),
       haptics: ss.haptics !== false,
-      sound: bool(ss.sound),
+      // `!== false` rather than `bool`: anyone who turned it off keeps it off,
+      // and a state saved before this was app-wide - which had no reason to
+      // carry the key at all - gets the new default rather than a silent no.
+      sound: ss.sound !== false,
       discreet: bool(ss.discreet),
       restDay: int(ss.restDay, 0, 6, base.settings.restDay),
       dailyTarget: int(ss.dailyTarget, 1, 3, base.settings.dailyTarget),
@@ -332,7 +373,6 @@ function hydrate(saved) {
       score: int(saved.prs?.score, 0, 100, 0),
       streak: int(saved.prs?.streak, 0, 100000, 0),
     },
-    badges: arr(saved.badges, 100).filter((b) => typeof b === 'string' && b.length < 40),
     pe: {
       settings: {
         units: oneOf(ps.units, ['cm', 'in'], 'cm'),
@@ -350,7 +390,6 @@ function hydrate(saved) {
       eq: arr(savedPe.eq, 2000)
         .map((e) => ({ ts: num(e?.ts, 0, 4e12) ?? Date.now(), date: dateKey(e?.date), v: int(e?.v, 1, 10, 0) }))
         .filter((e) => e.v >= 1),
-      achievements: arr(savedPe.achievements, 100).filter((a) => typeof a === 'string' && a.length < 40),
       prs: {
         sessionMs: int(savedPe.prs?.sessionMs, 0, 1e9, 0),
         weekMs: int(savedPe.prs?.weekMs, 0, 1e9, 0),
@@ -368,6 +407,7 @@ function hydrate(saved) {
     bible: cleanBible(saved.bible, base.bible),
     breathe: cleanBreathe(saved.breathe, base.breathe),
     habits: cleanHabits(saved.habits, base.habits),
+    arena: cleanArena(saved.arena, base.arena),
     nightlight: cleanNightlight(saved.nightlight, base.nightlight),
   };
 }
@@ -484,6 +524,91 @@ function cleanBreathe(sb, base) {
   };
 }
 
+/** The Arena slice.
+ *
+ *  Standings and results, which is the one place in this app where stored data
+ *  is not a cache of something computable. So the sanitiser's job here is
+ *  narrower than usual but stricter: every key is a period identifier that gets
+ *  parsed and rendered, and every value decides a rank.
+ *
+ *  Keys are checked by shape - `YYYY-Www`, `YYYY-MM`, `YYYY-season` - and
+ *  dropped rather than defaulted, for the same reason a bad day key is dropped
+ *  in the habits slice: defaulting would pile a file's worth of junk onto one
+ *  real period and quietly rewrite a season.
+ */
+function cleanArena(sa, base) {
+  const src = sa && typeof sa === 'object' ? sa : {};
+  const pctOf = (v) => num(v, 0, 1) ?? 0;
+
+  const weeks = {};
+  const rawWeeks = src.weeks && typeof src.weeks === 'object' ? src.weeks : {};
+  for (const [k, v] of Object.entries(rawWeeks).slice(0, 600)) {
+    if (!/^\d{4}-W\d{2}$/.test(k) || !v || typeof v !== 'object') continue;
+    weeks[k] = {
+      score: pctOf(v.score),
+      due: int(v.due, 0, 100000, 0),
+      done: num(v.done, 0, 100000) ?? 0,
+      // 'record' is a week the Arena scored on the day it was installed, out
+      // of habit data older than itself. It counts as a performance - it can
+      // be your Nemesis, and it is in the month's average - but it is not a
+      // result, because no match was played on it and one cannot be invented
+      // retrospectively.
+      opponent: str(v.opponent, 40),
+      oppName: str(v.oppName, 40),
+      oppScore: v.oppScore == null ? null : pctOf(v.oppScore),
+      result: oneOf(v.result, ['won', 'lost', 'void', 'record'], null),
+      arc: oneOf(v.arc, ['group', 'qf', 'sf', 'final'], null),
+    };
+  }
+
+  const months = {};
+  const rawMonths = src.months && typeof src.months === 'object' ? src.months : {};
+  for (const [k, v] of Object.entries(rawMonths).slice(0, 200)) {
+    if (!/^\d{4}-\d{2}$/.test(k) || !v || typeof v !== 'object') continue;
+    months[k] = {
+      score: pctOf(v.score),
+      w: int(v.w, 0, 10, 0),
+      l: int(v.l, 0, 10, 0),
+      from: oneOf(v.from, ARENA_DIVISIONS, base.division),
+      to: oneOf(v.to, ARENA_DIVISIONS, base.division),
+      move: oneOf(v.move, ['up', 'down', 'held', 'placed'], 'held'),
+    };
+  }
+
+  const arcs = {};
+  const rawArcs = src.arcs && typeof src.arcs === 'object' ? src.arcs : {};
+  for (const [k, v] of Object.entries(rawArcs).slice(0, 80)) {
+    if (!/^\d{4}-(winter|spring|summer|autumn)$/.test(k) || !v || typeof v !== 'object') continue;
+    const round = (r) => oneOf(r, ['won', 'lost'], null);
+    arcs[k] = {
+      qualified: v.qualified === true ? true : v.qualified === false ? false : null,
+      qf: round(v.qf),
+      sf: round(v.sf),
+      final: round(v.final),
+      won: bool(v.won),
+    };
+  }
+
+  const feats = {};
+  const rawFeats = src.feats && typeof src.feats === 'object' ? src.feats : {};
+  for (const [k, v] of Object.entries(rawFeats).slice(0, 200)) {
+    if (!/^[a-z][a-z0-9_-]{1,40}$/.test(k)) continue;
+    const ts = num(v, 0, 4e12);
+    if (ts != null) feats[k] = ts;
+  }
+
+  return {
+    division: oneOf(src.division, ARENA_DIVISIONS, base.division),
+    placed: bool(src.placed),
+    weeks,
+    months,
+    arcs,
+    feats,
+    seenWeek: /^\d{4}-W\d{2}$/.test(src.seenWeek) ? src.seenWeek : '',
+    backfilled: bool(src.backfilled),
+  };
+}
+
 /** The habits slice.
  *
  *  The only slice whose *shape* is user-defined, which makes it the one most
@@ -540,6 +665,10 @@ function cleanHabits(sh, base) {
           .map((d) => int(d, 0, 6, null))
           .filter((d) => d !== null),
         archived: bool(h?.archived),
+        // When it was archived, not just that it was. The Arena locks its
+        // scoring roster on Monday, so it has to know whether a habit was
+        // still yours during a week that has already been played.
+        archivedAt: num(h?.archivedAt, 0, 4e12),
         createdAt: num(h?.createdAt, 0, 4e12) ?? Date.now(),
         order: int(h?.order, 0, 1000, 0),
       };
@@ -622,6 +751,11 @@ function cleanPray(sp, base) {
 let state = load();
 const listeners = new Set();
 
+// Once at boot as well as on every save: a launch where nothing needed
+// rewriting never calls save(), and ui.js would sit on its defaults with the
+// sound switched on for somebody who had switched it off.
+setFeedback(state.settings);
+
 function load() {
   let raw = null;
   try {
@@ -650,6 +784,10 @@ export function get() {
 let saveFailed = false;
 
 export function save() {
+  // The two feedback switches live in settings and are read by ui.js, which
+  // cannot import this module back. Pushing them on every save is what keeps
+  // "sound off" meaning off everywhere rather than only in a session.
+  setFeedback(state.settings);
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
     saveFailed = false;

@@ -428,10 +428,17 @@ function safely(fn, fallback) {
 
 /** A linked source dressed as a habit, so every function below can take it
  *  without knowing the difference. `linked` marks its past read-only: only
- *  today's cell does anything, and what it does is start the thing. */
+ *  today's cell does anything, and what it does is start the thing.
+ *
+ *  The setting is honoured here and everywhere downstream, the Arena included.
+ *  There was a version that scored the five whether or not the grid showed
+ *  them, on the reasoning that a display toggle must not move your division.
+ *  It is the wrong trade: someone who has turned these off has said they are
+ *  not what they are keeping, and losing a week to five rows you cannot see is
+ *  a bug however defensible the rule behind it. */
 export function linkedHabits() {
-  if (!settings().showLinked) return [];
   const st = store.get();
+  if (!settings().showLinked) return [];
   return LINKED.map((l) => {
     const days = l.days(st);
     return {

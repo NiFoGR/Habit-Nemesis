@@ -1,10 +1,29 @@
 // Small shared helpers: feedback, formatting and dependency-free SVG charts.
 
+/* ---------------- whether the app is allowed to make a noise ----------------
+   Two switches, held here rather than read here. This module is imported *by*
+   the store and cannot import it back, so the store pushes the pair in through
+   `setFeedback` on every save. Before that each caller checked for itself,
+   which meant the session players honoured the setting and the grid, the
+   Arena and every toast did not. */
+
+let feedback = { haptics: true, sound: true };
+
+/** Called by store.js. Never call it from a screen. */
+export function setFeedback(s) {
+  feedback = { haptics: s?.haptics !== false, sound: s?.sound !== false };
+}
+
 const PATTERNS = {
   tick: 12, press: 18, hit: [0, 30, 60, 30], go: 25, rest: 10, done: 22, miss: [0, 40, 40, 40], phase: [0, 20, 40, 20], level: [0, 40, 60, 40, 60, 80],
+  // The Arena. A win is two beats and a promotion is three rising ones, so
+  // the phone tells you which happened before you have read anything.
+  win: [0, 35, 50, 90], loss: [0, 120], promote: [0, 40, 50, 40, 50, 120], relegate: [0, 160, 80, 160],
+  feat: [0, 25, 40, 25, 40, 60], trophy: [0, 60, 60, 60, 60, 60, 60, 200],
 };
 
 export function haptic(kind) {
+  if (!feedback.haptics) return;
   const p = PATTERNS[kind];
   if (p && navigator.vibrate) {
     try {
@@ -17,6 +36,7 @@ export function haptic(kind) {
 
 let audioCtx = null;
 export function beep(freq = 880, ms = 60) {
+  if (!feedback.sound) return;
   try {
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
     const osc = audioCtx.createOscillator();
@@ -32,6 +52,79 @@ export function beep(freq = 880, ms = 60) {
   } catch {
     /* audio is a nicety, never a requirement */
   }
+}
+
+/* ---------------- the Arena's own sound and light ----------------
+   The app had one beep and one buzz, which is right for a session player where
+   a cue must not become a performance. A result is different: a week you won
+   should land, and landing is what a short rise in pitch and a handful of
+   sparks are for.
+
+   Whether either is allowed is decided once, at the top of this file. */
+
+const NOTES = { c: 261.63, e: 329.63, g: 392.0, a: 440.0, b: 493.88, C: 523.25, E: 659.25, G: 783.99, C2: 1046.5 };
+
+/** One note in an envelope that opens fast and closes slowly, so a motif reads
+ *  as music rather than as a row of clicks. */
+function tone(ctx, freq, at, dur, peak = 0.14, type = 'sine') {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, ctx.currentTime + at);
+  gain.gain.setValueAtTime(0.0001, ctx.currentTime + at);
+  gain.gain.exponentialRampToValueAtTime(peak, ctx.currentTime + at + 0.012);
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + at + dur);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(ctx.currentTime + at);
+  osc.stop(ctx.currentTime + at + dur + 0.02);
+}
+
+/** Motifs, not sound effects. Each one is the shape of what happened: up for
+ *  a win, down for a loss, a full triad for a promotion, and a run for a feat. */
+const MOTIFS = {
+  win: [[NOTES.g, 0, 0.16], [NOTES.C, 0.09, 0.3]],
+  loss: [[NOTES.e, 0, 0.18], [NOTES.c, 0.1, 0.34]],
+  promote: [[NOTES.c, 0, 0.2], [NOTES.e, 0.08, 0.2], [NOTES.G, 0.16, 0.42]],
+  relegate: [[NOTES.G, 0, 0.2], [NOTES.e, 0.09, 0.2], [NOTES.c, 0.18, 0.46]],
+  feat: [[NOTES.C, 0, 0.14], [NOTES.E, 0.06, 0.14], [NOTES.G, 0.12, 0.14], [NOTES.C2, 0.18, 0.4]],
+  trophy: [[NOTES.c, 0, 0.18], [NOTES.g, 0.1, 0.18], [NOTES.C, 0.2, 0.18], [NOTES.E, 0.3, 0.18], [NOTES.G, 0.4, 0.7]],
+  tick: [[NOTES.a, 0, 0.06]],
+};
+
+export function chime(kind) {
+  const motif = MOTIFS[kind];
+  if (!motif || !feedback.sound) return;
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    // A context created before the first gesture starts suspended, and a
+    // suspended context swallows the whole motif silently.
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    for (const [freq, at, dur] of motif) tone(audioCtx, freq, at, dur);
+  } catch {
+    /* audio is a nicety, never a requirement */
+  }
+}
+
+/** A short burst of sparks from the middle of an element.
+ *
+ *  No library and no canvas: a dozen absolutely positioned dots that animate
+ *  out on the compositor and delete themselves. It costs nothing, it cannot
+ *  leak - the wrapper removes itself on the longest animation's end - and it
+ *  does nothing at all when the reader has asked for less motion. */
+export function celebrate(el, { colour = 'var(--accent)', count = 14, spread = 90 } = {}) {
+  if (!el || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'sparks';
+  for (let i = 0; i < count; i++) {
+    const a = (Math.PI * 2 * i) / count + Math.random() * 0.4;
+    const d = spread * (0.55 + Math.random() * 0.65);
+    const s = document.createElement('i');
+    s.style.cssText = `--dx:${(Math.cos(a) * d).toFixed(1)}px;--dy:${(Math.sin(a) * d).toFixed(1)}px;` +
+      `--d:${(0.5 + Math.random() * 0.45).toFixed(2)}s;--w:${(3 + Math.random() * 4).toFixed(1)}px;background:${colour}`;
+    wrap.appendChild(s);
+  }
+  el.appendChild(wrap);
+  setTimeout(() => wrap.remove(), 1200);
 }
 
 export function fmtMs(ms) {

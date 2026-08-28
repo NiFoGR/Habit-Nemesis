@@ -8,6 +8,7 @@
 
 import * as store from '../store.js';
 import * as pe from './program.js';
+import * as feats from '../arena/feats.js';
 import * as kegel from '../kegels/program.js';
 import { haptic, beep, fmtClock, fmtMs, notify, askNotifyPermission, escapeHtml, toast } from '../ui.js';
 import { scheduleAlarm, cancelAlarm, ensureAlarmPermission, ALARM_SESSION } from '../native.js';
@@ -531,10 +532,11 @@ export function renderTimer(mount, opts = {}) {
       kegelLogged = record.kegelCycles;
     }
 
-    const earned = pe.checkAchievements(st);
-    const kegelBadges = kegel.checkBadges(st);
+    // One catalogue now, so a stretch that also ran kegels no longer has to
+    // ask two modules whether anything was earned and paste the answers together.
+    const earned = feats.check();
     store.save();
-    renderReport(record, earned.concat(kegelBadges), kegelLogged);
+    renderReport(record, earned, kegelLogged);
   }
 
   function todayTotal() {
@@ -579,7 +581,7 @@ export function renderTimer(mount, opts = {}) {
         ${kegelLogged ? `<p class="small muted">${kegelLogged} kegel cycles counted toward your Kegels streak too.</p>` : ''}
 
         ${earned.length ? `<section class="card">
-          ${earned.map((a) => `<div class="pr-row"><b>${icon('medal', 16)} ${escapeHtml(a.name)}</b><span>${escapeHtml(a.desc)}</span></div>`).join('')}
+          ${earned.map((a) => `<div class="pr-row"><b>${icon(a.icon || 'medal', 16)} ${escapeHtml(a.name)}</b><span>${escapeHtml(a.blurb)}</span></div>`).join('')}
         </section>` : ''}
 
         <button class="btn primary big" data-nav="pe">Done</button>
