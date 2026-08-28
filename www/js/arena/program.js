@@ -215,6 +215,16 @@ export function weekScore(key) {
 
 export const storedWeeks = () => store.get().arena.weeks;
 
+/** Is there anything on the record at all?
+ *
+ *  A new install has no weeks: sync() writes a week when it *ends*, so for the
+ *  whole of your first week there is nothing here. That is the honest answer to
+ *  "which division are you in" - none yet - and it is why the app no longer
+ *  opens on NPC and a joke about Mike Mentzer aimed at someone who has not
+ *  done anything yet. Void weeks do not count: a week with almost nothing due
+ *  in it is not a performance, and one of those should not rank you either. */
+export const hasRecord = () => playedWeeks().length > 0;
+
 /** Every week we have a score for, newest first, voids left out: a void week
  *  is not a performance and has no business being anybody's opponent. */
 export function playedWeeks() {
@@ -465,6 +475,19 @@ export function previousArc(arc) {
   return { ...ARCS[i - 1], year: arc.year };
 }
 
+/** How much of a cup you have to actually turn up for before it counts.
+ *
+ *  Both halves are needed and both were missing. With no record at all there
+ *  were no rivals, so the table was one row - you - and you came first and
+ *  qualified on a score of nought, having done nothing, in a cup you had never
+ *  heard of. And `played` counted group weeks that had merely *elapsed*, so
+ *  the calendar could walk you through a group stage on its own.
+ *
+ *  Written as a share of the group rather than a number of weeks, so a cup
+ *  with a different shape does not silently get an easier entry. */
+export const ARC_MIN_RIVALS = 3;
+export const arcWeeksNeeded = (groupWeeks) => Math.ceil(groupWeeks.length / 2);
+
 /** The group table: you, and five past selves whose scores are already fixed,
  *  so the whole thing is visible from day one and you can see exactly what
  *  qualifying costs. Spread across your record rather than taken from the top,
@@ -482,6 +505,9 @@ export function groupTable(arc = arcOfMonth(currentMonth())) {
   }
   const mine = groupWeeks.map(weekScore).filter((w) => !w.void && w.due >= VOID_CELLS);
   const you = mine.length ? mine.reduce((a, w) => a + w.score, 0) / mine.length : 0;
+  const need = arcWeeksNeeded(groupWeeks);
+  // A cup needs a field to be a cup, and you have to have played in it.
+  const eligible = mine.length >= need && rivals.length >= ARC_MIN_RIVALS;
 
   const table = [
     ...rivals.map((r, i) => ({ you: false, name: `You, ${weekLabel(r.key)}`, week: r.key, score: r.score, seed: i + 1 })),
@@ -489,7 +515,18 @@ export function groupTable(arc = arcOfMonth(currentMonth())) {
   ].sort((a, b) => b.score - a.score);
 
   const place = table.findIndex((r) => r.you) + 1;
-  return { arc, table, place, qualifies: place <= 3, groupWeeks, played: mine.length };
+  return {
+    arc,
+    table,
+    place,
+    // Coming third in a field of one is not coming third.
+    qualifies: eligible && place <= 3,
+    eligible,
+    need,
+    rivals: rivals.length,
+    groupWeeks,
+    played: mine.length,
+  };
 }
 
 /* ---------------- where the cup is up to ----------------
@@ -536,7 +573,11 @@ export function arcState(key = currentWeek()) {
   const upcoming = nextArc(arc);
   const opensOn = weekStart(arcSeason(upcoming)[0] || arcWeeks(upcoming)[0]);
 
-  const played = group.filter((w) => w < key).length;
+  // Weeks you actually played, not weeks the calendar got through. Counting
+  // the latter meant a cup could run its whole group stage while the app sat
+  // untouched, and then tell you that you were through.
+  const table = groupTable(arc);
+  const elapsed = group.filter((w) => w < key).length;
   return {
     arc,
     key: arcKey(arc),
@@ -548,8 +589,13 @@ export function arcState(key = currentWeek()) {
     season,
     group,
     // group progress
-    played,
-    groupLeft: Math.max(0, group.length - played),
+    played: table.played,
+    elapsed,
+    // whether there is enough of a record for this to be a cup at all
+    eligible: table.eligible,
+    need: table.need,
+    rivals: table.rivals,
+    groupLeft: Math.max(0, group.length - elapsed),
     // the knockout, when you are in one
     round: KNOCKOUT[stage] || null,
     fixture: phase === 'qf' || phase === 'sf' || phase === 'final' ? arcFixture(key) : null,
@@ -804,15 +850,23 @@ export function monthsOfYear(y) {
 
 /* ---------------- standing ---------------- */
 
+/** Where you stand before you have stood anywhere. Shaped like a division so
+ *  every caller can read `.name` without asking first, but it is not in
+ *  DIVISIONS and has no bar, because it is not a rung on the ladder - it is the
+ *  absence of one. */
+export const UNRANKED = { id: 'unranked', name: 'Unranked', bar: 0, blurb: 'Play a week and the app will tell you.' };
+
 export function standing() {
   const a = store.get().arena;
-  const div = divisionOf(a.division);
+  const unranked = !hasRecord();
+  const div = unranked ? UNRANKED : divisionOf(a.division);
   const i = divisionIndex(a.division);
-  const next = DIVISIONS[i + 1] || null;
-  const below = DIVISIONS[i - 1] || null;
+  const next = unranked ? null : DIVISIONS[i + 1] || null;
+  const below = unranked ? null : DIVISIONS[i - 1] || null;
   const month = monthScore(currentMonth());
   return {
     division: div,
+    unranked,
     next,
     below,
     placed: a.placed,

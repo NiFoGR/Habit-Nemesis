@@ -20,7 +20,7 @@ import * as arena from './program.js';
 import * as feats from './feats.js';
 import { escapeHtml, openSheet, haptic } from '../ui.js';
 import { icon } from '../icons.js';
-import { crest } from './crest.js';
+import { crest, UNRANKED } from './crest.js';
 
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 const hex = (h) => (h.colour ? habits.hexOf(h.colour) : 'var(--accent)');
@@ -36,6 +36,19 @@ function ladder(id) {
   return `<div class="ar-ladder" role="img" aria-label="Division ${escapeHtml(arena.divisionOf(id).name)}, ${at + 1} of ${arena.DIVISIONS.length}">
     ${arena.DIVISIONS.map((d, i) => `<i class="${i <= at ? 'on' : ''} ${i === at ? 'here' : ''}" title="${escapeHtml(d.name)}"></i>`).join('')}
   </div>`;
+}
+
+/** The ladder with nothing lit on it, and how long until something is. Shown
+ *  instead of the bar, because a bar implies a position on it and the whole
+ *  point of this state is that you do not have one yet. The app used to open on
+ *  NPC, which meant a joke about Mike Mentzer aimed at someone who had not had
+ *  the chance to do anything at all. */
+function unrankedHero() {
+  const left = arena.daysLeftInWeek();
+  return `<div class="ar-ladder none" role="img" aria-label="Unranked">
+      ${arena.DIVISIONS.map(() => '<i></i>').join('')}
+    </div>
+    <p class="ar-monthline"><span class="muted">your first week ends in ${left} day${left === 1 ? '' : 's'}</span></p>`;
 }
 
 /** The month, as a bar inside the division you are in: floor on the left, the
@@ -61,8 +74,6 @@ function barTo(st) {
     <span>${st.next ? `${escapeHtml(st.next.name)} · ${pct(roof)}` : 'the top'}</span>
   </div>`;
 }
-
-/* ---------------- the week ---------------- */
 
 /* ---------------- the week ---------------- */
 
@@ -204,11 +215,16 @@ function arcCard() {
 
 /** No cup on. A countdown, and what happened in the last one if anything did. */
 function arcClosed(st) {
-  const ended = st.phase === 'out'
-    ? st.rec.qualified === false
-      ? `Out at the group stage of the ${escapeHtml(st.arc.name)}.`
-      : `Out in the ${escapeHtml(arena.KNOCKOUT[st.lostAt]?.name.toLowerCase() || 'knockout')} of the ${escapeHtml(st.arc.name)}.`
-    : '';
+  // "Out at the group stage" is the wrong sentence for someone who never had
+  // enough weeks on the record to enter: they did not lose the cup, they were
+  // not in it. Saying otherwise is the app inventing a defeat.
+  const ended = st.phase !== 'out'
+    ? ''
+    : st.rec.qualified === false
+      ? st.eligible
+        ? `Out at the group stage of the ${escapeHtml(st.arc.name)}.`
+        : `Not enough weeks played for the ${escapeHtml(st.arc.name)}.`
+      : `Out in the ${escapeHtml(arena.KNOCKOUT[st.lostAt]?.name.toLowerCase() || 'knockout')} of the ${escapeHtml(st.arc.name)}.`;
   return `<a class="arc-wait" href="#/arena">
     <span class="arc-wait-mark">${icon('trophy', 20)}</span>
     <span class="arc-wait-text">
@@ -231,14 +247,23 @@ function arcGroup(st) {
       ? '<p class="muted small">Your group fills up as you play weeks.</p>'
       : `<div class="ar-table">
           ${g.table
-            .map((r, i) => `<div class="ar-tr ${r.you ? 'you' : ''} ${i < 3 ? 'q' : 'nq'}" ${r.week ? `data-week="${r.week}"` : ''}>
+            .map((r, i) => `<div class="ar-tr ${r.you ? 'you' : ''} ${g.eligible && i < 3 ? 'q' : 'nq'}" ${r.week ? `data-week="${r.week}"` : ''}>
               <span class="ar-pos">${i + 1}</span>
               <span class="ar-tn">${escapeHtml(r.name)}</span>
               <b>${pct(r.score)}</b>
             </div>`)
             .join('')}
         </div>`}
+    ${g.eligible ? '' : `<p class="muted small">${escapeHtml(shortfall(g))}</p>`}
   </section>`;
+}
+
+/** Why this is not a cup yet, in one line. Nothing on the table is coloured
+ *  green until it is: a top-three row that cannot qualify is the screen
+ *  telling you that you are through when you are not. */
+function shortfall(g) {
+  if (g.rivals < arena.ARC_MIN_RIVALS) return 'Not enough weeks on the record yet to make a field to beat.';
+  return `${g.played} of ${g.need} weeks played. A cup wants at least ${g.need} of them.`;
 }
 
 /** A knockout round you are in. */
@@ -281,15 +306,17 @@ function arcCup(st) {
 export function renderArena(mount) {
   const st = arena.standing();
   const a = store.get().arena;
-  const rung = arena.divisionIndex(a.division);
+  const rung = st.unranked ? UNRANKED : arena.divisionIndex(a.division);
 
   mount.innerHTML = `
     <div class="screen">
-      <section class="ar-hero rung-${rung}">
+      <section class="ar-hero ${st.unranked ? 'unranked' : `rung-${rung}`}">
         <span class="ar-crest">${crest(rung, 92)}</span>
         <h1 class="ar-rank">${escapeHtml(st.division.name)}</h1>
         <p class="ar-blurb">${escapeHtml(st.division.blurb)}</p>
-        ${ladder(a.division)}
+        ${st.unranked
+          ? unrankedHero()
+          : `${ladder(a.division)}
         ${st.month.empty
           ? `<p class="ar-monthline"><span class="muted">${st.placed ? 'nothing scored this month yet' : 'placement month'}</span></p>`
           : `${barTo(st)}
@@ -299,7 +326,7 @@ export function renderArena(mount) {
                <em class="${st.next && st.month.score >= st.next.bar ? 'up' : st.safe ? 'safe' : 'down'}">${
                  st.next && st.month.score >= st.next.bar ? 'promoting' : st.safe ? 'holding' : 'below the bar'
                }</em>
-             </p>`}
+             </p>`}`}
       </section>
 
       ${weekCard()}

@@ -162,9 +162,9 @@ a date whether or not you had read anything the day before, and the plans were
 a thing to fall behind on. Both are gone. The book has an order; the reader
 follows it, opening where you left off.
 
-**The copyright point stands, and the answer is to ship the parser.** The app
-holds no scripture. You import the copy you own, it is parsed on the phone, and
-it stays there. Prayer had already drawn that line for its prayer book.
+**The first version shipped the parser, not the text.** You imported the copy
+you owned and it was parsed on the phone. That made the first run an errand,
+so the parsed text ships now and `parse.js` stays as the extractor's engine.
 
 **And prayer belongs in the same room.** Two tiles meant the hub asked every
 morning which half of one practice you wanted.
@@ -187,12 +187,11 @@ morning which half of one practice you wanted.
 
 ## Deliberately rejected, then un-rejected
 
-- **Shipping the text in the repo.** Rejected while the repo was public and
-  deploying to Pages: that would have been bulk public redistribution of a
-  commercial translation, not personal use. The repo is now private and Pages
-  is off, which removed the actual objection rather than just the appearance
-  of it, so the parsed text now ships in `www/bible/`. If the repo is ever
-  made public again this has to be reverted, back to a device-side import.
+- **Shipping the text in the repo.** Rejected once, on the grounds that a
+  device-side import kept the app free of it. Un-rejected: an empty section
+  waiting on an errand is a worse first run than a larger download, so the
+  parsed text ships in `www/bible/`. The hosted build leaves it out on size
+  alone — 7 MB of the app's 8, for a section a locked install cannot open.
 - **A lectionary or reading plan.** See above.
 - **Treating welded digits as verse markers.** Tried, and it split John 1:1
   into three fragments. They are debris, and stripping them is right even

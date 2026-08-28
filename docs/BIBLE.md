@@ -16,29 +16,22 @@ August whether or not you had read anything on the thirteenth.
 Both are gone. The section opens where you left off, prayer sits underneath
 with its two times, and there is no plan to fall behind on.
 
-## Why the text is bundled, and why it wasn't at first
+## Why the text is bundled
 
-The Orthodox Study Bible's translations are under copyright: the front matter
-allows a thousand verses, under half of any one book. There are 35,903 verses
-here, and the app was then a public repository that deployed to a public
-website. Shipping the full text there would have been redistributing a
-commercial translation in bulk, which is not something the license covers and
-not something to do regardless of what it covers.
+The first version made you import a copy on the device, and it was a bad first
+run: you opened the section and it was empty until you had gone and found a
+file. The parsed text is committed under `www/bible/` now, one JSON file per
+book, and the reader loads it directly. There is no import step.
 
-**This repository is now private, and the GitHub Pages workflow has been
-deleted.** That changes what shipping the text means: it is a personal copy of
-a book you own, kept for personal use, not a public release. So the parsed text
-is committed under `www/bible/`, one JSON file per book, and the reader loads it
-directly. There is no import step.
+`www/js/bible/parse.js` stays in the app, unused at runtime, because it is what
+`tools/extract-bible-text.mjs` runs and because it is the way back to importing
+on the device if that is ever wanted again.
 
-If this repository is ever made public again, `www/bible/` has to come out
-first and the app goes back to reading from a copy you import on the device,
-which is how the first version of this feature worked and which
-`www/js/bible/parse.js` still knows how to do.
-
-The Prayer feature draws a related line for its own book: it bundles the
-ancient core, which is in the public domain, and lets you type in the rest from
-your own copy rather than including a copyrighted prayer book.
+The text is 7 MB, which is most of the app's size and all of the reason
+`tools/pack-web.mjs` leaves it out of the hosted build: that build exists to be
+handed to someone else, and someone else's install is locked, so it has no
+Bible section to open. Sending them seven megabytes of a book they cannot read
+is just a slower download.
 
 ## What the export does to the text, and how it is undone
 
@@ -173,20 +166,12 @@ entry says so rather than picking a side.
   fall behind on; the book has an order of its own and the reader follows it.
 * **A verse-level tracker.** A chapter is the honest unit.
 * **Silently dropping a verse the parser missed.** It is marked.
-* **The text in a public place.** It has never been, and must never be, in a
-  GitHub Pages deployment or any other public surface. Note that Pages is
-  public even when the repository is private.
-
-  `.github/workflows/pages.yml` was deleted outright rather than disabled for
-  exactly that reason, because the version that existed then uploaded `www`
-  and a workflow merely switched off is one click from publishing the whole
-  translation. It is back now, and what changed is that it no longer has the
-  text to publish: it deploys `dist-web/`, built by `tools/pack-web.mjs`,
-  which is `www/` with `www/bible/` left out. Two things enforce that rather
-  than describe it — the script walks its own output and exits non-zero if a
-  single scripture file reached it, and the workflow repeats the check in the
-  step next to the upload, because the script and the workflow can be broken
-  by the same careless commit but not by the same careless line.
+* **The text in the hosted build.** `.github/workflows/pages.yml` deploys
+  `dist-web/`, built by `tools/pack-web.mjs`, which is `www/` with
+  `www/bible/` left out — seven of the app's eight megabytes, for a section a
+  locked install cannot open anyway. The script checks its own output and
+  exits non-zero if a scripture file ended up there, so the build stays that
+  size by measurement rather than by intention.
 
 ## Sources
 

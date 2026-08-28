@@ -23,6 +23,7 @@
 // reimplementation that agrees with it today and not after the next edit.
 
 import * as store from './store.js';
+import { nifoUnlocked } from './nifo.js';
 import { escapeHtml, segmented, onSegment, toast } from './ui.js';
 import { icon } from './icons.js';
 
@@ -321,7 +322,7 @@ export async function renderNightlightSettings(mount) {
           <span><b>In bed by</b></span>
           <input type="time" id="sleepAt" value="${escapeHtml(n.sleepAt)}">
         </label>
-        <button class="btn ghost" id="matchRule">Match my prayer rule times</button>
+        ${nifoUnlocked() ? '<button class="btn ghost" id="matchRule">Match my prayer rule times</button>' : ''}
       </section>
 
       <section class="card">
@@ -417,7 +418,7 @@ export async function renderNightlightSettings(mount) {
   $('transitionMin').addEventListener('change', (e) => set({ transitionMin: Number(e.target.value) }));
   $('intensity').addEventListener('input', (e) => set({ intensity: Number(e.target.value) / 100 }));
 
-  $('matchRule').addEventListener('click', () => {
+  $('matchRule')?.addEventListener('click', () => {
     const p = store.get().pray.settings;
     set({ wakeAt: p.morningAt, sleepAt: p.eveningAt });
     $('wakeAt').value = p.morningAt;

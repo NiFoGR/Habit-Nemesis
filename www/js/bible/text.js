@@ -1,10 +1,9 @@
 // The scripture, bundled with the app.
 //
-// This repository is private, which is what makes shipping the text itself
-// legitimate: it is a personal copy for personal use, not a public
-// redistribution of a commercial translation. See docs/BIBLE.md. If this repo
-// is ever made public, www/bible/ has to come out first and this goes back to
-// reading from a device-side import instead.
+// The hosted build (tools/pack-web.mjs) leaves www/bible/ out on size, so every
+// fetch below can 404 there. That is why a failed load returns null and the
+// reader shows an empty chapter rather than throwing: a locked install has no
+// way to reach this code at all, but nothing here assumes that.
 //
 // One JSON file per book, fetched lazily and kept in a small memory cache, so
 // opening a chapter costs one network request the first time you touch that

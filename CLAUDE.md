@@ -45,6 +45,12 @@ are no invented rivals and no other people, which is the only thing that makes
 beating one mean anything — and the reason you can tap any of them and look at
 the grid they actually played.
 
+That cuts both ways, and it is the reason a new install is **Unranked** rather
+than starting somewhere: with no record there is no opponent, no division and
+no cup. A cup you were not there for is not yours either — the group table
+needs weeks you actually played and a field of past selves to beat, or it says
+so instead of handing you third place in a field of one.
+
 **A cup has a shape, so the screen has one too.** The Arc is a build-up, an
 opening, a table, a knockout and a ceremony, and then a fortnight of nothing.
 Between cups it is one line and a date; while nothing is happening it is not a
@@ -79,9 +85,10 @@ coerces every value to the type and range it is supposed to be.
 kegels, PE, the Bible, prayer, the wind-down — are what it is *for*, not what
 it *is*, and the person installing it may be someone they have nothing to say
 to. So they are behind one button at the foot of Settings, and that button
-takes one attempt. This is not security and must never be written as though it
-were: the PIN is a constant in `nifo.js` like any other. It exists so the app
-can be handed to a friend. `intro.js` is what a new install is shown instead.
+takes one attempt. It is a door rather than a lock, and worth describing as
+one: the PIN is a constant in `nifo.js` like any other and nothing is
+encrypted. It exists so the app can be handed to a friend. `intro.js` is what
+a new install is shown instead.
 
 Two consequences worth holding on to. Whatever is added, ask what a locked
 install sees — the router is an allow-list of the open routes for exactly that

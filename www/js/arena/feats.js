@@ -23,6 +23,7 @@ import { dailyStretchTotals } from '../pe/program.js';
 import * as arena from './program.js';
 import { BOOKS } from '../bible/canon.js';
 import { fmtHours } from '../ui.js';
+import { nifoUnlocked } from '../nifo.js';
 
 /* ---------------- helpers the tests share ---------------- */
 
@@ -309,9 +310,23 @@ export function check() {
 /** The catalogue, grouped for display, in catalogue order inside each section.
  *  Not earned-first: several sections are ladders - twenty seconds, thirty,
  *  sixty - and sorting the earned ones to the top takes the ladder apart. */
+/* ---------------- what this install can earn ----------------
+   Written as the sections everyone has, not the sections the five own, for
+   the same reason the router is an allow-list: a section added later is
+   hidden from a locked install until someone lets it in on purpose, rather
+   than leaking on the day it is written.
+
+   The catalogue is filtered rather than the earned list, so the count under
+   the Cabinet is "3 of 12" against what you can actually earn instead of
+   "3 of 40" against a set that includes twenty-eight feats for features you
+   do not have. */
+const OPEN_SECTIONS = ['The grid', 'The Arena'];
+
+const visible = () => (nifoUnlocked() ? FEATS : FEATS.filter((f) => OPEN_SECTIONS.includes(f.section)));
+
 export function bySection() {
   const out = new Map();
-  for (const f of FEATS) {
+  for (const f of visible()) {
     if (!out.has(f.section)) out.set(f.section, []);
     out.get(f.section).push({ ...f, ...progressOf(f), at: earnedAt(f.id) });
   }
@@ -323,14 +338,15 @@ export function bySection() {
 }
 
 export function counts() {
-  const all = FEATS.map(progressOf);
-  return { earned: all.filter((f) => f.earned).length, total: FEATS.length };
+  const list = visible();
+  const all = list.map(progressOf);
+  return { earned: all.filter((f) => f.earned).length, total: list.length };
 }
 
 /** The nearest thing to being earned, for the "next up" line. Only ones with a
  *  measurable distance: a pass-or-fail feat has nothing to show. */
 export function closest(n = 3) {
-  return FEATS.map((f) => ({ ...f, ...progressOf(f) }))
+  return visible().map((f) => ({ ...f, ...progressOf(f) }))
     .filter((f) => !f.earned && f.need)
     .sort((a, b) => b.frac - a.frac)
     .slice(0, n);

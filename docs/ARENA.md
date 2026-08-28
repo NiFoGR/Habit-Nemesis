@@ -40,6 +40,12 @@ picture of where you are, and a drawn one cannot land a joke. Each rung carries
 a one-line blurb in the same spirit, shown under the name on the Arena's hero
 and nowhere else.
 
+Before any of that there is **Unranked**, which is not a rung and has no bar:
+a grey dashed shield with a question mark, shown until there is a single week
+on the record. The app used to open on NPC, which meant a stranger's first
+screen was a joke about Mike Mentzer aimed at someone who had not yet had the
+chance to do anything.
+
 At the end of a month: **at or above the next division's bar** promotes you,
 **at or above your own** holds you, **below it** relegates you one step.
 
@@ -51,6 +57,25 @@ better than everything, so doing everything has to be enough.
 
 Your first completed month is a **placement season** — it sets your division
 and cannot relegate you, because there is nothing to relegate you from.
+
+### A cup needs a record to run
+
+The group table is you against five past selves, and both halves have to exist
+for third place to mean anything. With an empty record there were no past
+selves, so the table was one row — you — and you came first and qualified on a
+score of nought. `played` also counted group weeks that had merely *elapsed*,
+so the calendar could walk an untouched app through a whole group stage and
+tell it that it was through.
+
+Two conditions now, and the screen says which one is missing rather than
+colouring a top-three row green that cannot qualify:
+
+* **at least three rivals**, so there is a field, and
+* **at least half the group weeks actually played**, written as a share of the
+  group so a cup of a different length does not silently get an easier entry.
+
+Failing either is not a defeat and is not described as one: "not enough weeks
+played for the Summer Arc", not "out at the group stage".
 
 ## The score
 

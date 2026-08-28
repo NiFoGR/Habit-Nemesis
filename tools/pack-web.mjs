@@ -2,13 +2,10 @@
 // cannot sideload an APK - which in practice means an iPhone, where Add to Home
 // Screen is the only route there is.
 //
-// It is `www/` minus `www/bible/`, and the omission is the entire point.
-// Publishing the app is fine; publishing the Orthodox Study Bible's text with
-// it is redistributing a commercial translation, which docs/BIBLE.md sets out
-// and the deleted Pages workflow was deleted over. So the scripture stays
-// behind, sw.js caches those files best-effort precisely so their absence
-// costs nothing, and a build handed to someone else is locked anyway: it has
-// no Bible section to open, so nothing is missing from where they are sitting.
+// It is `www/` minus `www/bible/`. The scripture is 7 MB of the app's 8, and
+// an install from this build is locked, so it has no Bible section to open:
+// shipping it would be a slower download and nothing else. sw.js caches those
+// files best-effort precisely so their absence costs nothing.
 //
 // Run: node tools/pack-web.mjs   (npm run pack:web)
 // Then serve dist-web/ over HTTPS, open it in Safari, Share, Add to Home
@@ -48,11 +45,9 @@ async function measure(dir) {
   return { bytes, files };
 }
 
-// Asserted rather than trusted. This build exists to be published, so "no
-// scripture in it" is the one property that must not be able to quietly stop
-// being true - a copy step that changes shape, a filter that stops matching, a
-// file that lands somewhere new. Checked by looking, not by reasoning about
-// the filter above, and loud enough to fail a deploy.
+// Checked by looking rather than by trusting the filter above, because a copy
+// step that changes shape or a file that lands somewhere new would put the 7 MB
+// back without anything else noticing.
 async function scriptureIn(dir, hits = []) {
   for (const e of await readdir(dir, { withFileTypes: true })) {
     const p = new URL(e.name + (e.isDirectory() ? '/' : ''), dir);
@@ -66,7 +61,7 @@ const leaked = await scriptureIn(out);
 if (leaked.length) {
   console.error(`\nREFUSING: ${leaked.length} scripture file(s) reached dist-web/, starting with`);
   console.error(`  ${leaked[0]}`);
-  console.error('docs/BIBLE.md says why this build must not carry them.');
+  console.error('This build leaves them out on size; see docs/BIBLE.md.');
   process.exit(1);
 }
 
