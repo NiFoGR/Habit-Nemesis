@@ -14,14 +14,19 @@
 // It ends by writing `onboarded`, so the router stops sending you here, and it
 // is reachable from the bottom of Settings for ever afterwards - which is also
 // how anyone tests it without erasing the app.
+//
+// It says nothing about the five, on any install. There was a page for them,
+// shown once the door at the bottom of Settings was open, and it was the wrong
+// idea twice over: an introduction is for explaining the app to whoever is
+// holding it, and the five are not the app - they are one person's use of it.
+// Nobody who needs an introduction needs that page, and the one person it
+// described did not need an introduction at all.
 
 import * as store from './store.js';
 import { icon, logoMark } from './icons.js';
 import { crest } from './arena/crest.js';
-import { nifoUnlocked } from './nifo.js';
 import { escapeHtml } from './ui.js';
 import { navigate } from './back.js';
-import { kegelName, peName } from './names.js';
 
 /** True until the introduction has been finished or skipped once. */
 export const introDue = () => !store.get().settings.onboarded;
@@ -76,17 +81,6 @@ function pages() {
     },
   ];
 
-  // Only on an install that has them, which on a first run is never: this page
-  // exists for the replay from Settings after the door at the bottom is open.
-  if (nifoUnlocked()) {
-    list.splice(3, 0, {
-      title: 'The five',
-      line: `${kegelName()}, ${peName()}, the Bible, prayer and the wind-down keep rows of their own. Tapping the name opens the section; tapping today starts it.`,
-      art: `<span class="intro-rooms">
-        <i>${icon('target', 24)}</i><i>${icon('trend', 24)}</i><i>${icon('scripture', 24)}</i><i>${icon('sun', 24)}</i><i>${icon('breath', 24)}</i>
-      </span>`,
-    });
-  }
   return list;
 }
 

@@ -1,11 +1,6 @@
 // Generates the Bible text the app ships, from a plain-text export of The
 // Orthodox Study Bible you own.
 //
-// This repository is private, which is what makes shipping the parsed text
-// itself legitimate: it is a personal copy for personal use, not a public
-// redistribution of a commercial translation. See docs/BIBLE.md. If this repo
-// is ever made public again, www/bible/ has to come out first.
-//
 // The actual parsing — undoing the PDF export's letter-spacing and drop-cap
 // damage — lives in www/js/bible/parse.js, which the app itself no longer
 // needs at runtime (the text ships pre-parsed) but which stays the single

@@ -30,28 +30,15 @@ version, with the scripture and the night light in it.
 **Anyone else, or an iPhone:** `npm run pack:web`, host `dist-web/`, Add to
 Home Screen. That build has no scripture in it, on purpose.
 
-### Why a hosted copy is never `www/` itself
+### Why the hosted copy is not `www/` itself
 
-There used to be a route where GitHub Pages served `www/` whole. That is gone
-and it must stay gone.
+`npm run pack:web` writes `dist-web/`, which is `www/` with `www/bible/` left
+out. That is 7 MB of the app's 8, for a section a locked install has no way to
+open, so the hosted build is about 1 MB instead of about 8.
 
-`www/bible/` holds the full text of the Orthodox Study Bible. Shipping that
-inside an APK you install on your own phone is a personal copy of a book you
-own. Publishing it to a website is redistributing a commercial translation, and
-**GitHub Pages is public even when the repository is private** — private Pages
-needs an Enterprise plan. So the deploy workflow has been deleted rather than
-merely disabled, because a disabled workflow is one click away from being a
-copyright problem. [`docs/BIBLE.md`](docs/BIBLE.md) explains the line in full.
-
-If Pages was ever switched on for this repository, turn it off in
-**Settings → Pages → Source: None**.
-
-`npm run pack:web` is what makes a hosted copy legitimate: it writes
-`dist-web/`, which is `www/` with `www/bible/` left out. Nothing else changes,
-and nothing downstream has to know — `sw.js` keeps the scripture in a list of
-its own and precaches it best-effort, so on that build all 154 files are a 404
-by design and the app still installs and still works offline. An install from
-it is locked besides (below), so there is no Bible section there to open.
+Nothing downstream has to know: `sw.js` keeps the scripture in a list of its
+own and precaches it best-effort, so on that build all 154 files are a 404 by
+design and the app still installs and still works offline.
 
 ### Giving it to someone else, or putting it on an iPhone
 
@@ -59,14 +46,24 @@ An iPhone cannot sideload, so Add to Home Screen is the only route there is,
 and it is a good one: it installs as a real app, full screen, offline, with its
 own icon.
 
+**The easy way: GitHub Pages.** `.github/workflows/pages.yml` builds the packed
+copy and deploys it on every push to the default branch. Switch Pages on once,
+under **Settings → Pages → Source: GitHub Actions**, and the app lives at
+`https://nifogr.github.io/NiFo-App/` from then on. Send that link.
+
+That workflow publishes `dist-web/`, and `pack-web.mjs` checks its own output,
+so the build stays small by measurement rather than by intention.
+
+**By hand, to any host:**
+
 ```bash
 npm run pack:web          # writes dist-web/, about 1 MB
 node tools/serve.mjs 8080 dist-web   # to check it first
 ```
 
-Then put `dist-web/` behind **HTTPS** — any static host, unlisted — open it in
-Safari, and **Share → Add to Home Screen**. HTTPS is not optional: a service
-worker will not register without it and the app will not work offline.
+Then put `dist-web/` behind **HTTPS** — any static host — open it in Safari,
+and **Share → Add to Home Screen**. HTTPS is not optional: a service worker
+will not register without it and the app will not work offline.
 
 What an iPhone does not get, because Safari does not have them: real alarms
 that fire with the app closed (the reminders become in-app notifications only),
@@ -175,7 +172,7 @@ Reasoning, safety numbers and sources: [`docs/PE_PROGRAM.md`](docs/PE_PROGRAM.md
 
 ## What is in the Bible feature
 
-**The scripture ships with the app.** This repository is private, which is what makes that the right call rather than a public redistribution of a commercial translation. There is no import step: open the section and it is already there. Reasoning and the numbers: [`docs/BIBLE.md`](docs/BIBLE.md).
+**The scripture ships with the app.** There is no import step: open the section and it is already there. Reasoning and the numbers: [`docs/BIBLE.md`](docs/BIBLE.md).
 
 **It reads straight through.** Genesis 1 to Revelation 22, next and previous, opening where you left off. There is no daily portion and no plan, because a plan is a thing to fall behind on and the book already has an order.
 

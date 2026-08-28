@@ -31,15 +31,23 @@ const ART = [
   'rank-6-topg',
 ];
 
-export const crestSrc = (i) => `./img/${ART[Math.max(0, Math.min(i, ART.length - 1))]}.webp`;
+/** Not a rung. Before your first week there is nothing to be a picture of, so
+ *  this one is a grey dashed shield with a question mark in it - drawn rather
+ *  than cropped, because the joke of the other seven is that they are someone,
+ *  and the point of this one is that nobody knows yet. */
+export const UNRANKED = -1;
+const UNRANKED_ART = 'rank-unranked';
+
+export const crestSrc = (i) =>
+  `./img/${i === UNRANKED ? UNRANKED_ART : ART[Math.max(0, Math.min(i, ART.length - 1))]}.webp`;
 
 /**
- * `i` is the division's rung, 0 to 6. Returns an `<img>`, sized in pixels.
- * Decorative: the division's name is always next to it, so nothing is lost by
- * hiding it from a screen reader.
+ * `i` is the division's rung, 0 to 6, or UNRANKED. Returns an `<img>`, sized
+ * in pixels. Decorative: the division's name is always next to it, so nothing
+ * is lost by hiding it from a screen reader.
  */
 export function crest(i, size = 64) {
-  const rung = Math.max(0, Math.min(i, ART.length - 1));
-  return `<img class="crest rung-${rung}" src="${crestSrc(rung)}" width="${size}" height="${size}"
-    alt="" aria-hidden="true" draggable="false">`;
+  const rung = i === UNRANKED ? UNRANKED : Math.max(0, Math.min(i, ART.length - 1));
+  return `<img class="crest rung-${rung === UNRANKED ? 'none' : rung}" src="${crestSrc(rung)}"
+    width="${size}" height="${size}" alt="" aria-hidden="true" draggable="false">`;
 }

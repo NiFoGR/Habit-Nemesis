@@ -32,11 +32,12 @@ import { nifoOffered, nifoUnlocked, tryNifoPin } from './nifo.js';
  *  screen, because prayer lives in the Bible section. One row, named for
  *  both. */
 function settingsNav() {
+  const link = (href, ico, name) => `<a href="${href}">${icon(ico, 16)}<span>${escapeHtml(name)}</span></a>`;
   return `<div class="set-nav">
-    <a href="#/kegels/settings">${icon('target', 18)}<span><b>${escapeHtml(kegelName())}</b><i>Input, daily target, release day, reminder</i></span></a>
-    <a href="#/pe/settings">${icon('trend', 18)}<span><b>${escapeHtml(peName())}</b><i>Units, session defaults, check-in day</i></span></a>
-    <a href="#/bible/settings">${icon('scripture', 18)}<span><b>Bible and prayer</b><i>Text size, reminder, prayer times and language</i></span></a>
-    <a href="#/breathe/settings">${icon('breath', 18)}<span><b>Wind-down</b><i>Pattern, length, pacing, reminder</i></span></a>
+    ${link('#/kegels/settings', 'target', kegelName())}
+    ${link('#/pe/settings', 'trend', peName())}
+    ${link('#/bible/settings', 'scripture', 'Bible and prayer')}
+    ${link('#/breathe/settings', 'breath', 'Wind-down')}
   </div>`;
 }
 
@@ -48,125 +49,83 @@ export function renderSettings(mount) {
   const nl = store.get().nightlight;
   const hs = habits.settings();
 
+  // One row: what it is on the left, what it is set to on the right. The
+  // explanation is not here, and that is the whole change - the old screen put
+  // two lines of grey under every label, so the descriptions outweighed the
+  // settings and the page ran to three thousand pixels of identical cards.
+  const row = (label, control, note) => `<div class="set-row">
+    <span class="set-label">${label}${note ? `<i>${note}</i>` : ''}</span>
+    ${control}
+  </div>`;
+  const select = (id, options, value) =>
+    `<select id="${id}">${options.map(([v, t]) => `<option value="${v}" ${String(v) === String(value) ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
+  const toggle = (id, on, extra = '') => `<input type="checkbox" id="${id}" ${on ? 'checked' : ''} ${extra}>`;
+  const group = (name, rows) => `<h3 class="set-group">${name}</h3><div class="set-rows">${rows}</div>`;
+
   mount.innerHTML = `
-    <div class="screen">
+    <div class="screen settings">
       <header class="screen-head">
         <button class="icon-btn" data-back="hub" aria-label="Back">${icon('back')}</button>
         <h1>Settings</h1>
         <span class="icon-btn ghost"></span>
       </header>
 
-      ${nifoUnlocked() ? `<h3 class="sec-head">Sections</h3>${settingsNav()}` : ''}
-
-      <h3 class="sec-head">Everywhere</h3>
-
-      <section class="card">
-        <div class="h-row">${icon('habits', 16)}<h2>The grid</h2></div>
-        <label class="setting">
-          <span><b>First day of the week</b><i>Where the calendar and the weekly buckets start.</i></span>
-          <select id="firstDay">
-            ${WEEKDAYS.map((d, i) => `<option value="${i}" ${hs.firstDay === i ? 'selected' : ''}>${d}</option>`).join('')}
-          </select>
-        </label>
-        <label class="setting">
-          <span><b>A new day begins at</b><i>Past midnight, so something ticked at 01:00 belongs to the night you were still up for. The grid only: sessions and readings record against midnight.</i></span>
-          <select id="dayStart">
-            ${[0, 1, 2, 3, 4, 5, 6].map((h) => `<option value="${h}" ${hs.dayStartHour === h ? 'selected' : ''}>${h === 0 ? 'Midnight' : `${String(h).padStart(2, '0')}:00`}</option>`).join('')}
-          </select>
-        </label>
-        <label class="setting">
-          <span><b>Days on screen</b><i>Columns in the grid.</i></span>
-          <select id="columns">
-            ${[1, 3, 4, 5, 6, 7].map((n) => `<option value="${n}" ${hs.columns === n ? 'selected' : ''}>${n}</option>`).join('')}
-          </select>
-        </label>
-        <label class="setting toggle">
-          <span><b>Oldest first</b><i>Days run left to right instead of newest on the left.</i></span>
-          <input type="checkbox" id="reverseDays" ${hs.reverseDays ? 'checked' : ''}>
-        </label>
-        ${nifoUnlocked() ? `<label class="setting toggle">
-          <span><b>Show the five</b><i>${escapeHtml(kegelName())}, ${escapeHtml(peName())}, the Bible, prayer and the wind-down, as rows on the grid. Turning them off does not turn the features off.</i></span>
-          <input type="checkbox" id="showLinked" ${hs.showLinked ? 'checked' : ''}>
-        </label>` : ''}
+      <!-- The one loud thing on the page, and the only claim the app makes
+           about itself that is worth making twice. -->
+      <section class="set-hero">
+        <b id="usage">checking</b>
+        <span>on this phone, and nowhere else. No account, no server, nobody
+        else. Clearing the app's data is the only thing that can take it.</span>
       </section>
 
-      <section class="card">
-        <div class="h-row">${icon('check', 16)}<h2>Marking</h2></div>
-        <label class="setting toggle">
-          <span><b>Toggle with a short press</b><i>One tap marks a day. Turn it off and a cell needs holding, which is what you want if you keep catching them while scrolling.</i></span>
-          <input type="checkbox" id="shortPress" ${hs.shortPress ? 'checked' : ''}>
-        </label>
-        <label class="setting toggle">
-          <span><b>Skip days</b><i>Tap again for a skip instead of clearing. A skip leaves the score exactly where it was and keeps the streak running through it: it is for the days that genuinely did not count.</i></span>
-          <input type="checkbox" id="skipDays" ${hs.skipDays ? 'checked' : ''}>
-        </label>
-        <label class="setting toggle">
-          <span><b>Question marks for missing data</b><i>Tells a day you never answered apart from a day you answered no. With this on, tap twice to record a real lapse.</i></span>
-          <input type="checkbox" id="unknownMarks" ${hs.unknownMarks ? 'checked' : ''}>
-        </label>
-        <div class="btn-row">
-          <a class="btn linkbtn" href="#/habits/archive">Archived habits</a>
-          <button class="btn" id="csv">Export habits as CSV</button>
-        </div>
-      </section>
+      ${nifoUnlocked() ? `<h3 class="set-group">Sections</h3>${settingsNav()}` : ''}
 
-      <section class="card">
-        <div class="h-row">${icon('flash', 16)}<h2>Feedback</h2></div>
-        <label class="setting toggle">
-          <span><b>Vibration</b><i>Buzzes on every phase change, so you can train with the screen face down.</i></span>
-          <input type="checkbox" id="haptics" ${s.haptics ? 'checked' : ''}>
-        </label>
-        <label class="setting toggle">
-          <span><b>Sound</b><i>Tones in a session, and when a week in the Arena is won or lost.</i></span>
-          <input type="checkbox" id="sound" ${s.sound ? 'checked' : ''}>
-        </label>
-        <label class="setting toggle">
-          <span><b>Discreet mode</b><i>Renames Kegels to "Core Training" and PE to "Length Training".</i></span>
-          <input type="checkbox" id="discreet" ${s.discreet ? 'checked' : ''}>
-        </label>
-      </section>
+      ${group('The grid', [
+        row('Week starts', select('firstDay', WEEKDAYS.map((d, i) => [i, d]), hs.firstDay)),
+        row('A new day begins at', select('dayStart', [0, 1, 2, 3, 4, 5, 6].map((h) => [h, h === 0 ? 'Midnight' : `${String(h).padStart(2, '0')}:00`]), hs.dayStartHour),
+          'The grid only. Sessions and readings record against midnight.'),
+        row('Days on screen', select('columns', [1, 3, 4, 5, 6, 7].map((n) => [n, n]), hs.columns)),
+        row('Oldest first', toggle('reverseDays', hs.reverseDays)),
+        nifoUnlocked() ? row('Show the five', toggle('showLinked', hs.showLinked)) : '',
+      ].join(''))}
 
-      <section class="card">
-        <div class="h-row">${icon('warmth', 16)}<h2>Night light</h2></div>
-        <p class="small muted">${nl.enabled
-          ? `Warming from ${escapeHtml(nl.wakeAt)}, reaching ${nl.nightKelvin}K by ${escapeHtml(nl.sleepAt)}.`
-          : 'Off. Takes the blue out of the screen as the evening goes on.'}</p>
-        <a class="btn ghost wide linkbtn" href="#/settings/night">${nl.enabled ? 'Adjust' : 'Set it up'}</a>
-      </section>
+      ${group('Marking', [
+        row('Toggle with a short press', toggle('shortPress', hs.shortPress)),
+        row('Skip days', toggle('skipDays', hs.skipDays), 'A skip holds the score and the streak where they are.'),
+        row('Question marks for missing data', toggle('unknownMarks', hs.unknownMarks), 'Tells a day you never answered apart from a day you answered no.'),
+      ].join(''))}
 
-      <section class="card">
-        <div class="h-row">${icon('lock', 16)}<h2>Privacy</h2></div>
-        <label class="setting toggle">
-          <span><b>Lock the app</b><i>${vault.isSet() ? 'Asks for your gallery PIN when you open NiFo.' : 'Set a gallery PIN first, under Progress then Gallery.'}</i></span>
-          <input type="checkbox" id="appLock" ${s.appLock ? 'checked' : ''} ${vault.isSet() ? '' : 'disabled'}>
-        </label>
-        <label class="setting">
-          <span><b>Gallery auto-lock</b><i>How long the gallery stays open untouched.</i></span>
-          <select id="autoLockMin">
-            ${[1, 2, 5, 10].map((m) => `<option value="${m}" ${pe.autoLockMin === m ? 'selected' : ''}>${m} min</option>`).join('')}
-          </select>
-        </label>
-        <p class="fineprint">The app lock is a door, not a safe. It keeps someone who picks up your phone out, but sessions and measurements are stored unencrypted like any other app's data. Only the photos are actually encrypted, and that is what the PIN protects.</p>
-      </section>
+      ${group('Feedback', [
+        row('Vibration', toggle('haptics', s.haptics)),
+        row('Sound', toggle('sound', s.sound)),
+        nifoUnlocked() ? row('Discreet mode', toggle('discreet', s.discreet), 'Renames Kegels and PE.') : '',
+      ].join(''))}
 
-      <section class="card">
-        <div class="h-row">${icon('images', 16)}<h2>Data</h2></div>
-        <div class="kv"><span>On this device</span><b id="usage">checking</b></div>
-        <p class="fineprint">Everything lives on this phone. Reinstalling the app or clearing browser data wipes it, so export occasionally. Exporting opens your share sheet, so the file can go to Files, Drive or a message; in a browser it lands in your downloads.</p>
-        <div class="btn-row">
-          <button class="btn" id="exportBtn">Export backup</button>
-          <button class="btn" id="importBtn">Import backup</button>
-        </div>
-        <input type="file" id="importFile" accept="application/json" hidden>
-      </section>
+      ${group('Night light', [
+        row('The screen through the day', `<a class="set-link linkbtn" href="#/settings/night">${nl.enabled ? `${nl.nightKelvin}K by ${escapeHtml(nl.sleepAt)}` : 'Off'}</a>`),
+      ].join(''))}
 
-      <section class="card danger">
-        <div class="h-row">${icon('warn', 16)}<h2>Reset</h2></div>
-        <p class="small muted">Erases every session, measurement, prayer day, chapter read, habit and badge. No undo. Export a backup first.</p>
-        <button class="btn danger" id="reset">Erase all data</button>
-      </section>
+      ${nifoUnlocked() ? group('Privacy', [
+        row('Lock the app', toggle('appLock', s.appLock, vault.isSet() ? '' : 'disabled'),
+          vault.isSet() ? 'Asks for your gallery PIN when you open NiFo.' : 'Needs a gallery PIN first.'),
+        row('Gallery auto-lock', select('autoLockMin', [1, 2, 5, 10].map((m) => [m, `${m} min`]), pe.autoLockMin)),
+      ].join('')) : ''}
 
-      <p class="fineprint centre">NiFo, everything on-device</p>
+      <h3 class="set-group">Your data</h3>
+      <div class="set-actions">
+        <a class="btn linkbtn" href="#/habits/archive">Archived habits</a>
+        <button class="btn" id="csv">Habits as CSV</button>
+        <button class="btn" id="exportBtn">Export backup</button>
+        <button class="btn" id="importBtn">Import backup</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json" hidden>
+      <p class="fineprint">Exporting opens your share sheet, so the file can go to Files, Drive or a message. In a browser it lands in your downloads.</p>
+
+      <button class="btn danger wide" id="reset">Erase all data</button>
+      <p class="fineprint">${nifoUnlocked()
+        ? 'Every session, measurement, prayer day, chapter read, habit and feat. No undo.'
+        : 'Every habit, every day you have marked, and everything the Arena has recorded. No undo.'}</p>
+
       <div class="set-tail">
         <a class="tail-btn" href="#/intro">Show the introduction again</a>
         ${nifoOffered() ? '<button class="tail-btn" id="nifoOnly">nifo only</button>' : ''}
@@ -197,16 +156,18 @@ export function renderSettings(mount) {
 
   bind('haptics', 'haptics', (e) => e.checked);
   bind('sound', 'sound', (e) => e.checked);
-  bind('discreet', 'discreet', (e) => e.checked);
+  // Discreet mode and the whole Privacy card belong to sections a locked
+  // install does not have, so neither is on the page to wire up.
+  if (mount.querySelector('#discreet')) bind('discreet', 'discreet', (e) => e.checked);
 
-  mount.querySelector('#autoLockMin').addEventListener('change', (e) => {
+  mount.querySelector('#autoLockMin')?.addEventListener('change', (e) => {
     store.update((st) => {
       st.pe.settings.autoLockMin = Number(e.target.value);
     });
     toast('Saved');
   });
 
-  mount.querySelector('#appLock').addEventListener('change', (e) => {
+  mount.querySelector('#appLock')?.addEventListener('change', (e) => {
     store.setSetting('appLock', e.target.checked);
     // Turning it on takes effect at the next launch. Locking someone out of the
     // screen they just enabled it on would be absurd.

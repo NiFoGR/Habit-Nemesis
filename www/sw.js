@@ -3,7 +3,7 @@
 // Bump CACHE to drop everything already stored. Note that the app's own code
 // no longer depends on this being remembered: see the fetch handler, which
 // revalidates code against the network and keeps the cache for offline only.
-const CACHE = 'nifo-v21';
+const CACHE = 'nifo-v22';
 
 const SHELL = [
   './',
@@ -96,6 +96,7 @@ const SHELL = [
   // The division crests. Artwork rather than something the app draws, so they
   // are precached with everything else: a crest that arrives late leaves a
   // hole where the whole point of the screen is.
+  './img/rank-unranked.webp',
   './img/rank-0-bottom.webp',
   './img/rank-1-npc.webp',
   './img/rank-2-prospect.webp',

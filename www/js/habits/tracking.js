@@ -131,7 +131,6 @@ export function renderHabitDetail(mount, id) {
           ${scores.values.length > 1
             ? lineChart(scores.values, { color: colour, labels: [bucketLabel(scores.keys[0]), bucketLabel(scores.keys[scores.keys.length - 1])] })
             : '<div class="chart-empty">A few days of answers fill this in</div>'}
-          <p class="fineprint">The score is an average with a memory: every day pulls it a little, and a day two weeks ago pulls half as hard as today. It rises slowly and falls slowly, which is the only honest way to draw a habit.</p>
         </section>
 
         <section class="card">
@@ -162,7 +161,6 @@ export function renderHabitDetail(mount, id) {
         <section class="card">
           <div class="h-row">${icon('repeat', 16)}<h2>Frequency</h2></div>
           ${freq.max ? freqHtml(freq, colour) : '<div class="chart-empty">Which days of the week this happens on, once it has happened</div>'}
-          <p class="fineprint">A row per weekday, a column per month, and the bigger the dot the more often. It is the chart that tells you a habit has quietly become a weekend-only habit.</p>
         </section>
 
         ${habit.notes
@@ -184,10 +182,6 @@ export function renderHabitDetail(mount, id) {
       draw();
     });
     if (editing) wireCalendarEdit(mount, habit, () => renderHabitDetail(mount, id));
-    // Seventeen weeks do not fit across a phone, and the half that matters is
-    // the recent half. Open on this week and let it scroll back.
-    const body = mount.querySelector('.hcal-body');
-    if (body) body.scrollLeft = body.scrollWidth;
   };
 
   draw();
