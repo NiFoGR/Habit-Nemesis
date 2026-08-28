@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Empty on purpose. This plugin needs no permission and registers no component;
+  it only talks to the window of the activity that is already running. The file
+  exists because Capacitor expects every plugin module to have one to merge.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application />
+</manifest>

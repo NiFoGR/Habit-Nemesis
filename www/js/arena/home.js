@@ -20,6 +20,7 @@ import * as arena from './program.js';
 import * as feats from './feats.js';
 import { escapeHtml, openSheet, haptic } from '../ui.js';
 import { icon } from '../icons.js';
+import { crest } from './crest.js';
 
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 const hex = (h) => (h.colour ? habits.hexOf(h.colour) : 'var(--accent)');
@@ -37,19 +38,18 @@ function ladder(id) {
   </div>`;
 }
 
-/** The month score as a bar with the two thresholds on it: where you stop
- *  being safe, and where you go up. A bare percentage cannot show that 71% is
- *  a hair from promotion in one division and a relegation in the next. */
+/** The month, as a bar inside the division you are in: floor on the left, the
+ *  next rung on the right. A bar spanning nought to a hundred put every
+ *  threshold within a few pixels of the last and made a whole month's work
+ *  invisible. Its colour says which way you are going, so nothing has to. */
 function barTo(st) {
   const s = st.month.score;
   const floor = st.division.bar;
   const roof = st.next ? st.next.bar : 1;
-  // The bar spans this division only, so movement inside it is visible. A bar
-  // spanning 0-100% put every threshold within a few pixels of the last.
   const span = Math.max(0.01, roof - floor);
   const at = Math.max(0, Math.min((s - floor) / span, 1));
-  // The readout follows the fill, but never all the way to either end: at 0%
-  // and at 100% half of it hung off the side of the card.
+  // The readout follows the fill but never all the way to either end: at 0%
+  // and at 100% half of it hung off the side.
   const label = Math.min(92, Math.max(8, at * 100));
   const state = s >= roof ? 'up' : st.safe ? 'safe' : 'down';
   return `<div class="ar-bar ${state}">
@@ -58,9 +58,11 @@ function barTo(st) {
   </div>
   <div class="ar-bar-ends">
     <span>${escapeHtml(st.division.name)} · ${pct(floor)}</span>
-    <span>${st.next ? `${escapeHtml(st.next.name)} · ${pct(roof)}` : 'top of the ladder'}</span>
+    <span>${st.next ? `${escapeHtml(st.next.name)} · ${pct(roof)}` : 'the top'}</span>
   </div>`;
 }
+
+/* ---------------- the week ---------------- */
 
 /* ---------------- the week ---------------- */
 
@@ -119,9 +121,7 @@ function weekCard() {
     </div>
     ${race(live.score, opp.score)}
     <p class="ar-verdict"><b>${escapeHtml(verdict)}</b><i>${left === 1 ? 'Last day' : `${left} days left`}</i></p>
-    <p class="muted small ar-oppline">${live.void
-      ? `A week counts once at least ${arena.VOID_CELLS} cells are owed across ${arena.VOID_DAYS} days. So far, ${live.due} across ${live.days}.`
-      : `${escapeHtml(opp.blurb)}${opp.week ? ' · tap to see it' : ''}`}</p>
+    <p class="muted small ar-oppline">${live.void ? 'Not enough owed yet to be a match.' : escapeHtml(opp.blurb)}</p>
 
     <div class="ar-rows">${rows || '<p class="muted small">Nothing is due this week yet.</p>'}</div>
   </section>`;
@@ -165,6 +165,9 @@ export function openWeekSheet(key) {
 
 /* ---------------- form ---------------- */
 
+/** The last eight results, as a strip rather than as a card. A heading saying
+ *  "Form" over eight W's and L's is a word doing a job the W's and L's have
+ *  already done. */
 function formStrip() {
   const weeks = Object.entries(store.get().arena.weeks)
     .filter(([k, w]) => k < arena.currentWeek() && (w.result === 'won' || w.result === 'lost'))
@@ -180,134 +183,97 @@ function formStrip() {
   </div>`;
 }
 
-/* ---------------- the arc ---------------- */
+/* ---------------- the arc ----------------
+   Not a permanent box. The cup has a shape - a build-up, an opening, a table,
+   a knockout, a ceremony, and then nothing at all for a fortnight - and the
+   screen has to have that shape too, or it is a scoreboard for a match that is
+   not being played.
+
+   Between cups it is one line and a date. That is the whole reason the arcs
+   stopped tiling the year end to end: while you were always in a cup, a cup
+   was never something you entered. */
 
 function arcCard() {
-  const arc = arena.arcOfMonth(arena.currentMonth());
-  const key = arena.arcKey(arc);
-  const rec = store.get().arena.arcs[key] || { qualified: null, qf: null, sf: null, final: null, won: false };
-  const { stage } = arena.arcStage(arena.currentWeek());
-  const inGroup = !stage || stage === 'group';
+  const st = arena.arcState();
 
-  let body;
-  if (inGroup) {
-    const g = arena.groupTable(arc);
-    body = g.table.length <= 1
-      ? `<p class="muted small">The group fills up as you play weeks. Every rival in it will be a week you actually had, so there is nothing here until there is a record to seed it from.</p>`
+  if (st.phase === 'break' || st.phase === 'out') return arcClosed(st);
+  if (st.phase === 'champion') return arcCup(st);
+  if (st.phase === 'group') return arcGroup(st);
+  return arcRound(st);
+}
+
+/** No cup on. A countdown, and what happened in the last one if anything did. */
+function arcClosed(st) {
+  const ended = st.phase === 'out'
+    ? st.rec.qualified === false
+      ? `Out at the group stage of the ${escapeHtml(st.arc.name)}.`
+      : `Out in the ${escapeHtml(arena.KNOCKOUT[st.lostAt]?.name.toLowerCase() || 'knockout')} of the ${escapeHtml(st.arc.name)}.`
+    : '';
+  return `<a class="arc-wait" href="#/arena">
+    <span class="arc-wait-mark">${icon('trophy', 20)}</span>
+    <span class="arc-wait-text">
+      <b>${escapeHtml(st.next.name)} Trophy</b>
+      <i>${ended ? `${ended} Opens again in ` : 'Opens in '}<b>${st.opensIn}</b> day${st.opensIn === 1 ? '' : 's'}</i>
+    </span>
+  </a>`;
+}
+
+/** The group stage, live. The line between third and fourth is the only thing
+ *  on it that matters, so it is drawn. */
+function arcGroup(st) {
+  const g = arena.groupTable(st.arc);
+  return `<section class="card">
+    <div class="ar-week-head">
+      <h2>${escapeHtml(st.label)}</h2>
+      <span class="pill ghost">${st.groupLeft} week${st.groupLeft === 1 ? '' : 's'} to the knockout</span>
+    </div>
+    ${g.table.length <= 1
+      ? '<p class="muted small">Your group fills up as you play weeks.</p>'
       : `<div class="ar-table">
           ${g.table
-            .map((r, i) => `<div class="ar-tr ${r.you ? 'you' : ''} ${i < 3 ? 'q' : ''}" ${r.week ? `data-week="${r.week}"` : ''}>
+            .map((r, i) => `<div class="ar-tr ${r.you ? 'you' : ''} ${i < 3 ? 'q' : 'nq'}" ${r.week ? `data-week="${r.week}"` : ''}>
               <span class="ar-pos">${i + 1}</span>
               <span class="ar-tn">${escapeHtml(r.name)}</span>
               <b>${pct(r.score)}</b>
             </div>`)
             .join('')}
-        </div>
-        <p class="muted small">Top three go through. ${g.played} of ${g.groupWeeks.length} group weeks played · you are ${
-          g.qualifies ? 'through as it stands' : 'outside the three'
-        }.</p>`;
-  } else {
-    // What is actually on today, asked of the same function that decides the
-    // week's fixture. Reading `stage` alone said "Playing now" under a final
-    // the week card was not playing, because a round is only live if the one
-    // before it was won.
-    const live = arena.arcFixture(arena.currentWeek());
-    const weeks = arena.arcWeeks(arc);
-    const weekOf = { qf: weeks[weeks.length - 3], sf: weeks[weeks.length - 2], final: weeks[weeks.length - 1] };
-    const round = (id) => {
-      const r = rec[id];
-      const here = live?.knockout === id;
-      const gone = !r && !here && weekOf[id] <= arena.currentWeek();
-      const label = r === 'won' ? 'Won'
-        : r === 'lost' ? 'Lost'
-        : rec.qualified === false ? 'Did not qualify'
-        : here ? 'Playing now'
-        : gone ? 'Not played'
-        : 'To come';
-      return `<div class="ar-round ${r || ''} ${here ? 'here' : ''}">
-        <b>${escapeHtml(arena.KNOCKOUT[id].name)}</b><span>${escapeHtml(label)}</span>
-        <i>${escapeHtml(arena.KNOCKOUT[id].opponent)}</i>
-      </div>`;
-    };
-    body = rec.qualified === false
-      ? `<p class="muted small">You did not make the top three of the group. The Arc runs again next quarter, and the group is seeded from the weeks you have had since.</p>`
-      : `<div class="ar-bracket">${round('qf')}${round('sf')}${round('final')}</div>
-         ${arcNote(rec, live)}`;
-  }
-
-  // Oldest first, so the cabinet reads as a record rather than as whatever
-  // order the object happened to be built in.
-  const cabinet = Object.entries(store.get().arena.arcs).filter(([, a]) => a.won).sort();
-  return `<section class="card">
-    <div class="ar-week-head">
-      <h2>${escapeHtml(arena.arcLabel(arc))}</h2>
-      <span class="pill ghost">${inGroup ? 'Group stage' : escapeHtml(arena.KNOCKOUT[stage].name)}</span>
-    </div>
-    ${body}
-    ${cabinet.length
-      ? `<div class="ar-cabinet">
-          ${cabinet.map(([k]) => `<span class="ar-cup">${icon('trophy', 18)}<i>${escapeHtml(cupLabel(k))}</i></span>`).join('')}
-        </div>`
-      : ''}
+        </div>`}
   </section>`;
 }
 
-/** The line under the bracket, when there is one to say. There are two very
- *  different reasons for a round not being live and one sentence covered both,
- *  so a semi-final you lost was explained as a week that passed before the
- *  Arena existed. */
-function arcNote(rec, live) {
-  const lost = ['qf', 'sf', 'final'].find((k) => rec[k] === 'lost');
-  if (lost === 'final') {
-    return '<p class="muted small">Runner-up. The final is always your own best week, and this time it held. It is kept either way: a cabinet with only wins in it is a participation trophy.</p>';
-  }
-  if (lost) {
-    return `<p class="muted small">Out in the ${escapeHtml(arena.KNOCKOUT[lost].name.toLowerCase())}. The league does not stop, so there is still a match every week, and the next Arc starts again from the group stage.</p>`;
-  }
-  if (!live && rec.qualified) {
-    return '<p class="muted small">A round is only live if the one before it was won, so a knockout week that passed before the Arena was keeping score is left unplayed. The next Arc starts from the group stage.</p>';
-  }
-  return '';
-}
-
-/** '2026-summer' → 'Summer 2026', without rebuilding the arc object. */
-function cupLabel(key) {
-  const [year, id] = key.split('-');
-  const arc = arena.ARCS.find((a) => a.id === id);
-  return arc ? arena.arcLabel({ ...arc, year: Number(year) }) : key;
-}
-
-/* ---------------- feats ---------------- */
-
-function featsCard() {
-  const c = feats.counts();
-  const next = feats.closest(3);
-  return `<section class="card">
+/** A knockout round you are in. */
+function arcRound(st) {
+  const rounds = ['qf', 'sf', 'final'];
+  return `<section class="card ar-knock">
     <div class="ar-week-head">
-      <h2>Feats</h2>
-      <span class="pill ghost">${c.earned} of ${c.total}</span>
+      <h2>${escapeHtml(st.label)}</h2>
+      <span class="pill ghost">${escapeHtml(st.round?.name || 'Knockout')}</span>
     </div>
-    ${next.length
-      ? `<div class="ar-next">
-          ${next
-            .map((f) => `<div class="ar-nextrow">
-              <span class="ar-nico">${icon(f.icon, 16)}</span>
-              <span class="ar-nname"><b>${escapeHtml(f.name)}</b><i>${escapeHtml(fmtNeed(f))}</i></span>
-              <span class="ar-row-bar"><i style="width:${(f.frac * 100).toFixed(0)}%"></i></span>
-            </div>`)
-            .join('')}
-        </div>`
-      : '<p class="muted small">Every feat is earned. There is nothing left on the list.</p>'}
-    <a class="btn ghost wide" href="#/arena/feats">${icon('medal', 16)}<span>All feats</span></a>
+    <div class="ar-bracket">
+      ${rounds
+        .map((id) => {
+          const r = st.rec[id];
+          const here = st.stage === id;
+          const label = r === 'won' ? 'Won' : r === 'lost' ? 'Lost' : here ? 'Playing now' : rounds.indexOf(id) < rounds.indexOf(st.stage) ? 'Not played' : 'To come';
+          return `<div class="ar-round ${r || ''} ${here ? 'here' : ''}">
+            <b>${escapeHtml(arena.KNOCKOUT[id].name)}</b><span>${escapeHtml(label)}</span>
+            <i>${escapeHtml(arena.KNOCKOUT[id].opponent)}</i>
+          </div>`;
+        })
+        .join('')}
+    </div>
   </section>`;
 }
 
-/** "42 of 100" in the feat's own unit, rounded the way the unit wants: hours
- *  and centimetres to one place, counts to none. */
-function fmtNeed(f) {
-  const dp = f.unit && /cm|h|s/.test(f.unit) ? 1 : 0;
-  const round = (v) => (dp ? v.toFixed(1) : Math.round(v).toLocaleString());
-  return `${round(Math.min(f.have, f.need))}${f.unit || ''} of ${round(f.need)}${f.unit || ''}`;
+/** Won. */
+function arcCup(st) {
+  return `<section class="card ar-won">
+    <span class="cup-art">${icon('trophy', 30)}</span>
+    <div>
+      <b>${escapeHtml(st.trophy)} won</b>
+      <i>The final is always your own best week. You beat it.</i>
+    </div>
+  </section>`;
 }
 
 /* ---------------- the screen ---------------- */
@@ -315,62 +281,30 @@ function fmtNeed(f) {
 export function renderArena(mount) {
   const st = arena.standing();
   const a = store.get().arena;
-  const played = arena.playedWeeks().length;
+  const rung = arena.divisionIndex(a.division);
 
   mount.innerHTML = `
     <div class="screen">
-      <header class="screen-head">
-        <button class="icon-btn" data-back="hub" aria-label="Back">${icon('back')}</button>
-        <h1>The Arena</h1>
-        <a class="icon-btn linkbtn" href="#/arena/year" aria-label="The Year">${icon('calendar')}</a>
-      </header>
-
-      <section class="card ar-rank">
-        <div class="ar-rank-top">
-          <span class="ar-crown">${icon('crown', 22)}</span>
-          <div class="ar-rank-name">
-            <b>${escapeHtml(st.division.name)}</b>
-            <i>${escapeHtml(st.division.blurb)}</i>
-          </div>
-        </div>
+      <section class="ar-hero rung-${rung}">
+        <span class="ar-crest">${crest(rung, 92)}</span>
+        <h1 class="ar-rank">${escapeHtml(st.division.name)}</h1>
         ${ladder(a.division)}
         ${st.month.empty
-          ? `<p class="muted small ar-monthline">No week has finished this month yet. ${
-              st.placed ? 'Your division holds until one does.' : 'Your first full month sets your division outright.'
-            }</p>`
+          ? `<p class="ar-monthline"><span class="muted">${st.placed ? 'nothing scored this month yet' : 'placement month'}</span></p>`
           : `${barTo(st)}
              <p class="ar-monthline">
                <b>${st.month.w}W–${st.month.l}L</b>
-               <span class="muted">this month · ${arena.weeksLeft()} week${arena.weeksLeft() === 1 ? '' : 's'} left · ${
-                 // Three states, no arithmetic. This used to read "92% to Top G",
-                 // which looks like ninety-two per cent of the way there and
-                 // means ninety-two points short. The bar above shows the
-                 // distance; this line only has to say which way it is going.
-                 st.next && st.month.score >= st.next.bar
-                   ? `promoting to ${escapeHtml(st.next.name)}`
-                   : st.safe
-                     ? `holding ${escapeHtml(st.division.name)}`
-                     : `below the bar for ${escapeHtml(st.division.name)}`
-               }</span>
+               <span class="muted">· ${arena.weeksLeft()} week${arena.weeksLeft() === 1 ? '' : 's'} left ·</span>
+               <em class="${st.next && st.month.score >= st.next.bar ? 'up' : st.safe ? 'safe' : 'down'}">${
+                 st.next && st.month.score >= st.next.bar ? 'promoting' : st.safe ? 'holding' : 'below the bar'
+               }</em>
              </p>`}
-        ${st.placed ? '' : '<p class="notice">Placement. Nothing can relegate you until a first month has been scored.</p>'}
       </section>
 
       ${weekCard()}
-
-      <section class="card">
-        <div class="ar-week-head">
-          <h2>Form</h2>
-          <span class="pill ghost">${played} week${played === 1 ? '' : 's'} on record</span>
-        </div>
-        ${formStrip() || '<p class="muted small">Your first result lands the Monday after your first full week.</p>'}
-        ${nemesisLine()}
-      </section>
-
+      ${formStrip()}
+      ${nemesisLine()}
       ${arcCard()}
-      ${featsCard()}
-
-      <a class="btn ghost wide" href="#/arena/year">${icon('calendar', 16)}<span>The Year</span></a>
     </div>`;
 
   wire(mount);
@@ -411,6 +345,14 @@ function wire(mount) {
       openWeekSheet(el.dataset.week);
     })
   );
+}
+
+/** "42 of 100" in the feat's own unit, rounded the way the unit wants: hours
+ *  and centimetres to one place, counts to none. */
+function fmtNeed(f) {
+  const dp = f.unit && /cm|h|s/.test(f.unit) ? 1 : 0;
+  const round = (v) => (dp ? v.toFixed(1) : Math.round(v).toLocaleString());
+  return `${round(Math.min(f.have, f.need))}${f.unit || ''} of ${round(f.need)}${f.unit || ''}`;
 }
 
 /* ---------------- every feat ---------------- */

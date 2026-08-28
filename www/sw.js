@@ -3,7 +3,7 @@
 // Bump CACHE to drop everything already stored. Note that the app's own code
 // no longer depends on this being remembered: see the fetch handler, which
 // revalidates code against the network and keeps the cache for offline only.
-const CACHE = 'nifo-v18';
+const CACHE = 'nifo-v20';
 
 const ASSETS = [
   './',
@@ -22,6 +22,7 @@ const ASSETS = [
   './js/icons.js',
   './js/native.js',
   './js/nightlight.js',
+  './js/tabs.js',
 
   // kegels
   './js/kegels/program.js',
@@ -63,6 +64,8 @@ const ASSETS = [
   './js/arena/result.js',
   './js/arena/year.js',
   './js/arena/feats.js',
+  './js/arena/cabinet.js',
+  './js/arena/moment.js',
 
   // wind-down
   './js/breathe/program.js',

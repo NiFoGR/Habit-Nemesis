@@ -18,9 +18,20 @@ right. If explaining it needs an "and also", stop.
 
 ## The shape of the app
 
-**The home screen is the grid.** Every commitment you have — the five the app
-itself asks of you, and every habit you added — is a row. There is no menu
-above it and no dashboard beside it, because both were the same list again.
+**Three rooms, and the grid is the one you land in.** Every commitment you
+have — the five the app itself asks of you, and every habit you added — is a
+row on it. Above the grid there is nothing but the date and how much of today
+is left: no dashboard, no summary card, no second list.
+
+The bar at the bottom holds the other two rooms. **Grid** is now, **Arena** is
+where you stand, **Cabinet** is what you have done. This looks like the menu
+this file used to forbid, and the rule it replaces was written about something
+else: the old hub was a *list of the things the grid already listed*, the same
+data twice, one tap apart. No two of these three rooms show the same number.
+
+The bar appears on those three and nowhere else. Everything deeper is a pushed
+screen with a corner arrow — one rule, rather than a list of exceptions, and
+the reader and the session players get the whole height.
 
 Two rules, no exceptions:
 
@@ -29,12 +40,23 @@ Two rules, no exceptions:
 - **The cell does it.** Tapping today starts the session, or marks the day.
   Only today acts; the days behind it are a record.
 
-**The Arena is a reading of the grid, not a section.** It has one door — the
-season line under the today card — and it is not on the grid and not in a menu,
-because a competitive layer that needed its own tile would be the hub coming
-back under a new name. Every opponent in it is a real week out of your own
-record; there are no invented rivals, which is the only thing that makes
-beating one mean anything.
+**Every opponent in the Arena is a real week out of your own record.** There
+are no invented rivals and no other people, which is the only thing that makes
+beating one mean anything — and the reason you can tap any of them and look at
+the grid they actually played.
+
+**A cup has a shape, so the screen has one too.** The Arc is a build-up, an
+opening, a table, a knockout and a ceremony, and then a fortnight of nothing.
+Between cups it is one line and a date; while nothing is happening it is not a
+box saying nothing is happening. That is why the four arcs stopped tiling the
+year end to end: while you were always in a cup, a cup was never something you
+entered.
+
+**One thing per screen gets to be loud.** Everything used to be a bordered card
+with a heading and a pill in the corner, so a live cup final looked exactly like
+a settings row — which is what "it looks like a fancier Excel spreadsheet"
+meant, and it was right. Whatever is live now is elevated; everything else
+recedes. This is not licence to decorate: it is licence for hierarchy.
 
 **One theme.** One accent, one sans, one set of state colours. Colour answers
 *what state is this in* — done, due, missed — and nothing else. It does not
@@ -84,5 +106,9 @@ whose answers cannot be read off a screen. Everything else is:
 - Anything the app does at a moment it was not opened by hand — a result on
   launch, a sound, a buzz — has had no user gesture, and a phone refuses to
   vibrate or start an `AudioContext` without one. Put it behind a tap.
+- A screen that redraws itself is a screen that cannot animate: nothing that is
+  replaced can move. Marking a cell swaps that one cell and nudges the numbers
+  that changed, which is why the rings sweep instead of jumping and why the
+  page no longer fades back in under your thumb.
 - Adding a file means adding it to `ASSETS` in `www/sw.js` **and** bumping
   `CACHE`. Forgetting the bump ships code nobody can see.

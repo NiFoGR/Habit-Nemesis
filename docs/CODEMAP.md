@@ -32,16 +32,17 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/app.js` | 279 | Route table, shell state, boot. Nothing renders here. |
+| `js/app.js` | 313 | Route table, shell state, boot. Nothing renders here. |
 | `js/back.js` | 213 | What Back means: the corner arrow, the hardware button, history. |
 | `js/icons.js` | 129 | The inline SVG icon set and the logo mark. |
 | `js/lock.js` | 70 | The optional PIN gate. Owns whether the app is unlocked. |
 | `js/names.js` | 10 | What each section is called, under discreet mode. |
-| `js/native.js` | 108 | Capacitor bridge for real Android alarms. |
+| `js/native.js` | 136 | Capacitor bridge for real Android alarms. |
 | `js/nightlight.js` | 474 | The night light: the bridge, its settings screen, the browser fallback. |
 | `js/settings.js` | 316 | App-wide settings: the grid, marking, feedback, privacy, data, reset. |
-| `js/store.js` | 912 | localStorage persistence and the input sanitiser. |
-| `js/ui.js` | 509 | Shared helpers: formatting, haptics, notifications, SVG charts, the sheet. |
+| `js/tabs.js` | 74 | The bottom bar: Cabinet, Grid, Arena. Drawn once, never rebuilt. |
+| `js/store.js` | 948 | localStorage persistence and the input sanitiser. |
+| `js/ui.js` | 523 | Shared helpers: formatting, haptics, notifications, SVG charts, the sheet. |
 
 ## Kegels
 
@@ -123,7 +124,7 @@ lives in Java, and why there are two filters rather than one.
 | File | Lines | What it is |
 |---|---|---|
 | `js/habits/program.js` | 842 | The record, the frequency model, the score, the streaks, the charts, the five linked rows. |
-| `js/habits/home.js` | 635 | **The home screen.** The grid, marking, reordering, groups, the archive, the install prompt. |
+| `js/habits/home.js` | 710 | **The home screen.** The grid, marking, reordering, groups, the archive, the install prompt. |
 | `js/habits/edit.js` | 360 | Creating and editing: the type, colour, frequency and reminder pickers. |
 | `js/habits/tracking.js` | 313 | One habit in full, and the calendar you can write to. |
 
@@ -145,24 +146,30 @@ app options**, on `settings.js`, because the grid is the app.
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/arena/program.js` | 685 | Weeks, divisions, opponents, arcs, and the only part of the app that writes down what it could recompute. |
-| `js/arena/home.js` | 466 | The Arena in one scrolling screen, and every feat on another. |
-| `js/arena/year.js` | 250 | The Year: twelve months, four arcs, the rows that carried it. |
-| `js/arena/result.js` | 214 | Telling you what happened — the full screen, and the one-line feat pop. |
+| `js/arena/program.js` | 1100 | Weeks, divisions, opponents, arcs, and the only part of the app that writes down what it could recompute. |
+| `js/arena/home.js` | 484 | The Arena in one scrolling screen, and every feat on another. |
+| `js/arena/year.js` | 297 | The Year: twelve months, four arcs, the rows that carried it. |
+| `js/arena/result.js` | 252 | Telling you what happened — the full screen, and the one-line feat pop. |
+| `js/arena/cabinet.js` | 147 | The Cabinet: cups, feats, years, and the lines you left. |
 | `js/arena/feats.js` | 339 | Forty predicates over the record. The one catalogue. |
 
-Not a section, and it is deliberately not on the grid: the Arena is a *reading*
-of the grid, so it hangs off it through the season line under the today card
-and nowhere else. There is no menu, because the app spent a version getting rid
-of one.
+Two rooms of the three, and the split is what stopped either being a stack of
+cards: **Arena** is *now* — the division, this week's match, the cup that is
+running — and **Cabinet** is *forever* — the cups won, the feats, the years,
+the lines you left yourself. Nothing in the Cabinet changes hour to hour, which
+is what lets it be still.
 
-Three things to know. **`program.js` stores what it could derive**, alone in
+Four things to know. **`program.js` stores what it could derive**, alone in
 this app, because a closed week's result is a historical fact rather than a
 view — recomputing it would let a frequency edited this morning rewrite a match
 won in March. **Nothing in `program.js` imports `feats.js`**, only the other
 way, so the cycle cannot form; the callers invoke both. And **the roster locks
 on Monday**, which is the rule that took the most argument and is the reason
-adding a habit on Wednesday cannot lose you a match you had already won.
+adding a habit on Wednesday cannot lose you a match you had already won. And
+**a cup has an off-season**: the four arcs used to tile the year end to end,
+which meant you were always in one and so a cup was never something you
+*entered*. Two weeks of nothing at the end of each quarter is what buys the
+countdown its meaning.
 [`docs/ARENA.md`](ARENA.md) has all of it, and `npm run check:arena` asserts
 the parts that cannot be read off a screen.
 

@@ -143,12 +143,30 @@ still yours, and still one you would be ashamed to lose to.
 Losing to Your Worst Self is meant to sting. When you beat the Nemesis he is
 replaced by the week that just beat him, so he can never be beaten permanently.
 
+## Two rooms
+
+The Arena is **now**: the division you are in, the week you are playing, the
+cup that is running. The Cabinet is **for ever**: the cups you have won, the
+feats, the years, and the lines you left yourself.
+
+Splitting them is what stopped either being a stack of five cards. Nothing in
+the Cabinet changes hour to hour, which is what lets that room be still.
+
 ## The Arc
 
 Four a year, on the meteorological seasons: **Winter** (Dec–Feb), **Spring**
 (Mar–May), **Summer** (Jun–Aug), **Autumn** (Sep–Nov).
 
-**Group stage** — every arc week except the last three. A table of you and five
+**A cup has an off-season.** The last two weeks of every quarter are not part
+of any tournament. The arcs used to tile the year end to end, which meant you
+were always in one — and something you are always in is not something you
+*enter*. Two weeks of nothing is what buys the countdown its meaning, and it is
+why the Arc leaves the screen entirely between cups and comes back as a date.
+
+So a thirteen-week quarter is eight group weeks, three knockout weeks and a
+fortnight of nothing.
+
+**Group stage** — the season, less its last three weeks. A table of you and five
 past selves whose scores are already fixed, so the whole table is visible from
 day one and you can see exactly what qualifying costs. **Top three go through.**
 
@@ -169,7 +187,65 @@ semi, 81% to 84%* is kept, because a cabinet with only wins in it is a
 participation trophy.
 
 Being knocked out is not dead time. The league never stops, so there is still a
-match every week, and the next Arc is thirteen weeks away.
+match every week — and the moment you are out, the Arc section becomes the
+countdown to the next one, which is the same thing it shows during the break.
+
+### What is on screen, and when
+
+| Phase | The Arc is |
+|---|---|
+| **break** | one line and a date: *Autumn Arc Trophy · opens in 5 days* |
+| **group** | the live table, with the qualification line drawn across it |
+| **qf / sf / final** | the round you are in, and the bracket around it |
+| **out** | how it ended, and the countdown to the next one |
+| **champion** | the cup |
+
+Three of those get a full-screen moment the first time you see them, and each
+fires once: **opening night**, **qualification night**, and **the ceremony**.
+What is stored is that you have seen it — the record already says it happened.
+
+### Shouting through the door
+
+Three real Android alarms, on the same machinery as the prayer and reading
+reminders, re-armed on every launch because a launch is exactly when what is
+true about them has changed:
+
+- the morning a cup opens
+- the morning its group stage ends
+- the evening before a round you are actually in finishes
+
+The temptation was to schedule the whole bracket in advance. It is the wrong
+call: those rounds depend on winning, and a phone that announces a final you
+were knocked out of is worse than a phone that says nothing.
+
+## A line for whoever has to beat it
+
+Set a new best week and you are offered one sentence — capped at 140
+characters, the only free text anywhere in the Arena. It is stored on that
+week, and it comes back at you when that week turns up as your Nemesis.
+
+It earns its place because every other opponent here is a number, and a number
+cannot say anything to you. Getting shit-talked by yourself from four months
+ago is a different kind of motivation from a percentage.
+
+Winning an Arc offers the same, and that one goes on the trophy.
+
+## The Year
+
+**365 days from the day your record starts**, not a calendar year, written like
+a season: **26/27**.
+
+A calendar year would hand somebody who installed in November a six-week "year"
+to review, and the whole point of the screen is that it covers a long time.
+
+**It is locked while it runs.** The Cabinet shows a countdown and nothing else
+until the year is over, and past years are always open. A review you can read
+early is not a review, it is a dashboard.
+
+The anchor is stored rather than derived. Derived from the earliest recorded
+day it would move every boundary backwards the first time you corrected an old
+date from the calendar, and a year that had already unlocked would lock itself
+again.
 
 ## Feats
 

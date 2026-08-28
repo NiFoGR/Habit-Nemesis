@@ -199,17 +199,19 @@ www/               the entire app, plain ES modules, no build
     icons.js       the inline SVG icon set
     native.js      real Android alarms via Capacitor
     nightlight.js  the night light bridge, settings and browser fallback
-    habits/        the grid, which is the home screen
-    arena/         the competitive layer, which is a reading of the grid
+    tabs.js        the bottom bar: Cabinet, Grid, Arena
+    habits/        the grid, which is where you land
+    arena/         the Arena, the Cabinet, the Arc and the feats
     kegels/        the Kegels feature
     pe/            the PE feature
     bible/         the Bible feature and reader
-    pray/          the prayer rule, part of the Bible section
+    pray/          prayer, part of the Bible section
     breathe/       the wind-down
   bible/           the scripture itself, one JSON file per book, generated
   sw.js            offline service worker
 native/
   nightlight/      Capacitor plugin: the system-wide blue-light filter
+  systemui/        Capacitor plugin: hides the Android navigation bar
 signing/           the fixed APK key, so updates install over the top
 tools/             icon generation, signing patch, dev server, data extraction,
                    `npm run check:arena` for the Arena's calendar maths
