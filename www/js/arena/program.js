@@ -58,6 +58,10 @@ export function divisionForScore(score) {
  *  case the rule exists for. */
 export const VOID_CELLS = 4;
 export const VOID_DAYS = 3;
+
+/** The version of the scoring rule the stored record was computed under.
+ *  Bumping it re-scores every week that was never played. See `rescore`. */
+const SCORING = 1;
 const MAX_BACKFILL_WEEKS = 130;
 
 const asDate = (key) => {
@@ -153,16 +157,39 @@ export function scoreWeek(key) {
   let due = 0;
   for (const h of roster) {
     const sum = habits.summary(h);
-    let rDone = 0;
-    let rDue = 0;
-    for (const day of weekDays(key)) {
-      if (day > today) continue; // the future is not owed yet
-      const d = sum?.index.get(day);
-      if (d?.skipped) continue;
-      rDue++;
-      days.add(day);
-      if (d?.satisfied) rDone++;
+    // The days of this week that have happened and that you have not stepped
+    // over. A skip removes the day from both halves, here as everywhere.
+    const live = weekDays(key).filter((d) => d <= today && !sum?.index.get(d)?.skipped);
+    for (const d of live) days.add(d);
+    const { num, den } = h.freq || { num: 1, den: 1 };
+
+    let rDone;
+    let rDue;
+    if (den > 1) {
+      // A habit that asks for five days in seven owes five cells over the
+      // week, not seven, and it does not care which five.
+      //
+      // The obvious version of this - count the days the habits engine calls
+      // satisfied - is wrong here, and wrong in a way that took a real week to
+      // notice. That engine's window is trailing: a Monday can only be carried
+      // by the seven days *before* it, which are last week's. So the same five
+      // days scored 100% done Monday to Friday and 71% done Wednesday to
+      // Sunday, and a brand new habit was punished for its first week no
+      // matter what you did. The window is right for a running score, which
+      // has to answer "are you keeping up" without looking into the future.
+      // It is wrong for a fixed week, which can see the whole of itself.
+      //
+      // Floored, so slack is real: five in seven means two days off, and being
+      // at nothing on Monday is not yet being behind. The quota catches up as
+      // the week does, and by Sunday it is exactly the five.
+      rDue = Math.floor((num * live.length) / den);
+      const hits = live.filter((d) => sum?.index.get(d)?.hit).length;
+      rDone = Math.min(hits, rDue);
+    } else {
+      rDue = live.length;
+      rDone = live.filter((d) => sum?.index.get(d)?.satisfied).length;
     }
+
     if (rDue) rows.push({ id: h.id, name: h.name, colour: h.colour, linked: !!h.linked, done: rDone, due: rDue });
     done += rDone;
     due += rDue;
@@ -580,6 +607,45 @@ function settleGroup(st, key, events) {
   events.push({ kind: 'group', arc, qualified: rec.qualified, place: table.place, table: table.table });
 }
 
+/** Bring an old record up to the current scoring rule.
+ *
+ *  It has run once, for the change that stopped a habit asking for five days
+ *  in seven being scored out of seven. Weeks the Arena scored out of older
+ *  data are recomputed; weeks that were actually played are not, because a
+ *  result is a historical fact and stands even when the rule that produced it
+ *  has since been corrected. A month made only of re-scored weeks goes back
+ *  with them, along with the division those months placed you in, because none
+ *  of it was ever a match either. */
+function rescore(st) {
+  if (st.arena.scoring >= SCORING) return;
+  st.arena.scoring = SCORING;
+
+  const played = new Set(
+    Object.entries(st.arena.weeks)
+      .filter(([, w]) => w.result === 'won' || w.result === 'lost')
+      .map(([k]) => k)
+  );
+
+  for (const key of Object.keys(st.arena.weeks)) {
+    if (played.has(key)) continue;
+    const s = scoreWeek(key);
+    if (s.due === 0) {
+      delete st.arena.weeks[key];
+      continue;
+    }
+    st.arena.weeks[key] = { ...st.arena.weeks[key], score: s.score, due: s.due, done: s.done, result: s.void ? 'void' : 'record' };
+  }
+
+  // Standings derived from nothing but re-scored weeks are re-derived. A month
+  // holding a real match keeps its verdict, and so does everything after it.
+  const stale = Object.keys(st.arena.months).filter((m) => !weeksOfMonth(m).some((w) => played.has(w)));
+  if (stale.length === Object.keys(st.arena.months).length) {
+    st.arena.division = 'npc';
+    st.arena.placed = false;
+  }
+  for (const m of stale) delete st.arena.months[m];
+}
+
 /** Group qualification for the arc being played now, for the case where no
  *  week has closed since the group stage ended. */
 function closeGroups(st, events) {
@@ -640,6 +706,7 @@ export function sync() {
   const events = [];
   store.update((st) => {
     if (!st.arena.backfilled) backfill(st);
+    rescore(st);
     closeWeeks(st, events);
     closeGroups(st, events);
     closeMonths(st, events);

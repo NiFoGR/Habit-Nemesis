@@ -1,6 +1,6 @@
 // Prayer domain logic: what is owed today, what has been kept, and the streak.
 //
-// The rule is two fixed slots a day and both are required. There is no daily
+// Prayer, kept as a rule: two fixed slots a day and both are required. There is no daily
 // target to tune and no partial credit, so the state of a day is just two
 // booleans. That is deliberate: a rule you can negotiate with is not a rule.
 

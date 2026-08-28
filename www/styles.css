@@ -968,17 +968,17 @@ input[type="range"] {
 }
 .slot-dots i.on { background: var(--accent); border-color: var(--accent); }
 
-.rule-list { display: grid; gap: 10px; margin-bottom: 16px; }
-.rule-card {
+.prayer-list { display: grid; gap: 10px; margin-bottom: 16px; }
+.prayer-card {
   display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit;
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 16px 15px;
 }
-.rule-card:active { background: var(--surface-2); }
-.rule-card.live { border-color: var(--accent); }
-.rule-card.kept { opacity: 0.6; }
+.prayer-card:active { background: var(--surface-2); }
+.prayer-card.live { border-color: var(--accent); }
+.prayer-card.kept { opacity: 0.6; }
 .rc-ico { display: flex; color: var(--accent); }
-.rule-card.kept .rc-ico { color: var(--good); }
+.prayer-card.kept .rc-ico { color: var(--good); }
 .rc-text { flex: 1; display: grid; gap: 3px; }
 .rc-text b { font-size: 1.05rem; font-weight: 600; }
 .rc-text i { font-style: normal; font-size: 0.8rem; color: var(--muted); }
@@ -987,7 +987,7 @@ input[type="range"] {
 .btn.ext { display: flex; align-items: center; justify-content: center; gap: 9px; }
 .btn.ext .ico:last-child { opacity: 0.6; }
 
-/* ---------- prayer: the rule ---------- */
+/* ---------- prayer ---------- */
 
 /* Fixed to the viewport rather than `min-height: 100dvh`, for the same reason
    `.player` is: a flex column only hands its middle child a scrollbar when the
@@ -1065,7 +1065,7 @@ input[type="range"] {
 .text-input:focus { outline: none; border-color: var(--accent); }
 .field label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 6px; }
 
-/* The live-slot button sits between the rule list and the stats card, so it
+/* The live-slot button sits between the prayer list and the stats card, so it
    needs air on both sides rather than only above. */
 .pr-nav .btn[disabled] { opacity: 0.35; }
 

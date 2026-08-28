@@ -181,6 +181,10 @@ function blank() {
       months: {}, // 'YYYY-MM' -> { score, w, l, from, to, move }
       arcs: {}, // 'YYYY-season' -> { qualified, qf, sf, final, won }
       feats: {}, // featId -> the timestamp it was first earned
+      // Which rule the stored scores were computed under. Bumping it re-scores
+      // every week that was never actually played; `rescore` in
+      // arena/program.js says why a played one is left alone.
+      scoring: 0,
       seenWeek: '', // the last closed week whose result screen was shown
       backfilled: false, // the one-time sweep that gives the Arena a history
     },
@@ -604,6 +608,7 @@ function cleanArena(sa, base) {
     months,
     arcs,
     feats,
+    scoring: int(src.scoring, 0, 1000, 0),
     seenWeek: /^\d{4}-W\d{2}$/.test(src.seenWeek) ? src.seenWeek : '',
     backfilled: bool(src.backfilled),
   };

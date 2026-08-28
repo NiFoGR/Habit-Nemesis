@@ -27,14 +27,14 @@ import { markUnlocked } from './lock.js';
  *
  *  Prayer had a row of its own pointing at `#/pray/settings`, which is not in
  *  the route table and never was, so it fell through to the hub. There is no
- *  such screen to point it at either: the rule's settings live on the Bible
- *  screen, because the rule lives in the Bible section. One row, named for
+ *  such screen to point it at either: prayer's settings live on the Bible
+ *  screen, because prayer lives in the Bible section. One row, named for
  *  both. */
 function settingsNav() {
   return `<div class="set-nav">
     <a href="#/kegels/settings">${icon('target', 18)}<span><b>${escapeHtml(kegelName())}</b><i>Input, daily target, release day, reminder</i></span></a>
     <a href="#/pe/settings">${icon('trend', 18)}<span><b>${escapeHtml(peName())}</b><i>Units, session defaults, check-in day</i></span></a>
-    <a href="#/bible/settings">${icon('scripture', 18)}<span><b>Bible and prayer</b><i>Text size, reminder, the rule's times and language</i></span></a>
+    <a href="#/bible/settings">${icon('scripture', 18)}<span><b>Bible and prayer</b><i>Text size, reminder, prayer times and language</i></span></a>
     <a href="#/breathe/settings">${icon('breath', 18)}<span><b>Wind-down</b><i>Pattern, length, pacing, reminder</i></span></a>
   </div>`;
 }
@@ -85,7 +85,7 @@ export function renderSettings(mount) {
           <input type="checkbox" id="reverseDays" ${hs.reverseDays ? 'checked' : ''}>
         </label>
         <label class="setting toggle">
-          <span><b>Show the five</b><i>${escapeHtml(kegelName())}, ${escapeHtml(peName())}, the Bible, the rule and the wind-down, as rows on the grid. Turning them off does not turn the features off.</i></span>
+          <span><b>Show the five</b><i>${escapeHtml(kegelName())}, ${escapeHtml(peName())}, the Bible, prayer and the wind-down, as rows on the grid. Turning them off does not turn the features off.</i></span>
           <input type="checkbox" id="showLinked" ${hs.showLinked ? 'checked' : ''}>
         </label>
       </section>

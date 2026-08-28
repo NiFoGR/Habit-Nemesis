@@ -388,7 +388,7 @@ export const LINKED = [
   },
   {
     id: 'link:pray', icon: 'sun', href: '#/bible',
-    name: () => 'The rule',
+    name: () => 'Prayer',
     question: 'Morning and night, both?',
     days: (st) => new Set(Object.entries(st.pray.days).filter(([, d]) => d && d.morning && d.evening).map(([k]) => k)),
     // Whichever half is still owed. Both kept and it opens the morning again,

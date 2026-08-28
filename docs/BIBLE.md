@@ -1,6 +1,6 @@
 # The Bible section
 
-One room for reading and for the rule, why the app parses your own copy rather
+One room for reading and for prayer, why the app parses your own copy rather
 than shipping one, and how the parser undoes what the PDF export did to the
 text.
 
@@ -13,7 +13,7 @@ every morning to choose between the two halves of the same practice, and the
 Bible tile had a lectionary telling you what to read on the fourteenth of
 August whether or not you had read anything on the thirteenth.
 
-Both are gone. The section opens where you left off, the rule sits underneath
+Both are gone. The section opens where you left off, prayer sits underneath
 with its two times, and there is no plan to fall behind on.
 
 ## Why the text is bundled, and why it wasn't at first

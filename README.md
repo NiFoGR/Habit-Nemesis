@@ -145,7 +145,7 @@ Reasoning, safety numbers and sources: [`docs/PE_PROGRAM.md`](docs/PE_PROGRAM.md
 
 **A screen for every book, before you open it.** The same six questions for all 76: who wrote it, when, where it sits in the story, what it is for, what to watch for while you read, and how the Church reads it toward Christ. The four Gospels answer two more, which are the only two that actually distinguish four accounts of the same events: **who it was written for, and what only this one gives you.**
 
-**The rule, in the same room.** Morning and night, both required, in Greek and English, with the ancient core bundled and room for the prayers you say yourself from your own book. Streaks, per-slot streaks and a 13-week heatmap.
+**Prayer, in the same room.** Morning and night, both required, in Greek and English, with the ancient core bundled and room for the prayers you say yourself from your own book. Streaks, per-slot streaks and a 13-week heatmap.
 
 **What you have read.** Chapter by chapter, marked as you reach the end of one, with a heatmap, a streak, a bar per part of the canon and books finished. A chapter is the unit because it is the largest thing you can honestly say you either read or did not.
 
@@ -163,13 +163,13 @@ Reasoning, safety numbers and sources: [`docs/PE_PROGRAM.md`](docs/PE_PROGRAM.md
 
 **Measurable habits with a ceiling.** How many litres, how many pages - and, the other way round, at most this many calories. The score is full while you stay under the cap and falls away above it, which is the shape of anything you are trying to do less of.
 
-**The rest of NiFo, along the top, read-only.** Kegels, PE, the Bible, the rule and the wind-down, filled from their own records. That is the answer to putting a habit tracker inside an app that already tracks five things: without it you would keep two records of the same morning and they would disagree by Friday.
+**The rest of NiFo, along the top, read-only.** Kegels, PE, the Bible, prayer and the wind-down, filled from their own records. That is the answer to putting a habit tracker inside an app that already tracks five things: without it you would keep two records of the same morning and they would disagree by Friday.
 
 [`docs/HABITS.md`](docs/HABITS.md) has the maths.
 
 ## What is in the Arena
 
-**Your week is a match, and your opponent is you.** Monday to Sunday, every row on the grid, scored as the percentage of what was due that you actually did - against a real week out of your own history. There are no invented rivals and no other people, which is the only reason beating one means anything, and the reason you can tap any of them and look at the grid they played.
+**Your week is a match, and your opponent is you.** Monday to Sunday, every row on the grid, scored as the percentage of what was due that you actually did - against a real week out of your own history. A habit asking for five days in seven owes five cells, not seven, and does not care which five. There are no invented rivals and no other people, which is the only reason beating one means anything, and the reason you can tap any of them and look at the grid they played.
 
 **Four opponents, all of them you.** Your Nemesis is the best week you have ever had. Last Month You is this week, one month back. Your Worst Self is your worst of the last thirteen, and losing to him is meant to sting. The Standard is your division's bar with a face on it, and stands in whenever the record cannot supply a real week yet.
 

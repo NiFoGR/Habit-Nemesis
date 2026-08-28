@@ -47,10 +47,28 @@ and cannot relegate you, because there is nothing to relegate you from.
 
 > **A week scores the percentage of what was due that you did.**
 
-Every day of the week, every row on the scoring roster, is one cell. A cell is
-done when that row was *satisfied* on that day — which is the habits engine's
-own word, so a habit asking for three days in seven is satisfied on the days it
-does not ask for, and a skipped day leaves both halves of the fraction.
+A **daily** row owes one cell per day. A row asking for **n days in d** owes
+`n × elapsed ÷ d` cells over the week, floored — five in seven owes five, and
+does not care which five. A skipped day leaves both halves of the fraction, as
+it does everywhere else in this app.
+
+That second rule is not what shipped first, and the difference is worth
+keeping. The first version asked the habits engine whether each day was
+*satisfied*, which for a 3-in-7 habit is true on the days it does not ask for.
+But that engine's window is **trailing** — a Monday can only be carried by the
+seven days before it, which belong to last week. So the same five days scored
+100% done Monday to Friday and 71% done Wednesday to Sunday, a brand new habit
+was marked down for its first week whatever you did, and a genuine weekend
+habit scored 43% for a perfect week.
+
+The window is right for a running score, which has to answer *are you keeping
+up* without looking into the future. It is wrong for a fixed week, which can
+see the whole of itself. So the Arena counts the quota and the engine keeps its
+window; neither had to change for the other.
+
+The quota is **floored** so that slack is real: five in seven means two days
+off, and being at nothing on Monday is not yet being behind. It catches up as
+the week does, and by Sunday it is exactly the five.
 
 **A month is the mean of its weeks**, not one big recomputed percentage. Each
 week had a fixed, fair roster, so the month is an average of clean numbers
@@ -202,6 +220,18 @@ lost before the feature existed.
 The months still close from them, so you arrive at the division your record has
 actually earned rather than at the bottom of a ladder you have been climbing
 for eight months.
+
+## Correcting the record
+
+The stored scores carry a `scoring` version. Bumping it re-scores every week
+that was **never played** — the ones the Arena computed out of older data — and
+re-derives any standing that rested on nothing else, the division included.
+
+Weeks that were actually played are left alone, even when the rule that
+produced them has since been corrected. A result is a historical fact, and the
+whole reason the Arena stores anything at all is that facts do not move.
+
+It has run once, for the frequency rule above.
 
 ## Announcing it
 

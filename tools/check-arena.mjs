@@ -148,5 +148,31 @@ st.update((s) => { s.habits.entries = {}; });
 is('a week you did nothing in is still a fixture, and lost',
   [a.scoreWeek('2026-W20').void, a.scoreWeek('2026-W20').score], [false, 0]);
 
+/* ---------------- frequencies ----------------
+   The one that was wrong in the shipped version: a habit asking for five days
+   in seven was scored out of seven, and the habits engine's trailing window
+   meant the same five days were worth 100% done Monday to Friday and 71% done
+   Wednesday to Sunday. A fixed week can see the whole of itself, so it counts
+   what the habit asks for and does not care which days. */
+group('a habit that does not ask for every day');
+const week = (num, den, pattern) => {
+  st.update((s) => {
+    s.habits.items = [habit('h_f', 'Five', { freq: { num, den } })];
+    const d = a.weekDays('2026-W20');
+    s.habits.entries = { h_f: Object.fromEntries(d.filter((_, i) => pattern[i] === 'X').map((k) => [k, 1])) };
+  });
+  const w = a.scoreWeek('2026-W20');
+  return [w.done, w.due];
+};
+is('five in seven, done Monday to Friday', week(5, 7, 'XXXXX__'), [5, 5]);
+is('five in seven, done Wednesday to Sunday', week(5, 7, '__XXXXX'), [5, 5]);
+is('five in seven, done on any five days at all', week(5, 7, 'X_XX_XX'), [5, 5]);
+is('doing more than it asks is not extra credit', week(5, 7, 'XXXXXXX'), [5, 5]);
+is('doing four of the five costs you one', week(5, 7, 'XXXX___'), [4, 5]);
+is('three in seven, done at the weekend', week(3, 7, '____XXX'), [3, 3]);
+is('every third day owes two in a week', week(1, 3, 'X__X__X'), [2, 2]);
+is('ten in thirty owes two in a week', week(10, 30, 'X_X____'), [2, 2]);
+is('a daily habit still owes every day', week(1, 1, 'XXXXX__'), [5, 7]);
+
 console.log(failed.length ? `\n${failed.length} FAILED: ${failed.join('; ')}` : `\nall ${passed} checks passed`);
 process.exit(failed.length ? 1 : 0);

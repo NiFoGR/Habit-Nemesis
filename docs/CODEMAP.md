@@ -7,7 +7,7 @@ Five rules the tree follows:
 1. **One folder per feature.** `kegels/`, `pe/`, `bible/`, `breathe/`, `habits/`,
    `arena/`.
    Anything at the top level of `js/` is shell, used by all of them. `pray/` is
-   not a feature of its own: the rule is part of the Bible section, and the
+   not a feature of its own: prayer is part of the Bible section, and the
    folder holds the prayer texts and the guided rule it runs.
 2. **The same filenames in each.** `program.js` is always the domain logic,
    `home.js` always the section's screens, `session.js` always the thing that
@@ -88,7 +88,7 @@ The prayer rule lives in this section too.
 | `js/bible/read.js` | 133 | The shelf and the chapter grid. |
 | `js/bible/reader.js` | 86 | One chapter on screen, Genesis to Revelation. |
 | `js/bible/text.js` | 51 | Loads a book from `www/bible/`, cached in memory. |
-| `js/bible/tracking.js` | 114 | Heatmap, canon progress, the rule, log. |
+| `js/bible/tracking.js` | 114 | Heatmap, canon progress, prayer, log. |
 | `js/pray/home.js` | 104 | The prayers you added yourself. |
 | `js/pray/prayers.js` | 240 | The bundled prayers and the two rules. |
 | `js/pray/program.js` | 182 | What is owed today, streaks, heatmap data, alarms. |

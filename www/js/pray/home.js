@@ -1,6 +1,6 @@
 // The prayers you added yourself.
 //
-// The rest of the prayer section now lives in bible/, because the rule and the
+// The rest of the prayer section now lives in bible/, because prayer and the
 // reading are one practice and were being split across two tiles. This screen
 // stayed here with the prayer texts it edits.
 
@@ -20,7 +20,7 @@ export function renderMyPrayers(mount) {
           <span class="icon-btn ghost"></span>
         </header>
 
-        <p class="small muted">The app ships the ancient core only. Add what you say from your own prayer book and it joins the rule in the slot you choose.</p>
+        <p class="small muted">The app ships the ancient core only. Add what you say from your own prayer book and it joins your morning or your night in the slot you choose.</p>
 
         ${['morning', 'evening'].map((slot) => {
           const list = mine.filter((p) => p.slot === slot);

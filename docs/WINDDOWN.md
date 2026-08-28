@@ -120,7 +120,7 @@ Last on the Today list, after the night rule.
 That list had a deliberate rule that nothing came after the night prayers,
 because putting anything there read as though something came after them. The
 wind-down is the one thing that genuinely does: you pray, and then you lie down
-and breathe until you are ready to sleep. So it takes the last row and the rule
+and breathe until you are ready to sleep. So it takes the last row and prayer
 keeps the one above it.
 
 The reminder should be set after the night prayers for the same reason. The
