@@ -29,6 +29,19 @@ const LONG_PRESS_MS = 420;
 
 const rowColour = (habit) => (habit.colour ? habits.hexOf(habit.colour) : 'var(--accent)');
 
+/** The line under a row's name. One of the five says what that section still
+ *  owes today; a measurable habit says what it is counting and what counts as
+ *  done, which is the context its bare numbers need and which used to be
+ *  stamped on every cell instead. */
+function detailOf(habit) {
+  if (habit.linked) return habit.detail;
+  if (habit.kind !== 'number') return '';
+  const unit = habit.unit || '';
+  if (!habit.target) return unit;
+  const aim = `${habit.targetType === 'atmost' ? 'under' : 'at least'} ${fmtNumber(habit.target)}`;
+  return unit ? `${unit} · ${aim}` : aim;
+}
+
 /** The small ring beside a habit's name: its score, in its own colour.
  *  `ringSvg` is the 168px one from the report screen and carries a gradient,
  *  a label and a caption, none of which survive being shrunk to 26px. */
@@ -65,9 +78,12 @@ function cellHtml(habit, key, sum, s) {
   if (habit.kind === 'number') {
     const has = typeof raw === 'number';
     const met = !!d?.hit;
+    // No unit here. It was on every cell, four identical copies of "Liters"
+    // across one row, crowding out the one thing that actually differs. It is
+    // said once, under the name, where it belongs.
     return `<button class="hg-cell num ${met ? 'on' : has ? 'part' : ''}" data-day="${key}"${go}
-      style="${met ? `color:${colour}` : ''}" aria-label="${escapeHtml(label)}">
-      <b>${has ? escapeHtml(fmtNumber(raw)) : '–'}</b><i>${escapeHtml(habit.unit || '')}</i></button>`;
+      style="${met ? `color:${colour}` : ''}" aria-label="${escapeHtml(label)}: ${has ? fmtNumber(raw) : 'nothing'} ${escapeHtml(habit.unit || '')}">
+      ${has ? escapeHtml(fmtNumber(raw)) : '–'}</button>`;
   }
   if (raw === habits.YES) {
     return `<button class="hg-cell on" data-day="${key}"${go} style="color:${colour}" aria-label="${escapeHtml(label)}: done">${icon('check', 18)}</button>`;
@@ -116,7 +132,7 @@ function rowHtml(habit, days, s, { reorder = false, groupOptions = () => '' } = 
       ${habit.linked ? `<span class="hg-link-ico" style="color:${colour}">${icon(habit.icon, 17)}</span>` : miniRing(sum.score, colour)}
       <span class="hg-label">
         <b${habit.linked ? '' : ` style="color:${colour}"`}>${escapeHtml(habit.name)}</b>
-        ${habit.detail ? `<i>${escapeHtml(habit.detail)}</i>` : ''}
+        ${detailOf(habit) ? `<i>${escapeHtml(detailOf(habit))}</i>` : ''}
       </span>
     </a>
     ${reorder && !habit.linked
@@ -149,6 +165,7 @@ function redraw(mount) {
   const linked = habits.linkedHabits();
   const list = habits.active();
   const due = habits.dueToday();
+  const run = habits.bestRun();
   const days = s.reverseDays ? habits.recentDays(s.columns) : habits.recentDays(s.columns).reverse();
   const groupOptions = (current) =>
     `<option value="" ${current ? '' : 'selected'}>No group</option>${habits
@@ -192,6 +209,7 @@ function redraw(mount) {
         <div class="today-left">
           <h2>${due.pending.length ? `${due.pending.length} left today` : 'All done today'}</h2>
           <p class="muted small">${escapeHtml(new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }))}</p>
+          ${run ? `<p class="run-line">${icon('flame', 14)}<span><b>${run.days}</b> day${run.days === 1 ? '' : 's'} of ${escapeHtml(run.name)}</span></p>` : ''}
         </div>
         ${ringSvg(due.total ? due.done / due.total : 1, `${due.done}/${due.total}`, 'today', { size: 84 })}
       </div>

@@ -21,8 +21,8 @@ const sling = (arrow) => {
   const arrows = {
     up: `<path d="M100 118 L100 74" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>
          <path d="M92 84 L100 72 L108 84" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`,
-    down: `<path d="M100 74 L100 118" stroke="var(--violet)" stroke-width="4" stroke-linecap="round"/>
-           <path d="M92 106 L100 120 L108 106" fill="none" stroke="var(--violet)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`,
+    down: `<path d="M100 74 L100 118" stroke="var(--calm)" stroke-width="4" stroke-linecap="round"/>
+           <path d="M92 106 L100 120 L108 106" fill="none" stroke="var(--calm)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`,
     none: '',
   };
   // The viewBox has to leave room below the sling for both the deepest curve
@@ -33,7 +33,7 @@ const sling = (arrow) => {
     <path d="M34 40 L34 112" stroke="var(--line)" stroke-width="3" stroke-linecap="round"/>
     <path d="M166 40 L166 112" stroke="var(--line)" stroke-width="3" stroke-linecap="round"/>
     <path d="M34 112 Q100 ${arrow === 'up' ? 118 : arrow === 'down' ? 148 : 132} 166 112"
-      fill="none" stroke="${arrow === 'down' ? 'var(--violet)' : 'var(--accent)'}" stroke-width="5" stroke-linecap="round"/>
+      fill="none" stroke="${arrow === 'down' ? 'var(--calm)' : 'var(--accent)'}" stroke-width="5" stroke-linecap="round"/>
     <text x="100" y="${arrow === 'down' ? 168 : 152}" text-anchor="middle" class="dg-lab">pelvic floor</text>
     ${arrows[arrow] || ''}
   </svg>`;

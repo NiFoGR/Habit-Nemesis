@@ -57,8 +57,8 @@ export function renderKegels(mount) {
 
       <div class="today ${plan.type}">
         <div class="today-left">
-          <h2>${escapeHtml(plan.type === 'release' ? 'Release day' : plan.type === 'test' ? 'Max hold test' : `Week ${plan.level}, ${def.name}`)}</h2>
-          <p class="muted small">${st ? `${st}d streak` : 'No streak yet'}${weekAvg != null ? ` · avg ${weekAvg} this week` : ''}</p>
+          <h2>${escapeHtml(plan.type === 'release' ? 'Release day' : plan.type === 'test' ? 'Max hold test' : `Week ${plan.level}`)}</h2>
+          <p class="muted small">${escapeHtml(plan.type === 'training' ? `${def.name} · ` : '')}${st ? `${st}d streak` : 'No streak yet'}${weekAvg != null ? ` · avg ${weekAvg}` : ''}</p>
         </div>
         ${ringSvg(plan.target ? Math.min(plan.doneToday / plan.target, 1) : 0, `${plan.doneToday}/${plan.target}`, 'today', { size: 96 })}
       </div>

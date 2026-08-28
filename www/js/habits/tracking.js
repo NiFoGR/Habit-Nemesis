@@ -115,15 +115,13 @@ export function renderHabitDetail(mount, id) {
 
         <section class="card">
           <div class="h-row">${icon('chart', 16)}<h2>Overview</h2></div>
-          <div class="stat-grid four">
+          <div class="stat-grid three">
             <div class="stat"><b style="color:${colour}">${Math.round(sum.score * 100)}%</b><span>score</span></div>
             <div class="stat"><b class="${deltaClass(month)}">${month > 0 ? '+' : ''}${month}%</b><span>month</span></div>
             <div class="stat"><b class="${deltaClass(year)}">${year > 0 ? '+' : ''}${year}%</b><span>year</span></div>
+            <div class="stat"><b>${sum.streak}</b><span>streak</span></div>
+            <div class="stat"><b>${sum.best}</b><span>best</span></div>
             <div class="stat"><b>${fmtTotal(habit, sum)}</b><span>total</span></div>
-          </div>
-          <div class="stat-grid">
-            <div class="stat"><b>${sum.streak}</b><span>day streak</span></div>
-            <div class="stat"><b>${sum.best}</b><span>best streak</span></div>
           </div>
         </section>
 
@@ -139,7 +137,7 @@ export function renderHabitDetail(mount, id) {
           <div class="h-row">${icon('calendar', 16)}<h2>History</h2>${periodSelect('histP', historyPeriod, {
             day: 'Day', week: 'Week', month: 'Month', quarter: 'Quarter', year: 'Year',
           })}</div>
-          ${barChart(bars, { unit: habit.unit ? ` ${habit.unit}` : '' })}
+          ${barChart(bars, { unit: habit.unit ? ` ${habit.unit}` : '', colour })}
         </section>
 
         <section class="card">

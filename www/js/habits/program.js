@@ -769,6 +769,21 @@ export function groupScore(groupId) {
   return list.reduce((a, h) => a + summary(h).score, 0) / list.length;
 }
 
+/** The longest run currently going, and whose it is.
+ *
+ *  Not a streak of the whole grid: a single grid-wide streak would break the
+ *  first day you miss any one row, which on a list this long is most days, and
+ *  a number that is almost always zero motivates nobody. The longest live run
+ *  is the one worth putting on the front door. */
+export function bestRun() {
+  let best = null;
+  for (const h of [...linkedHabits(), ...active()]) {
+    const s = summary(h);
+    if (s.streak > (best?.days || 0)) best = { name: h.name, days: s.streak };
+  }
+  return best;
+}
+
 /** Done-per-day over the last `n` days, for the hub tile's trend line. */
 export function recentCounts(n = 14) {
   const list = active();

@@ -212,7 +212,9 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 .btn.primary { background: var(--accent); color: #04121a; border: 0; font-weight: 700; }
 .btn.big { padding: 17px; font-size: 1.05rem; }
 .btn.ghost { background: none; color: var(--muted); }
-.btn.wide { margin-top: 14px; }
+/* Bottom margin as well as top: a card has margin-bottom and no margin-top, so
+   a full-width button directly above one sat flush against it. */
+.btn.wide, .btn.big { margin: 14px 0; }
 .btn.danger { background: rgba(248, 113, 113, 0.14); color: var(--danger); border-color: rgba(248, 113, 113, 0.4); }
 .row-btns { display: flex; gap: 8px; }
 .row-btns .btn { margin-top: 10px; }
@@ -557,7 +559,10 @@ input[type="range"] {
 .good-text { color: var(--good); }
 
 /* stats */
-.segmented { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 9px; padding: 4px; margin-bottom: 14px; }
+.segmented { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 4px; margin-bottom: 14px; }
+/* Every option one line, whatever it is called: one two-word label used to
+   make the whole control twice as tall as its neighbours. */
+.segmented button { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .segmented button {
   flex: 1; background: none; border: 0; color: var(--muted); font: inherit; font-size: 0.82rem;
   padding: 8px 4px; border-radius: 9px; cursor: pointer;
@@ -571,7 +576,7 @@ input[type="range"] {
 .barchart { display: flex; align-items: flex-end; gap: 3px; height: calc(var(--h) + 18px); }
 .bar { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; min-width: 6px; }
 .bar-stack { width: 100%; display: flex; flex-direction: column-reverse; border-radius: 4px 4px 0 0; overflow: hidden; background: var(--surface-2); }
-.bar-stack i { display: block; width: 100%; background: var(--accent); }
+.bar-stack i { display: block; width: 100%; background: var(--bar, var(--accent)); }
 .bar span { font-size: 0.6rem; color: var(--muted); margin-top: 4px; white-space: nowrap; }
 
 .paired { display: flex; align-items: flex-end; gap: 8px; height: 120px; margin: 10px 0; }
@@ -691,12 +696,22 @@ input[type="range"] {
 /* ---------- simplified nav bits ---------- */
 
 .linkbtn { text-align: center; text-decoration: none; display: block; }
-/* Four links have to sit on one line at 390px. A wrapping flex row put the
-   last one alone underneath, which reads as a different kind of link; an even
-   grid keeps them a single group. */
-.linkrow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; justify-items: center; margin: 22px 0 8px; }
-.linkrow a { justify-content: center; text-align: center; }
-@media (max-width: 359px) { .linkrow { grid-template-columns: repeat(2, 1fr); row-gap: 16px; } }
+
+/* The section link rows. This was a four-column grid, on the reasoning that a
+   wrapping row leaves the last link alone underneath and it reads as a
+   different kind of link. Both halves of that turned out to be wrong once
+   there were five links: a fixed four columns put the fifth on its own row
+   AND left-aligned it, and a four-column grid narrow enough for five labels
+   broke "The books" across two lines.
+
+   A centred wrapping row fixes both. Whatever does not fit drops to the next
+   line in the middle, which reads as one group at four links or at six, and
+   no label ever breaks mid-phrase. */
+.linkrow {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 10px 18px; margin: 22px 0 8px;
+}
+.linkrow a { justify-content: center; text-align: center; white-space: nowrap; }
 .linkrow a { color: var(--muted); text-decoration: none; font-size: 0.86rem; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
 .linkrow a:active { color: var(--text); }
 
@@ -720,6 +735,9 @@ input[type="range"] {
 @media (min-width: 520px) {
   .stat-grid { grid-template-columns: repeat(4, 1fr); }
   .stat-grid.four { grid-template-columns: repeat(4, 1fr); }
+  /* Three stays three at every width: it is used where the six tiles are two
+     rows of three and read as one block, which four columns would break up. */
+  .stat-grid.three { grid-template-columns: repeat(3, 1fr); }
   .rating-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
@@ -1430,6 +1448,11 @@ body.blacked .br-orb { opacity: 0.09; }
 .head-actions { display: flex; gap: 8px; flex: 0 0 auto; }
 .hub-head .brand-row h1 { font-size: var(--f-title); letter-spacing: -0.02em; }
 .home-today { margin-bottom: 14px; }
+/* The longest run still going. The one number on this screen that is there to
+   make you open the app rather than to tell you what to do. */
+.run-line { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: var(--f-fine); color: var(--muted); }
+.run-line .ico { color: var(--warn); }
+.run-line b { color: var(--text); font-weight: var(--w-medium); }
 .screen.home .btn.ghost.wide { margin-top: 18px; }
 
 /* The line under a row's name. On one of the five it is that section saying
@@ -1532,11 +1555,16 @@ body.blacked .br-orb { opacity: 0.09; }
 .hg-cell:active { background: var(--surface-2); }
 .hg-q { font-size: 0.95rem; font-weight: 700; }
 
-.hg-cell.num { line-height: 1.05; opacity: 1; overflow: hidden; }
-.hg-cell.num b { font-size: 0.82rem; font-weight: 600; }
-.hg-cell.num i { font-style: normal; font-size: 0.52rem; color: var(--muted); display: block;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+/* A measurement, with no unit stamped on it: the row says what is being
+   counted, so the cell only has to carry the number. */
+.hg-cell.num {
+  opacity: 1; overflow: hidden;
+  font-size: var(--f-small); font-weight: var(--w-medium);
+  font-variant-numeric: tabular-nums;
+}
 .hg-cell.num:not(.on):not(.part) { color: var(--muted); opacity: 0.45; }
+/* Logged, but short of the target. Legible, and visibly not a win. */
+.hg-cell.num.part { color: var(--muted); }
 
 .hg-group { display: flex; align-items: center; gap: 8px; margin: 14px 0 2px; }
 .hg-group-btn {
@@ -1584,7 +1612,7 @@ body.blacked .br-orb { opacity: 0.09; }
 }
 .sheet h2 { font-size: 1.15rem; margin-bottom: 6px; }
 .sheet .btn-row { margin-top: 16px; }
-.sheet .btn.wide { margin-top: 16px; }
+.sheet .btn.wide { margin: 16px 0 0; }
 @media (min-width: 620px) {
   .sheet-scrim { align-items: center; }
   .sheet { border-radius: 16px; padding-bottom: 20px; }

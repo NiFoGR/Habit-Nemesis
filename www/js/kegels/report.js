@@ -56,7 +56,7 @@ export function renderReport(mount, result, onDone) {
     <div class="report">
       <div class="report-hero ${outcome.levelUp ? 'levelup' : ''}">
         ${isRelease
-          ? ringSvg(1, '✓', 'released', { color: 'var(--calm)' })
+          ? ringSvg(1, icon('check', 34), 'released', { color: 'var(--calm)' })
           : ringSvg(record.score / 100, String(record.score), g.letter, {
               color: record.score >= 85 ? 'var(--good)' : record.score >= 62 ? 'var(--accent)' : 'var(--warn)',
             })}

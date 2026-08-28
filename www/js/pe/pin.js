@@ -58,7 +58,7 @@ export function renderPinGate(mount, { onReady, onCancel, title }) {
             ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `<button data-k="${n}">${n}</button>`).join('')}
             <button class="ghost-key" id="forgot">${setting ? '' : 'Forgot'}</button>
             <button data-k="0">0</button>
-            <button class="ghost-key" data-del>⌫</button>
+            <button class="ghost-key" data-del aria-label="Delete">${icon('backspace', 20)}</button>
           </div>
 
           ${setting ? `<p class="fineprint centre">There is no recovery. Forgetting the PIN means the photos are gone for good. That is what makes the encryption worth anything.</p>` : ''}

@@ -51,6 +51,16 @@ Every file opens with a comment saying what it is and *why it works the way it
 does*. Match that: the comments in this repo explain decisions, not syntax, and
 several of them exist because the obvious alternative was tried and was worse.
 
+## One failure mode worth naming
+
+A layout rule that encodes **how many** of something there are will break the
+first time that number changes, and it will break silently. The section link
+row was a four-column grid with a comment explaining why a wrapping row was
+wrong; a fifth link then stranded itself for months. `.btn.wide` had a top
+margin only, because when it was written it was always last on the screen.
+
+Prefer the rule that does not need to know the count.
+
 ## Before you push
 
 There is no build step and no test runner. What there is:

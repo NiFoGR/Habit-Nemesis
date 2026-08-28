@@ -45,7 +45,7 @@ export function renderPeHome(mount) {
 
       ${latest ? `<div class="spark-card">
         <div class="cap"><span>${pe.fmtLength(latest.bpel)} × ${pe.fmtLength(latest.eg)}</span><b>${gain >= 0 ? '+' : '−'}${pe.fmtLength(Math.abs(gain), undefined, 2)}</b></div>
-        ${s.measurements.length > 1 ? sparkline(s.measurements.map((m) => m.bpel), { color: 'var(--violet)', h: 40 }) : ''}
+        ${s.measurements.length > 1 ? sparkline(s.measurements.map((m) => m.bpel), { color: 'var(--accent)', h: 40 }) : ''}
       </div>` : ''}
 
       ${due.due ? `<a class="notice action" href="#/pe/measure">${icon('ruler', 16)} Monthly check-in due.</a>` : ''}
@@ -55,7 +55,7 @@ export function renderPeHome(mount) {
 
       <div class="start-grid">
         <a class="start-card" href="#/pe/timer?type=stretch" style="--c:var(--accent)">${icon('stretch')}<span class="sc-text"><span>Stretch</span><i>${s.settings.stretchMin} min · ${s.settings.tensionKg} kg</i></span></a>
-        <a class="start-card" href="#/pe/timer?type=pump" style="--c:var(--violet)">${icon('pump')}<span class="sc-text"><span>Pump</span><i>${s.settings.pumpMin} min</i></span></a>
+        <a class="start-card" href="#/pe/timer?type=pump" style="--c:var(--accent)">${icon('pump')}<span class="sc-text"><span>Pump</span><i>${s.settings.pumpMin} min</i></span></a>
       </div>
 
       ${eqDue ? `<section class="card" id="eqCard">

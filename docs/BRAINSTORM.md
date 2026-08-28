@@ -286,3 +286,45 @@ safe there because the past is written once by a session that has just ended.
 - Notes on a day, not only on a habit.
 - A home-screen widget, which is the one thing the source app does that this
   cannot.
+
+
+---
+
+# The polish pass
+
+Forty screenshots of every screen in the app, each asked the same ten
+questions. Kept because the useful finding was not any one of the fixes, it
+was that **three of them were the same bug wearing different clothes**: a rule
+written for the content that existed on the day it was written, quietly broken
+by the next thing added.
+
+- `.linkrow` was a four-column grid, with a comment explaining that a wrapping
+  row would leave the last link stranded. Then a fifth link was added to two
+  sections, and the fixed grid stranded it *and* left it left-aligned. The
+  comment had correctly diagnosed a problem and then hard-coded the count.
+  It is a centred wrapping row now, which is right at four links or at six.
+- `.btn.wide` had `margin-top` only, because when it was written it was always
+  the last thing on a screen. The first card placed after one sat flush against
+  it, on two different screens, for months.
+- `barChart` took no colour, because when it was written there was one accent
+  and every chart used it. On a habit's own screen it was then the single mark
+  not in that habit's colour.
+
+**The lesson to carry:** a layout rule that encodes *how many* of something
+there are will break the first time that number changes, and it will break
+silently, because nothing throws. When writing one, prefer the rule that does
+not need to know the count.
+
+The same pass found four places using a text glyph where the icon set exists -
+`✕`, `⌫`, and `✓` twice - each of which had been written before the icon it
+needed was added, and none of which anything would ever flag.
+
+## Deliberately not changed
+
+- **Ten rows of best streaks** on a habit screen. It is a lot of screen, but
+  that screen is where you go to see exactly that.
+- **The unlabelled week strip** on the Kegels home. A caption for a seven-bar
+  strip costs more room than it buys.
+- **No score ring on the five feature rows** where habits have one. They are
+  the app's frame, not things you are scored on; their sections hold their
+  numbers.
