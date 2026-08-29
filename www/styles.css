@@ -2603,133 +2603,108 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .ar-side.them .nem-face { margin: 0 auto 6px; }
 
 /* ---------- the month settles ----------
-   Three beats, driven by data-beat on the screen so the timing lives in one
-   place: the old crest is there, the new one arrives over it, then the ladder
-   lights and the words land. Relegation runs the same beats slower and with
-   nothing to celebrate, because a punishing screen is how you get someone to
-   stop opening the app. */
-/* One moment, one way out, so the button sits on the floor rather than
-   floating under a half-empty page. */
+   The whole ladder, every rung named with what it costs, and the badge moving
+   between two of them. Three beats driven by data-beat on the screen, so the
+   timing lives in one place and reduced motion collapses it to the last one. */
 .screen.rank-moment {
   display: flex;
   flex-direction: column;
   min-height: calc(100dvh - var(--safe-t) - var(--safe-b));
+  padding-top: calc(var(--safe-t) + 26px);
 }
-.rank-moment .rk-head { margin-bottom: 6px; }
-.rank-moment #go { margin-top: 20px; }
+.rk-eyebrow { text-align: center; margin-bottom: 10px; }
 
-.rank-moment .rk-stage {
-  position: relative;
-  height: 130px;
-  display: grid;
-  place-items: center;
-  margin: 8px 0 4px;
-}
-.rank-moment .rk-crest {
-  grid-area: 1 / 1;
-  display: grid;
-  place-items: center;
-  transition: transform 0.5s var(--ease), opacity 0.5s var(--ease), filter 0.5s var(--ease);
-}
-.rank-moment .rk-crest img { display: block; }
-
-/* Beat 0: only where you were. */
-.rank-moment .rk-crest.old { opacity: 1; transform: none; }
-.rank-moment .rk-crest.new { opacity: 0; transform: scale(0.6); }
-
-/* Beat 1: the new one arrives. Up, it comes in over the top and lands hard;
-   down, the old one sinks and dims and the new one fades up under it. */
-.rank-moment.up[data-beat='1'] .rk-crest.old,
-.rank-moment.up[data-beat='2'] .rk-crest.old { opacity: 0; transform: translateY(14px) scale(0.82); }
-.rank-moment.up[data-beat='1'] .rk-crest.new,
-.rank-moment.up[data-beat='2'] .rk-crest.new { opacity: 1; transform: none; }
-
-.rank-moment.down[data-beat='1'] .rk-crest.old,
-.rank-moment.down[data-beat='2'] .rk-crest.old { opacity: 0; transform: translateY(-10px) scale(0.9); filter: grayscale(1); }
-.rank-moment.down[data-beat='1'] .rk-crest.new,
-.rank-moment.down[data-beat='2'] .rk-crest.new { opacity: 1; transform: none; }
-
-/* The glow behind it, and only on the way up. */
-.rank-moment.up .rk-stage::before {
-  content: '';
-  position: absolute;
-  inset: -10% 20%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgb(251 191 36 / 0.22), transparent 70%);
-  opacity: 0;
-  transform: scale(0.6);
-  transition: opacity 0.5s var(--ease), transform 0.6s var(--ease);
-}
-.rank-moment.up[data-beat='2'] .rk-stage::before { opacity: 1; transform: none; }
-
-.rank-moment .rk-word {
+.rk-verdict {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   opacity: 0;
   transform: translateY(8px);
   transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
 }
-.rank-moment[data-beat='2'] .rk-word { opacity: 1; transform: none; }
+.rank-moment[data-beat='2'] .rk-verdict { opacity: 1; transform: none; }
+.rk-word { font-size: 2rem; margin: 0; }
 .rank-moment.up .rk-word { color: var(--good); }
-.rank-moment.down .rk-word { color: var(--muted); }
+.rank-moment.down .rk-word { color: var(--text); }
 
-.rank-moment .rk-move {
-  display: flex;
+.rk-pill {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: var(--f-body);
-  color: var(--muted);
-  opacity: 0;
-  transition: opacity 0.4s var(--ease) 0.08s;
-}
-.rank-moment[data-beat='2'] .rk-move { opacity: 1; }
-.rank-moment .rk-from { text-decoration: line-through; opacity: 0.6; }
-.rank-moment .rk-to { color: var(--text); font-weight: var(--w-bold); }
-.rank-moment.up .rk-arrow { color: var(--good); }
-.rank-moment.down .rk-arrow { color: var(--danger); }
-
-/* The ladder, lighting one rung at a time. A rung you lost stays faintly lit:
-   it is where you were, and it is where you are going back to. */
-.rk-ladder {
-  display: flex;
-  gap: 6px;
-  margin: 22px 0 16px;
-}
-.rk-ladder i {
-  flex: 1;
-  height: 6px;
+  gap: 4px;
+  padding: 4px 10px;
   border-radius: var(--radius-pill);
-  background: var(--surface-2);
-  transform: scaleY(0.5);
-  transition: background 0.3s var(--ease), transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
-  transition-delay: calc(var(--i) * 55ms);
+  font-size: var(--f-fine);
+  font-weight: var(--w-bold);
+  border: 1px solid;
 }
-.rank-moment[data-beat='2'] .rk-ladder i.lit { background: var(--accent); transform: none; }
-.rank-moment[data-beat='2'] .rk-ladder i.here {
-  background: var(--good);
-  box-shadow: 0 0 12px rgb(74 222 128 / 0.5);
-}
-.rank-moment[data-beat='2'] .rk-ladder i.lost {
-  background: color-mix(in oklab, var(--danger) 35%, var(--surface-2));
-  transform: none;
-}
+.rank-moment.up .rk-pill { color: var(--good); border-color: color-mix(in oklab, var(--good) 45%, transparent); }
+.rank-moment.down .rk-pill { color: var(--danger); border-color: color-mix(in oklab, var(--danger) 45%, transparent); }
 
-.rk-blurb {
-  font-size: var(--f-head);
-  color: var(--text);
+.rk-line {
   text-align: center;
-  margin: 0 0 6px;
-}
-.rk-next {
-  font-size: var(--f-small);
   color: var(--muted);
-  text-align: center;
-  margin: 0 0 auto;
-  padding-bottom: 8px;
+  font-size: var(--f-small);
+  margin: 8px 0 0;
+  opacity: 0;
+  transition: opacity 0.4s var(--ease) 0.1s;
 }
+.rank-moment[data-beat='2'] .rk-line { opacity: 1; }
+
+/* The ladder. Top rung first, so the eye lands where you are rather than at the
+   bottom of the list. */
+.rk-ladder {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+  /* Takes the height left between the verdict and the button, and spreads the
+     rungs through it, so the ladder is the screen rather than a list at the top
+     of one. */
+  flex: 1;
+  align-content: space-evenly;
+}
+.rk-rung {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  grid-template-areas: 'mark name need' 'mark bar bar';
+  align-items: center;
+  column-gap: 10px;
+  padding: 4px 0;
+  opacity: 0.42;
+  transition: opacity 0.35s var(--ease);
+  transition-delay: calc(var(--i) * 45ms);
+}
+.rank-moment[data-beat='1'] .rk-rung,
+.rank-moment[data-beat='2'] .rk-rung { opacity: 1; }
+.rk-rung.above { opacity: 0.42; }
+.rank-moment[data-beat='2'] .rk-rung.above { opacity: 0.55; }
+
+.rk-mark { grid-area: mark; display: grid; place-items: center; min-height: 24px; }
+.rk-mark img { display: block; }
+.rk-name { grid-area: name; font-size: var(--f-small); color: var(--muted); }
+.rk-need { grid-area: need; font-size: var(--f-fine); color: var(--faint); font-variant-numeric: tabular-nums; }
+.rk-bar { grid-area: bar; height: 4px; border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; margin-top: 5px; }
+.rk-bar i { display: block; height: 100%; width: 0; background: var(--line); border-radius: inherit; transition: width 0.5s var(--ease); }
+.rank-moment[data-beat='2'] .rk-rung .rk-bar i { width: 100%; }
+
+/* Where you are: named in full, lit, and carrying the score that got you here. */
+.rk-rung.here .rk-name { color: var(--text); font-size: var(--f-head); font-weight: var(--w-bold); }
+.rk-rung.here .rk-need { color: var(--good); font-weight: var(--w-bold); }
+.rank-moment.up .rk-rung.here .rk-bar i { background: var(--good); box-shadow: 0 0 10px rgb(74 222 128 / 0.45); }
+.rank-moment.down .rk-rung.here .rk-bar i { background: var(--accent); }
+.rk-rung.here { position: relative; }
+
+/* The rung you lost. Dashed and marked with what it wants, because it is where
+   you are going back to rather than something that was taken off you. */
+.rk-rung.lost .rk-name { color: var(--danger); }
+.rk-rung.lost .rk-need { color: var(--danger); }
+.rk-rung.lost .rk-bar { background: transparent; border-top: 1px dashed color-mix(in oklab, var(--danger) 55%, transparent); height: 0; margin-top: 7px; }
+.rank-moment[data-beat='2'] .rk-rung.lost .rk-bar i { width: 0; }
+
+.rank-moment #go { margin-top: 18px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .rank-moment .rk-crest,
-  .rank-moment .rk-word,
-  .rank-moment .rk-move,
-  .rk-ladder i { transition: none; }
+  .rk-verdict, .rk-line, .rk-rung, .rk-bar i { transition: none; }
 }
