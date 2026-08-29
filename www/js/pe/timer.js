@@ -8,7 +8,7 @@ import * as store from '../store.js';
 import * as pe from './program.js';
 import * as feats from '../arena/feats.js';
 import * as kegel from '../kegels/program.js';
-import { haptic, beep, fmtClock, fmtMs, notify, askNotifyPermission, escapeHtml, toast } from '../ui.js';
+import { haptic, chime, fmtClock, fmtMs, notify, askNotifyPermission, escapeHtml, toast } from '../ui.js';
 import { scheduleAlarm, cancelAlarm, ensureAlarmPermission, ALARM_SESSION } from '../native.js';
 import { icon } from '../icons.js';
 import { leaveTo } from '../back.js';
@@ -337,7 +337,7 @@ export function renderTimer(mount, opts = {}) {
       if (remaining <= 0 && !doneAt) {
         doneAt = Date.now();
         haptic('level');
-        beep(880, 200);
+        chime('complete');
         notify(`${def().label} done`, `${cfg.minutes} minutes complete.`);
         el.state.textContent = 'done, finish when ready';
         el.player.classList.add('done');

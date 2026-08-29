@@ -324,7 +324,7 @@ function patchTotals(mount, wasDone) {
   const done = due.total > 0 && due.pending.length === 0;
   if (done && !wasDone) {
     haptic('level');
-    chime('win');
+    chime('complete');
     const ring = mount.querySelector('.gh-ring');
     if (ring) celebrate(ring, { count: 20, spread: 74, colour: 'var(--good)' });
   }
@@ -347,7 +347,9 @@ function markCell(mount, habit, key, cell) {
 
   // Only for the direction that earns one: celebrating a miss is a lie.
   const nowOn = !!habits.summary(habit).index.get(key)?.hit;
+  const skipped = !!habits.summary(habit).index.get(key)?.skipped;
   haptic(nowOn ? 'hit' : 'tick');
+  chime(nowOn ? 'mark' : skipped ? 'skip' : 'unmark');
   if (nowOn && !wasOn) {
     next.classList.add('just-on');
     celebrate(next, { count: 8, spread: 26, colour: rowColour(habit) });

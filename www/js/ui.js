@@ -32,63 +32,135 @@ export function haptic(kind) {
   }
 }
 
-let audioCtx = null;
-export function beep(freq = 880, ms = 60) {
-  if (!feedback.sound) return;
-  try {
-    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.frequency.value = freq;
-    osc.type = 'sine';
-    gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.15, audioCtx.currentTime + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + ms / 1000);
-    osc.connect(gain).connect(audioCtx.destination);
-    osc.start();
-    osc.stop(audioCtx.currentTime + ms / 1000 + 0.02);
-  } catch {
-    /* audio is optional */
-  }
+/* ---------------- sound ---------------- */
+// One context and one chain: every voice goes through a master gain into a
+// compressor. Two cues landing together is common (a day closing out is a mark
+// and a win), and without the compressor that pair clips.
+
+let ctx = null;
+let master = null;
+
+function audio() {
+  if (ctx) return ctx;
+  const Ctor = window.AudioContext || window.webkitAudioContext;
+  if (!Ctor) return null;
+  ctx = new Ctor();
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -10;
+  comp.knee.value = 22;
+  comp.ratio.value = 6;
+  comp.attack.value = 0.003;
+  comp.release.value = 0.2;
+  master = ctx.createGain();
+  // Everyday cues land around -15 dBFS and the ceremonies around -7, which is
+  // audible on a phone speaker without being the loudest thing in the room.
+  master.gain.value = 1.7;
+  master.connect(comp).connect(ctx.destination);
+  return ctx;
 }
 
-const NOTES = { c: 261.63, e: 329.63, g: 392.0, a: 440.0, b: 493.88, C: 523.25, E: 659.25, G: 783.99, C2: 1046.5 };
+// A context made before the first gesture starts suspended and swallows the cue
+// silently, so the first tap of a session is mute. Resume on the first touch.
+const wake = () => {
+  if (ctx && ctx.state === 'suspended') ctx.resume();
+};
+for (const ev of ['pointerdown', 'touchstart', 'keydown']) {
+  document.addEventListener(ev, wake, { capture: true, passive: true });
+}
 
-/* ---------------- Arena sound and light ---------------- */
-
-/** One note, fast attack and slow release, so a motif reads as music. */
-function tone(ctx, freq, at, dur, peak = 0.14, type = 'sine') {
+/** One voice. `at` is seconds from now. The filter opens with the note and
+ *  closes over its release, which is what stops a sine reading as a test tone. */
+function voice(freq, at, dur, { peak = 0.12, type = 'sine', glide = 0, bright = 4 } = {}) {
+  const t0 = ctx.currentTime + at;
   const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
   osc.type = type;
-  osc.frequency.setValueAtTime(freq, ctx.currentTime + at);
-  gain.gain.setValueAtTime(0.0001, ctx.currentTime + at);
-  gain.gain.exponentialRampToValueAtTime(peak, ctx.currentTime + at + 0.012);
-  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + at + dur);
-  osc.connect(gain).connect(ctx.destination);
-  osc.start(ctx.currentTime + at);
-  osc.stop(ctx.currentTime + at + dur + 0.02);
+  osc.frequency.setValueAtTime(freq, t0);
+  if (glide) osc.frequency.exponentialRampToValueAtTime(Math.max(40, freq * glide), t0 + dur);
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(Math.min(18000, freq * bright), t0);
+  filter.frequency.exponentialRampToValueAtTime(Math.max(200, freq * 1.15), t0 + dur);
+  filter.Q.value = 0.6;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.exponentialRampToValueAtTime(peak, t0 + 0.008);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  osc.connect(filter).connect(gain).connect(master);
+  osc.start(t0);
+  osc.stop(t0 + dur + 0.03);
 }
 
-/** Motifs: up for a win, down for a loss, a triad for a promotion, a run for a feat. */
-const MOTIFS = {
-  win: [[NOTES.g, 0, 0.16], [NOTES.C, 0.09, 0.3]],
-  loss: [[NOTES.e, 0, 0.18], [NOTES.c, 0.1, 0.34]],
-  promote: [[NOTES.c, 0, 0.2], [NOTES.e, 0.08, 0.2], [NOTES.G, 0.16, 0.42]],
-  relegate: [[NOTES.G, 0, 0.2], [NOTES.e, 0.09, 0.2], [NOTES.c, 0.18, 0.46]],
-  feat: [[NOTES.C, 0, 0.14], [NOTES.E, 0.06, 0.14], [NOTES.G, 0.12, 0.14], [NOTES.C2, 0.18, 0.4]],
-  trophy: [[NOTES.c, 0, 0.18], [NOTES.g, 0.1, 0.18], [NOTES.C, 0.2, 0.18], [NOTES.E, 0.3, 0.18], [NOTES.G, 0.4, 0.7]],
-  tick: [[NOTES.a, 0, 0.06]],
+/** A filtered noise burst: the transient that makes a cue feel struck rather
+ *  than played. Only the big moments get one. */
+function strike(at, dur = 0.14, { peak = 0.16, tone = 1400 } = {}) {
+  const n = Math.max(1, Math.floor(ctx.sampleRate * dur));
+  const buf = ctx.createBuffer(1, n, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / n) ** 2;
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.value = tone;
+  filter.Q.value = 0.8;
+  const gain = ctx.createGain();
+  gain.gain.value = peak;
+  src.connect(filter).connect(gain).connect(master);
+  src.start(ctx.currentTime + at);
+}
+
+const N = {
+  c2: 130.81, g2: 196.0, a2: 220.0,
+  c: 261.63, d: 293.66, e: 329.63, f: 349.23, g: 392.0, a: 440.0, b: 493.88,
+  C: 523.25, D: 587.33, E: 659.25, G: 783.99, A: 880.0, C2: 1046.5, E2: 1318.5,
 };
 
+/* One key throughout, so two cues overlapping are still music. Each entry is
+   notes of [freq, at, dur, opts], plus an optional strike. Peaks are graded:
+   a cell mark is a whisper, a cup is the loudest thing the app does. */
+const CUES = {
+  // the grid
+  tick: { notes: [[N.A, 0, 0.05, { peak: 0.04, bright: 3 }]] },
+  mark: { notes: [[N.E, 0, 0.07, { peak: 0.07 }], [N.A, 0.045, 0.14, { peak: 0.08 }]] },
+  unmark: { notes: [[N.A, 0, 0.06, { peak: 0.05 }], [N.E, 0.04, 0.12, { peak: 0.05 }]] },
+  skip: { notes: [[N.d, 0, 0.1, { peak: 0.05, type: 'triangle', bright: 2 }]] },
+  // sessions
+  go: { notes: [[N.c, 0, 0.12, { peak: 0.1 }], [N.g, 0.07, 0.22, { peak: 0.1 }]] },
+  phase: { notes: [[N.G, 0, 0.12, { peak: 0.09 }]] },
+  rest: { notes: [[N.e, 0, 0.18, { peak: 0.07, bright: 2.5 }]] },
+  complete: { notes: [[N.c, 0, 0.14, { peak: 0.11 }], [N.e, 0.08, 0.14, { peak: 0.11 }], [N.G, 0.16, 0.4, { peak: 0.12 }]] },
+  // the Arena
+  win: { notes: [[N.g, 0, 0.16, { peak: 0.13 }], [N.C, 0.09, 0.34, { peak: 0.14 }]] },
+  loss: { notes: [[N.e, 0, 0.2, { peak: 0.1, bright: 2.5 }], [N.c, 0.1, 0.4, { peak: 0.1, bright: 2 }]] },
+  feat: { notes: [[N.C, 0, 0.12, { peak: 0.1 }], [N.E, 0.06, 0.12, { peak: 0.11 }], [N.G, 0.12, 0.12, { peak: 0.12 }], [N.C2, 0.18, 0.42, { peak: 0.13 }]] },
+  // Promotion is struck: a transient, a triad, and one note left ringing above
+  // it. Relegation is the same shape with no strike and a longer fall, because
+  // a punishing noise is how you get someone to stop opening the app.
+  promote: {
+    strike: [0, 0.16, { peak: 0.18, tone: 1800 }],
+    notes: [[N.c, 0.02, 0.24, { peak: 0.13 }], [N.e, 0.1, 0.24, { peak: 0.13 }], [N.G, 0.18, 0.3, { peak: 0.14 }], [N.C2, 0.3, 0.7, { peak: 0.12, bright: 6 }]],
+  },
+  relegate: {
+    notes: [[N.G, 0, 0.3, { peak: 0.1, bright: 3 }], [N.e, 0.12, 0.34, { peak: 0.1, bright: 2.5 }], [N.c, 0.26, 0.8, { peak: 0.11, bright: 2, glide: 0.94 }]],
+  },
+  trophy: {
+    strike: [0, 0.2, { peak: 0.2, tone: 2200 }],
+    notes: [[N.c, 0.02, 0.2, { peak: 0.13 }], [N.g, 0.12, 0.2, { peak: 0.13 }], [N.C, 0.22, 0.2, { peak: 0.14 }], [N.E, 0.32, 0.2, { peak: 0.14 }], [N.G, 0.42, 0.9, { peak: 0.15 }], [N.C2, 0.42, 0.9, { peak: 0.08, bright: 6 }]],
+  },
+  // Not a scold. Low, short, and over.
+  refuse: { notes: [[N.a2, 0, 0.12, { peak: 0.08, type: 'triangle', bright: 2 }]] },
+};
+
+/** Play a cue by name. Unknown names are silent rather than an error, so a
+ *  screen naming a cue that does not exist yet is not a crash. */
 export function chime(kind) {
-  const motif = MOTIFS[kind];
-  if (!motif || !feedback.sound) return;
+  const cue = CUES[kind];
+  if (!cue || !feedback.sound) return;
   try {
-    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    // A context made before the first gesture starts suspended and swallows the motif.
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    for (const [freq, at, dur] of motif) tone(audioCtx, freq, at, dur);
+    if (!audio()) return;
+    if (ctx.state === 'suspended') ctx.resume();
+    if (cue.strike) strike(cue.strike[0], cue.strike[1], cue.strike[2]);
+    for (const [freq, at, dur, opts] of cue.notes) voice(freq, at, dur, opts);
   } catch {
     /* audio is optional */
   }

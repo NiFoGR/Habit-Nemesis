@@ -7,7 +7,7 @@
 import * as store from '../store.js';
 import * as program from './program.js';
 import * as feats from '../arena/feats.js';
-import { haptic, beep, fmtMs } from '../ui.js';
+import { haptic, chime, fmtMs } from '../ui.js';
 import { icon } from '../icons.js';
 
 const R = 132;
@@ -88,7 +88,7 @@ export function startSession(mount, opts, onFinish) {
 
   navigator.wakeLock?.request('screen').then((w) => (wakeLock = w)).catch(() => {});
 
-  // No local gate: haptic and beep read the switches themselves, so changing one
+  // No local gate: haptic and chime read the switches themselves, so changing one
   // mid-session takes effect now.
 
   function setRing(pct, cls) {
@@ -164,14 +164,14 @@ export function startSession(mount, opts, onFinish) {
         phase = 'timed';
         t0 = performance.now();
         haptic('go');
-        beep(880);
+        chime('go');
       } else {
         phase = 'await';
         t0 = performance.now();
         el.coreBig.textContent = '';
         el.coreSmall.textContent = 'press & hold';
         haptic('go');
-        beep(880);
+        chime('go');
       }
       return;
     }
@@ -248,7 +248,7 @@ export function startSession(mount, opts, onFinish) {
       el.coreSmall.textContent = p >= 1 ? 'strong, ease off when you fade' : `of ${(target / 1000).toFixed(0)}s`;
       if (p >= 1 && p < 1.03) {
         haptic('hit');
-        beep(1320, 80);
+        chime('phase');
       }
       const limit = step.kind === 'max' ? 120000 : target * OVERHOLD_LIMIT;
       if (held >= limit) release();
