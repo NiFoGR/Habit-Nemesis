@@ -43,7 +43,7 @@ function opening(mount, st) {
       <section class="mo-head">
         <p class="eyebrow">The cup</p>
         <h1 class="mo-title">${escapeHtml(st.arc.name)}</h1>
-        <p class="mo-sub">${st.season.length} weeks. ${rivals.length + 1} of you. Three go through.</p>
+        <p class="mo-sub">${st.season.length} weeks. ${rivals.length + 1} of you.</p>
       </section>
 
       <div class="mo-deal">
@@ -106,12 +106,10 @@ function ceremony(mount, st) {
       <section class="mo-head cup" id="hero">
         <span class="mo-cup">${cup(st.arc.id, 132)}</span>
         <p class="eyebrow">Champion</p>
-        <h1 class="mo-title">${escapeHtml(st.trophy)}</h1>
-        <p class="mo-sub">${escapeHtml(arena.arcLabel(st.arc))}</p>
+        <h1 class="mo-title">${escapeHtml(arena.arcLabel(st.arc))}</h1>
       </section>
 
       <section class="card note-ask" id="noteAsk">
-        <h2>Engrave it</h2>
         <input type="text" id="noteText" maxlength="${arena.MAX_NOTE}" autocomplete="off"
           placeholder="Nobody gave me this." value="${escapeHtml(existing)}">
         <button class="btn" id="noteSave">${existing ? 'Change it' : 'Engrave it'}</button>

@@ -104,11 +104,7 @@ function weekCard() {
   const left = arena.daysLeftInWeek();
   const gap = live.score - opp.score;
   const state = live.void ? 'void' : gap > 0 ? 'ahead' : gap < 0 ? 'behind' : 'level';
-  const verdict = live.void
-    ? 'Not a fixture yet'
-    : state === 'level'
-      ? 'Level'
-      : `${state === 'ahead' ? 'Ahead' : 'Behind'} by ${pct(Math.abs(gap))}`;
+  const verdict = live.void ? 'Not a fixture yet' : state === 'level' ? 'Level' : state === 'ahead' ? 'Ahead' : 'Behind';
 
   const rows = live.rows
     .map((r) => {
@@ -142,7 +138,6 @@ function weekCard() {
     </div>
     ${race(live.score, opp.score)}
     <p class="ar-verdict"><b>${escapeHtml(verdict)}</b><i>${left === 1 ? 'Last day' : `${left} days left`}</i></p>
-    <p class="muted small ar-oppline">${live.void ? 'Not enough owed yet to be a match.' : escapeHtml(opp.blurb)}</p>
 
     <div class="ar-rows">${rows || '<p class="muted small">Nothing is due this week yet.</p>'}</div>
   </section>`;
@@ -343,10 +338,7 @@ export function renderArena(mount) {
         ${st.month.empty
           ? `<p class="ar-monthline">${st.placed ? 'nothing scored this month yet' : 'placement month'}</p>`
           : `${barTo(st)}
-             <p class="ar-monthline">
-               <b>${st.month.w}W–${st.month.l}L</b>
-               · ${arena.weeksLeft()} week${arena.weeksLeft() === 1 ? '' : 's'} left
-             </p>`}`}
+             <p class="ar-monthline"><b>${st.month.w}W–${st.month.l}L</b></p>`}`}
       </section>
 
       ${weekCard()}
@@ -466,6 +458,6 @@ function featTile(f) {
       ? '<i class="ft-tick">' + icon('check', 12) + '</i>'
       : f.need
         ? `<span class="ft-bar"><i style="width:${(f.frac * 100).toFixed(0)}%"></i></span>`
-        : '<i class="ft-locked">—</i>'}
+        : '<i class="ft-locked">·</i>'}
   </button>`;
 }

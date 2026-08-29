@@ -36,8 +36,6 @@ function readWeek(key) {
   const now = arena.scoreWeek(key);
   const sums = new Map(arena.rosterFor(key).map((h) => [h.id, habits.summary(h)]));
   const shape = arena.weekShape(key);
-  // Today is not over, so it is neither the best day nor the quietest.
-  const past = shape.filter((d) => !d.future && d.key !== habits.today());
   const played = arena.playedWeeks().filter((p) => p.key !== key);
   const prev = arena.weekScore(arena.prevWeek(key));
   const from = arena.weekStart(key);
@@ -55,8 +53,6 @@ function readWeek(key) {
     due: live ? now.due : saved.due,
     rows,
     shape,
-    best: past.length ? past.reduce((a, d) => (d.done > a.done ? d : a)) : null,
-    quiet: past.length ? past.reduce((a, d) => (d.done < a.done ? d : a)) : null,
     average: played.length ? played.reduce((a, p) => a + p.score, 0) / played.length : null,
     prev: prev.void || !prev.due ? null : prev,
     alive: habits.active().map((h) => habits.summary(h)).filter((s) => s?.streak).sort((a, b) => b.streak - a.streak),
@@ -92,7 +88,7 @@ function daysBeat(w) {
   const top = Math.max(1, ...w.shape.map((d) => d.done));
   const today = habits.today();
   const bars = w.shape.map((d, i) => {
-    const state = `${d.future ? 'future' : d.done === top ? 'top' : d.done ? '' : 'none'}${d.key === today ? ' today' : ''}`;
+    const state = `${d.future ? 'future' : d.done === top ? 'top' : d.done ? '' : 'none'}${d.key === today ? ' now' : ''}`;
     return `<span class="rv-day ${state}" style="--h:${Math.round((d.done / top) * 100)}%;--i:${i}">
       <i class="rv-bar"></i>
       <em>${d.done || ''}</em>
@@ -100,19 +96,12 @@ function daysBeat(w) {
     </span>`;
   }).join('');
 
-  const flat = !w.best || w.best.done === w.quiet.done;
   return `
     <p class="eyebrow">The days</p>
-    <div class="rv-days">${bars}</div>
-    ${flat
-      ? `<p class="rv-note">Every day the same${w.best ? `: ${w.best.done} done` : ''}.</p>`
-      : `<div class="rv-kv"><span>Best day</span><b>${weekday(w.best.key)} · ${w.best.done}</b></div>
-         <div class="rv-kv"><span>Quietest</span><b>${weekday(w.quiet.key)} · ${w.quiet.done}</b></div>`}`;
+    <div class="rv-days">${bars}</div>`;
 }
 
 function rowsBeat(w) {
-  const carried = w.rows[0];
-  const cost = w.rows[w.rows.length - 1];
   const list = w.rows.map((r, i) => {
     const colour = r.colour ? habits.hexOf(r.colour) : 'var(--accent)';
     return `<li style="--c:${colour};--w:${Math.round((r.done / r.due) * 100)}%;--i:${i}">
@@ -126,10 +115,6 @@ function rowsBeat(w) {
   return `
     <p class="eyebrow">The rows</p>
     <ul class="rv-rows">${list}</ul>
-    ${carried && cost && carried.id !== cost.id && cost.done < cost.due
-      ? `<div class="rv-kv"><span>Carried it</span><b>${escapeHtml(carried.name)}</b></div>
-         <div class="rv-kv"><span>Cost you</span><b class="down">${escapeHtml(cost.name)}</b></div>`
-      : ''}
     ${longest
       ? `<div class="rv-kv"><span>Streaks alive</span><b>${w.alive.length} · ${escapeHtml(longest.habit.name)} at ${longest.streak}</b></div>`
       : ''}
@@ -154,7 +139,7 @@ function verdictBeat(w) {
     const ahead = w.score >= opp.score;
     const need = Math.max(0, Math.ceil(opp.score * w.due) - w.done);
     const stake = ahead
-      ? `Ahead by ${points(w.score - opp.score)} with a day to play.`
+      ? 'One day left to drop it.'
       : need <= w.open
         ? `${need} of today's ${w.open} beats him.`
         : need <= w.owed
@@ -176,7 +161,6 @@ function verdictBeat(w) {
   return `
     <p class="eyebrow">The verdict</p>
     <h1 class="rv-title ${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${escapeHtml(head)}</h1>
-    <p class="rv-sub">${pct(w.score)} is the number to beat.</p>
     ${featBlock}`;
 }
 
@@ -204,7 +188,7 @@ function empty(mount) {
     <div class="screen rv">
       <p class="eyebrow">The week in review</p>
       <h1 class="rv-title">Not yet</h1>
-      <p class="rv-sub">A week needs a few days in it before it is worth reviewing. Come back Sunday.</p>
+      <p class="rv-sub">Come back Sunday.</p>
       <button class="btn primary big" data-back>Back to the grid</button>
     </div>`;
 }

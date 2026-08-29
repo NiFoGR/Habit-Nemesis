@@ -2,7 +2,6 @@
 // round; one sliding line for a feat, so the grid is not interrupted.
 // Both announced once.
 
-import * as store from '../store.js';
 import * as arena from './program.js';
 import * as feats from './feats.js';
 import { captureFace, face, faceAvatar } from './face.js';
@@ -125,11 +124,11 @@ function drawFull(mount, res, fresh) {
               <span class="vs">${icon('versus', 18)}</span>
               <span class="them"><b>${pct(res.week.oppScore)}</b><i>${escapeHtml(res.week.oppName || 'The Standard')}</i></span>
             </div>
-            <p class="muted small">${res.week.done} of ${res.week.due} cells${
+            <p class="muted small">${
               // Only if this week was the knockout. The arc block below reports
               // a round played in an earlier unseen week, and stamping its name
               // on this week's headline said the wrong week had been the final.
-              res.arc?.week === res.key ? ` · ${escapeHtml(arena.KNOCKOUT[res.arc.round]?.name || 'Knockout')}` : ''
+              res.arc?.week === res.key ? escapeHtml(arena.KNOCKOUT[res.arc.round]?.name || 'Knockout') : ''
             }</p>
           </section>`
         : ''}
@@ -193,7 +192,7 @@ function noteBlock(key) {
         <b>${has ? 'Put this week on him' : 'Give him a face'}</b>
         <i class="muted small">He is you at your best. He may as well look like it.</i>
       </div>
-      <button class="btn small" id="faceGo">${has ? 'Retake' : 'Take one'}</button>
+      <button class="btn small-btn" id="faceGo">${has ? 'Retake' : 'Take one'}</button>
     </div>
 
     <label class="fine" for="noteText">And a line for whoever has to beat it. That will be you.</label>

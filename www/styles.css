@@ -1669,7 +1669,7 @@ body.blacked .br-orb { opacity: 0.09; }
 .habit-hero p { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 .habit-hero .ico { width: 14px; height: 14px; }
 
-.screen-head .btn.small-btn { padding: 10px 15px; font-size: var(--f-small); margin-top: 0; }
+.btn.small-btn { width: auto; padding: 10px 15px; font-size: var(--f-small); margin-top: 0; }
 
 /* A native select, because five options want the platform picker on a phone,
    but dressed as one of the app's pills rather than left as a platform control:
@@ -1943,6 +1943,7 @@ body.blacked .br-orb { opacity: 0.09; }
 .ar-side.them:active { background: var(--surface); transform: scale(0.98); }
 .ar-vs { display: grid; place-items: center; color: var(--faint); flex: 0 0 30px; }
 .ar-week.ahead .ar-side.me b { color: var(--good); }
+.ar-week.behind .ar-side.me b { color: var(--warn); }
 /* Not a fixture yet. Neither side is winning, so neither is coloured. */
 .ar-week.void .ar-side b, .ar-week.void .ar-verdict b { color: var(--muted); }
 .ar-week.behind .ar-side.them b { color: var(--danger); }
@@ -1959,7 +1960,6 @@ body.blacked .br-orb { opacity: 0.09; }
 .ar-verdict i { font-style: normal; color: var(--muted); font-size: var(--f-fine); }
 .ar-week.ahead .ar-verdict b { color: var(--good); }
 .ar-week.behind .ar-verdict b { color: var(--warn); }
-.ar-oppline { margin-bottom: 0; }
 
 /* The same rows as the grid, in the same order, so the eye can map one onto
    the other. What is new is the fraction. */
@@ -2106,6 +2106,8 @@ body.blacked .br-orb { opacity: 0.09; }
 .rs-score b { display: block; font-size: var(--f-hero); letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
 .rs-score i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); margin-top: 5px; }
 .rs-score .me b { color: var(--accent); }
+.rs-hero.won .rs-score .me b { color: var(--good); }
+.rs-hero.lost .rs-score .me b { color: var(--danger); }
 .rs-score .them b { color: var(--muted); }
 .rs-score .vs { color: var(--faint); }
 
@@ -2704,6 +2706,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 /* Where you are: named in full, lit, and carrying the score that got you here. */
 .rk-rung.here .rk-name { color: var(--text); font-size: var(--f-head); font-weight: var(--w-bold); }
 .rk-rung.here .rk-need { color: var(--good); font-weight: var(--w-bold); }
+.rank-moment.down .rk-rung.here .rk-need { color: var(--danger); }
 .rank-moment.up .rk-rung.here .rk-bar i { background: var(--good); box-shadow: 0 0 10px rgb(74 222 128 / 0.45); }
 .rank-moment.down .rk-rung.here .rk-bar i { background: var(--accent); }
 .rk-rung.here { position: relative; }
@@ -2806,9 +2809,10 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 /* Seven columns, counts not percentages: a four-a-week habit missing on a
    Tuesday is not a miss, so a per-day score would lie about the day. */
 .rv-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: end; height: 132px; margin: 18px 0 16px; }
-.rv-day { display: flex; flex-direction: column; justify-content: flex-end; height: 100%; gap: 5px; }
+.rv-day { display: grid; grid-template-rows: 1fr auto auto; height: 100%; gap: 5px; }
 .rv-bar {
   height: var(--h);
+  align-self: end;
   min-height: 3px;
   border-radius: var(--radius-sm);
   background: var(--surface-2);
@@ -2820,10 +2824,11 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .rv-day.none .rv-bar { background: var(--line-soft); }
 .rv-day.future { opacity: 0.35; }
 .rv-day em { font-size: var(--f-micro); color: var(--muted); font-style: normal; height: 10px; }
-.rv-day u { font-size: var(--f-micro); color: var(--faint); text-decoration: none; }
+.rv-day u { position: relative; font-size: var(--f-micro); color: var(--faint); text-decoration: none; }
 .rv-day.top em { color: var(--accent); font-weight: var(--w-bold); }
-/* A dot under today: the day is not over, which is why its bar is short. */
-.rv-day.today u::after { content: ''; display: block; width: 3px; height: 3px; border-radius: 50%; background: var(--accent); margin: 3px auto 0; }
+/* A dot under today: the day is not over, which is why its bar is short.
+   Called "now": .today is the hub card and a column wearing it took a border. */
+.rv-day.now u::after { content: ''; position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); width: 3px; height: 3px; border-radius: 50%; background: var(--accent); }
 @keyframes rv-grow { from { transform: scaleY(0); } }
 
 /* Every row, best first, each bar in the colour you gave it. */

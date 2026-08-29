@@ -1,23 +1,16 @@
 // The month settles: you go up, or you go down.
 //
-// It used to be a card inside the week result. It is the biggest thing that
-// happens in this app in any given month, so it gets the screen.
+// The whole ladder, every division with the number it costs and the badge on
+// the one you are on. Relegation marks the division you lost as a target:
+// dashed, with an arrow back at it.
 //
-// The whole ladder is on it, every rung named with what it costs, and the badge
-// travels between two of them. That is the one layout that answers all three
-// questions at once: where you were, where you are, and what is above you.
-//
-// Relegation marks the rung you lost as a target rather than a wound: dashed,
-// with the number it wants and an arrow pointing back at it.
-//
-// Marked seen on the way OUT, like the other ceremonies: marking as it draws
-// makes the screen eat what put it there, and a reload loses it for good.
+// Marked seen on the way OUT: marking as it draws makes the screen eat what
+// put it there, and a reload loses it for good.
 
 import * as store from '../store.js';
 import * as arena from './program.js';
 import { escapeHtml, chime, celebrate, haptic } from '../ui.js';
 import { crest } from './crest.js';
-import { icon } from '../icons.js';
 import { navigate, replaceWith } from '../back.js';
 
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
