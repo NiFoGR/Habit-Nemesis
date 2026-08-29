@@ -36,6 +36,7 @@ import { renderYear } from './arena/year.js';
 import { renderResult, collect, hasResults, leaveResult } from './arena/result.js';
 import { renderMoment, hasMoment, leaveMoment } from './arena/moment.js';
 import { renderRank, hasRank, leaveRank } from './arena/rank.js';
+import { renderWeekReview } from './arena/review.js';
 import { renderBreatheHome, renderBreatheSettings } from './breathe/home.js';
 import { startBreathe } from './breathe/session.js';
 import * as breatheProgram from './breathe/program.js';
@@ -129,6 +130,7 @@ const ROUTES = {
   '#/arena/result': () => renderResult(app),
   '#/arena/moment': () => renderMoment(app),
   '#/arena/rank': () => renderRank(app),
+  '#/arena/review': () => renderWeekReview(app),
   '#/cabinet': () => renderCabinet(app),
   '#/cabinet/feats': () => renderFeats(app),
   '#/cabinet/year': (params) => renderYear(app, params.get('y')),
@@ -217,7 +219,7 @@ document.addEventListener('click', (e) => {
 });
 
 // Never left on the back stack: these start on arrival.
-const EPHEMERAL = ['#/session', '#/bible/pray', '#/pe/timer', '#/pe/measure', '#/pocket', '#/breathe/run', '#/habits/edit', '#/arena/result', '#/arena/rank', '#/arena/moment', '#/intro'];
+const EPHEMERAL = ['#/session', '#/bible/pray', '#/pe/timer', '#/pe/measure', '#/pocket', '#/breathe/run', '#/habits/edit', '#/arena/result', '#/arena/rank', '#/arena/moment', '#/arena/review', '#/intro'];
 
 // One restore point a day, before anything can write over the day's record.
 store.snapshot();

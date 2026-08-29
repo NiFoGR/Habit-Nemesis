@@ -527,6 +527,22 @@ export function summary(habit) {
   return out;
 }
 
+/** Streaks that ended inside a window, longest first: what broke that week.
+ *  The live run is left out, since it has not broken. */
+export function brokenIn(from, to) {
+  const floor = store.addDays(today(), -1);
+  const out = [];
+  for (const h of active()) {
+    const sum = summary(h);
+    if (!sum) continue;
+    for (const st of sum.streaks) {
+      if (st.to >= floor || st.to < from || st.to > to || st.len < 3) continue;
+      out.push({ habit: h, len: st.len, to: st.to });
+    }
+  }
+  return out.sort((a, b) => b.len - a.len);
+}
+
 /** The score `back` days ago, for the overview deltas. */
 export function scoreAgo(sum, back) {
   const key = store.addDays(today(), -back);

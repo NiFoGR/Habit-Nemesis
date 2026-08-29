@@ -192,6 +192,20 @@ function addStarter(mount, i) {
   redraw(mount);
 }
 
+/** The one card on the grid that is not a habit. Sunday, and the two days after
+ *  it in case Sunday was missed. */
+function reviewCta() {
+  if (!arena.reviewDue()) return '';
+  const key = arena.reviewWeek();
+  return `<a class="rv-cta" href="#/arena/review">
+    <span class="rv-cta-ico">${icon('chart', 18)}</span>
+    <span class="rv-cta-text">
+      <b>The week in review</b>
+      <i>${key === arena.currentWeek() ? 'Sunday. One day left.' : escapeHtml(arena.weekLabel(key))}</i>
+    </span>
+  </a>`;
+}
+
 export function renderHome(mount) {
   reorderMode = false;
   redraw(mount);
@@ -245,6 +259,8 @@ function redraw(mount) {
           <a class="icon-btn linkbtn" href="#/settings" aria-label="Settings">${icon('settings')}</a>
         </div>
       </header>
+
+      ${reviewCta()}
 
       <div class="hg-tools">
         <button class="chipbtn ${reorderMode ? 'on' : ''}" id="reorderBtn">${icon('reorder', 15)}<span>${reorderMode ? 'Done' : 'Reorder'}</span></button>

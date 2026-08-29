@@ -24,8 +24,8 @@
 
   /* ---- type ----
      Seven sizes, and every size in the app is one of them. */
-  /* Above display, for two things only: the division, and the two scores
-     of the week you are playing. */
+  /* Above display, for three things: the division, the two scores of the week
+     you are playing, and the review's count. */
   --f-hero: 2.3rem;
   --f-display: 1.75rem;
   --f-title: 1.3rem;
@@ -193,6 +193,7 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
   cursor: pointer;
   margin-top: 8px;
 }
+a.btn { text-decoration: none; }
 .btn:active { transform: scale(0.99); }
 .btn:has(.ico) { display: flex; align-items: center; justify-content: center; gap: 9px; }
 .btn.primary { background: var(--accent); color: #04121a; border: 0; font-weight: 700; }
@@ -2749,3 +2750,131 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .restore h4 { margin: 0 0 4px; font-size: var(--f-small); color: var(--text); }
 .restore .fineprint { margin: 0 0 8px; }
 .restore .set-actions { margin-bottom: 8px; }
+
+/* ---------- the week in review ----------
+   Five beats, one tap apart, each one filling the screen. Every beat is one
+   number and the shape behind it, so nothing here is read, only glanced at. */
+.screen.rv {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - var(--safe-t) - var(--safe-b));
+  padding-top: calc(var(--safe-t) + 22px);
+}
+.rv-dots { display: flex; gap: 5px; justify-content: center; margin-bottom: 4px; }
+.rv-dots i { width: 22px; height: 3px; border-radius: var(--radius-pill); background: var(--line); }
+.rv-dots i.on { background: var(--accent); }
+
+.rv-body { flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+.rv-body > * { animation: rv-in 0.34s var(--ease) both; }
+.rv-body > :nth-child(2) { animation-delay: 60ms; }
+.rv-body > :nth-child(3) { animation-delay: 120ms; }
+.rv-body > :nth-child(4) { animation-delay: 180ms; }
+.rv-body > :nth-child(5) { animation-delay: 240ms; }
+@keyframes rv-in { from { opacity: 0; transform: translateY(10px); } }
+
+.rv-title { font-size: var(--f-display); line-height: 1.1; letter-spacing: -0.03em; margin: 0 0 8px; }
+.rv-title.up { color: var(--good); }
+.rv-title.down { color: var(--warn); }
+.rv-sub { color: var(--muted); font-size: var(--f-small); margin: 0; }
+.rv-note { color: var(--faint); font-size: var(--f-fine); margin: 10px 0 0; }
+.rv .up { color: var(--good); }
+.rv .down { color: var(--warn); }
+
+.rv-big {
+  display: block;
+  font-size: var(--f-hero);
+  font-weight: var(--w-bold);
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  margin: 2px 0 4px;
+}
+
+/* The score against your average, so the number is read against something. */
+.rv-gauge { position: relative; height: 8px; border-radius: var(--radius-pill); background: var(--surface-2); margin: 18px 40px 0; }
+.rv-gauge i { display: block; height: 100%; width: var(--w); background: var(--accent); border-radius: inherit; animation: rv-fill 0.9s var(--ease) both; }
+.rv-gauge u { position: absolute; top: -4px; bottom: -4px; left: var(--avg); width: 2px; background: var(--text); opacity: 0.5; }
+
+/* Seven columns, counts not percentages: a four-a-week habit missing on a
+   Tuesday is not a miss, so a per-day score would lie about the day. */
+.rv-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: end; height: 132px; margin: 18px 0 16px; }
+.rv-day { display: flex; flex-direction: column; justify-content: flex-end; height: 100%; gap: 5px; }
+.rv-bar {
+  height: var(--h);
+  min-height: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  transform-origin: bottom;
+  animation: rv-grow 0.4s var(--ease) both;
+  animation-delay: calc(var(--i) * 45ms);
+}
+.rv-day.top .rv-bar { background: var(--accent); }
+.rv-day.none .rv-bar { background: var(--line-soft); }
+.rv-day.future { opacity: 0.35; }
+.rv-day em { font-size: var(--f-micro); color: var(--muted); font-style: normal; height: 10px; }
+.rv-day u { font-size: var(--f-micro); color: var(--faint); text-decoration: none; }
+.rv-day.top em { color: var(--accent); font-weight: var(--w-bold); }
+/* A dot under today: the day is not over, which is why its bar is short. */
+.rv-day.today u::after { content: ''; display: block; width: 3px; height: 3px; border-radius: 50%; background: var(--accent); margin: 3px auto 0; }
+@keyframes rv-grow { from { transform: scaleY(0); } }
+
+/* Every row, best first, each bar in the colour you gave it. */
+.rv-rows { list-style: none; margin: 14px 0 4px; padding: 0; display: grid; gap: 7px; }
+.rv-rows li { display: grid; grid-template-columns: 1fr 84px auto; align-items: center; gap: 10px; text-align: left; }
+.rv-rname { font-size: var(--f-small); color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rv-rbar { height: 5px; border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; }
+.rv-rbar i {
+  display: block;
+  height: 100%;
+  width: var(--w);
+  background: var(--c);
+  border-radius: inherit;
+  animation: rv-fill 0.45s var(--ease) both;
+  animation-delay: calc(var(--i) * 35ms);
+}
+.rv-rows b { font-size: var(--f-fine); color: var(--muted); font-variant-numeric: tabular-nums; }
+@keyframes rv-fill { from { width: 0; } }
+
+.rv-kv { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line-soft); text-align: left; }
+.rv-kv span { color: var(--muted); font-size: var(--f-fine); }
+.rv-kv b { font-size: var(--f-small); }
+
+/* The stake. Two numbers on one line, because the gap is the point. */
+.rv-vs { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 8px 0 12px; }
+.rv-vs span { display: grid; gap: 2px; }
+.rv-vs b { font-size: var(--f-display); font-variant-numeric: tabular-nums; }
+.rv-vs i { font-size: var(--f-fine); color: var(--muted); font-style: normal; }
+.rv-versus { color: var(--faint); }
+.rv-stake { font-size: var(--f-head); font-weight: var(--w-medium); margin: 0; }
+.rv-stake.up { color: var(--good); }
+.rv-stake.down { color: var(--muted); }
+
+.rv-feats { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 16px; }
+.rv-feat {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: var(--radius-pill);
+  background: var(--surface); border: 1px solid var(--line);
+  font-size: var(--f-fine); color: var(--warn);
+}
+.rv-feat.more { color: var(--muted); text-decoration: none; }
+
+.screen.rv .btn.primary { margin-top: 20px; }
+
+/* The way in, on the grid. */
+.rv-cta {
+  display: flex; align-items: center; gap: 11px;
+  margin-top: 12px; padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid color-mix(in oklab, var(--accent) 35%, var(--line));
+  color: var(--text);
+}
+.rv-cta:active { transform: scale(0.99); }
+.rv-cta, .rv-cta b, .rv-cta i { text-decoration: none; }
+.rv-cta-ico { color: var(--accent); display: grid; place-items: center; }
+.rv-cta-text { display: grid; gap: 1px; }
+.rv-cta-text b { font-size: var(--f-small); }
+.rv-cta-text i { font-size: var(--f-fine); color: var(--muted); font-style: normal; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rv-body > *, .rv-bar, .rv-rbar i, .rv-gauge i { animation: none; }
+}

@@ -192,6 +192,47 @@ is('every third day owes two in a week', week(1, 3, 'X__X__X'), [2, 2]);
 is('ten in thirty owes two in a week', week(10, 30, 'X_X____'), [2, 2]);
 is('a daily habit still owes every day', week(1, 1, 'XXXXX__'), [5, 7]);
 
+/* ------------------ the week in review ------------------ */
+
+group('the review');
+{
+  const habits = await import('../www/js/habits/program.js');
+  const back = (n) => st.addDays(st.dayKey(), -n);
+  const run = (from, len) => Object.fromEntries(Array.from({ length: len }, (_, i) => [back(from - i), 1]));
+
+  st.update((s) => {
+    s.habits.settings.showLinked = false;
+    s.habits.items = [habit('h_a', 'A'), habit('h_b', 'B')];
+    const d = a.weekDays('2026-W20');
+    s.habits.entries = {
+      h_a: { [d[0]]: 1, [d[1]]: 1, [d[2]]: 0, [d[3]]: 1, [d[4]]: 1, [d[5]]: 1, [d[6]]: 1 },
+      h_b: { [d[0]]: 1, [d[1]]: -1 },
+    };
+  });
+  const shape = a.weekShape('2026-W20');
+  is('a shape is seven days', shape.length, 7);
+  is('counting what was done, not what was owed', shape.map((x) => x.done), [2, 1, 0, 1, 1, 1, 1]);
+  is('a skip is held apart from a miss', shape.map((x) => x.skipped), [0, 1, 0, 0, 0, 0, 0]);
+  is('and a week gone by holds no future', shape.filter((x) => x.future).length, 0);
+
+  const cur = a.currentWeek();
+  is('the review is this week on its last day, the one gone after that',
+    a.reviewWeek(), st.dayKey() === a.weekEnd(cur) ? cur : a.prevWeek(cur));
+  a.markReviewed(a.reviewWeek());
+  is('marking it means it is not offered again', a.reviewDue(), false);
+  a.markReviewed('2020-W01');
+  is('and the mark never moves backwards', st.get().arena.reviewed, a.reviewWeek());
+
+  // A run of eight that ended a fortnight ago, and one still going.
+  st.update((s) => {
+    s.habits.items = [habit('h_old', 'Old'), habit('h_live', 'Live')];
+    s.habits.entries = { h_old: run(20, 8), h_live: run(6, 7) };
+  });
+  is('a streak that ended inside the window is what broke',
+    habits.brokenIn(back(16), back(10)).map((b) => [b.habit.name, b.len]), [['Old', 8]]);
+  is('a live streak has not broken', habits.brokenIn(back(6), back(0)).length, 0);
+}
+
 /* ----- the public feats with real logic -----
    Streak counts and run lengths are the same shape of arithmetic as the week
    maths above, and just as unreadable off a screen. Seeded relative to today,

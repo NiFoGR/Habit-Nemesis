@@ -151,6 +151,24 @@ export function scoreWeek(key) {
   return { key, done, due, days: days.size, score: due ? done / due : 0, void: due < VOID_CELLS || days.size < VOID_DAYS, rows };
 }
 
+/** What each day of the week held: how many of the roster you actually did.
+ *  A count, not a score. A four-a-week habit not done on Tuesday is not a miss,
+ *  so a per-day percentage would lie about the day. */
+export function weekShape(key) {
+  const today = habits.today();
+  const sums = rosterFor(key).map((h) => habits.summary(h)).filter(Boolean);
+  return weekDays(key).map((d) => {
+    let done = 0;
+    let skipped = 0;
+    for (const s of sums) {
+      const cell = s.index.get(d);
+      if (cell?.skipped) skipped++;
+      else if (cell?.hit) done++;
+    }
+    return { key: d, done, skipped, of: sums.length, future: d > today };
+  });
+}
+
 /** Stored wins over live: a closed week is a fact, not a view. */
 export function weekScore(key) {
   const saved = store.get().arena.weeks[key];
@@ -1016,6 +1034,29 @@ export function unseenResults() {
   const arc = arcWeek ? { round: arcWeek[1].arc, won: arcWeek[1].result === 'won', week: arcWeek[0] } : null;
 
   return { key, week, month, arc };
+}
+
+/* ---------------------- the review ---------------------- */
+
+/** The week the review is about: this one on its last day, the one just gone
+ *  after that. Sunday reviews a week you can still change. */
+export function reviewWeek() {
+  const cur = currentWeek();
+  return habits.today() === weekEnd(cur) ? cur : prevWeek(cur);
+}
+
+/** Offered on Sunday, and for two days after in case Sunday was missed. */
+export function reviewDue() {
+  const key = reviewWeek();
+  if (store.get().arena.reviewed >= key) return false;
+  if (weekDays(currentWeek()).indexOf(habits.today()) > 1 && key !== currentWeek()) return false;
+  return !scoreWeek(key).void;
+}
+
+export function markReviewed(key) {
+  store.update((st) => {
+    if (key > st.arena.reviewed) st.arena.reviewed = key;
+  });
 }
 
 export function markSeen(key) {

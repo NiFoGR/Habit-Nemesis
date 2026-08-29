@@ -150,6 +150,7 @@ function blank() {
       scoring: 0,
       seenWeek: '', // the last closed week whose result screen was shown
       seenMonth: '', // the last month whose promotion or relegation was shown
+      reviewed: '', // the last week whose review was opened
       backfilled: false, // the one-time sweep that gives the Arena a history
       // Your face, taken on the week that became your best. { src, week, at }
       face: null,
@@ -564,6 +565,7 @@ function cleanArena(sa, base) {
     scoring: int(src.scoring, 0, 1000, 0),
     seenWeek: /^\d{4}-W\d{2}$/.test(src.seenWeek) ? src.seenWeek : '',
     seenMonth: /^\d{4}-\d{2}$/.test(src.seenMonth) ? src.seenMonth : '',
+    reviewed: /^\d{4}-W\d{2}$/.test(src.reviewed) ? src.reviewed : '',
     backfilled: bool(src.backfilled),
   };
 }
