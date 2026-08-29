@@ -99,10 +99,10 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
         ${h.kind === 'number'
           ? `<section class="card">
               <div class="h-row">${icon('chart', 16)}<h2>The measurement</h2></div>
-              <div class="field">
-                <label for="unit"><b>Unit</b> <em>What you are counting</em></label>
-                <input type="text" id="unit" maxlength="20" placeholder="e.g. Liters, pages, kcal" value="${escapeHtml(h.unit)}">
-              </div>
+              <label class="setting">
+                <span><b>Unit</b><i>What you count.</i></span>
+                <input type="text" id="unit" maxlength="20" placeholder="litres" value="${escapeHtml(h.unit)}">
+              </label>
               <label class="setting">
                 <span><b>Target</b><i>A day counts when it reaches this.</i></span>
                 <input type="number" id="target" inputmode="decimal" step="any" min="0" value="${h.target}">

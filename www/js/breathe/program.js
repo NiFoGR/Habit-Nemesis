@@ -21,7 +21,7 @@ export const PATTERNS = {
     inMs: 4000,
     holdMs: 0,
     outMs: 8000,
-    blurb: 'Twice as long out as in. The strongest of the three for coming down, and the easiest to hold for five minutes without thinking about it.',
+    blurb: 'Twice as long out as in. The strongest of the three for coming down.',
   },
   coherent: {
     id: 'coherent',
@@ -30,7 +30,7 @@ export const PATTERNS = {
     inMs: 5500,
     holdMs: 0,
     outMs: 5500,
-    blurb: 'Even breaths, about six a minute. Heart rate rises and falls in step with the breath, which is where heart-rate variability peaks.',
+    blurb: 'Even breaths, about six a minute. Where heart-rate variability peaks.',
   },
   '478': {
     id: '478',
@@ -39,7 +39,7 @@ export const PATTERNS = {
     inMs: 4000,
     holdMs: 7000,
     outMs: 8000,
-    blurb: 'Weil’s pattern. The held breath settles some people and makes others tense, so try it a few times before you commit to it.',
+    blurb: 'Weil’s pattern. The held breath settles some people and tenses others.',
   },
 };
 

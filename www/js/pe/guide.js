@@ -96,7 +96,7 @@ export function renderPeSettings(mount) {
       <section class="card">
         <div class="h-row">${icon('ruler', 16)}<h2>Measuring</h2></div>
         <label class="setting">
-          <span><b>Units</b><i>Every length and girth in the app.</i></span>
+          <span><b>Units</b></span>
           <select id="units">
             <option value="cm" ${s.units === 'cm' ? 'selected' : ''}>cm</option>
             <option value="in" ${s.units === 'in' ? 'selected' : ''}>inches</option>
@@ -132,15 +132,12 @@ export function renderPeSettings(mount) {
           </select>
         </label>
         <label class="setting toggle">
-          <span><b>Kegels while pumping</b><i>Runs a cadence during pump sessions. Counts for your kegel streak, never for promotion.</i></span>
+          <span><b>Kegels while pumping</b><i>Counts for your kegel streak, never for promotion.</i></span>
           <input type="checkbox" id="kegelDuringPump" ${s.kegelDuringPump ? 'checked' : ''}>
         </label>
       </section>
 
-      <section class="card">
-        <div class="h-row">${icon('shield', 16)}<h2>Reference</h2></div>
-        <a class="btn ghost linkbtn" href="#/pe/guide">${icon('shield', 16)}<span>Doing this safely</span></a>
-      </section>
+      <a class="btn ghost wide linkbtn" href="#/pe/guide">${icon('shield', 16)}<span>Doing this safely</span></a>
     </div>`;
 
   const bind = (id, get = (e) => e.value) =>

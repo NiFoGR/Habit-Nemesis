@@ -200,11 +200,8 @@ export function renderKegelSettings(mount) {
         </label>
       </section>
 
-      <section class="card">
-        <div class="h-row">${icon('help', 16)}<h2>Technique</h2></div>
-        <a class="btn ghost linkbtn" href="#/tutorial">${icon('play', 16)}<span>Replay the walkthrough</span></a>
-        <a class="btn ghost linkbtn" href="#/roadmap">${icon('route', 16)}<span>See all 104 weeks</span></a>
-      </section>
+      <a class="btn ghost wide linkbtn" href="#/tutorial">${icon('play', 16)}<span>Replay the walkthrough</span></a>
+      <a class="btn ghost wide linkbtn" href="#/roadmap">${icon('route', 16)}<span>See all 104 weeks</span></a>
     </div>`;
 
   const bind = (id, key, get = (e) => e.value) =>

@@ -177,7 +177,10 @@ function bucketLabel(key) {
   if (!key) return '';
   if (/^\d{4}$/.test(key)) return key;
   if (/^\d{4}-Q\d$/.test(key)) return key.replace('-', ' ');
-  if (/^\d{4}-\d{2}$/.test(key)) return `${key.slice(5)}/${key.slice(2, 4)}`;
+  if (/^\d{4}-\d{2}$/.test(key)) {
+    const [y, m] = key.split('-').map(Number);
+    return new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
+  }
   return fmtDate(key).replace(/^\w+,?\s*/, '');
 }
 
@@ -257,8 +260,10 @@ function openPastValue(habit, key, refresh) {
 /* ---------------- streaks and frequency ---------------- */
 
 function streaksHtml(sum, colour) {
-  const list = sum.streaks.slice(0, 10);
-  if (!list.length) return '<p class="muted small">No streak yet. One day is a streak of one.</p>';
+  // Five, and never a run of one: a list of single days is not a best.
+  const long = sum.streaks.filter((s) => s.len > 1);
+  const list = (long.length ? long : sum.streaks).slice(0, 5);
+  if (!list.length) return '<p class="muted small">No streak yet.</p>';
   const max = list[0].len;
   return `<div class="streak-list">${list
     .map((s) => `<div class="streak-row">

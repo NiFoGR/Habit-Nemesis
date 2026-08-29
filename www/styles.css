@@ -1057,7 +1057,9 @@ input[type="range"] {
 .set-nav i { font-style: normal; font-size: var(--f-fine); color: var(--muted); }
 
 /* Capped, or one long <option> squeezes the label into a two-word column. */
-.setting select, .setting input[type="time"], .set-row select { min-width: 108px; max-width: 50%; }
+/* One width for every control in a settings list: a ragged right edge is what
+   a column of selects sized to their own text looks like. */
+.setting select, .setting input[type="time"], .set-row select { flex: 0 0 auto; width: 47%; }
 .setting input[type="range"] { flex: 0 1 46%; min-width: 120px; accent-color: var(--accent); }
 .card .h-row + .setting { border-top: 0; }
 .card.danger .h-row .ico { color: var(--danger); }
@@ -1639,7 +1641,8 @@ body.blacked .br-orb { opacity: 0.09; }
 }
 .screen.habits .field label { margin-bottom: 8px; }
 .screen.habits .notes { width: 100%; }
-.screen.habits .setting input[type="number"] {
+.screen.habits .setting input[type="number"],
+.screen.habits .setting input[type="text"] {
   background: var(--surface-2); color: var(--text); border: 1px solid var(--line);
   border-radius: 10px; padding: 9px 10px; font-size: var(--f-body); width: 108px; text-align: right;
 }
