@@ -383,6 +383,16 @@ copy and deploys it on every push to the default branch. Switch Pages on once
 under Settings -> Pages -> Source: GitHub Actions, and the app lives at
 https://nifogr.github.io/NiFo-App/ from then on.
 
+SOURCE HAS TO BE "GITHUB ACTIONS", NOT "DEPLOY FROM A BRANCH". On a branch,
+Pages serves the repository root, and the root is not the app, so every URL
+404s while pages.yml still reports a successful deploy: the deployment API
+succeeds, the site is built from somewhere else. The tell is a "pages build and
+deployment" run in the Actions tab with no matching pages.yml run beside it,
+and Pages can only serve / or /docs from a branch, neither of which is www/.
+There is an index.html at the repo root that redirects into www/ so a
+branch-served site works rather than 404s, but it serves the whole 8 MB. It is
+a net, not the route.
+
 WHY THE HOSTED COPY IS NOT www/ ITSELF. pack-web.mjs writes www/ minus
 www/bible/. That is 7 MB of the app's 8, for a section a locked install has no
 way to open, so the hosted build is about 1 MB instead of about 8. Nothing
