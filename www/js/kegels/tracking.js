@@ -147,7 +147,6 @@ export function renderTracking(mount) {
 
       <section class="card">
         <div class="h-row">${icon('medal', 16)}<h2>Personal best hold</h2></div>
-        <p class="small muted">Your ceiling in seconds. It only steps up.</p>
         ${bestHoldSeries.length > 1 ? lineChart(bestHoldSeries, { color: 'var(--good)' }) : '<div class="chart-empty">Not enough sessions yet</div>'}
       </section>
 
@@ -160,7 +159,7 @@ export function renderTracking(mount) {
         <div class="h-row">${icon('target', 16)}<h2>Progress through the plan</h2></div>
         <ol class="timeline">
           ${state.program.history
-            .map((h) => `<li><b>Week ${h.level}</b><span>${escapeHtml(program.levelDef(h.level).name)}</span><i>${new Date(h.at).toLocaleDateString()}</i></li>`)
+            .map((h) => `<li><b>Week ${h.level}</b><span>${escapeHtml(program.levelDef(h.level).name)}</span><i>${new Date(h.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</i></li>`)
             .reverse()
             .join('')}
         </ol>

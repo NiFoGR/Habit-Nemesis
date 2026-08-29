@@ -156,6 +156,8 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
   margin-bottom: 14px;
 }
 .card.danger { border-color: rgba(248, 113, 113, 0.32); }
+a.card.solo-book { display: block; color: inherit; text-decoration: none; }
+a.card.solo-book .prog-bar { margin-bottom: 0; }
 .card.pr { border-color: rgba(251,191,36,0.35); }
 .tag { float: right; font-size: var(--f-fine); color: var(--muted); font-weight: 400; }
 
@@ -343,10 +345,6 @@ a.btn { text-decoration: none; }
   background: var(--brand); color: var(--on-accent);
   font-weight: 700; letter-spacing: 0.04em; font-size: var(--f-small);
 }
-.hero-delta { font-size: var(--f-small); margin-top: 6px; }
-.hero-delta.up { color: var(--good); }
-.hero-delta.down { color: var(--warn); }
-.hero-delta.flat { color: var(--muted); }
 .nextup { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; }
 .report .card p { color: var(--muted); font-size: var(--f-body); }
 .report .card p b { color: var(--text); }
@@ -686,14 +684,14 @@ input[type="range"] {
    centres the glyph: the gear sat nine pixels above the plus beside it. */
 .icon-btn.linkbtn { display: grid; place-items: center; }
 
-/* The section link rows, centred and wrapping. A fixed four columns put a
-   fifth link alone and left-aligned, and narrow enough for five labels broke
-   "The books" in half. Never encode how many there are. */
+/* Two columns, so four links read as a block rather than three and an orphan.
+   An odd last one takes the full width. */
 .linkrow {
-  display: flex; flex-wrap: wrap; justify-content: center;
+  display: grid; grid-template-columns: repeat(2, 1fr);
   gap: 10px 18px; margin: 22px 0 8px;
 }
-.linkrow a { justify-content: center; text-align: center; white-space: nowrap; }
+.linkrow a:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.linkrow a { justify-content: center; text-align: center; }
 .linkrow a { color: var(--muted); text-decoration: none; font-size: var(--f-small); border-bottom: 1px solid var(--line); padding-bottom: 2px; }
 .linkrow a:active { color: var(--text); }
 
@@ -861,7 +859,6 @@ input[type="range"] {
 .dl { font-style: normal; font-size: var(--f-fine); min-width: 62px; text-align: right; }
 .dl.up { color: var(--good); }
 .dl.down { color: var(--warn); }
-.dl.flat { color: var(--muted); }
 
 /* ---------- measurement check-in ---------- */
 
@@ -1842,7 +1839,7 @@ body.blacked .br-orb { opacity: 0.09; }
 
 .ar-hero {
   position: relative; text-align: center;
-  padding: 8px 4px 20px; margin-bottom: 20px;
+  padding: 8px 4px 14px; margin-bottom: 16px;
 }
 .ar-hero::before {
   content: ''; position: absolute; left: 50%; top: -30px; transform: translateX(-50%);
@@ -1867,19 +1864,13 @@ body.blacked .br-orb { opacity: 0.09; }
   font-size: var(--f-hero); line-height: 1.05; letter-spacing: -0.035em;
   margin: 0 0 4px;
 }
-/* The one line allowed to be rude. Never wrapped into a paragraph: at two
-   lines it has stopped being a caption. */
-.ar-blurb {
-  margin: 0 0 14px; font-size: var(--f-micro); color: var(--muted);
-  letter-spacing: 0.01em;
-}
 /* The top rung only, whichever rung that is. */
 .ar-hero.top .ar-rank {
   background: var(--brand); -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 
 /* One segment per division, however many there are. */
-.ar-ladder { display: flex; gap: 4px; margin: 0 0 14px; }
+.ar-ladder { display: flex; gap: 4px; margin: 14px 0; }
 .ar-ladder i { flex: 1 1 0; height: 5px; border-radius: 3px; background: var(--line); }
 .ar-ladder i.on { background: var(--accent); opacity: 0.42; }
 .ar-ladder i.here { opacity: 1; box-shadow: 0 0 10px rgba(34, 211, 197, 0.5); }
@@ -1913,10 +1904,7 @@ body.blacked .br-orb { opacity: 0.09; }
 /* The one line on the hero allowed a colour: what the rest of the month has
    to average. The bar above already says the same thing in its fill, so the
    month line under it stays uncoloured. */
-.ar-need { margin: 10px 0 0; font-size: var(--f-small); color: var(--accent); }
-.ar-need.up { color: var(--good); }
-.ar-need.safe { color: var(--good); }
-.ar-need.gone { color: var(--warn); }
+.ar-need { margin: 10px 0 0; font-size: var(--f-small); color: var(--muted); }
 
 .ar-monthline { margin: 4px 0 0; font-size: var(--f-fine); color: var(--muted); }
 .ar-monthline b { color: var(--text); font-variant-numeric: tabular-nums; }
@@ -1945,25 +1933,15 @@ body.blacked .br-orb { opacity: 0.09; }
 .ar-side b { display: block; font-size: var(--f-hero); letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
 .ar-side span { display: block; margin-top: 5px; font-size: var(--f-fine); color: var(--muted);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ar-side.me b { color: var(--accent); }
+.ar-side.me b { color: var(--text); }
 .ar-side.them b { color: var(--muted); }
 .ar-side.them:active { background: var(--surface); transform: scale(0.98); }
 .ar-vs { display: grid; place-items: center; color: var(--faint); flex: 0 0 30px; }
-.ar-week.ahead .ar-side.me b { color: var(--good); }
-.ar-week.behind .ar-side.me b { color: var(--warn); }
 /* Not a fixture yet. Neither side is winning, so neither is coloured. */
 .ar-week.void .ar-side b, .ar-week.void .ar-verdict b { color: var(--muted); }
 .ar-week.behind .ar-side.them b { color: var(--danger); }
 
-.ar-race { margin: 12px 0 8px; }
-.ar-race-bar { display: flex; height: 8px; border-radius: 5px; overflow: hidden; background: var(--surface-2); }
-.ar-race-bar i { display: block; transition: width 0.6s var(--ease); }
-.ar-race-bar i.me { background: var(--accent); }
-.ar-race-bar i.them { background: var(--line); }
-.ar-week.ahead .ar-race-bar i.me { background: var(--good); }
-.ar-week.behind .ar-race-bar i.them { background: var(--danger); opacity: 0.55; }
-
-.ar-verdict { display: flex; justify-content: space-between; gap: 10px; margin: 0 0 2px; font-size: var(--f-small); }
+.ar-verdict { display: flex; justify-content: space-between; gap: 10px; margin: 12px 0 0; font-size: var(--f-small); }
 .ar-verdict i { font-style: normal; color: var(--muted); font-size: var(--f-fine); }
 .ar-week.ahead .ar-verdict b { color: var(--good); }
 .ar-week.behind .ar-verdict b { color: var(--warn); }
@@ -1986,8 +1964,7 @@ body.blacked .br-orb { opacity: 0.09; }
   border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2);
   color: var(--muted); cursor: pointer;
 }
-.ar-chip b { display: block; font-size: var(--f-small); }
-.ar-chip i { display: block; font-style: normal; font-size: var(--f-micro); color: var(--faint); font-variant-numeric: tabular-nums; }
+.ar-chip b { display: block; font-size: var(--f-small); font-variant-numeric: tabular-nums; }
 .ar-chip.won { border-color: rgba(74, 222, 128, 0.42); color: var(--good); }
 .ar-chip.lost { border-color: rgba(248, 113, 113, 0.36); color: var(--danger); }
 .ar-chip:active { transform: scale(0.95); }
@@ -2057,7 +2034,6 @@ body.blacked .br-orb { opacity: 0.09; }
 
 .ar-next { margin-bottom: 4px; }
 .ar-nextrow { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
-.ar-nextrow .ar-row-bar { flex: 0 0 64px; }
 .ar-nextrow .ar-nname i { font-size: var(--f-micro); }
 
 /* Three across, two on a narrow phone, with neither number written down. */
@@ -2105,7 +2081,13 @@ body.blacked .br-orb { opacity: 0.09; }
 .rs-hero.won { border-color: rgba(74, 222, 128, 0.42); }
 .rs-hero.lost { border-color: rgba(248, 113, 113, 0.3); }
 /* The moment before. One line, one button, and nothing that gives it away. */
-.rs-hero.pending { padding: 40px 18px 30px; }
+/* The one card on a screen with nothing else on it, so it sits in the middle
+   rather than at the top of an empty viewport. */
+.screen.result:has(.rs-hero.pending) {
+  display: flex; flex-direction: column; justify-content: center;
+  min-height: calc(100dvh - var(--safe-t) - var(--safe-b));
+}
+.rs-hero.pending { padding: 40px 18px 30px; margin-bottom: 0; }
 .rs-hero.pending .rs-word { margin-bottom: 8px; }
 .rs-hero.pending .btn { margin-top: 22px; }
 .rs-word { font-size: var(--f-display); letter-spacing: -0.03em; margin: 0 0 16px; }
@@ -2346,7 +2328,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
   padding: 34px 18px 26px; border-radius: var(--radius);
   border: 1px dashed var(--line); background: var(--surface);
 }
-.vault.small { padding: 20px 14px 16px; border-style: solid; background: var(--surface-2); margin-bottom: 12px; }
+.vault.small { padding: 20px 14px 16px; border-style: solid; background: var(--surface); margin-bottom: 12px; }
 .vault-lock { display: grid; place-items: center; color: var(--faint); margin-bottom: 8px; }
 .vault-count { font-size: var(--f-mega); line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
 .vault.small .vault-count { font-size: var(--f-display); }

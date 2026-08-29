@@ -40,25 +40,25 @@ function summarise(sessions, { from, to }) {
 const delta = (now, then, fmt = (v) => String(v), { good = 'up' } = {}) => {
   if (then == null || now == null) return '';
   const d = now - then;
-  if (Math.abs(d) < 1e-9) return '<i class="dl flat">no change</i>';
+  if (Math.abs(d) < 1e-9) return '';
   const better = good === 'up' ? d > 0 : d < 0;
   return `<i class="dl ${better ? 'up' : 'down'}">${d > 0 ? '+' : '−'}${escapeHtml(fmt(Math.abs(d)))}</i>`;
 };
 
 /** The largest real change, and what to do about it. */
 function verdict(now, prev, state) {
-  if (!now.sessions) return { level: 'warn', text: 'Nothing logged this week. One session today restarts everything. The plan does not punish a gap, it just waits.' };
-  if (!prev.sessions) return { level: 'good', text: `${now.sessions} session${now.sessions === 1 ? '' : 's'} across ${now.days} day${now.days === 1 ? '' : 's'}. That is your baseline. Next week has something to beat.` };
+  if (!now.sessions) return { level: 'warn', text: 'Nothing logged this week. One session today restarts everything.' };
+  if (!prev.sessions) return { level: 'good', text: `${now.sessions} session${now.sessions === 1 ? '' : 's'} across ${now.days} day${now.days === 1 ? '' : 's'}. Next week has something to beat.` };
 
   const dSessions = now.sessions - prev.sessions;
   const dAvg = now.avg != null && prev.avg != null ? now.avg - prev.avg : 0;
 
-  if (dSessions <= -3) return { level: 'warn', text: `${Math.abs(dSessions)} fewer sessions than last week. Consistency is the whole mechanism. Drop the daily target to one rather than missing days entirely.` };
-  if (dAvg <= -8) return { level: 'warn', text: `Your average score fell ${Math.abs(dAvg)} points. That is usually under-resting: rest at least as long as you hold, or the reps at the end of a set are worthless.` };
-  if (dSessions >= 3 && dAvg >= 0) return { level: 'good', text: `${dSessions} more sessions than last week and the quality held. That is exactly how promotion is meant to happen.` };
-  if (dAvg >= 8) return { level: 'good', text: `Average score up ${dAvg} points. The holds are landing on target. ${state.program.qualifying}/${program.PROMOTION_TARGET} banked towards week ${Math.min(state.program.level + 1, program.MAX_LEVEL)}.` };
-  if (now.days >= 6) return { level: 'good', text: `${now.days} days out of seven. Steady is the goal; nothing here needs changing.` };
-  return { level: 'info', text: `${now.sessions} sessions across ${now.days} days, about the same as last week. One more day a week is the smallest change that would move things.` };
+  if (dSessions <= -3) return { level: 'warn', text: `${Math.abs(dSessions)} fewer sessions than last week. Drop the daily target to one rather than missing days entirely.` };
+  if (dAvg <= -8) return { level: 'warn', text: `Your average score fell ${Math.abs(dAvg)} points. Usually under-resting: rest at least as long as you hold.` };
+  if (dSessions >= 3 && dAvg >= 0) return { level: 'good', text: `${dSessions} more sessions than last week and the quality held.` };
+  if (dAvg >= 8) return { level: 'good', text: `Average score up ${dAvg} points. ${state.program.qualifying}/${program.PROMOTION_TARGET} banked towards week ${Math.min(state.program.level + 1, program.MAX_LEVEL)}.` };
+  if (now.days >= 6) return { level: 'good', text: `${now.days} days out of seven. Nothing here needs changing.` };
+  return { level: 'info', text: `${now.sessions} sessions across ${now.days} days, about the same as last week. One more day a week would move things.` };
 }
 
 export function renderReview(mount) {

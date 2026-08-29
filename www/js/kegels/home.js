@@ -82,7 +82,6 @@ export function renderKegels(mount) {
       </section>` : ''}
 
       <div class="linkrow">
-        <a href="#/track">${icon('chart')} Tracking</a>
         <a href="#/roadmap">${icon('route')} The plan</a>
         <a href="#/review">${icon('calendar')} Your week</a>
         <a href="#/guide">${icon('help')} How to</a>

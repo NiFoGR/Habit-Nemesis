@@ -71,31 +71,19 @@ function fromHere(st) {
   // Promotion first when it is still reachable, then the floor. A need at or
   // below zero is already banked and is never printed: -94% is not a target.
   if (up && up.need > 0 && up.need <= 1) {
-    return `<p class="ar-need up">${pct(up.need)} ${escapeHtml(weeks)} takes you to ${escapeHtml(st.next.name)}.</p>`;
+    return `<p class="ar-need">${pct(up.need)} ${escapeHtml(weeks)} takes you to ${escapeHtml(st.next.name)}.</p>`;
   }
-  if (up && up.need <= 0) {
-    return `<p class="ar-need up">${escapeHtml(st.next.name)} is already yours.</p>`;
-  }
+  if (up && up.need <= 0) return '';
   if (hold.need <= 0) {
-    return `<p class="ar-need safe">${escapeHtml(st.division.name)} is safe whatever happens.</p>`;
+    return `<p class="ar-need">${escapeHtml(st.division.name)} is safe whatever happens.</p>`;
   }
   if (hold.need > 1) {
-    return `<p class="ar-need gone">${escapeHtml(st.division.name)} is out of reach this month.</p>`;
+    return `<p class="ar-need">${escapeHtml(st.division.name)} is out of reach this month.</p>`;
   }
   return `<p class="ar-need">${pct(hold.need)} ${escapeHtml(weeks)} holds ${escapeHtml(st.division.name)}.</p>`;
 }
 
 /* ---------------- the week ---------------- */
-
-/** Both scores as a share of the pair: the gap is what matters, so they share
- *  a scale. */
-function race(mine, theirs) {
-  const total = Math.max(0.0001, mine + theirs);
-  const a = (mine / total) * 100;
-  return `<div class="ar-race">
-    <div class="ar-race-bar"><i class="me" style="width:${a.toFixed(1)}%"></i><i class="them" style="width:${(100 - a).toFixed(1)}%"></i></div>
-  </div>`;
-}
 
 function weekCard() {
   const key = arena.currentWeek();
@@ -136,7 +124,6 @@ function weekCard() {
         <span>${escapeHtml(opp.name)}</span>
       </button>
     </div>
-    ${race(live.score, opp.score)}
     <p class="ar-verdict"><b>${escapeHtml(verdict)}</b><i>${left === 1 ? 'Last day' : `${left} days left`}</i></p>
 
     <div class="ar-rows">${rows || '<p class="muted small">Nothing is due this week yet.</p>'}</div>
@@ -218,7 +205,7 @@ function formStrip() {
   return `<div class="ar-form">
     ${weeks
       .map(([k, w]) => `<button class="ar-chip ${w.result}" data-week="${k}" aria-label="${escapeHtml(arena.weekLabel(k))}, ${w.result}">
-        <b>${w.result === 'won' ? 'W' : 'L'}</b><i>${pct(w.score)}</i>
+        <b>${pct(w.score)}</b>
       </button>`)
       .join('')}
   </div>`;
@@ -331,14 +318,12 @@ export function renderArena(mount) {
         style="--lift:${st.unranked ? 0 : rung}">
         <span class="ar-crest">${crest(rung, 92)}</span>
         <h1 class="ar-rank">${escapeHtml(st.division.name)}</h1>
-        ${st.unranked ? '' : `<p class="ar-blurb">${escapeHtml(st.division.blurb)}</p>`}
         ${st.unranked
           ? unrankedHero()
           : `${ladder(a.division)}
         ${st.month.empty
           ? `<p class="ar-monthline">${st.placed ? 'nothing scored this month yet' : 'placement month'}</p>`
-          : `${barTo(st)}
-             <p class="ar-monthline"><b>${st.month.w}W–${st.month.l}L</b></p>`}`}
+          : barTo(st)}`}
       </section>
 
       ${weekCard()}

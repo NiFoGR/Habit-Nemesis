@@ -70,7 +70,6 @@ export function renderCabinet(mount) {
                 .map((f) => `<div class="ar-nextrow">
                   <span class="ar-nico">${icon(f.icon, 16)}</span>
                   <span class="ar-nname"><b>${escapeHtml(f.name)}</b><i>${escapeHtml(nearly(f))}</i></span>
-                  <span class="ar-row-bar"><i style="width:${(f.frac * 100).toFixed(0)}%"></i></span>
                 </div>`)
                 .join('')}
             </div>`
@@ -78,26 +77,21 @@ export function renderCabinet(mount) {
         <a class="btn ghost wide" href="#/cabinet/feats">${icon('medal', 16)}<span>All feats</span></a>
       </section>
 
-      <section class="card">
-        <div class="ar-week-head">
-          <h2>The Year</h2>
-        </div>
-        <div class="vault small">
-          <span class="vault-lock">${icon('lock', 20)}</span>
-          <b class="vault-count">${left}</b>
-          <span class="vault-unit">day${left === 1 ? '' : 's'}</span>
-          <p class="vault-label">until <b>${escapeHtml(running.label)}</b> is sealed</p>
-        </div>
-        ${open.length
-          ? `<div class="yr-chips">
-              ${open
-                .slice()
-                .reverse()
-                .map((y) => `<a class="yr-chip" href="#/cabinet/year?y=${y.n}">${escapeHtml(y.label)}</a>`)
-                .join('')}
-            </div>`
-          : ''}
-      </section>
+      <div class="vault small">
+        <span class="vault-lock">${icon('lock', 20)}</span>
+        <b class="vault-count">${left}</b>
+        <span class="vault-unit">day${left === 1 ? '' : 's'}</span>
+        <p class="vault-label">until <b>${escapeHtml(running.label)}</b> is sealed</p>
+      </div>
+      ${open.length
+        ? `<div class="yr-chips">
+            ${open
+              .slice()
+              .reverse()
+              .map((y) => `<a class="yr-chip" href="#/cabinet/year?y=${y.n}">${escapeHtml(y.label)}</a>`)
+              .join('')}
+          </div>`
+        : ''}
 
       ${notes.length
         ? `<section class="card">

@@ -367,7 +367,7 @@ export function renderMeasure(mount) {
       <div class="report">
         <div class="report-hero">
           <h1>${pe.fmtLength(record.bpel)} × ${pe.fmtLength(record.eg)}</h1>
-          <p class="muted">${new Date(record.ts).toLocaleDateString()}${record.photoId ? ' · photo encrypted' : ''}</p>
+          <p class="muted">${new Date(record.ts).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}${record.photoId ? ' · photo encrypted' : ''}</p>
         </div>
 
         ${dLast ? `<div class="stat-grid">

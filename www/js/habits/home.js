@@ -28,7 +28,7 @@ function detailOf(habit) {
   const unit = habit.unit || '';
   if (!habit.target) return unit;
   const aim = `${habit.targetType === 'atmost' ? 'under' : 'at least'} ${fmtNumber(habit.target)}`;
-  return unit ? `${unit} · ${aim}` : aim;
+  return unit ? `${aim} ${unit}` : aim;
 }
 
 /** The small ring: the score in the habit's own colour. ringSvg is the 168px

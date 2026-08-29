@@ -291,8 +291,10 @@ export function sparkline(values, { color = 'var(--accent)', w = 120, h = 34, fi
 export function barChart(bars, { h = 120, unit = '', colour = null } = {}) {
   if (!bars.length) return '<div class="chart-empty">Nothing logged in this period</div>';
   const max = Math.max(...bars.map((b) => b.value), 1);
+  // Past about eight columns the labels collide, so thin them from the right.
+  const every = Math.max(1, Math.ceil(bars.length / 8));
   return `<div class="barchart" style="--h:${h}px${colour ? `;--bar:${colour}` : ''}">${bars
-    .map((b) => {
+    .map((b, i) => {
       const pctH = Math.max(b.value > 0 ? 3 : 0, (b.value / max) * 100);
       const stack = b.parts
         ? b.parts
@@ -302,7 +304,7 @@ export function barChart(bars, { h = 120, unit = '', colour = null } = {}) {
         : '<i style="height:100%"></i>';
       return `<div class="bar" title="${escapeHtml(b.label)}: ${escapeHtml(b.text || String(b.value) + unit)}">
         <div class="bar-stack" style="height:${pctH}%">${stack}</div>
-        <span>${escapeHtml(b.short || b.label)}</span>
+        <span>${(bars.length - 1 - i) % every === 0 ? escapeHtml(b.short || b.label) : ''}</span>
       </div>`;
     })
     .join('')}</div>`;
@@ -348,6 +350,8 @@ export function toast(msg) {
 /** Line chart with area fill. Gaps are not drawn. */
 export function lineChart(values, { w = 320, h = 110, pad = 10, color = 'var(--accent)', fill = true, labels = null } = {}) {
   if (!values.length) return '<div class="chart-empty">Not enough data yet</div>';
+  // All zeros is a line on the floor pretending to be a chart.
+  if (!values.some((v) => v)) return '<div class="chart-empty">Nothing recorded yet</div>';
   const max = Math.max(...values, 1);
   const min = Math.min(...values, 0);
   const span = max - min || 1;

@@ -47,7 +47,7 @@ export function renderBibleHome(mount) {
       <div class="today bible-today">
         <div class="today-left">
           <h2>${escapeHtml(bible.refName(`${pos.book}:${pos.ch}`))}</h2>
-          <p class="muted small">${prog.read} of ${bible.TOTAL_CHAPTERS} chapters${streak ? ` · ${streak}d reading streak` : ''}</p>
+          <p class="muted small">${streak ? `${streak} day reading streak` : `${prog.read} of ${bible.TOTAL_CHAPTERS} chapters`}</p>
         </div>
         ${ringSvg(prog.frac, `${Math.round(prog.frac * 100)}%`, 'read', { size: 92, color: 'var(--accent)' })}
       </div>
@@ -72,8 +72,7 @@ export function renderBibleHome(mount) {
 
       <div class="linkrow">
         <a href="#/bible/books">${icon('book')} The books</a>
-        <a href="#/bible/prayers">${icon('book')} My prayers</a>
-        <a href="#/bible/track">${icon('chart')} Tracking</a>
+        <a href="#/bible/prayers">${icon('sun')} My prayers</a>
         <a href="#/bible/settings">${icon('settings')} Settings</a>
       </div>
     </div>`;

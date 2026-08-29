@@ -20,7 +20,6 @@ export function renderPeHome(mount) {
     .filter((x) => x.date === store.dayKey() && x.type === 'stretch')
     .reduce((a, x) => a + x.durationSec * 1000, 0);
   const goal = pe.DAILY_STRETCH_GOAL_MS;
-  const left = Math.max(0, goal - todayStretch);
 
   const lastStretch = s.sessions.filter((x) => x.type === 'stretch').slice(-1)[0];
   const lastEq = s.eq[s.eq.length - 1];
@@ -37,13 +36,13 @@ export function renderPeHome(mount) {
       <div class="today pe-today">
         <div class="today-left">
           <h2>${fmtHours(todayStretch)} <span class="of-goal">of 2h</span></h2>
-          <p class="muted small">${left > 0 ? `${fmtHours(left)} left today` : 'Target hit today'}${pe.peStreak() ? ` · ${pe.peStreak()}d streak` : ''}</p>
+          <p class="muted small">${pe.peStreak() ? `${pe.peStreak()} day streak` : 'No streak yet'}</p>
         </div>
         ${ringSvg(Math.min(todayStretch / goal, 1), `${Math.round((todayStretch / goal) * 100)}%`, 'today', { size: 96 })}
       </div>
 
       ${latest ? `<div class="spark-card">
-        <div class="cap"><span>${pe.fmtLength(latest.bpel)} × ${pe.fmtLength(latest.eg)}</span><b>${gain >= 0 ? '+' : '−'}${pe.fmtLength(Math.abs(gain), undefined, 2)}</b></div>
+        <div class="cap"><span>${pe.fmtLength(latest.bpel)}${latest.eg ? ` × ${pe.fmtLength(latest.eg)}` : ''}</span><b>${gain >= 0 ? '+' : '−'}${pe.fmtLength(Math.abs(gain), undefined, 2)}</b></div>
         ${s.measurements.length > 1 ? sparkline(s.measurements.map((m) => m.bpel), { color: 'var(--accent)', h: 40 }) : ''}
       </div>` : ''}
 
@@ -65,7 +64,6 @@ export function renderPeHome(mount) {
       ${!latest ? '<a class="btn primary big linkbtn" href="#/pe/measure">Take first measurement</a>' : ''}
 
       <div class="linkrow">
-        <a href="#/pe/stats">${icon('chart')} Progress</a>
         <a href="#/pe/gallery">${icon('lock')} Gallery</a>
         <a href="#/pe/measure">${icon('ruler')} Check-in${due.due ? '' : ` · ${due.next}d`}</a>
         <a href="#/pe/guide">${icon('shield')} Safety</a>

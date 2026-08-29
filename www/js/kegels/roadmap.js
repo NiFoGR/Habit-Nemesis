@@ -58,7 +58,7 @@ export function renderRoadmap(mount) {
       <div class="today">
         <div class="today-left">
           <h2>Week ${level} of ${program.TOTAL_WEEKS}</h2>
-          <p class="muted small">${escapeHtml(def.name)} · ${pct}% through${perLevel ? ` · ~${perLevel.toFixed(0)}d per week-level so far` : ''}</p>
+          <p class="muted small">${escapeHtml(def.name)}${perLevel ? ` · ${perLevel.toFixed(0)} days a level so far` : ''}</p>
         </div>
       </div>
 

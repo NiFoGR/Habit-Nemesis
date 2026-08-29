@@ -263,13 +263,15 @@ export async function renderNightlightSettings(mount) {
         <span class="icon-btn ghost"></span>
       </header>
 
-      <section class="card">
-        <div class="h-row">${icon('warmth', 16)}<h2>Right now</h2>
-          <span class="pill ${modeLine[0] === 'good' ? 'done' : 'ghost'}">${escapeHtml(modeLine[1])}</span></div>
-        ${st && st.enabled && !st.neutral ? `<div class="kv"><span>Screen temperature</span><b>${st.kelvin}K</b></div>` : ''}
-        ${st?.mode === 'blocked' ? `<button class="btn primary" id="grant">Allow drawing over other apps</button>` : ''}
-        ${st?.native && st.enabled ? `<button class="btn ghost" id="pauseBtn">${st.pausedUntil > Date.now() ? 'Resume now' : 'Pause for an hour'}</button>` : ''}
-      </section>
+      ${st?.enabled || st?.mode === 'blocked'
+        ? `<section class="card">
+            <div class="h-row">${icon('warmth', 16)}<h2>Right now</h2>
+              <span class="pill ${modeLine[0] === 'good' ? 'done' : 'ghost'}">${escapeHtml(modeLine[1])}</span></div>
+            ${st.enabled && !st.neutral ? `<div class="kv"><span>Screen temperature</span><b>${st.kelvin}K</b></div>` : ''}
+            ${st.mode === 'blocked' ? `<button class="btn primary" id="grant">Allow drawing over other apps</button>` : ''}
+            ${st.native && st.enabled ? `<button class="btn ghost" id="pauseBtn">${st.pausedUntil > Date.now() ? 'Resume now' : 'Pause for an hour'}</button>` : ''}
+          </section>`
+        : ''}
 
       <section class="card">
         <label class="setting toggle">

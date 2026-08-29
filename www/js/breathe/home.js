@@ -31,7 +31,7 @@ export function renderBreatheHome(mount) {
           <h2>${today.done ? 'Done tonight' : 'Not yet tonight'}</h2>
           <p class="muted small">${today.done
             ? `${fmtDuration(today.ms / 1000)} at ${new Date(today.at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
-            : `${escapeHtml(plan.pattern.short)} · ${fmtClock(plan.totalMs)}`}${st ? ` · ${st} night${st === 1 ? '' : 's'}` : ''}</p>
+            : `${fmtClock(plan.totalMs)} tonight`}</p>
         </div>
         <div class="br-mark ${today.done ? 'on' : ''}">${icon(today.done ? 'check' : 'breath', 26)}</div>
       </div>
@@ -44,6 +44,13 @@ export function renderBreatheHome(mount) {
         <p class="small muted" id="patternBlurb">${escapeHtml(plan.pattern.blurb)}</p>
       </section>
 
+      <div class="stat-grid">
+        <div class="stat"><b>${st}</b><span>night streak</span></div>
+        <div class="stat"><b>${store.get().breathe.best}</b><span>best</span></div>
+        <div class="stat"><b>${Math.round(t30.rate * 100)}%</b><span>nights, 30d</span></div>
+        <div class="stat"><b>${fmtHours(life.ms)}</b><span>breathing, all told</span></div>
+      </div>
+
       <section class="card">
         <div class="h-row">${icon('calendar', 16)}<h2>Last 13 weeks</h2></div>
         <div class="heatmap">
@@ -51,12 +58,6 @@ export function renderBreatheHome(mount) {
         </div>
         <div class="hm-key">
           <span>less</span><i class="none"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><span>more</span>
-        </div>
-        <div class="stat-grid">
-          <div class="stat"><b>${st}</b><span>night streak</span></div>
-          <div class="stat"><b>${store.get().breathe.best}</b><span>best</span></div>
-          <div class="stat"><b>${Math.round(t30.rate * 100)}%</b><span>nights, 30d</span></div>
-          <div class="stat"><b>${fmtHours(life.ms)}</b><span>breathing, all told</span></div>
         </div>
       </section>
 
@@ -100,12 +101,6 @@ export function renderBreatheSettings(mount) {
 
       <section class="card">
         <div class="h-row">${icon('breath', 16)}<h2>The breath</h2></div>
-        <label class="setting">
-          <span><b>Pattern</b></span>
-          <select id="pattern">
-            ${breathe.PATTERN_IDS.map((id) => `<option value="${id}" ${s.pattern === id ? 'selected' : ''}>${escapeHtml(breathe.PATTERNS[id].label)} · ${escapeHtml(breathe.PATTERNS[id].short)}</option>`).join('')}
-          </select>
-        </label>
         <label class="setting">
           <span><b>Length</b><i>Whole breaths only, so it ends on an out-breath rather than mid-way through one.</i></span>
           <select id="minutes">
@@ -154,10 +149,6 @@ export function renderBreatheSettings(mount) {
       `${plan.breaths} breaths after the opening sighs, ${fmtClock(plan.totalMs)} in all.`;
   };
 
-  mount.querySelector('#pattern').addEventListener('change', (e) => {
-    set('pattern', e.target.value);
-    note();
-  });
   mount.querySelector('#minutes').addEventListener('change', (e) => {
     set('minutes', Number(e.target.value));
     note();
