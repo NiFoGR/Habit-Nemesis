@@ -47,16 +47,19 @@ Eight files. Worn at the top of the profile, in the Arena hero at 92px, and as a
 28px badge beside a name. The ladder is the app's spine, so these carry the most
 weight.
 
+Named by division id, never by rung number: a rung added in the middle of the
+ladder would otherwise renumber every file above it.
+
 | File | Rung | What it says |
 |---|---|---|
 | `rank-unranked.webp` | none | No record yet. Nobody knows what you are. Quiet, empty, waiting |
-| `rank-0-bottom.webp` | 0 Bottom G | You own the app and nothing else. The joke rung |
-| `rank-1-npc.webp` | 1 NPC | Going through the motions |
-| `rank-2-prospect.webp` | 2 Prospect | Something is happening, not reliably. First metal |
-| `rank-3-contender.webp` | 3 Contender | In it now. A bad week costs you |
-| `rank-4-menace.webp` | 4 Menace | Most weeks go your way and it shows |
-| `rank-5-locked.webp` | 5 Locked In | Serious. Relentless |
-| `rank-6-topg.webp` | 6 Top G | You do not miss. The top of the ladder |
+| `rank-bottom.webp` | 0 Bottom G | You own the app and nothing else. The joke rung |
+| `rank-npc.webp` | 1 NPC | Going through the motions |
+| `rank-prospect.webp` | 2 Prospect | Something is happening, not reliably. First metal |
+| `rank-contender.webp` | 3 Contender | In it now. A bad week costs you |
+| `rank-menace.webp` | 4 Menace | Most weeks go your way and it shows |
+| `rank-locked.webp` | 5 Locked In | Serious. Relentless |
+| `rank-topg.webp` | 6 Top G | You do not miss. The top of the ladder |
 
 The progression has to be readable with the labels covered. Pick one thing that
 climbs and let it climb: metal (dull to bright), rim weight, how much of the rim

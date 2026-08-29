@@ -1842,9 +1842,8 @@ body.blacked .br-orb { opacity: 0.09; }
   width: 260px; height: 190px; pointer-events: none; z-index: -1;
   background: radial-gradient(50% 50% at 50% 50%, rgba(34, 211, 197, calc(0.03 + var(--lift, 0) * 0.035)), transparent 70%);
 }
-.ar-hero.rung-0 { --lift: 0; } .ar-hero.rung-1 { --lift: 1; } .ar-hero.rung-2 { --lift: 2; }
-.ar-hero.rung-3 { --lift: 3; } .ar-hero.rung-4 { --lift: 4; } .ar-hero.rung-5 { --lift: 5; }
-.ar-hero.rung-6 { --lift: 6; }
+/* --lift is set inline from the rung, so a division added to the ladder needs
+   no rule here. */
 /* No glow at all before there is anything to glow about. */
 .ar-hero.unranked { --lift: 0; }
 .ar-hero.unranked::before { display: none; }
@@ -1867,7 +1866,8 @@ body.blacked .br-orb { opacity: 0.09; }
   margin: 0 0 14px; font-size: var(--f-micro); color: var(--muted);
   letter-spacing: 0.01em;
 }
-.ar-hero.rung-6 .ar-rank {
+/* The top rung only, whichever rung that is. */
+.ar-hero.top .ar-rank {
   background: var(--brand); -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 

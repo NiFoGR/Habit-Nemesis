@@ -324,7 +324,8 @@ export function renderArena(mount) {
 
   mount.innerHTML = `
     <div class="screen">
-      <section class="ar-hero ${st.unranked ? 'unranked' : `rung-${rung}`}">
+      <section class="ar-hero ${st.unranked ? 'unranked' : ''} ${!st.unranked && !st.next ? 'top' : ''}"
+        style="--lift:${st.unranked ? 0 : rung}">
         <span class="ar-crest">${crest(rung, 92)}</span>
         <h1 class="ar-rank">${escapeHtml(st.division.name)}</h1>
         <p class="ar-blurb">${escapeHtml(st.division.blurb)}</p>

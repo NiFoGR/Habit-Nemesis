@@ -15,6 +15,9 @@ const HABIT_KINDS = ['yesno', 'number'];
 const HABIT_TARGET_TYPES = ['atleast', 'atmost'];
 
 // The ladder, low to high.
+// The ladder, second copy. store.js cannot import arena/program.js, which
+// imports it back, so a rung added there must be added here. check:arena
+// fails if the two drift.
 const ARENA_DIVISIONS = ['bottom', 'npc', 'prospect', 'contender', 'menace', 'locked', 'topg'];
 
 const KEY = 'nifo.state.v1';
