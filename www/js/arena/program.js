@@ -12,16 +12,16 @@ import * as native from '../native.js';
 
 /** Low to high. `bar` is the month score that holds you in the division. */
 export const DIVISIONS = [
-  { id: 'bottom', name: 'Bottom G', bar: 0.2, blurb: 'You have the app. That is the whole of it so far.' },
-  { id: 'npc', name: 'NPC', bar: 0.3, blurb: 'Doing it. Nobody would notice if you stopped.' },
-  { id: 'mentzer', name: 'Mentzer', bar: 0.4, blurb: 'BiGgEr aNd StRoNgEr ThAn MiKe MeNtZeR' },
-  { id: 'prospect', name: 'Prospect', bar: 0.5, blurb: 'Something is happening. Not reliably.' },
-  { id: 'contender', name: 'Contender', bar: 0.6, blurb: 'You are in it now. A bad week costs you.' },
-  { id: 'menace', name: 'Menace', bar: 0.7, blurb: 'Most weeks go your way and it shows.' },
-  { id: 'locked', name: 'Locked In', bar: 0.8, blurb: 'How about, fucking eat more?' },
-  { id: 'topg', name: 'Top G', bar: 0.9, blurb: 'You do not miss. Two days a month, at most.' },
+  { id: 'bottom', name: 'Bottom G', bar: 0.2 },
+  { id: 'npc', name: 'NPC', bar: 0.3 },
+  { id: 'mentzer', name: 'Mentzer', bar: 0.4 },
+  { id: 'prospect', name: 'Prospect', bar: 0.5 },
+  { id: 'contender', name: 'Contender', bar: 0.6 },
+  { id: 'menace', name: 'Menace', bar: 0.7 },
+  { id: 'locked', name: 'Locked In', bar: 0.8 },
+  { id: 'topg', name: 'Top G', bar: 0.9 },
   // The only rung that asks for everything. One missed cell in a month loses it.
-  { id: 'full', name: 'Full', bar: 1, blurb: 'Everything, every day. One miss and it is gone.' },
+  { id: 'full', name: 'Full', bar: 1 },
 ];
 
 export const divisionOf = (id) => DIVISIONS.find((d) => d.id === id) || DIVISIONS[1];
@@ -782,7 +782,7 @@ export function monthsOfYear(y) {
 
 /** Unranked. Shaped like a division so callers can read `.name`, but it has
  *  no bar: it is the absence of a rung. */
-export const UNRANKED = { id: 'unranked', name: 'Unranked', bar: 0, blurb: 'Play a week and the app will tell you.' };
+export const UNRANKED = { id: 'unranked', name: 'Unranked', bar: 0 };
 
 export function standing() {
   const a = store.get().arena;

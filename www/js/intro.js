@@ -14,6 +14,7 @@ import { FEATS } from './arena/feats.js';
 import { cup } from './arena/cup.js';
 import { escapeHtml, chime, haptic, celebrate } from './ui.js';
 import { navigate } from './back.js';
+import { setPager } from './swipe.js';
 
 /** True until it has been finished or skipped once. */
 export const introDue = () => !store.get().settings.onboarded;
@@ -72,11 +73,11 @@ function fixture() {
 function ladder() {
   return `<ol class="intro-ladder">
     ${arena.DIVISIONS.map((d, i) => `<li>
-      <button class="intro-rung" data-rung="${i}">
+      <span class="intro-rung">
         <span class="intro-rung-crest">${crest(i, 30)}</span>
         <span class="intro-rung-name">${escapeHtml(d.name)}</span>
         <span class="intro-rung-need">${pct(d.bar)}</span>
-      </button>
+      </span>
     </li>`).reverse().join('')}
   </ol>`;
 }
@@ -208,6 +209,15 @@ export function renderIntro(mount) {
       </div>`;
 
     if (locked) opener = setTimeout(open, 4000);
+    // Read the button rather than `locked`: the gate opens without a redraw,
+    // so a captured flag would still say locked after you answered it.
+    setPager({
+      next: () => {
+        const btn = mount.querySelector('#next');
+        if (btn && !btn.disabled) btn.click();
+      },
+      prev: () => mount.querySelector('#back').click(),
+    });
     wire(page, last);
   }
 
@@ -250,17 +260,6 @@ export function renderIntro(mount) {
       mount.querySelector('#line').textContent = page.done;
       open();
     });
-
-    mount.querySelectorAll('[data-rung]').forEach((b) =>
-      b.addEventListener('click', () => {
-        haptic('tick');
-        chime('tick');
-        // Tapping the lit one again puts the page's own line back.
-        const off = b.classList.contains('on');
-        mount.querySelectorAll('[data-rung]').forEach((o) => o.classList.toggle('on', !off && o === b));
-        mount.querySelector('#line').textContent = off ? page.line : arena.DIVISIONS[Number(b.dataset.rung)].blurb;
-      })
-    );
 
     mount.querySelectorAll('[data-pick]').forEach((b) =>
       b.addEventListener('click', () => {
