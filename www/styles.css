@@ -2471,6 +2471,8 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 /* Built from the grid's own classes, so what you are told to tap looks like the
    thing you then tap. */
 .intro-grid { width: 100%; margin: 0; pointer-events: none; }
+/* One live cell in a dead picture: the page is about tapping it. */
+.intro-grid .intro-tap { pointer-events: auto; }
 .intro-grid .hg-cell { min-height: 34px; }
 .intro-grid .hg-row { min-height: 44px; }
 /* Today's cell on the top row: the one the sentence is about. */
@@ -2886,3 +2888,77 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
   border-radius: var(--radius); border: 1px solid var(--line);
   margin: 0 0 12px; background: var(--bg-2);
 }
+
+/* ---------- the introduction, page by page ----------
+   Two of the seven are done rather than read. Everything else is one picture
+   and one line, and the picture is built from the screen it is about. */
+
+/* A tall page leads with its heading: seven rungs above the title push it off
+   the bottom of a phone. */
+.intro-body.tall { padding-top: 4px; }
+.intro-body.tall .intro-art { min-height: 0; margin: 16px 0 0; }
+
+/* What a row can be. */
+.intro-kinds { display: grid; gap: 9px; width: 100%; }
+.intro-kind {
+  display: grid; grid-template-columns: 12px 1fr auto; align-items: center; gap: 11px;
+  padding: 13px 14px; border-radius: var(--radius);
+  background: var(--surface); border: 1px solid var(--line);
+  text-align: left;
+}
+.intro-dot {
+  width: 10px; height: 10px; border-radius: 50%; background: var(--kc);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--kc) 22%, transparent);
+}
+.intro-kind b { color: var(--kc); font-weight: var(--w-medium); font-size: var(--f-body); }
+.intro-kind em { font-style: normal; font-size: var(--f-fine); color: var(--muted); }
+
+/* The fixture, cut to the two numbers and the gap between them. */
+.intro-fix {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 14px;
+  width: 100%; padding: 20px 18px; border-radius: var(--radius);
+  background: var(--surface); border: 1px solid var(--line);
+}
+.intro-fix-side { display: grid; gap: 2px; }
+.intro-fix-side b { font-size: var(--f-display); font-variant-numeric: tabular-nums; }
+.intro-fix-side i { font-size: var(--f-fine); color: var(--muted); font-style: normal; }
+.intro-fix-vs { color: var(--faint); }
+.intro-race { grid-column: 1 / -1; height: 6px; border-radius: var(--radius-pill); background: var(--danger); overflow: hidden; }
+.intro-race u { display: block; height: 100%; background: var(--accent); text-decoration: none; }
+
+/* Every rung and what it costs. Tapping one says what it means. */
+.intro-ladder { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; gap: 2px; }
+.intro-rung {
+  display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 10px;
+  width: 100%; padding: 7px 8px; border: 0; border-radius: var(--radius-sm);
+  background: none; color: var(--text); text-align: left; font: inherit;
+}
+.intro-rung.on { background: var(--surface); }
+.intro-rung-crest { display: grid; place-items: center; opacity: 0.8; }
+.intro-rung.on .intro-rung-crest { opacity: 1; }
+.intro-rung-name { font-size: var(--f-small); color: var(--muted); }
+.intro-rung.on .intro-rung-name { color: var(--text); font-weight: var(--w-medium); }
+.intro-rung-need { font-size: var(--f-fine); color: var(--faint); font-variant-numeric: tabular-nums; }
+.intro-rung.on .intro-rung-need { color: var(--accent); }
+
+/* Cups and feats. */
+.intro-cabinet { display: grid; gap: 16px; justify-items: center; }
+.intro-cups { display: flex; gap: 16px; }
+.intro-cup {
+  display: grid; place-items: center; width: 60px; height: 60px;
+  border-radius: 50%; color: var(--cc);
+  background: color-mix(in oklab, var(--cc) 12%, transparent);
+  border: 1px solid color-mix(in oklab, var(--cc) 40%, transparent);
+}
+.intro-feats { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.intro-feat {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: var(--radius-pill);
+  background: var(--surface); border: 1px solid var(--line);
+  font-size: var(--f-fine); color: var(--muted);
+}
+
+/* The last page: the grid you leave on. */
+.intro-starters { width: 100%; margin-top: 18px; }
+.starter.picked { border-color: color-mix(in oklab, var(--sc) 55%, var(--line)); background: color-mix(in oklab, var(--sc) 10%, var(--surface)); }
+.starter.picked .starter-add { color: var(--sc); }

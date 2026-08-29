@@ -127,6 +127,28 @@ function blankHabit() {
 }
 
 /** A new habit, unsaved. The form works on this so backing out leaves nothing. */
+/* ---------------- the first five ---------------- */
+
+/** What an empty grid offers, and what the introduction ends on. Five is the
+ *  most anyone keeps at once in the first month. */
+export const STARTERS = [
+  { name: 'Gym', colour: 'orange', kind: 'yesno', freq: { num: 4, den: 7 }, question: 'Did you train?' },
+  { name: 'Water', colour: 'sky', kind: 'number', unit: 'L', target: 3, question: 'How much water?' },
+  { name: 'Read', colour: 'violet', kind: 'number', unit: 'pages', target: 20, question: 'How many pages?' },
+  { name: 'Protein', colour: 'amber', kind: 'number', unit: 'g', target: 150, question: 'How much protein?' },
+  { name: 'No sugar', colour: 'rose', kind: 'yesno', freq: { num: 6, den: 7 }, question: 'Stayed off sugar?' },
+];
+
+/** The line under a starter's name: what it will ask of you. */
+export const starterMeta = (h) => (h.kind === 'number' ? `${h.target} ${h.unit} a day` : freqLabel(h.freq));
+
+export function addStarter(i) {
+  const pick = STARTERS[i];
+  // Replaying the introduction must not leave two rows called Gym.
+  if (!pick || active().some((h) => h.name === pick.name)) return null;
+  return save({ ...draft(pick.kind), ...pick, order: active().length });
+}
+
 export function draft(kind = 'yesno') {
   return { ...blankHabit(), kind, target: kind === 'number' ? 1 : 0 };
 }
