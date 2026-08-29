@@ -2542,3 +2542,45 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .set-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
 .settings .btn.danger.wide { margin-top: 22px; }
 .settings .fineprint { margin-top: 8px; }
+
+/* ---------- the Nemesis, with a face ----------
+   He is the best week you have ever had, so the picture is you. The frame is
+   the same at every size: a ring in the accent, a dark ground under it for the
+   weeks before there is a photo. */
+.nem-face {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 0 3px rgb(34 211 197 / 0.12);
+}
+.nem-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.nem-face.empty { color: var(--faint); border-color: var(--line); box-shadow: none; }
+
+.nem-ask {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  margin: 12px 0;
+}
+.nem-ask > div { flex: 1; min-width: 0; }
+.nem-ask b { display: block; font-size: var(--f-body); }
+.nem-ask i { display: block; font-style: normal; }
+
+.nem-head { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.nem-head h2 { margin: 0; }
+.nem-head p { margin: 2px 0 0; }
+
+/* The one number that says whether you are beating him right now. */
+.nem-gap { font-size: var(--f-small); font-weight: var(--w-medium); margin: 10px 0 0; }
+.nem-gap.ahead { color: var(--good); }
+.nem-gap.behind { color: var(--danger); }
+
+/* On the fixture card he sits above his score, so the pair reads as one side. */
+.ar-side.them .nem-face { margin: 0 auto 6px; }

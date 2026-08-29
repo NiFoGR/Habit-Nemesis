@@ -5,6 +5,7 @@
 import * as store from '../store.js';
 import * as arena from './program.js';
 import * as feats from './feats.js';
+import { captureFace, face, faceAvatar } from './face.js';
 import { escapeHtml, chime, celebrate, haptic } from '../ui.js';
 import { icon } from '../icons.js';
 import { navigate, replaceWith } from '../back.js';
@@ -185,9 +186,21 @@ function drawFull(mount, res, fresh) {
 
 function noteBlock(key) {
   const existing = arena.noteFor(key);
+  const has = !!face();
   return `<section class="card note-ask" id="noteAsk">
     <h2>Your best week</h2>
-    <p class="muted small">You have never had a better one. Leave a line for whoever has to beat it. That will be you.</p>
+    <p class="muted small">You have never had a better one. This week is your Nemesis now.</p>
+
+    <div class="nem-ask">
+      ${faceAvatar(64)}
+      <div>
+        <b>${has ? 'Put this week on him' : 'Give him a face'}</b>
+        <i class="muted small">He is you at your best. He may as well look like it.</i>
+      </div>
+      <button class="btn small" id="faceGo">${has ? 'Retake' : 'Take one'}</button>
+    </div>
+
+    <label class="fine" for="noteText">And a line for whoever has to beat it. That will be you.</label>
     <input type="text" id="noteText" maxlength="${arena.MAX_NOTE}" autocomplete="off"
       placeholder="Beat that." value="${escapeHtml(existing)}">
     <button class="btn" id="noteSave">${existing ? 'Change it' : 'Leave it'}</button>
@@ -197,6 +210,18 @@ function noteBlock(key) {
 function wireNote(mount, res) {
   const save = mount.querySelector('#noteSave');
   if (!save || !res) return;
+
+  mount.querySelector('#faceGo')?.addEventListener('click', async () => {
+    haptic('press');
+    if (!(await captureFace(res.key))) return;
+    const slot = mount.querySelector('.nem-ask');
+    if (!slot) return;
+    slot.querySelector('.nem-face')?.replaceWith(nodeFrom(faceAvatar(64)));
+    slot.querySelector('b').textContent = 'That is him now';
+    slot.querySelector('#faceGo').textContent = 'Retake';
+    chime('feat');
+  });
+
   const field = mount.querySelector('#noteText');
   save.addEventListener('click', () => {
     arena.setNote(res.key, field.value);
@@ -207,6 +232,13 @@ function wireNote(mount, res) {
          <p class="muted small">He will see it the next time this week comes up as your Nemesis.</p>`
       : '<h2>Nothing said</h2><p class="muted small">The week stands on its own, then.</p>';
   });
+}
+
+/** One element from a markup string. */
+function nodeFrom(html) {
+  const t = document.createElement('template');
+  t.innerHTML = html.trim();
+  return t.content.firstElementChild;
 }
 
 function arcBlock(arc) {

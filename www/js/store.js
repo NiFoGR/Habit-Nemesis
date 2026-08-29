@@ -150,6 +150,8 @@ function blank() {
       scoring: 0,
       seenWeek: '', // the last closed week whose result screen was shown
       backfilled: false, // the one-time sweep that gives the Arena a history
+      // Your face, taken on the week that became your best. { src, week, at }
+      face: null,
     },
 
     // Night light. Settings only. On the APK the live copy is the service's.
@@ -540,6 +542,15 @@ function cleanArena(sa, base) {
     if (ts != null) feats[k] = ts;
   }
 
+  // A 256px JPEG of you, so the Nemesis has a face. Only that shape passes: it
+  // is interpolated into a src attribute, and 300KB is far more than 256px of
+  // JPEG needs.
+  const raw = src.face && typeof src.face === 'object' ? src.face : null;
+  const data = typeof raw?.src === 'string' ? raw.src : '';
+  const face = /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(data) && data.length <= 300000
+    ? { src: data, week: /^\d{4}-W\d{2}$/.test(raw.week) ? raw.week : '', at: num(raw.at, 0, 4e12) ?? 0 }
+    : null;
+
   return {
     division: oneOf(src.division, ARENA_DIVISIONS, base.division),
     placed: bool(src.placed),
@@ -547,6 +558,7 @@ function cleanArena(sa, base) {
     months,
     arcs,
     feats,
+    face,
     anchor: /^\d{4}-\d{2}-\d{2}$/.test(src.anchor) ? src.anchor : '',
     scoring: int(src.scoring, 0, 1000, 0),
     seenWeek: /^\d{4}-W\d{2}$/.test(src.seenWeek) ? src.seenWeek : '',

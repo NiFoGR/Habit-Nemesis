@@ -5,8 +5,9 @@
 import * as store from '../store.js';
 import * as habits from '../habits/program.js';
 import * as arena from './program.js';
+import { captureFace, face, faceAvatar } from './face.js';
 import * as feats from './feats.js';
-import { escapeHtml, openSheet, haptic } from '../ui.js';
+import { escapeHtml, openSheet, haptic, toast } from '../ui.js';
 import { icon } from '../icons.js';
 import { crest, UNRANKED } from './crest.js';
 
@@ -103,6 +104,7 @@ function weekCard() {
       </div>
       <div class="ar-vs">${icon('versus', 20)}</div>
       <button class="ar-side them" id="oppBtn">
+        ${opp.id === 'nemesis' || opp.knockout === 'final' ? faceAvatar(38) : ''}
         <b>${pct(opp.score)}</b>
         <span>${escapeHtml(opp.name)}</span>
       </button>
@@ -133,17 +135,41 @@ export function openWeekSheet(key) {
       </div>`;
     })
     .join('');
+  const nemesis = arena.nemesisWeek();
+  const isNemesis = !!nemesis && nemesis.key === key;
+  const said = arena.noteFor(key);
+  const now = arena.scoreWeek(arena.currentWeek());
+  const gap = Math.round((now.score - score) * 100);
+
   openSheet(`
-    <h2>${escapeHtml(arena.weekLabel(key))}</h2>
+    ${isNemesis
+      ? `<div class="nem-head">${faceAvatar(56)}<div><h2>Your Nemesis</h2>
+          <p class="muted small">${escapeHtml(arena.weekLabel(key))} · your best week</p></div></div>`
+      : `<h2>${escapeHtml(arena.weekLabel(key))}</h2>`}
     <p class="muted small">${escapeHtml(key.replace('-W', ', week '))}${
       result ? ` · ${result} against ${escapeHtml(stored.oppName || 'the bar')}` : ' · on the record, not played'
     }</p>
     <div class="ar-sheet-score ${result}"><b>${pct(score)}</b><span>${
       stored ? `${stored.done} of ${stored.due} cells` : `${live.done} of ${live.due} cells`
     }</span></div>
+    ${said ? `<p class="said-quote">“${escapeHtml(said)}”</p>` : ''}
+    ${isNemesis && key !== arena.currentWeek()
+      ? `<p class="nem-gap ${gap >= 0 ? 'ahead' : 'behind'}">${
+          gap >= 0 ? `You are ${gap} points ahead of him this week.` : `You are ${Math.abs(gap)} points behind him this week.`
+        }</p>`
+      : ''}
     <h3 class="ar-sub">The week, row by row</h3>
     <div class="ar-rows">${rows || '<p class="muted small">No rows were on the grid that week.</p>'}</div>
+    ${isNemesis ? `<button class="btn ghost wide" id="faceSwap">${face() ? 'Change his face' : 'Give him a face'}</button>` : ''}
     <button class="btn wide" data-close>Close</button>`);
+
+  document.getElementById('faceSwap')?.addEventListener('click', async () => {
+    haptic('press');
+    if (await captureFace(key)) {
+      toast('That is him now');
+      openWeekSheet(key);
+    }
+  });
 }
 
 /* ---------------- form ---------------- */
@@ -301,7 +327,7 @@ function nemesisLine() {
   const n = arena.nemesisWeek();
   if (!n) return '';
   return `<button class="ar-nemesis" data-week="${n.key}">
-    <span class="ar-nico">${icon('flash', 16)}</span>
+    ${face() ? faceAvatar(36) : `<span class="ar-nico">${icon('flash', 16)}</span>`}
     <span class="ar-nname"><b>Your Nemesis</b><i>${escapeHtml(arena.weekLabel(n.key))} · your best week</i></span>
     <b class="ar-nscore">${pct(n.score)}</b>
   </button>`;
