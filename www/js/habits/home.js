@@ -443,16 +443,25 @@ function wireCells(grid, mount, s) {
 
   if (s.shortPress) return;
 
+  let from = null;
   grid.addEventListener('pointerdown', (e) => {
     const cell = e.target.closest('.hg-cell');
     if (!cell) return;
     held = false;
+    from = { x: e.clientX, y: e.clientY };
     timer = setTimeout(() => {
       held = true;
       act(cell);
     }, LONG_PRESS_MS);
   });
-  const cancel = () => clearTimeout(timer);
+  const cancel = () => {
+    clearTimeout(timer);
+    from = null;
+  };
+  // A finger that has travelled is swiping or scrolling, not holding.
+  grid.addEventListener('pointermove', (e) => {
+    if (from && Math.hypot(e.clientX - from.x, e.clientY - from.y) > 10) cancel();
+  });
   grid.addEventListener('pointerup', cancel);
   grid.addEventListener('pointercancel', cancel);
   grid.addEventListener('pointerleave', cancel);

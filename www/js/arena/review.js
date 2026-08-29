@@ -13,6 +13,7 @@ import * as feats from './feats.js';
 import { escapeHtml, chime, celebrate, haptic, WEEKDAYS_LONG } from '../ui.js';
 import { icon } from '../icons.js';
 import { navigate } from '../back.js';
+import { setPager } from '../swipe.js';
 import { shareWeek } from './share.js';
 
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
@@ -224,6 +225,16 @@ function draw(mount, w) {
     chime(beat.cue);
     haptic('tick');
   }
+
+  // A beat back, and out of the review at the cover.
+  setPager({
+    next: () => mount.querySelector('#next').click(),
+    prev: () => {
+      if (step === 0) return void navigate('#/hub');
+      step--;
+      draw(mount, w);
+    },
+  });
 
   mount.querySelector('#share')?.addEventListener('click', () => shareWeek(w.key));
   mount.querySelector('#next').addEventListener('click', () => {

@@ -1792,6 +1792,13 @@ body.blacked .br-orb { opacity: 0.09; }
 .screen.enter { animation: screen-in var(--t-base) var(--ease); }
 @keyframes screen-in { from { opacity: 0; transform: translateY(4px); } }
 
+/* A swipe: the screen arrives from the side the finger came from. Overrides
+   the plain arrival, which is why it sits after it. */
+.screen.swiped-left { animation: swipe-in-left var(--t-base) var(--ease); }
+.screen.swiped-right { animation: swipe-in-right var(--t-base) var(--ease); }
+@keyframes swipe-in-left { from { opacity: 0; transform: translateX(18px); } }
+@keyframes swipe-in-right { from { opacity: 0; transform: translateX(-18px); } }
+
 /* Changing the day count: the rows stay put and the columns grow. */
 .hgrid { transition: none; }
 .hg-row, .hg-head { transition: grid-template-columns var(--t-base) var(--ease); }
@@ -2946,20 +2953,15 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .intro-race { grid-column: 1 / -1; height: 6px; border-radius: var(--radius-pill); background: var(--danger); overflow: hidden; }
 .intro-race u { display: block; height: 100%; background: var(--accent); text-decoration: none; }
 
-/* Every rung and what it costs. Tapping one says what it means. */
+/* Every rung and what it costs. */
 .intro-ladder { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; gap: 2px; }
 .intro-rung {
   display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 10px;
-  width: 100%; padding: 7px 8px; border: 0; border-radius: var(--radius-sm);
-  background: none; color: var(--text); text-align: left; font: inherit;
+  width: 100%; padding: 7px 8px; text-align: left;
 }
-.intro-rung.on { background: var(--surface); }
 .intro-rung-crest { display: grid; place-items: center; opacity: 0.8; }
-.intro-rung.on .intro-rung-crest { opacity: 1; }
 .intro-rung-name { font-size: var(--f-small); color: var(--muted); }
-.intro-rung.on .intro-rung-name { color: var(--text); font-weight: var(--w-medium); }
 .intro-rung-need { font-size: var(--f-fine); color: var(--faint); font-variant-numeric: tabular-nums; }
-.intro-rung.on .intro-rung-need { color: var(--accent); }
 
 /* Cups and feats. */
 .intro-cabinet { display: grid; gap: 16px; justify-items: center; }
