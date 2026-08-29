@@ -1,15 +1,6 @@
-// Creating and editing a habit.
-//
-// Every field on this screen can be changed afterwards, including the ones
-// that change what the record means: the frequency, the target and whether the
-// target is a floor or a ceiling. That is deliberate. Scores and streaks are
-// computed from the entries on every read rather than stored, so editing a
-// habit re-reads its whole history under the new rules instead of leaving a
-// number behind that was true under the old ones.
-//
-// The one thing you cannot change is yes/no against measurable, because the
-// values already recorded mean different things in the two and there is no
-// honest conversion. Archive it and make the other one.
+// Creating and editing a habit. Every field can be changed afterwards,
+// frequency and target included: scores recompute from the entries.
+// Yes/no against measurable is the exception, there is no honest conversion.
 
 import * as habits from './program.js';
 import { escapeHtml, toast, openSheet } from '../ui.js';
@@ -19,9 +10,7 @@ import { navigate, replaceWith } from '../back.js';
 const WEEK_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const WEEK_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-/* ---------------- the type picker ----------------
-   Two kinds of question, and the choice has to be made before the form can
-   exist, because half the fields belong to one of them. */
+/* ------------------ the type picker ------------------ */
 
 export function typePickerHtml() {
   return `
@@ -38,8 +27,7 @@ export function typePickerHtml() {
     </div>`;
 }
 
-/** Opened from the grid's + button, which is where the choice actually
- *  belongs: over the list you are adding to. */
+/** Opened from the grid, over the list you are adding to. */
 export function openTypePicker() {
   openSheet(`${typePickerHtml()}<button class="btn ghost wide" data-close>Cancel</button>`);
 }
@@ -49,8 +37,7 @@ export function openTypePicker() {
 export function renderHabitEdit(mount, { id, kind } = {}) {
   const existing = id ? habits.byId(id) : null;
   if (id && !existing) {
-    // A link to a habit that has since been deleted. Say so rather than
-    // silently opening a blank form that would create a second one.
+    // Deleted habit: say so rather than opening a blank form that creates a second.
     mount.innerHTML = `
       <div class="screen habits">
         <header class="screen-head">
@@ -73,9 +60,7 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
         </header>
         <section class="card">${typePickerHtml()}</section>
       </div>`;
-    // Choosing a kind replaces this screen rather than stacking the form on
-    // top of it. Otherwise saving would unwind to the picker, and you would be
-    // looking at "what kind of habit?" one press after creating one.
+    // Replaces rather than stacks: saving must not unwind to the picker.
     mount.querySelectorAll('.type-card').forEach((a) =>
       a.addEventListener('click', (e) => {
         e.preventDefault();
@@ -85,9 +70,7 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
     return;
   }
 
-  // The form works on a copy. Backing out of a half-filled screen has to leave
-  // nothing behind, and the only way to be sure of that is to not write until
-  // Save is pressed.
+  // Works on a copy. Nothing is written until Save.
   const h = existing ? { ...existing, freq: { ...existing.freq }, remindDays: [...existing.remindDays] } : habits.draft(kind);
 
   const draw = () => {
@@ -172,8 +155,7 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
     wire();
   };
 
-  /** Read the plain fields back before anything that redraws, so typing a name
-   *  and then opening the colour picker does not lose the name. */
+  /** Read the plain fields back before any redraw, or opening a picker loses the name. */
   const collect = () => {
     const val = (sel) => mount.querySelector(sel)?.value ?? '';
     h.name = val('#name').slice(0, 60);
@@ -263,8 +245,7 @@ function openColourSheet(h, done) {
   );
 }
 
-/** The five ways of saying the same fraction. The rows are laid out exactly as
- *  they read: a radio, a number you can change, and the words around it. */
+/** Five ways of saying one fraction. Rows read as they are laid out. */
 function openFreqSheet(h, done) {
   const p = habits.freqPreset(h.freq);
   const everyN = p === 'everyN' ? h.freq.den : 3;
@@ -295,9 +276,8 @@ function openFreqSheet(h, done) {
     const v = Number(sheet.el.querySelector(`#${id}`).value);
     return Number.isFinite(v) && v >= 1 ? Math.round(v) : dflt;
   };
-  // Picking up a number is picking its row: reaching for the box beside
-  // "10 times per month" and then having to find the radio as well is the kind
-  // of dialog people give up on.
+  // Touching a number picks its row: hunting for the radio as well is how a
+  // dialog gets abandoned.
   sheet.el.querySelectorAll('.freq-num').forEach((input) =>
     input.addEventListener('focus', () => {
       input.closest('.freq-row').querySelector('input[type="radio"]').checked = true;
@@ -350,8 +330,7 @@ function openRemindSheet(h, done) {
   });
   sheet.el.querySelector('#remSave').addEventListener('click', () => {
     const at = sheet.el.querySelector('#at').value;
-    // A reminder with no days selected would be a reminder that never fires,
-    // which looks identical to a bug. Nothing chosen means every day.
+    // No days chosen means every day. A reminder that never fires looks like a bug.
     h.remindDays = picked.size ? [...picked].sort() : [0, 1, 2, 3, 4, 5, 6];
     h.remindAt = /^\d{2}:\d{2}$/.test(at) ? at : '';
     sheet.close();

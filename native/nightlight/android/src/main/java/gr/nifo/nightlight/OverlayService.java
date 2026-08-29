@@ -24,28 +24,17 @@ import android.view.WindowManager;
 import java.util.Calendar;
 
 /**
- * The filter itself: a foreground service that owns the schedule and repaints
- * once a minute.
- *
- * <p>It is a service rather than something the WebView drives because the app
- * is not running most of the time this feature is supposed to be working. A
- * night light that only warms the screen while you have NiFo open is not a
- * night light. So the configuration is pushed into SharedPreferences by the
- * plugin and everything after that happens here, including across a reboot.
+ * The filter: a foreground service owning the schedule, repainting once a
+ * minute. A service because the app is not running for most of the hours this
+ * is meant to cover.
  *
  * <h3>Why the overlay washes rather than multiplies</h3>
  *
- * <p>A real colour-temperature filter multiplies each channel: blue times 0.4
- * leaves black alone and takes the blue out of white. Window compositing cannot
- * do that. Every window on Android is blended source-over, so the most an
- * overlay can do is <em>out = amber·a + screen·(1−a)</em>, which takes blue out
- * of bright pixels correctly and lifts black pixels towards amber, which is
- * exactly wrong. There is no flag that changes this: blending happens in
- * SurfaceFlinger, below anything an app can reach.
- *
- * <p>That is why {@link HardwareTint} is tried first on every tick and this is
- * the fallback. The alpha is capped in {@link Curve} so the lift stays
- * tolerable, and the settings screen says plainly which of the two is running.
+ * <p>Every window is blended source-over, so the most an overlay can do is
+ * <em>out = amber·a + screen·(1−a)</em>: correct on bright pixels, and it lifts
+ * blacks towards amber. Blending happens in SurfaceFlinger, below anything an
+ * app can reach. That is why {@link HardwareTint} is tried first every tick and
+ * this is the fallback, with the alpha capped in {@link Curve}.
  */
 public class OverlayService extends Service {
 
@@ -73,8 +62,7 @@ public class OverlayService extends Service {
         @Override
         public void run() {
             apply();
-            // Rescheduled from the end of the work rather than at a fixed rate,
-            // so a slow tick cannot pile up a backlog of them.
+            // Rescheduled from the end of the work, so a slow tick cannot pile up.
             if (screenOn) handler.postDelayed(this, TICK_MS);
         }
     };
@@ -87,10 +75,7 @@ public class OverlayService extends Service {
         wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
         createChannel();
 
-        // Nothing is visible while the screen is off, so the tick stops rather
-        // than repainting an invisible window sixty times an hour. This is the
-        // difference between a filter you forget about and one that shows up in
-        // the battery screen.
+        // Screen off: stop ticking rather than repainting an invisible window.
         screenReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -127,8 +112,7 @@ public class OverlayService extends Service {
         startForegroundCompat();
         handler.removeCallbacks(ticker);
         handler.post(ticker);
-        // Restarted by the system if it is ever killed, which is what a filter
-        // that is supposed to be on at 3am needs.
+        // Restarted if killed, which a filter meant to be on at 3am needs.
         return START_STICKY;
     }
 
@@ -140,7 +124,7 @@ public class OverlayService extends Service {
         try {
             if (screenReceiver != null) unregisterReceiver(screenReceiver);
         } catch (Throwable ignored) {
-            // Not registered, or already gone. Either way there is nothing left to do.
+            // Not registered, or already gone.
         }
         super.onDestroy();
     }
@@ -160,9 +144,8 @@ public class OverlayService extends Service {
         Curve.Config c = Curve.Config.from(prefs());
 
         if (!Curve.active(c, System.currentTimeMillis())) {
-            // Paused or switched off. The window comes down and the system
-            // filter goes back to whatever it was, but the service stays up so
-            // an hour's pause resumes on its own.
+            // Paused or off: the window comes down, the service stays up so an hour's
+                        // pause can resume on its own.
             detach();
             if (lastWasHardware) {
                 HardwareTint.clear(this);
@@ -170,8 +153,7 @@ public class OverlayService extends Service {
             }
             lastKelvin = -1;
             updateNote(c, 0, false);
-            // A suspend is temporary and the service has to be here to lift it,
-            // so only an actual switch-off tears everything down.
+            // A suspend is temporary, so only a real switch-off tears down.
             if (!c.enabled) stopEverything();
             return;
         }
@@ -180,11 +162,10 @@ public class OverlayService extends Service {
         int minute = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
         int kelvin = Curve.kelvinAt(c, minute);
 
-        // The good path, re-checked every tick so granting the permission over
-        // adb takes effect without a restart of anything.
+        // Re-checked every tick, so granting the permission over adb takes effect
+                // without a restart.
         if (kelvin >= c.dayKelvin - 40) {
-            // Neutral. Nothing to apply either way, and leaving a zero-alpha
-            // window attached all day is a window the compositor still handles.
+            // Neutral: nothing to apply, and a zero-alpha window still costs the compositor.
             detach();
             if (lastWasHardware) {
                 HardwareTint.clear(this);
@@ -244,15 +225,13 @@ public class OverlayService extends Service {
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.MATCH_PARENT,
                 type,
-                // NOT_TOUCHABLE is the important one: every touch has to fall
-                // straight through to whatever is underneath, or the filter
-                // makes the phone unusable rather than warm.
+                // NOT_TOUCHABLE: every touch has to fall through, or the filter makes the
+                                // phone unusable rather than warm.
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                         | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
                         | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                        // Without NO_LIMITS the window stops at the status and
-                        // navigation bars, and two untinted strips across a warm
-                        // screen look like a bug.
+                        // Without NO_LIMITS the window stops at the system bars, and two
+                                                // untinted strips look like a bug.
                         | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
                         | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 PixelFormat.TRANSLUCENT);
@@ -269,7 +248,7 @@ public class OverlayService extends Service {
         try {
             wm.removeView(view);
         } catch (Throwable ignored) {
-            // Already detached, or the window manager has moved on.
+            // Already detached.
         }
         view = null;
         shownArgb = 0;
@@ -282,11 +261,6 @@ public class OverlayService extends Service {
         stopForeground(true);
         stopSelf();
     }
-
-    /* ---------------- the notification ----------------
-       Android will not let a long-running service go without one, so it may as
-       well be useful: it says what the filter is actually doing and carries the
-       one control anybody ever wants, which is "not for the next hour". */
 
     private void createChannel() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
@@ -358,8 +332,7 @@ public class OverlayService extends Service {
                 startForeground(NOTE_ID, note);
             }
         } catch (Throwable t) {
-            // Android 14 refuses some foreground starts outright. Nothing to
-            // recover here; the service will be restarted from the app.
+            // Android 14 refuses some foreground starts. The app will restart it.
         }
     }
 
@@ -368,7 +341,7 @@ public class OverlayService extends Service {
             NotificationManager nm = getSystemService(NotificationManager.class);
             if (nm != null) nm.notify(NOTE_ID, buildNote(c, kelvin, on));
         } catch (Throwable ignored) {
-            // Notifications may be blocked outright; the filter still works.
+            // Notifications may be blocked. The filter still works.
         }
     }
 
@@ -381,7 +354,7 @@ public class OverlayService extends Service {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(i);
             else ctx.startService(i);
         } catch (Throwable ignored) {
-            // Background start restrictions. The next app launch will retry.
+            // Background start restrictions. The next launch retries.
         }
     }
 }

@@ -1,9 +1,5 @@
-// Minimal static server for local development:
-//   node tools/serve.mjs [port] [dir]
-// `dir` is relative to the repo root and defaults to www/. Pass dist-web to
-// check what `npm run pack:web` produced, which is the build that has no
-// scripture in it and therefore the one where the service worker's
-// best-effort half is actually doing something.
+// Dev server: node tools/serve.mjs [port] [dir]. `dir` defaults to www/.
+// Pass dist-web to check what `npm run pack:web` produced.
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';

@@ -1,26 +1,16 @@
-// The training program: what to do today, how it is scored, and when you move up.
+// The training program: what to do today, how it is scored, when you move up.
 //
-// Design notes (sources in docs/KEGEL_PROGRAM.md):
-//  - The pelvic floor has fast-twitch and slow-twitch fibres, so every session
-//    trains both: quick flicks (~1s) and endurance holds (3s -> 15s).
-//  - Rest is always at least as long as the contraction. Under-resting is the
-//    single most common way people stall.
-//  - Total contraction work stays well under the ~15 min/day ceiling, because
-//    over-training produces a hypertonic (chronically tight) floor, which is
-//    worse than not training at all.
-//  - Every session ends with reverse kegels + diaphragmatic breathing so the
-//    muscle learns to fully release, not just clench.
-//  - Position progresses lying -> sitting -> standing -> under load, because a
-//    floor that only works lying down is not much use standing up.
+// Sources in docs/KEGEL_PROGRAM.md. The rules it encodes:
+//   Fast and slow fibres both, so every session has flicks and holds.
+//   Rest is at least as long as the contraction.
+//   Work stays under the ~15 min/day ceiling: over-training makes a floor
+//   hypertonic, which is worse than not training.
+//   Every session ends in reverse kegels and breathing, so it learns to release.
+//   Position climbs lying, sitting, standing, under load.
 
 import * as store from '../store.js';
 
-/* ---------------- the 2-year ladder ----------------
-   Twelve hand-written weeks ran out of progression in three months. This is a
-   104-week periodised plan generated from a model, so overload continues for
-   two years: six phases, each four-week block ending in a deload week, and
-   five separate things that grow: hold length, hold reps, flick reps, ramps
-   and (later) pulse sets. Position and load progress across the phases. */
+/* ----------------- the 2-year ladder ----------------- */
 
 const PHASES = [
   {
@@ -96,7 +86,7 @@ export const TOTAL_WEEKS = 104;
 const phaseFor = (n) => PHASES.find((p) => n >= p.from && n <= p.to) || PHASES[PHASES.length - 1];
 const round500 = (ms) => Math.round(ms / 500) * 500;
 
-/** Builds one week of the plan. Every fourth week is a deload. */
+/** One week. Every fourth is a deload. */
 function makeLevel(n) {
   const phase = phaseFor(n);
   const t = (n - 1) / (TOTAL_WEEKS - 1); // 0 at week 1, 1 at week 104
@@ -104,8 +94,8 @@ function makeLevel(n) {
   const soft = deload ? 0.7 : 1;
   const softReps = deload ? 0.8 : 1;
 
-  // 3s to 20s. Past twenty seconds a hold stops being productive, so the later
-  // years buy their overload from reps, ramps and pulses instead.
+  // 3s to 20s. Past twenty a hold stops paying, so later years buy overload from
+  // reps, ramps and pulses.
   const holdMs = round500((3000 + 17000 * Math.pow(t, 0.85)) * soft);
   const holdReps = Math.max(6, Math.round((8 + 12 * t) * softReps));
   const flickReps = Math.max(8, Math.round((10 + 20 * t) * softReps));
@@ -134,11 +124,11 @@ export { PHASES };
 
 export const MAX_LEVEL = LEVELS.length;
 export const PROMOTION_TARGET = 3; // qualifying sessions needed to level up
-// A level is a week of training. Without a minimum time at each one, two good
-// days would promote you and the two-year plan would collapse into months.
+// A level is a week. Without a minimum served, two good days would collapse
+// the two-year plan into months.
 export const MIN_DAYS_PER_LEVEL = 6;
 
-/** Days still to serve at the current level before promotion is possible. */
+/** Days still to serve before promotion is possible. */
 export function daysUntilEligible(state = store.get()) {
   const started = state.program.levelStartedAt || state.program.startedAt || Date.now();
   return Math.max(0, Math.ceil(MIN_DAYS_PER_LEVEL - (Date.now() - started) / 864e5));
@@ -152,9 +142,8 @@ export function levelDef(n) {
 
 const breathStep = (label, ms, cue) => ({ kind: 'breath', label, targetMs: ms, cue });
 
-/** Builds the ordered list of steps for a session.
- *  A deload trims hold targets by 25% without changing rep counts, so a bad
- *  week reduces intensity rather than breaking the habit. */
+/** The ordered steps for a session. A deload trims hold targets by 25% and
+ *  leaves rep counts alone. */
 export function buildSession({ level, type = 'training', deload = false }) {
   const def = levelDef(level);
   const scale = deload ? 0.75 : 1;
@@ -183,7 +172,7 @@ export function buildSession({ level, type = 'training', deload = false }) {
   };
 
   if (type === 'release') {
-    // Weekly down-training day: no strengthening at all, on purpose.
+    // Weekly down-training day: no strengthening at all.
     steps.push({ kind: 'title', label: 'Release day', sub: 'Down-training only' });
     for (let i = 0; i < 4; i++) {
       steps.push(breathStep('Breathe in, lengthen', 4000, 'Feel the floor drop as the belly expands.'));
@@ -194,8 +183,7 @@ export function buildSession({ level, type = 'training', deload = false }) {
   }
 
   if (type === 'quick') {
-    // The 90-second fallback for days that are falling apart. Keeps the streak
-    // honest without pretending it was a full session.
+    // 90-second fallback for a day falling apart. Keeps the streak honest.
     steps.push({ kind: 'title', label: 'Quick session', sub: def.position });
     for (let i = 0; i < 5; i++) {
       steps.push({ kind: 'flick', label: 'Squeeze', targetMs: 1000, rep: i + 1, of: 5, cue: 'Sharp on, sharp off.' });
@@ -230,9 +218,8 @@ export function buildSession({ level, type = 'training', deload = false }) {
     steps.push({ kind: 'rest', label: 'Let go', targetMs: def.flicks.restMs });
   }
 
-  // Adaptive target: a prescribed hold longer than ~60% of your tested max is
-  // a target you cannot actually hold, so it gets capped. The level ladder
-  // still controls progression; this only stops the table outrunning you.
+  // A target over ~60% of your tested max is one you cannot hold, so it is
+  // capped. The ladder still controls progression.
   const tested = store.get().prs.maxHoldMs;
   const ceiling = tested ? Math.max(3000, Math.round(tested * 0.6)) : Infinity;
   const holdMs = Math.min(Math.round((def.holds.holdMs * scale) / 500) * 500, ceiling);
@@ -279,12 +266,8 @@ export function buildSession({ level, type = 'training', deload = false }) {
   return { level, type, steps, def };
 }
 
-/** Work steps are the ones that get scored. */
+/** Work steps are the scored ones. */
 export const isWorkStep = (s) => ['flick', 'hold', 'ramp', 'max'].includes(s.kind);
-
-export function estimateDurationMs(session) {
-  return session.steps.reduce((ms, s) => ms + (s.kind === 'title' ? 1200 : s.targetMs || 0), 0);
-}
 
 /* ---------------- what to do right now ---------------- */
 
@@ -294,8 +277,7 @@ export function planForToday(state = store.get()) {
   const isRestDay = new Date().getDay() === settings.restDay;
   const total = state.sessions.length;
 
-  // A max-hold test every 7th session gives an honest strength datapoint that
-  // is not confounded by the prescribed target.
+  // Every 7th session is a max-hold test, unconfounded by a target.
   const dueForTest = total > 0 && total % 7 === 0 && !today.some((s) => s.type === 'test');
 
   let type = 'training';
@@ -321,16 +303,10 @@ export function planForToday(state = store.get()) {
 
 const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
 
-/** Turns the raw per-rep record into a 0-100 session score.
- *  completion , did you do the reps you were asked for       (40)
- *  fidelity   , did you actually hold for as long as the target (40)
- *  consistency, was rep 12 as good as rep 1, i.e. fatigue resistance (20)
- *
- *  Fidelity credits each rep at most 100% of its target, so holding some reps
- *  long can never paper over reps you cut short. Genuinely exceeding the target
- *  is rewarded separately, and only when nothing fell short, otherwise the
- *  honest way to a high score would be to overhold a few and bail on the rest.
- */
+/** 0-100 from completion (40), fidelity (40), consistency (20).
+ *  Fidelity credits each rep at most 100% of target, so long reps cannot paper
+ *  over short ones. Exceeding is rewarded separately, and only if nothing fell
+ *  short. */
 export function scoreSession(reps, { estimated = false } = {}) {
   const scored = reps.filter((r) => r.kind !== 'max');
   if (!scored.length) {
@@ -351,7 +327,7 @@ export function scoreSession(reps, { estimated = false } = {}) {
     consistency = capped[0] >= 0.9 ? 1 : 0.6;
   }
 
-  // Overhold bonus: up to +5, and only if every prescribed rep landed on target.
+  // Overhold bonus, up to +5, only if every prescribed rep landed.
   const clean = raw.every((v) => v >= 0.98);
   const bonus = clean ? clamp((raw.reduce((a, b) => a + b, 0) / raw.length - 1) * 25, 0, 5) : 0;
 
@@ -359,8 +335,8 @@ export function scoreSession(reps, { estimated = false } = {}) {
   return { score, completion, fidelity, consistency, estimated };
 }
 
-/** Hands-free mode has no per-rep data, so the self-rating stands in for it ,
- *  flagged as estimated everywhere it is displayed. */
+/** Hands-free has no per-rep data, so the self-rating stands in. Flagged
+ *  estimated everywhere. */
 export function scoreFromRating(rating) {
   const map = { easy: 94, solid: 86, hard: 74, failed: 52 };
   const score = map[rating] ?? 75;
@@ -378,8 +354,7 @@ export function grade(score) {
 
 /* ---------------- progression ---------------- */
 
-/** Decides what the session did to your level. Returns a description of the
- *  change so the report can explain it in words. */
+/** What the session did to your level, described so the report can say it. */
 export function applyProgression(state, session) {
   const p = state.program;
   const outcome = { levelUp: false, deloaded: false, from: p.level, to: p.level, qualifying: p.qualifying };
@@ -389,7 +364,7 @@ export function applyProgression(state, session) {
   if (p.deload > 0) p.deload = Math.max(0, p.deload - 1);
 
   if (session.discomfort) {
-    // Pain is a stop sign, not a challenge. Back off immediately.
+    // Pain is a stop sign. Back off immediately.
     p.deload = 3;
     p.qualifying = 0;
     outcome.deloaded = true;
@@ -402,8 +377,7 @@ export function applyProgression(state, session) {
   const qualified = session.score >= 80 && session.completion >= 0.99;
   if (qualified) {
     p.qualifying++;
-    // A level represents a week of training, so promotion needs time served as
-    // well as good sessions, otherwise two strong days would skip a week.
+    // Promotion needs time served as well as good sessions.
     const daysHere = (Date.now() - (p.levelStartedAt || p.startedAt || Date.now())) / 864e5;
     outcome.daysHere = daysHere;
     if (p.qualifying >= PROMOTION_TARGET && daysHere >= MIN_DAYS_PER_LEVEL && p.level < MAX_LEVEL) {
@@ -416,9 +390,8 @@ export function applyProgression(state, session) {
     }
   } else if (session.score < 55) {
     p.qualifying = 0;
-    // The session being scored is not in state.sessions yet, so "the previous
-    // one was also bad" means two in a row counting this one. Sessions logged
-    // from a pump cadence carry no score and must not trigger a deload.
+    // This session is not in state.sessions yet, so "the previous was also bad"
+    // means two in a row counting this one. Pump-cadence sessions carry no score.
     const previous = state.sessions.filter((s) => s.type !== 'release' && s.countsForPromotion !== false).slice(-1)[0];
     if (previous && previous.score < 55) {
       p.deload = 2;
@@ -431,8 +404,7 @@ export function applyProgression(state, session) {
 
 /* ---------------- composite strength index ---------------- */
 
-/** PFI is a single 0-1000 number so progress is legible at a glance:
- *  strength (best hold) + capacity (recent volume) + level + adherence. */
+/** PFI, 0-1000: strength, capacity, level, adherence. */
 export function pfi(state = store.get()) {
   const maxHold = state.prs.maxHoldMs || 0;
   const strength = clamp(maxHold / 30000, 0, 1) * 300;
@@ -456,4 +428,3 @@ export function pfiBand(v) {
   if (v >= 220) return 'Developing';
   return 'Beginner';
 }
-

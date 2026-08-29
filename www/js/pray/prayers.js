@@ -1,14 +1,8 @@
-// The prayer texts, Greek and English side by side.
+// The prayer texts, Greek and English.
 //
-// What is bundled here is the ancient core: the short pieces that open and
-// close almost every Orthodox rule, and which are old enough to be nobody's
-// property. The Greek is the original. The English is the traditional
-// rendering that has been in common use for centuries.
-//
-// A full prayer book is a modern compiled translation and is somebody's
-// copyright, so the app does not ship one. What it ships is the frame, plus
-// `custom` slots you fill from your own book. Anything you add is stored with
-// your data and appears in the slot exactly like the bundled texts.
+// The ancient core only: the pieces old enough to be nobody's property. A full
+// prayer book is a modern translation and somebody's copyright, so the app
+// ships the frame and you fill the custom slots from your own book.
 
 /** @typedef {{id:string, title:{el:string,en:string}, el:string[], en:string[],
  *             repeat?:number, note?:string}} Prayer */
@@ -159,8 +153,8 @@ export const PRAYERS = {
 
 /* ---------------- the two rules ---------------- */
 
-// A step is either a bundled prayer id, or a marker the runner expands:
-//   { custom: 'morning' }  everything you have added to that slot
+// A step is a bundled prayer id, or a marker the runner expands:
+//   { custom: 'morning' }  everything added to that slot
 //   { silence: ms }        stillness, no words
 
 export const RULES = {
@@ -191,10 +185,9 @@ export const RULES = {
   },
 };
 
-export const RULE_LIST = Object.values(RULES);
 export const ruleDef = (id) => RULES[id] || RULES.morning;
 
-/** Resolves a rule into renderable steps, folding in anything you have added. */
+/** A rule as renderable steps, folding in anything you added. */
 export function buildRule(ruleId, custom = []) {
   const rule = ruleDef(ruleId);
   const mine = custom.filter((c) => c.slot === ruleId);
@@ -228,7 +221,7 @@ export function buildRule(ruleId, custom = []) {
   return out;
 }
 
-/** Rough length, used to set expectations before you start. */
+/** Rough length, to set expectations before you start. */
 export function ruleMinutes(ruleId, custom = []) {
   const steps = buildRule(ruleId, custom);
   const ms = steps.reduce((a, s) => {

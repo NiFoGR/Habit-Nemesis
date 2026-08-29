@@ -1,29 +1,11 @@
-// Habits: the domain. Everything that is true about a habit regardless of
-// which screen is asking.
+// Habits domain. The general-purpose room: name, question, colour, unit,
+// target, frequency, group, reminder, order and any past day are all editable.
 //
-// This is the general-purpose room. The other five features each encode one
-// practice with its own protocol; this one holds whatever else you decide to
-// hold yourself to, so almost everything about a habit is yours to set and to
-// change afterwards: its name, question, colour, unit, target, frequency,
-// group, reminder, position in the list, and the value on any past day.
-//
-// Three things here are worth reading before the rest:
-//
-//   The record is entries, and nothing else. Streaks and scores are computed
-//   on every read rather than stored. Every other section in NiFo caches its
-//   streak, which is safe there because the past is written once by a session
-//   that has just ended. Here the past is editable by design - that is half
-//   the point of the calendar - so a cached streak would be wrong the moment
-//   you corrected last Tuesday.
-//
-//   A day is a string key, and which day it is can be moved. `dayStartHour`
-//   shifts the boundary so a habit ticked at 01:00 belongs to the night you
-//   were still awake for. It shifts this section only: the other five record
-//   against midnight, and rewriting their history to agree would be a much
-//   bigger change than the setting is worth.
-//
-//   Frequency is a fraction, n times in d days. Every day is 1/1, every third
-//   day is 1/3, three times a week is 3/7. One model, five ways of saying it.
+// Three things to know first:
+//   Entries are the record. Streaks and scores compute on every read, because
+//   the past is editable here.
+//   A day is a key, and `dayStartHour` moves the boundary. This section only.
+//   Frequency is a fraction, n in d. Daily is 1/1, three a week is 3/7.
 
 import * as store from '../store.js';
 import { kegelName, peName } from '../names.js';
@@ -32,14 +14,11 @@ import * as pe from '../pe/program.js';
 import * as bible from '../bible/program.js';
 import * as pray from '../pray/program.js';
 import * as breathe from '../breathe/program.js';
-import { fmtHours } from '../ui.js';
+import { fmtHours, WEEKDAYS } from '../ui.js';
 import { cancelAlarms, scheduleMany, ALARM_HABIT_BASE, ALARM_HABIT_SLOTS } from '../native.js';
 import { nifoUnlocked } from '../nifo.js';
 
-/* ---------------- the palette ----------------
-   A habit's colour is stored as an id from this list rather than as a hex
-   string, because it ends up in a `style` attribute. A closed set cannot carry
-   anything but a colour into the page; a free-text field could. */
+/* -------------------- the palette -------------------- */
 
 export const COLOURS = [
   { id: 'teal', hex: '#22d3c5', name: 'Teal' },
@@ -56,21 +35,18 @@ export const COLOURS = [
   { id: 'slate', hex: '#94a3b8', name: 'Slate' },
 ];
 
-export const COLOUR_IDS = COLOURS.map((c) => c.id);
 export const hexOf = (id) => (COLOURS.find((c) => c.id === id) || COLOURS[0]).hex;
 
-/** What a cell can hold. `undefined` is the fourth state and the default: no
- *  data at all, which is not the same as a lapse and is why the app can be
- *  asked to draw the two differently. */
+/** What a cell holds. `undefined` is the fourth state: no data at all, which
+ *  is not a lapse. */
 export const SKIP = -1;
 export const NO = 0;
 export const YES = 1;
 
 export const MAX_HABITS = 100;
-/** A run this long behind us is a corrupt createdAt, not a habit. */
+/** Longer than this is a corrupt createdAt, not a habit. */
 const MAX_SPAN_DAYS = 3650;
-/** How far back a linked row is read. Two years is longer than the app has
- *  existed and costs one pass over data already in memory. */
+/** How far back a linked row reads. */
 const LINKED_SPAN_DAYS = 730;
 
 /* ---------------- the day ---------------- */
@@ -79,8 +55,7 @@ export function settings() {
   return store.get().habits.settings;
 }
 
-/** Today, on this section's own boundary. With `dayStartHour` at 3, everything
- *  up to 02:59 still belongs to yesterday. */
+/** Today on this section's boundary. dayStartHour 3 keeps 02:59 on yesterday. */
 export function today() {
   const shift = settings().dayStartHour;
   const d = new Date();
@@ -121,8 +96,7 @@ export function groupById(id) {
   return groups().find((g) => g.id === id) || null;
 }
 
-/** Active habits arranged into their groups, ungrouped last. The grid renders
- *  straight from this, so the order here is the order on screen. */
+/** Active habits by group, ungrouped last. The grid renders straight from this. */
 export function grouped() {
   const list = active();
   const out = groups().map((g) => ({ group: g, habits: list.filter((h) => h.group === g.id) }));
@@ -152,9 +126,7 @@ function blankHabit() {
   };
 }
 
-/** A new habit, not yet saved. The edit screen works on this and calls
- *  `save()` when you are done, so backing out of a half-filled form leaves
- *  nothing behind. */
+/** A new habit, unsaved. The form works on this so backing out leaves nothing. */
 export function draft(kind = 'yesno') {
   return { ...blankHabit(), kind, target: kind === 'number' ? 1 : 0 };
 }
@@ -186,8 +158,7 @@ export function setArchived(id, archived) {
   });
 }
 
-/** Reorder by handing back the ids in the order you want them. Anything not
- *  named keeps its place behind the ones that are. */
+/** Reorder by ids. Anything unnamed keeps its place behind them. */
 export function reorder(ids) {
   return store.update((st) => {
     ids.forEach((id, i) => {
@@ -227,7 +198,7 @@ export function renameGroup(id, name) {
   });
 }
 
-/** Deleting a group never deletes habits. They fall out of it and carry on. */
+/** Deleting a group never deletes habits. */
 export function removeGroup(id) {
   return store.update((st) => {
     st.habits.groups = st.habits.groups.filter((g) => g.id !== id);
@@ -264,8 +235,7 @@ export function valueOn(habit, key) {
   return e ? e[key] : undefined;
 }
 
-/** `undefined` erases the day rather than storing a zero, because "nothing
- *  recorded" is a real state here and has to survive a round trip. */
+/** `undefined` erases the day. A zero is a different thing. */
 export function setValue(habitId, key, value) {
   return store.update((st) => {
     const map = st.habits.entries[habitId] || (st.habits.entries[habitId] = {});
@@ -275,15 +245,12 @@ export function setValue(habitId, key, value) {
   });
 }
 
-/** The tap cycle, built from the two settings that add states to it.
- *
- *  Off:                 nothing -> done -> nothing
- *  + question marks:    nothing -> done -> lapse -> nothing
- *  + skips:             nothing -> done -> skip -> nothing
- *  + both:              nothing -> done -> lapse -> skip -> nothing
- *
- *  A value that is not in the current cycle - a skip recorded before skips
- *  were turned off - clears on the next tap rather than sticking. */
+/** The tap cycle:
+ *    off              nothing -> done -> nothing
+ *    + question marks nothing -> done -> lapse -> nothing
+ *    + skips          nothing -> done -> skip -> nothing
+ *    + both           nothing -> done -> lapse -> skip -> nothing
+ *  A value outside the current cycle clears on the next tap. */
 export function nextValue(habit, key) {
   const s = settings();
   const cycle = [undefined, YES];
@@ -295,17 +262,7 @@ export function nextValue(habit, key) {
 
 /* ---------------- frequency ---------------- */
 
-export const FREQ_PRESETS = [
-  { id: 'daily', label: 'Every day' },
-  { id: 'everyN', label: 'Every N days' },
-  { id: 'week', label: 'N times per week' },
-  { id: 'month', label: 'N times per month' },
-  { id: 'custom', label: 'N times in N days' },
-];
-
-/** Which of the five rows in the frequency picker a fraction came from. Not
- *  stored: the fraction is the truth, and this reads it back so the picker
- *  opens on the row you chose rather than always on "N times in N days". */
+/** Which picker row a fraction came from. Not stored: the fraction is the truth. */
 export function freqPreset(freq) {
   const { num, den } = freq;
   if (num === 1 && den === 1) return 'daily';
@@ -324,23 +281,10 @@ export function freqLabel(freq) {
   return `${num} times in ${den} days`;
 }
 
-/* ---------------- linked rows ----------------
-   The other five features already answer "did you do it today", every day,
-   without being asked twice. Repeating them as habits you tick by hand would
-   be two records of the same thing, and the two would disagree within a week.
-   So they appear in the grid read-only, filled from their own data.
+/* -------------------- linked rows -------------------- */
 
-   These read `store.get()` directly rather than importing each feature's
-   program module. The store schema is the contract those modules and this one
-   both already depend on, and going through it means the grid cannot be broken
-   by a change to how, say, PE computes a projection. */
-
-// Each source hands back the set of days it happened on, rather than a
-// predicate asked once per day. Asked per day, "was there a kegel session on
-// the 3rd" is a scan of every session ever recorded, and the grid asks it
-// seven hundred times per row: two years of history times five rows times the
-// length of the session log, on every render of the hub. Once as a set, it is
-// one pass over each log and then a lookup.
+// Each source returns the set of days it happened on. Asked per day instead,
+// the grid would rescan every log seven hundred times per row.
 export const LINKED = [
   {
     id: 'link:kegels', icon: 'target', href: '#/kegels',
@@ -392,8 +336,7 @@ export const LINKED = [
     name: () => 'Prayer',
     question: 'Morning and night, both?',
     days: (st) => new Set(Object.entries(st.pray.days).filter(([, d]) => d && d.morning && d.evening).map(([k]) => k)),
-    // Whichever half is still owed. Both kept and it opens the morning again,
-    // which is the only harmless answer: praying twice is not an error.
+    // Whichever half is owed. Both kept opens the morning again, which is harmless.
     action: () => `#/bible/pray?slot=${pray.dayState().morning ? 'evening' : 'morning'}`,
     detail: () => {
       const d = pray.dayState();
@@ -417,8 +360,7 @@ export const LINKED = [
   },
 ];
 
-/** A feature's own status, asked without letting it break the grid. A section
- *  mid-migration should cost you its subtitle, not the whole home screen. */
+/** A feature's status, asked so it cannot break the grid. */
 function safely(fn, fallback) {
   try {
     return fn();
@@ -427,22 +369,13 @@ function safely(fn, fallback) {
   }
 }
 
-/** A linked source dressed as a habit, so every function below can take it
- *  without knowing the difference. `linked` marks its past read-only: only
- *  today's cell does anything, and what it does is start the thing.
- *
- *  The setting is honoured here and everywhere downstream, the Arena included.
- *  There was a version that scored the five whether or not the grid showed
- *  them, on the reasoning that a display toggle must not move your division.
- *  It is the wrong trade: someone who has turned these off has said they are
- *  not what they are keeping, and losing a week to five rows you cannot see is
- *  a bug however defensible the rule behind it. */
+/** A linked source dressed as a habit. `linked` marks its past read-only.
+ *  The setting is honoured downstream too, the Arena included: rows you have
+ *  switched off must not lose you a week. */
 export function linkedHabits() {
   const st = store.get();
-  // A locked install does not have the five at all, so there is nothing to
-  // read: not hidden rows, not rows scored out of sight. This is checked ahead
-  // of the setting rather than folded into it because the two mean different
-  // things - one is "I turned these off", the other is "these are not mine".
+  // A locked install has nothing to read. Checked ahead of the setting: "I turned
+  // these off" and "these are not mine" are different things.
   if (!nifoUnlocked()) return [];
   if (!settings().showLinked) return [];
   return LINKED.map((l) => {
@@ -466,19 +399,14 @@ export function linkedHabits() {
       createdAt: st.createdAt,
       order: -1,
       read: (key) => days.has(key),
-      // What today's cell does, and the line under the name. Both are computed
-      // rather than stored: they describe right now, not the record.
+      // Both computed, not stored: they describe now, not the record.
       action: safely(l.action, null),
       detail: safely(l.detail, ''),
     };
   });
 }
 
-/* ---------------- the series ----------------
-   One pass over a habit's whole history produces everything any screen wants
-   from it: the per-day values, the score at every point, the current streak
-   and every streak there has ever been. Screens ask for `summary(habit)` and
-   read fields off it. */
+/* --------------------- the series --------------------- */
 
 const cache = new Map();
 store.subscribe(() => cache.clear());
@@ -488,13 +416,8 @@ function rawOf(habit, key) {
   return valueOn(habit, key);
 }
 
-/** A day's worth, from 0 to 1, before frequency is taken into account.
- *
- *  A ceiling habit ("at most 2000 calories") scores 1 for anything at or under
- *  the target and falls away above it, reaching 0 at twice the target. A day
- *  with nothing recorded scores 0 either way: not logging is not evidence of
- *  staying under, and the skip is there for the days that genuinely did not
- *  count. */
+/** A day's worth, 0 to 1, before frequency. A ceiling habit scores 1 at or
+ *  under target and 0 at twice it. Nothing recorded scores 0 either way. */
 function unitValue(habit, raw) {
   if (habit.kind === 'number') {
     const t = habit.target;
@@ -522,9 +445,7 @@ export function summary(habit) {
   if (hit) return hit;
 
   const end = today();
-  // A linked row has no createdAt of its own worth trusting, so it gets a
-  // fixed two-year window; a real habit starts at whichever is earlier, the
-  // day it was created or the oldest day anything was recorded on.
+  // A linked row gets a fixed window; a real habit starts at created or oldest entry.
   const start = habit.linked ? store.addDays(end, -LINKED_SPAN_DAYS) : firstKey(habit);
   const { num, den } = habit.freq;
   const mult = Math.pow(0.5, Math.sqrt(num / den) / 13);
@@ -537,15 +458,10 @@ export function summary(habit) {
     days.push({ key: k, raw, skipped, unit, hit: !skipped && unit >= 1 });
   }
 
-  // A day satisfies a habit that asks for `num` in `den` when the window of
-  // `den` days ending on it holds at least that many - or when you did it, which
-  // is the case the window alone gets wrong. Mark one day of a habit that asks
-  // for four a week and the window still holds one, so a window-only rule would
-  // score that day zero and break the streak on the day you actually did the
-  // thing. Doing it always counts; the window is what carries the days between.
-  //
-  // Daily habits fall out as the trivial case and keep their partial credit,
-  // which is what makes 1.4 of 2 litres worth more than nothing on a chart.
+  // A day is satisfied when the window of `den` days ending on it holds `num`,
+  // or when you did it: marking one day of a four-a-week habit must not score
+  // zero on the day you did the thing. Daily falls out as the trivial case and
+  // keeps partial credit, so 1.4 of 2 litres is worth more than nothing.
   let score = 0;
   let window = 0;
   for (let i = 0; i < days.length; i++) {
@@ -560,19 +476,13 @@ export function summary(habit) {
       d.satisfied = d.hit;
       d.value = d.unit;
     }
-    // A skip leaves the series rather than scoring zero. That is the whole
-    // difference between "I was in hospital" and "I could not be bothered".
+    // A skip leaves the series rather than scoring zero.
     if (!d.skipped) score = score * mult + d.value * (1 - mult);
     d.score = score;
   }
 
-  // A streak is measured in calendar days, skips included: five days off with
-  // a good reason, between ten kept days on either side, is a streak of
-  // twenty-five and not of twenty. Saying otherwise would make a skip a
-  // half-punishment, which is the one thing it must not be.
-  //
-  // A run made of nothing but skips is not a streak, though, so `hits` decides
-  // whether a run is worth keeping and `len` decides how long it was.
+  // Streaks are calendar days, skips included: ten kept, five skipped, ten kept
+  // is twenty-five. `hits` decides whether a run counts, `len` how long it was.
   const streaks = [];
   let run = null;
   for (const d of days) {
@@ -588,9 +498,7 @@ export function summary(habit) {
   }
   if (run && run.hits) streaks.push(run);
 
-  // The live streak is the last run, and only if it reaches today or
-  // yesterday: today not being done yet must not read as a broken streak, the
-  // same grace every other section gives.
+  // Live only if it reaches today or yesterday: today unfinished is not broken.
   const last = streaks[streaks.length - 1];
   const yesterday = store.addDays(end, -1);
   const streak = last && (last.to === end || last.to === yesterday) ? last.len : 0;
@@ -619,12 +527,12 @@ export function summary(habit) {
   return out;
 }
 
-/** The score `back` days ago, for the month and year deltas on the overview. */
+/** The score `back` days ago, for the overview deltas. */
 export function scoreAgo(sum, back) {
   const key = store.addDays(today(), -back);
   const d = sum.index.get(key);
   if (d) return d.score;
-  // Older than the record goes: the habit did not exist, so it scored nothing.
+  // Older than the record: the habit did not exist, so it scored nothing.
   return sum.days.length && key < sum.days[0].key ? 0 : sum.score;
 }
 
@@ -632,7 +540,7 @@ export function scoreAgo(sum, back) {
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
 
-/** Bars for the history chart. One bucket per period, oldest first. */
+/** Bars for the history chart, one bucket per period, oldest first. */
 export function history(sum, period = 'week', buckets = 14) {
   const parse = (key) => {
     const [y, m, d] = key.split('-').map(Number);
@@ -680,8 +588,7 @@ export function history(sum, period = 'week', buckets = 14) {
   });
 }
 
-/** Weekday against month, for the bubble grid: which days of the week this
- *  actually happens on, and whether that has changed. */
+/** Weekday against month: which days this actually happens on. */
 export function weekdayByMonth(sum, months = 8) {
   const first = settings().firstDay;
   const rows = Array.from({ length: 7 }, (_, i) => (first + i) % 7);
@@ -706,20 +613,19 @@ export function weekdayByMonth(sum, months = 8) {
     max,
     rows: rows.map((dow) => ({
       dow,
-      label: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dow],
+      label: WEEKDAYS[dow],
       cells: cols.map((c) => counts.get(`${c.key}|${dow}`) || 0),
     })),
   };
 }
 
-/** The calendar: weeks as columns, weekdays as rows, exactly the shape the
- *  heatmaps in the other sections already use, with the dates written in. */
+/** Weeks as columns, weekdays as rows, with the dates written in. */
 export function calendar(sum, weeks = 17) {
   const first = settings().firstDay;
   const end = today();
   const [ey, em, ed] = end.split('-').map(Number);
   const endDate = new Date(ey, em - 1, ed);
-  // Wind back to the start of this week, then back again by `weeks - 1`.
+  // Back to the start of this week, then back `weeks - 1` more.
   const shift = (endDate.getDay() - first + 7) % 7;
   const startDate = new Date(ey, em - 1, ed - shift - (weeks - 1) * 7);
 
@@ -750,18 +656,13 @@ export function calendar(sum, weeks = 17) {
     }
     cols.push({ label, cells });
   }
-  return { cols, rowLabels: Array.from({ length: 7 }, (_, i) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][(first + i) % 7]) };
+  return { cols, rowLabels: Array.from({ length: 7 }, (_, i) => WEEKDAYS[(first + i) % 7]) };
 }
 
 /* ---------------- across all habits ---------------- */
 
-/** How much of today is still outstanding, across the whole grid.
- *
- *  This counts the linked rows too, because the grid is now the home screen
- *  and the ring above it has to mean the day rather than the part of the day
- *  you happened to write yourself. When the linked rows are switched off they
- *  are not on the grid, so they are not in the count either: the number always
- *  describes what is actually on screen. */
+/** What is still owed today across the grid, linked rows included when they
+ *  are on it: the number always describes what is on screen. */
 export function dueToday() {
   const list = [...linkedHabits(), ...active()];
   let done = 0;
@@ -774,39 +675,14 @@ export function dueToday() {
   return { total: list.length, done, pending, habits: active().length };
 }
 
-/** A group's score is the mean of its members'. An empty group scores nothing
- *  rather than 100%, which is what an average over no numbers would give. */
+/** Mean of its members. An empty group scores nothing, not 100%. */
 export function groupScore(groupId) {
   const list = active().filter((h) => h.group === groupId);
   if (!list.length) return null;
   return list.reduce((a, h) => a + summary(h).score, 0) / list.length;
 }
 
-/** The longest run currently going, and whose it is.
- *
- *  Not a streak of the whole grid: a single grid-wide streak would break the
- *  first day you miss any one row, which on a list this long is most days, and
- *  a number that is almost always zero motivates nobody. The longest live run
- *  is the one worth putting on the front door. */
-export function bestRun() {
-  let best = null;
-  for (const h of [...linkedHabits(), ...active()]) {
-    const s = summary(h);
-    if (s.streak > (best?.days || 0)) best = { name: h.name, days: s.streak };
-  }
-  return best;
-}
-
-/** Done-per-day over the last `n` days, for the hub tile's trend line. */
-export function recentCounts(n = 14) {
-  const list = active();
-  return recentDays(n).map((key) => list.reduce((a, h) => a + (summary(h).index.get(key)?.hit ? 1 : 0), 0));
-}
-
-/* ---------------- reminders ----------------
-   One alarm per habit per reminded weekday, in a block of ids reserved for
-   this section. The whole block is cancelled and rebuilt in two plugin calls
-   rather than one call per habit, because this runs on every launch. */
+/* --------------------- reminders --------------------- */
 
 export function syncAlarms() {
   const ids = [];
@@ -826,12 +702,12 @@ export function syncAlarms() {
         body: h.question || h.name,
         hour,
         minute,
-        // Capacitor counts weekdays from Sunday as 1; JavaScript counts from 0.
+        // Capacitor counts weekdays from Sunday as 1, JavaScript from 0.
         weekday: days.length === 7 ? null : d + 1,
       });
     }
   });
-  // All seven days is one daily alarm rather than seven weekly ones.
+  // All seven days is one daily alarm, not seven weekly ones.
   const collapsed = [];
   const seen = new Set();
   for (const n of notifications) {

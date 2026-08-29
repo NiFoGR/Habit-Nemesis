@@ -1,17 +1,9 @@
-// Pocket mode: the same session, paced entirely by vibration.
+// Pocket mode: the same session paced entirely by vibration, for a desk, a bus,
+// a queue. Nothing to press, nothing to watch.
 //
-// The point is doing kegels somewhere you cannot be seen holding a phone:
-// a desk, a bus, a queue. So there is nothing to press and nothing to watch:
-// distinct buzz patterns tell you when to squeeze, when to hold and when to
-// let go, and the screen is a near-black card you can leave face-down.
-//
-// Two honesty notes, both deliberate:
-//  - There is no per-rep measurement here, because there is no input. It is
-//    logged as a hands-free session and scored from your own rating, flagged
-//    as estimated everywhere it shows up, exactly like hands-free mode.
-//  - The screen stays on (dimmed) rather than sleeping. Once Android sleeps
-//    the screen it throttles timers to the point where the buzzes drift
-//    seconds out, and a pacer that lies about the time is worse than none.
+// No per-rep measurement, so it logs as hands-free and is flagged estimated.
+// The screen stays on, dimmed: asleep, Android throttles timers and the buzzes
+// drift seconds out.
 
 import * as store from '../store.js';
 import * as program from './program.js';
@@ -20,9 +12,8 @@ import { fmtClock, haptic, toast } from '../ui.js';
 import { icon } from '../icons.js';
 import { navigate, leaveTo } from '../back.js';
 
-// One pattern per event, chosen so they are told apart through a pocket:
-// a long rising buzz to start work, a double tap to release, a triple for a
-// new block, one short tick for the last three seconds of a hold.
+// One pattern per event, told apart through a pocket: rising to start, double
+// to release, triple for a new block, one tick for the last three seconds.
 const BUZZ = {
   work: [0, 260],
   flick: [0, 90],
@@ -36,7 +27,7 @@ function buzz(pattern) {
   try {
     navigator.vibrate?.(pattern);
   } catch {
-    /* refused without a gesture on some browsers; nothing to surface */
+    /* no gesture yet */
   }
 }
 
@@ -45,9 +36,8 @@ export function renderPocket(mount) {
   const plan = program.planForToday(state);
   const session = program.buildSession({ level: plan.level, type: plan.type === 'test' ? 'training' : plan.type, deload: plan.deload });
 
-  // The timeline is precomputed as absolute offsets so every tick is resolved
-  // against the wall clock. If the browser throttles us, the next tick lands on
-  // the step you should actually be on rather than resuming where it paused.
+  // Absolute offsets against the wall clock, so a throttled tick lands on the
+  // step you should be on rather than resuming where it paused.
   const timeline = [];
   let at = 0;
   for (const s of session.steps) {
@@ -110,8 +100,7 @@ export function renderPocket(mount) {
     if (step.kind === 'flick') return buzz(BUZZ.flick);
     if (step.kind === 'hold' || step.kind === 'ramp' || step.kind === 'max') return buzz(BUZZ.work);
     if (step.kind === 'rest') return buzz(BUZZ.release);
-    // Breathing and reverse-kegel steps are quiet on purpose: a buzz mid-breath
-    // is the opposite of the thing they are meant to teach.
+    // Breathing and reverse kegels are quiet: a buzz mid-breath teaches the opposite.
   }
 
   function tick() {
@@ -133,8 +122,7 @@ export function renderPocket(mount) {
     const left = Math.max(0, step.to - elapsed);
     $('pkClock').textContent = fmtClock(Math.max(0, totalMs - elapsed));
     $('pkBar').style.width = `${((elapsed / totalMs) * 100).toFixed(1)}%`;
-    // A tick in the last three seconds of a long hold, so you know it is nearly
-    // over without having to look.
+    // A tick in the last three seconds of a long hold.
     if ((step.kind === 'hold' || step.kind === 'ramp') && left <= 3000 && left > 2900) buzz(BUZZ.countdown);
   }
 
@@ -148,7 +136,7 @@ export function renderPocket(mount) {
     try {
       wakeLock = await navigator.wakeLock?.request('screen');
     } catch {
-      /* no wake lock: the session still runs while the screen is on */
+      /* no wake lock; the session still runs */
     }
     timer = setInterval(tick, 200);
     tick();
@@ -162,7 +150,7 @@ export function renderPocket(mount) {
     document.body.classList.remove('in-session');
   }
 
-  /** One question, then it is logged exactly like a hands-free session. */
+  /** One question, then logged exactly like a hands-free session. */
   function finish(quit) {
     if (!running) return;
     running = false;
@@ -196,9 +184,7 @@ export function renderPocket(mount) {
   function commit(rating, discomfort, quit, elapsedMs) {
     const scored = program.scoreFromRating(rating);
     const workSteps = session.steps.filter(program.isWorkStep);
-    // Credit the prescribed work only for the part of the timeline that
-    // actually elapsed, quitting a third of the way in must not bank a full
-    // session's contractions.
+    // Credit only the elapsed part: quitting early must not bank a full session.
     const reached = timeline.filter((s) => program.isWorkStep(s) && s.to <= elapsedMs);
     const tutMs = reached.reduce((a, s) => a + (s.targetMs || 0), 0);
 
@@ -228,8 +214,7 @@ export function renderPocket(mount) {
     const s = store.get();
     program.applyProgression(s, record);
     s.sessions.push(record);
-    // Estimated sessions never set the max-hold PR: that number has to come
-    // from a hold the app actually watched.
+    // Estimated sessions never set the max-hold PR.
     if (record.totals.tutMs > s.prs.tutMs) s.prs.tutMs = record.totals.tutMs;
     if (record.score > s.prs.score) s.prs.score = record.score;
     const st = store.streak();
@@ -250,8 +235,7 @@ export function renderPocket(mount) {
     leaveTo('#/kegels');
   });
 
-  // Coming back to a throttled tab resyncs immediately rather than waiting for
-  // the next interval, so the label matches where you actually are.
+  // Resync on foreground rather than waiting for the next interval.
   const onVis = () => running && tick();
   document.addEventListener('visibilitychange', onVis);
 

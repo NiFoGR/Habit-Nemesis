@@ -1,12 +1,5 @@
-// The Bible section, which is also where the prayer rule lives.
-//
-// One room for the whole of it: what you are reading, and the two rules that
-// bracket the day. They belong together because they are the same practice,
-// and splitting them across two tiles meant the hub asked you to choose
-// between them every morning.
-//
-// Reading comes first on the screen because it is the thing with no fixed
-// time. The two prayers sit under it with their own times and their own streak.
+// The Bible section, and the prayer rule, which is the same practice.
+// Reading first: it has no fixed time. The two rules sit under it.
 
 import * as store from '../store.js';
 import * as bible from './program.js';

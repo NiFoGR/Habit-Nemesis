@@ -1,5 +1,4 @@
-// PE home. One glance, one tap. Everything measured against the two-hour
-// daily stretching target.
+// PE home. Everything measured against the two-hour daily stretching target.
 
 import * as store from '../store.js';
 import * as pe from './program.js';
@@ -87,7 +86,7 @@ export function renderPeHome(mount) {
   );
 }
 
-/** Shown once. Short on purpose, the full version lives in the guide. */
+/** Shown once. The full version is in the guide. */
 function renderSafetyGate(mount) {
   mount.innerHTML = `
     <div class="screen">

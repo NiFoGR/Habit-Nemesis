@@ -1,21 +1,8 @@
-// The pretext: what you should know before you open a book.
+// What to know before opening a book. Six questions, always the same six: who
+// wrote it, when, where it falls in the story, what it is for, what to watch
+// for, how the Church reads it toward Christ. The Gospels get two more.
 //
-// This is the part of a study Bible you actually need and never read, because
-// it is four pages of small print in front of the thing you came for. So it is
-// here instead, one screen per book, and the app puts it in front of you when
-// you start that book rather than filing it somewhere you would have to go
-// looking.
-//
-// Six questions per book, always the same six, because a fixed shape is what
-// makes them comparable: who wrote it, when, where it falls in the story, what
-// it is for, what to watch for while reading, and how the Church reads it
-// toward Christ. The Gospels get two more, since the useful question about a
-// gospel is never “what happened” but “who was this written for, and what
-// does only this one tell me”.
-//
-// Written for this app. The Orthodox Study Bible’s own introductions are far
-// longer and are its copyright, not ours; where a traditional ascription is
-// disputed this says so rather than picking a side.
+// Written for this app. Where an ascription is disputed this says so.
 
 export const CONTEXT = {
   /* ---- the Law ---- */
@@ -834,8 +821,3 @@ export const CONTEXT = {
     ],
   },
 };
-
-/** True when a book has a written context entry. Every book in the canon does,
- *  but the screens check rather than assume, so adding a book to canon.js can
- *  never blank a screen. */
-export const hasContext = (id) => !!CONTEXT[id];

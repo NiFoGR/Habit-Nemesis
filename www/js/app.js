@@ -1,24 +1,4 @@
-// App shell.
-//
-// This file owns three things and nothing else: the route table, the shell
-// state that screens must not each keep their own copy of (the running
-// session, the install prompt), and boot. Every screen lives in its own
-// module and is called from ROUTES below.
-//
-// Where things are:
-//   tabs.js           the bottom bar: Cabinet, Grid, Arena
-//   habits/home.js    the Grid, which is where you land
-//   arena/home.js     the Arena: where you stand, right now
-//   arena/cabinet.js  the Cabinet: what you have done, for ever
-//   settings.js       app-wide settings
-//   lock.js           the optional PIN gate
-//   nifo.js           whether this install has the five preloaded sections
-//   intro.js          the introduction, shown once on a new install
-//   names.js          what each section is called
-//   kegels/ pe/ bible/ breathe/ habits/ one folder per feature
-//                     (pray/ is part of bible/)
-//
-// docs/CODEMAP.md has the full map.
+// Shell: route table, shell state, boot. Screens live in their own modules.
 
 import * as store from './store.js';
 import * as program from './kegels/program.js';
@@ -71,9 +51,8 @@ import { haptic } from './ui.js';
 
 const app = document.getElementById('app');
 
-/** The one screen that outlives a render, so the router can stop it. */
+/** The screen the router has to stop before navigating. */
 let activeSession = null;
-let installPrompt = null;
 
 /* ---------------- session + report ---------------- */
 
@@ -140,8 +119,7 @@ const ROUTES = {
   '#/bible/settings': () => renderBibleSettings(app),
   '#/bible/pray': (params) => runRule(params),
   '#/bible/prayers': () => renderMyPrayers(app),
-  // The grid is the home screen. This stays as an alias so older links, a
-  // pinned shortcut or a notification cannot land on a route that is gone.
+  // Aliases. A pinned link must not land on a dead route.
   '#/habits': () => renderHome(app),
   '#/habits/habit': (params) => renderHabitDetail(app, params.get('id')),
   '#/habits/edit': (params) => renderHabitEdit(app, { id: params.get('id'), kind: params.get('kind') }),
@@ -152,9 +130,7 @@ const ROUTES = {
   '#/cabinet': () => renderCabinet(app),
   '#/cabinet/feats': () => renderFeats(app),
   '#/cabinet/year': (params) => renderYear(app, params.get('y')),
-  // The feats and the review moved into the Cabinet when it became a room of
-  // its own. These stay so a pinned shortcut or a notification cannot land on
-  // a route that is gone, which is the same reason #/habits still answers.
+  // Moved to the Cabinet. Aliases kept.
   '#/arena/feats': () => renderFeats(app),
   '#/arena/year': (params) => renderYear(app, params.get('y')),
   '#/breathe': () => renderBreatheHome(app),
@@ -191,11 +167,9 @@ function route() {
     activeSession = null;
     document.body.classList.remove('in-session');
   }
-  // Leaving the gallery frees the decrypted object URLs it handed to <img>.
+  // Frees the decrypted object URLs.
   if (lastHash.startsWith('#/pe/gallery') && !location.hash.startsWith('#/pe/gallery')) leaveGallery();
-  // The two announcement screens each consume what put them on screen, so they
-  // hold it until you actually leave. Letting go is the router's job for the
-  // same reason freeing those object URLs is: only the router knows you left.
+  // Both consume their payload on the way out.
   if (lastHash.startsWith('#/arena/result') && !location.hash.startsWith('#/arena/result')) leaveResult();
   if (lastHash.startsWith('#/arena/moment') && !location.hash.startsWith('#/arena/moment')) leaveMoment();
   lastHash = location.hash;
@@ -204,36 +178,16 @@ function route() {
 
   const [path, query] = location.hash.split('?');
 
-  // A new install is introduced before it is used. Nothing else has happened
-  // yet, so this can sit ahead of every other interception below.
   if (introDue() && path !== '#/intro') return replaceWith('#/intro');
 
-  // What a locked install can reach, written as the list of what is open
-  // rather than the list of what is shut. The five sections are eleven route
-  // prefixes between them and would grow again with the next screen; the three
-  // rooms, Settings and the introduction do not. Getting this wrong in the
-  // open direction shows a stranger a pelvic floor programme and in the closed
-  // direction shows them the grid, so it is written to fail closed.
+  // Allow-list, so a new route fails closed.
   if (!nifoUnlocked() && !OPEN_WHEN_LOCKED.some((p) => path === p || path.startsWith(p + '/'))) {
     return replaceWith('#/hub');
   }
-  // There used to be a token set per section, swapped on the body here, so
-  // every section had its own accent. Six accents made the app read as six
-  // apps, and it meant colour answered "where am I" instead of "what state is
-  // this in". One theme now, so there is nothing to swap.
-  // The progress gallery and the monthly check-in's camera are the two screens
-  // where a colour cast is not cosmetic: it would make a photo look like
-  // progress, or hide it. The night light stands down for both.
+  // Night light off where a cast would fake progress.
   nightlight.suspend(path.startsWith('#/pe/gallery') || path.startsWith('#/pe/measure'));
 
-  // A week that ended, and then a cup that opened, are shown on the way to the
-  // grid rather than instead of it: the grid is where you always land, so this
-  // is the one place that can catch you without hijacking a deep link into a
-  // session or a notification.
-  //
-  // They queue behind each other with no code to sequence them: the result
-  // screen's way out is the grid, and the grid is what sends you on to the
-  // moment.
+  // Result, then cup, on the way to the grid.
   if (path === '#/hub') {
     if (hasResults()) return replaceWith('#/arena/result');
     if (hasMoment()) return replaceWith('#/arena/moment');
@@ -243,9 +197,7 @@ function route() {
 
   const fn = ROUTES[path] || (() => renderHome(app));
   fn(new URLSearchParams(query || ''));
-  // The entry animation belongs to arriving somewhere, not to a screen
-  // updating part of itself. Adding it here is what lets a cell on the grid
-  // change without the whole page fading back in behind it.
+  // Animate arrival, not a partial redraw.
   app.querySelector('.screen')?.classList.add('enter');
   if (path !== '#/session') window.scrollTo(0, 0);
 }
@@ -257,66 +209,36 @@ document.addEventListener('click', (e) => {
   navigate(NAV[nav.dataset.nav] || '#/hub');
 });
 
-// Screens that must not be left on the back stack. Mostly those that start
-// running the moment you arrive, so Back cannot walk into a session you have
-// just finished and set it going again.
-//
-// The habit form is here for the neighbouring reason: it is finished by its own
-// Save button, and coming out of it has to land on the grid you were adding to
-// rather than on a second copy of the form.
-//
-// The Arena's result screen is here for a third reason again: it is shown once
-// and consumes what put it there as you leave, so an entry for it on the back
-// stack is an entry that renders an empty screen and bounces you out of it.
-// The introduction is the same shape: finishing it is what makes it stop
-// happening, so there must be nothing behind you to walk back into.
+// Never left on the back stack: these start on arrival.
 const EPHEMERAL = ['#/session', '#/bible/pray', '#/pe/timer', '#/pe/measure', '#/pocket', '#/breathe/run', '#/habits/edit', '#/arena/result', '#/arena/moment', '#/intro'];
 
-// The Arena's books are closed before anything renders, so the first screen
-// after a week ends is the result of it rather than a grid with a number that
-// has quietly moved. It writes only when something has actually finished.
+// Close the Arena's books before the first render.
 collect();
 
-// Today is the default screen, settled before back.js takes its bearings below.
-// replaceState rather than assignment: landing on the app should not leave a
-// blank entry underneath Today for Back to fall into.
+// replaceState: no blank entry under the grid.
 if (!location.hash) history.replaceState(history.state, '', '#/hub');
 
-// The bar is drawn once and then only ever has a class toggled on it. The dot
-// on a tab is asked for on every route change rather than pushed, so nothing
-// has to remember to clear it.
 initTabs({ badges: () => ({ arena: hasResults() }) });
 
-// Two bars at the bottom of a phone is one too many, so the system one goes in
-// the APK. A no-op in a browser, and a no-op in an older APK that does not
-// carry the plugin.
+// APK only: hide the system nav bar.
 native.hideNavBar();
 
-// Back is its own gesture, not a link that happens to point backwards. back.js
-// says why, and owns the Android hardware button along with it.
 initBack({
   resolve: (key) => NAV[key] || '#/hub',
   ephemeral: (hash) => EPHEMERAL.some((r) => hash.startsWith(r)),
 });
 
-// Locking the vault the moment the app is backgrounded keeps decrypted photos
-// off the app switcher preview and out of a phone handed to someone else.
+// Background locks the vault.
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
-    // A phone left open across Sunday midnight would otherwise sit on last
-    // week's fixture until it was force-quit. sync() writes only when a week
-    // has actually ended, so this costs nothing on every other return.
+    // Catches a week that ended while backgrounded.
     collect();
     native.hideNavBar();
     if (lockActive()) route();
     else if (location.hash.startsWith('#/hub') && (hasResults() || hasMoment())) route();
     return;
   }
-  // Backgrounding re-arms the app lock, that is the whole point of it. A
-  // session in progress is the exception: a timer running against a real
-  // contraction must not be thrown away because you glanced at a message.
-  // Note this is independent of the vault's own idle auto-lock, so a gallery
-  // that times out after two minutes does not eject you from the app.
+  // Not mid-session: a running timer survives a glance away.
   if (store.get().settings.appLock && !activeSession) relock();
 
   if (vault.isUnlocked()) {
@@ -330,34 +252,22 @@ window.addEventListener('hashchange', route);
 
 route();
 
-// The prayer and reading reminders must survive a reinstall of the app's own
-// state, so they are re-armed from settings on every launch rather than only
-// when the times are edited.
-// Three of these belong to sections a locked install does not have, so it has
-// nothing to be reminded of. The habits' own reminders are everyone's.
+// Re-arm on every launch. A locked install has none.
 if (nifoUnlocked()) {
   prayProgram.syncAlarms();
   bibleProgram.syncAlarm();
   breatheProgram.syncAlarm();
 }
 habitsProgram.syncAlarms();
-// The Arc's three: the day a cup opens, the day its group stage ends, and the
-// evening before a round you are in finishes. Re-armed here because a launch
-// is exactly when what is true about them has changed.
+// Arc alarms: opens, group ends, round ends.
 arenaProgram.syncAlarms();
 
-// The night light is the same story: the APK's filter service keeps its own
-// copy of the schedule, and this is what puts the two back in step after a
-// reinstall or a restored backup.
+// Resync the filter's own copy of the schedule.
 nightlight.init();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
 }
 
-// Everything is on the device, which means the browser is allowed to throw it
-// away to reclaim space. Asking marks the origin as worth keeping where the
-// browser supports it, and is a no-op where it does not - Safari among them,
-// which is the reason the iPhone answer is "add it to the Home Screen": an
-// installed PWA is not subject to the seven-day eviction a tab is.
+// Persistent storage. No-op in Safari.
 navigator.storage?.persist?.().catch(() => {});

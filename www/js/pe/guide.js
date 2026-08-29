@@ -1,5 +1,4 @@
-// Technique and safety reference. Kept blunt and specific, vague warnings get
-// ignored, and the failure modes here are avoidable and well documented.
+// Technique and safety. Blunt and specific: vague warnings get ignored.
 
 import * as store from '../store.js';
 import { toast } from '../ui.js';
@@ -77,15 +76,10 @@ export function renderPeGuide(mount) {
         <p class="small muted">Pain lasting days, a new bend or lump, worse erections, persistent numbness, or blood in the urine. Peyronie's and vascular injury are real outcomes of overdoing this, and both are far more treatable early.</p>
       </section>
 
-
     </div>`;
 }
 
-/* ---------------- settings ----------------
-   PE's own options, moved off the global settings page. Units, the check-in day
-   and the gallery lock used to live there alongside kegel training options,
-   while the session defaults below had no UI at all and could only be changed
-   by setting them once in the timer. */
+/* ---------------------- settings ---------------------- */
 
 export function renderPeSettings(mount) {
   const s = store.get().pe.settings;

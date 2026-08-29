@@ -12,7 +12,7 @@ function delta(now, before, fmt = (v) => String(Math.round(v))) {
   return { dir: diff > 0 ? 'up' : 'down', text: `${diff > 0 ? '+' : '−'}${fmt(Math.abs(diff))}` };
 }
 
-/** One line, picked by what actually happened. */
+/** One line, picked by what happened. */
 function line({ record, outcome, prs, badges }, state) {
   const st = store.streak();
   if (outcome.levelUp) return `Week ${outcome.from} → ${outcome.to}.`;
@@ -27,7 +27,7 @@ function line({ record, outcome, prs, badges }, state) {
   return `Session ${state.sessions.length}.`;
 }
 
-/** Fatigue read from the user's own holds, the one thing worth explaining. */
+/** Fatigue, read from your own holds. */
 function fatigueNote(record) {
   const holds = record.reps.filter((r) => r.kind === 'hold' && r.actualMs > 250);
   if (holds.length < 3) return null;

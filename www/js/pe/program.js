@@ -1,21 +1,12 @@
-// PE domain logic: session types, safety limits, volume maths, the growth
-// projection, and the day-by-day totals the feats read.
+// PE domain: session types, limits, volume, the projection, daily totals.
 //
-// Grounding (sources in docs/PE_PROGRAM.md):
-//  - Traction is the only method with real clinical trial data. RestoreX at
-//    30-90 min/day produced a mean +1.5 cm at 3 months and +1.6 cm at 6; older
-//    extenders reported +1.2-1.7 cm at 6 months but demanded 4-9 h/day. Gains
-//    are front-loaded into the first ~3 months and are measured in millimetres
-//    per week, not centimetres.
-//  - Pumping has no comparable length evidence and is treated here as a girth
-//    and conditioning tool. Intensity is deliberately not recorded: a water
-//    pump has no gauge, so any number would be invented. Duration and enforced
-//    set breaks are the parts that are real. Beginner sessions 10-20 min, in
-//    ~10 min bursts, stopping at once for numbness, discolouration or pain.
-//  - The stretching target is as much as can be managed up to two hours a day
-//    at no more than 10 kg of tension.
-//  - Everything here assumes healthy tissue. Pain is a stop signal, not a
-//    training cue.
+// Sources in docs/PE_PROGRAM.md. What they say:
+//   Traction is the only method with trial data: about +1.5 cm at 3 months at
+//   30-90 min/day, front-loaded, measured in millimetres per week.
+//   Pumping has no comparable length evidence and is treated as girth and
+//   conditioning work. Intensity is not recorded: a water pump has no gauge.
+//   Stretch target is as much as you can manage up to two hours, under 10 kg.
+//   Pain is a stop signal, not a training cue.
 
 import * as store from '../store.js';
 
@@ -39,17 +30,15 @@ export const TYPES = {
     icon: 'pump',
     colour: 'var(--accent)',
     defaultMin: 15,
-    // No intensity field: a Hydromax has no gauge, so any number here would be
-    // invented. Duration and set breaks are the parts that are real.
+    // No intensity field: a Hydromax has no gauge, so any number is invented.
     intensity: null,
     blurb: 'Vacuum expansion. Girth and conditioning.',
     cue: 'Work in ~10 minute sets with a full release between them. Release at once for numbness, cold skin or dark colour.',
   },
 };
 
-/** Types that were offered in an earlier build. Nothing new can be logged
- *  against them, but old entries still have to render with their own name
- *  rather than being silently relabelled as something the user never did. */
+/** Retired types. Nothing new logs against them, but old entries keep their
+ *  own name rather than being relabelled. */
 const RETIRED = {
   warmup: { id: 'warmup', label: 'Warm-up', icon: 'droplet', colour: 'var(--muted)', retired: true, defaultMin: 8, intensity: null, blurb: '', cue: '' },
   jelq: { id: 'jelq', label: 'Jelqing', icon: 'stretch', colour: 'var(--muted)', retired: true, defaultMin: 10, intensity: null, blurb: '', cue: '' },
@@ -76,8 +65,7 @@ export function fmtLength(cm, units = store.get().pe.settings.units, dp = 1) {
 }
 /* ---------------- safety ---------------- */
 
-/** Checks a planned session against the limits and returns warnings to show
- *  before the timer starts, rather than after something has gone wrong. */
+/** Warnings before the timer starts, not after something has gone wrong. */
 export function planWarnings({ type, minutes, intensity }) {
   const out = [];
   const history = store.get().pe.sessions.filter((s) => s.type === type);
@@ -108,8 +96,7 @@ export function planWarnings({ type, minutes, intensity }) {
 
 /* ---------------- volume and streaks ---------------- */
 
-/** The target: as much stretching as you can manage, up to two hours a day.
- *  Everything on the home screen and the warnings is measured against this. */
+/** As much as you can manage, up to two hours a day. */
 export const DAILY_STRETCH_GOAL_MS = 2 * 60 * 60000;
 
 export const PERIODS = [
@@ -132,10 +119,6 @@ export function inPeriod(items, periodId, key = 'ts') {
   return items.filter((i) => i[key] >= cutoff);
 }
 
-export function sessionsInPeriod(periodId) {
-  return inPeriod(store.get().pe.sessions, periodId);
-}
-
 export function volumeByType(sessions) {
   const out = {};
   for (const s of sessions) out[s.type] = (out[s.type] || 0) + (s.durationSec || 0) * 1000;
@@ -154,9 +137,7 @@ export function peStreak() {
   return store.streakOver(store.get().pe.sessions.map((s) => s.date));
 }
 
-/** PE convention, and a sound one: periodic time off. Tissue adapts during
- *  rest, and the classic overtraining pattern is weeks of daily work with
- *  nothing to show for it. */
+/** Rest days. Tissue adapts during rest. */
 export function deconStatus() {
   const days = new Set(store.get().pe.sessions.map((s) => s.date));
   let cursor = store.dayKey();
@@ -171,10 +152,8 @@ export function deconStatus() {
 
 /* ---------------- BPFSL, the session-level signal ---------------- */
 
-/** Bone-pressed flaccid stretched length before and after a session is the
- *  fastest feedback loop available: it moves within one session, long before
- *  erect length does. Around +5% is the usual sign that the tissue actually
- *  took the load. */
+/** BPFSL either side of a session is the fastest feedback there is: it moves
+ *  within one session. About +5% means the tissue took the load. */
 export function bpfslVerdict(before, after) {
   if (!before || !after) return null;
   const pct = ((after - before) / before) * 100;
@@ -191,7 +170,7 @@ export function bpfslVerdict(before, after) {
 
 const monthsBetween = (a, b) => (b - a) / (30.44 * 864e5);
 
-/** Least-squares fit of a measurement series against time in months. */
+/** Least-squares fit against time in months. */
 function regress(points) {
   if (points.length < 2) return null;
   const n = points.length;
@@ -207,12 +186,10 @@ function regress(points) {
   return { slope, intercept, r2: ssTot ? 1 - ssRes / ssTot : 0, n };
 }
 
-/** What the literature would predict from this much weekly volume, before
- *  any of the user's own results are considered. Deliberately conservative:
- *  published means are under 2 cm over six months, and they front-load. */
+/** The prior, from weekly volume alone. Conservative: published means are
+ *  under 2 cm over six months and front-load. */
 function priorRates(weeklyStretchMin, weeklyPumpMin, monthsIn) {
-  // Traction response saturates: 30-90 min/day is where the trials sat, and
-  // more hours did not buy proportionally more length.
+  // Traction saturates: more than 30-90 min/day did not buy proportionally more.
   const dailyStretch = weeklyStretchMin / 7;
   const dose = Math.min(dailyStretch / 60, 1.5); // 1.0 at an hour a day
   const decay = Math.exp(-monthsIn / 7); // gains are front-loaded
@@ -224,12 +201,8 @@ function priorRates(weeklyStretchMin, weeklyPumpMin, monthsIn) {
   return { length, girth };
 }
 
-/**
- * Blends the user's own measured trend with the volume-based prior. Early on,
- * two measurements cannot tell a trend from noise, so the prior dominates; as
- * the series grows, their own numbers take over. Everything is returned with a
- * range, because a point estimate here would be dishonest.
- */
+/** Blends your own trend with the prior: the prior dominates early, your data
+ *  takes over as the series grows. Always a range, never a point. */
 export function projection(horizonMonths = [3, 6, 12]) {
   const state = store.get();
   const ms = state.pe.measurements.slice().sort((a, b) => a.ts - b.ts);
@@ -247,8 +220,7 @@ export function projection(horizonMonths = [3, 6, 12]) {
   const weeklyPump = weeklyVolumeMs('pump', 4) / 4 / 60000;
   const prior = priorRates(weeklyStretch, weeklyPump, monthsIn);
 
-  // Confidence in the user's own data: how many points, over how long, and how
-  // cleanly they line up.
+  // Confidence: how many points, over how long, how cleanly they line up.
   const span = lenPts.length ? lenPts[lenPts.length - 1].x : 0;
   const w = Math.min(
     0.85,
@@ -290,12 +262,8 @@ export function projection(horizonMonths = [3, 6, 12]) {
 
 /* ---------------- did the hours buy anything? ---------------- */
 
-/**
- * Pairs each gap between check-ins with the training that happened inside it.
- * This is the only chart in the app that can argue against more volume, which
- * is exactly why it earns its place: if the dots do not slope up, the extra
- * hours are not doing what they are supposed to.
- */
+/** Each gap between check-ins against the training inside it. The one chart
+ *  that can argue against more volume. */
 export function volumeVsGain(key = 'bpel') {
   const pe = store.get().pe;
   const ms = pe.measurements.filter((m) => m[key] != null).sort((a, b) => a.ts - b.ts);
@@ -319,8 +287,7 @@ export function volumeVsGain(key = 'bpel') {
   }
   if (points.length < 2) return { points, r: null, verdict: null };
 
-  // Pearson's r on the pairs. With a handful of points this is suggestive, not
-  // proof, and the wording below says so.
+  // Pearson's r. With a handful of points it is suggestive, and the wording says so.
   const n = points.length;
   const mx = points.reduce((a, p) => a + p.x, 0) / n;
   const my = points.reduce((a, p) => a + p.y, 0) / n;
@@ -338,9 +305,7 @@ export function volumeVsGain(key = 'bpel') {
   return { points, r, verdict, avgPerDay: mx, avgGain: my };
 }
 
-/** Thickest-point girth against base girth, plus the taper between them.
- *  Pumping tends to move the middle before the base, so the gap is a real
- *  training signal rather than a curiosity. */
+/** Thickest against base, and the taper. Pumping moves the middle first. */
 export function girthMap() {
   const ms = store
     .get()
@@ -369,8 +334,7 @@ export function measurementDue() {
   const day = s.settings.measureDay || 1;
   if (!last) return { due: true, reason: 'No measurements yet' };
   const daysSince = Math.floor((Date.now() - last.ts) / 864e5);
-  // Overdue is overdue: the preferred day of the month brings a check-in
-  // forward a little, it must never hold an overdue one back.
+  // The preferred day can bring a check-in forward, never hold an overdue one back.
   const onChosenDay = now.getDate() >= day && daysSince >= 25;
   if (daysSince >= 28 || onChosenDay) {
     return { due: true, daysSince, reason: `${daysSince} days since your last check-in.` };
@@ -378,16 +342,7 @@ export function measurementDue() {
   return { due: false, daysSince, next: Math.max(1, 28 - daysSince) };
 }
 
-/* ---------------- stretch, by day ----------------
-   The fifteen PE achievements that used to live here are gone, along with the
-   fifteen kegel badges in the other program file. They were two catalogues
-   that did not know about each other, neither visible outside its own section,
-   and a third of each was a trophy for opening the app. They are one list now,
-   in arena/feats.js, held to one rule: could you say it out loud to another
-   person and have it mean something. Everything worth keeping was carried over
-   and recomputes from this same data, so nothing had to be migrated.
-
-   This helper stayed because two of those feats need it. */
+/* ------------------ stretch, by day ------------------ */
 
 /** Stretch milliseconds per day, oldest first. */
 export function dailyStretchTotals(pe = store.get().pe) {
@@ -401,8 +356,7 @@ export function dailyStretchTotals(pe = store.get().pe) {
 
 /* ---------------- insights ---------------- */
 
-/** Plain observations drawn from the data, shown on the stats screen. Only
- *  things the numbers actually support. */
+/** Observations the numbers actually support. */
 export function insights() {
   const pe = store.get().pe;
   const out = [];

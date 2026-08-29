@@ -1,25 +1,8 @@
-// The seven crests.
+// The seven crests. Artwork, one file per rung in www/img/, square,
+// transparent, 256px, so one file serves the 92px hero and a 28px badge.
 //
-// These are artwork, not drawings the app makes: one file per rung in
-// `www/img/`, cropped from the set that was drawn for them. The version before
-// this one built each crest as an SVG out of chevrons, laurels and a crown,
-// on the reasoning that rank should be shape rather than colour so the app
-// kept one theme. That reasoning holds for the rest of the app and does not
-// hold here, for the same reason a habit keeps the colour you chose for it: a
-// rank badge is the one thing on the screen whose whole job is to be a picture
-// of where you are, and the drawn version could not carry a joke.
-//
-//   0 Bottom G   dashed, pink, barely a shield
-//   1 NPC        orange
-//   2 Prospect   silver
-//   3 Contender  gold
-//   4 Menace     purple
-//   5 Locked In  red
-//   6 Top G      gold, crowned
-//
-// Square, transparent, 256px, about 10KB each, so one file answers the 92px
-// hero and a 28px badge without a second size. They are precached with
-// everything else, so a crest is never a hole on the screen while it loads.
+//   0 Bottom G   1 NPC   2 Prospect   3 Contender
+//   4 Menace     5 Locked In         6 Top G
 
 const ART = [
   'rank-0-bottom',
@@ -31,21 +14,15 @@ const ART = [
   'rank-6-topg',
 ];
 
-/** Not a rung. Before your first week there is nothing to be a picture of, so
- *  this one is a grey dashed shield with a question mark in it - drawn rather
- *  than cropped, because the joke of the other seven is that they are someone,
- *  and the point of this one is that nobody knows yet. */
+/** Not a rung: drawn, not cropped. Before your first week there is nothing to
+ *  be a picture of. */
 export const UNRANKED = -1;
 const UNRANKED_ART = 'rank-unranked';
 
 export const crestSrc = (i) =>
   `./img/${i === UNRANKED ? UNRANKED_ART : ART[Math.max(0, Math.min(i, ART.length - 1))]}.webp`;
 
-/**
- * `i` is the division's rung, 0 to 6, or UNRANKED. Returns an `<img>`, sized
- * in pixels. Decorative: the division's name is always next to it, so nothing
- * is lost by hiding it from a screen reader.
- */
+/** `i` is the rung, 0 to 6, or UNRANKED. Decorative: the name is always beside it. */
 export function crest(i, size = 64) {
   const rung = i === UNRANKED ? UNRANKED : Math.max(0, Math.min(i, ART.length - 1));
   return `<img class="crest rung-${rung === UNRANKED ? 'none' : rung}" src="${crestSrc(rung)}"

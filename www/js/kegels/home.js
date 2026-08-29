@@ -1,7 +1,4 @@
-// The Kegels section: its home screen, its how-to, and its settings.
-//
-// Everything reachable from the Kegels tile that is not the session player
-// itself. The player is session.js, the plan is program.js.
+// Kegels: home, how-to, settings. The player is session.js, the plan program.js.
 
 import * as store from '../store.js';
 import * as program from './program.js';
@@ -17,15 +14,11 @@ import { scheduleDaily, cancelAlarm, ALARM_KEGEL_REMINDER } from '../native.js';
 
 export function renderKegels(mount) {
   const state = store.get();
-  // Nobody's first kegel should be guesswork. Straight into the walkthrough on
-  // a genuinely fresh install; after that it is a link, not a gate.
+  // Straight into the walkthrough on a fresh install. After that it is a link.
   if (!state.settings.tutorialDone && state.sessions.length === 0) {
     return renderTutorial(mount, {
-      // The walkthrough renders in place, still at #/kegels, so backing out of
-      // it means backing out of Kegels. Re-rendering the home would only hit
-      // this gate again and redraw step one, which is what made the back arrow
-      // look dead on a fresh install. Finishing or skipping sets tutorialDone,
-      // and that is the difference between the two exits.
+      // Renders in place, still at #/kegels, so backing out leaves Kegels.
+      // Finishing or skipping sets tutorialDone.
       onExit: () => (store.get().settings.tutorialDone ? renderKegels(mount) : leaveTo('#/hub')),
     });
   }
@@ -33,7 +26,7 @@ export function renderKegels(mount) {
   const def = program.levelDef(plan.level);
   const st = store.streak();
 
-  // Last 7 days as dots: done / release / missed.
+  // Last 7 days: done, release, missed.
   const days = [];
   for (let i = 6; i >= 0; i--) {
     const key = store.addDays(store.dayKey(), -i);
@@ -105,7 +98,7 @@ export function renderKegels(mount) {
   });
 }
 
-/** In-app nudge past your chosen time. The real alarm is scheduled natively. */
+/** In-app nudge. The real alarm is native. */
 function reminderNotice(state, plan) {
   const t = state.settings.reminder;
   if (!t || plan.complete) return '';
@@ -236,4 +229,3 @@ export function renderKegelSettings(mount) {
     toast('Saved');
   });
 }
-

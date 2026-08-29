@@ -1,26 +1,5 @@
-// The introduction, shown once on a new install.
-//
-// The app has no signup, no tour tooltips and no empty-state coaching, which
-// is right nine times out of ten and wrong for the first sixty seconds: a grid
-// with no rows on it, a bar with three unlabelled rooms and a screen called
-// "the Arena" do not explain themselves to someone who did not build them.
-//
-// Five pages, one idea each, and every one of them is mostly a picture. Words
-// here are the thing you skim past, so there is one line per page and it is
-// the line you would say out loud handing someone the phone. The grid page
-// shows a real grid built from the app's own classes rather than a drawing of
-// one, so what you are told to tap looks like the thing you then tap.
-//
-// It ends by writing `onboarded`, so the router stops sending you here, and it
-// is reachable from the bottom of Settings for ever afterwards - which is also
-// how anyone tests it without erasing the app.
-//
-// It says nothing about the five, on any install. There was a page for them,
-// shown once the door at the bottom of Settings was open, and it was the wrong
-// idea twice over: an introduction is for explaining the app to whoever is
-// holding it, and the five are not the app - they are one person's use of it.
-// Nobody who needs an introduction needs that page, and the one person it
-// described did not need an introduction at all.
+// The introduction. Five pages, one line each, shown once on a new install.
+// Reachable from Settings afterwards. It says nothing about the five sections.
 
 import * as store from './store.js';
 import { icon, logoMark } from './icons.js';
@@ -28,13 +7,12 @@ import { crest } from './arena/crest.js';
 import { escapeHtml } from './ui.js';
 import { navigate } from './back.js';
 
-/** True until the introduction has been finished or skipped once. */
+/** True until it has been finished or skipped once. */
 export const introDue = () => !store.get().settings.onboarded;
 
 /* ---------------- the pages ---------------- */
 
-/** Four days of one habit, drawn with the grid's own classes. The dates are
- *  not real and are never claimed to be: it is a picture of the shape. */
+/** A picture of the grid, drawn with the grid's own classes. Dates are not real. */
 function miniGrid() {
   const cell = (cls, ico) => `<span class="hg-cell ${cls}">${ico ? icon(ico, 16) : ''}</span>`;
   const row = (name, colour, cells) => `<div class="hg-row">
@@ -124,9 +102,7 @@ export function renderIntro(mount) {
       i++;
       draw();
     });
-    // Back steps a page rather than leaving, which is what the arrow means on
-    // every other paged screen in the app. From the first page there is
-    // nowhere behind it, so it means the same as Skip.
+    // Back steps a page. On the first page it means Skip.
     mount.querySelector('#back').addEventListener('click', () => {
       if (i === 0) return finish();
       i--;

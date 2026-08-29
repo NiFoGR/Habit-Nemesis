@@ -1,9 +1,6 @@
-// Bible tracking: the heatmap, progress through the canon, prayer, and the log.
-//
-// Same shape as the other three sections, deliberately. A thirteen-week grid
-// answers "am I actually doing this" faster than any number, and the section
-// bars answer the question a whole-Bible reader actually has, which is not
-// "what percentage" but "which parts have I never been into".
+// Bible tracking: heatmap, progress through the canon, prayer, log.
+// The section bars answer the real question, which is which parts you have
+// never been into.
 
 import * as store from '../store.js';
 import * as bible from './program.js';
@@ -22,7 +19,7 @@ export function renderBibleTracking(mount) {
   const cols = [];
   for (let i = 0; i < hist.length; i += 7) cols.push(hist.slice(i, i + 7));
 
-  // Recent days, newest first, with what was read on each.
+  // Recent days, newest first.
   const log = Object.entries(st.days)
     .sort((a, b) => (a[0] < b[0] ? 1 : -1))
     .slice(0, 30);
@@ -99,9 +96,7 @@ export function renderBibleTracking(mount) {
           ? `<div class="log-list">${log.map(([key, d]) => `
               <div class="log-row">
                 <span class="lr-day"><b>${escapeHtml(relDay(key))}</b>${
-                  // relDay falls back to the same string as fmtDate for
-                  // anything older than yesterday, and printing it twice
-                  // looks like a bug.
+                  // relDay repeats fmtDate for anything older than yesterday.
                   relDay(key) === fmtDate(key) ? '' : `<i>${escapeHtml(fmtDate(key))}</i>`
                 }</span>
                 <span class="lr-what">

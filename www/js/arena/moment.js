@@ -1,18 +1,6 @@
-// The three times a cup stops being a screen and becomes an event.
-//
-// Opening night, qualification night, and the ceremony. Everything else about
-// the Arc happens on the Arena in the ordinary run of things; these three do
-// not, because a tournament that begins with a table quietly appearing has not
-// begun at all.
-//
-// Each fires once and marks itself seen as it draws, for the same reason the
-// result screen does: a screen that had not marked itself seen would land you
-// on the grid, which would send you straight back into it, for ever.
-//
-// They queue behind a result rather than competing with it. The result screen's
-// way out is the grid, and the grid is what sends you here, so a week that
-// ended *and* a cup that opened arrive one after the other with no code to
-// sequence them.
+// The three times a cup becomes an event: opening night, qualification night,
+// the ceremony. Each fires once. They queue behind a result: its way out is the
+// grid, and the grid sends you here.
 
 import * as arena from './program.js';
 import { escapeHtml, chime, celebrate, haptic } from '../ui.js';
@@ -23,19 +11,8 @@ const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 
 export const hasMoment = () => !!arena.arcMoment();
 
-/* Marked seen on the way OUT, not on the way in.
- *
- * The first version marked it as it drew, which meant the screen ate the very
- * thing that put it there: render it a second time - and the router will, on a
- * reload, or when a navigation resolves twice - and it finds nothing owed and
- * throws you off it. Worse, a reload while the moment was on screen lost it
- * for good.
- *
- * Marking on the way out fixes both directions. A re-render still finds the
- * moment, because nothing has been consumed; and if the app is killed while
- * you are standing on it, you get it again next launch, which is the failure
- * worth having. `leaveMoment` is the router's, the same way the gallery's
- * object URLs are. */
+/* Marked seen on the way OUT, so a re-render still finds the moment and a
+ * reload does not lose it. */
 let showing = null;
 
 export function leaveMoment() {
@@ -45,8 +22,7 @@ export function leaveMoment() {
 
 export function renderMoment(mount) {
   const m = arena.arcMoment();
-  // Nothing owed: the app was closed on this screen and the launch restored the
-  // hash. Replace, and to the grid, because that is where a launch lands.
+  // Nothing owed: closed on this screen and the launch restored the hash.
   if (!m) return replaceWith('#/hub');
   showing = m;
   const st = m.arc;
@@ -56,10 +32,7 @@ export function renderMoment(mount) {
   return ceremony(mount, st);
 }
 
-/* ---------------- opening night ----------------
-   The group is dealt rather than listed. Six rows appearing at once is a table;
-   six rows arriving one after another is a draw, and a draw is the moment a
-   tournament starts. */
+/* ------------------- opening night ------------------- */
 
 function opening(mount, st) {
   const g = arena.groupTable(st.arc);
@@ -123,10 +96,7 @@ function qualification(mount, st) {
   land(mount, through ? 'promote' : 'loss', through ? 'promote' : 'loss');
 }
 
-/* ---------------- the ceremony ----------------
-   The cup draws itself in. It is the one piece of artwork in the app that gets
-   to take its time, because it happens at most four times a year and only ever
-   after the best week you have had. */
+/* -------------------- the ceremony -------------------- */
 
 function ceremony(mount, st) {
   const existing = st.rec.note;
@@ -164,9 +134,7 @@ function ceremony(mount, st) {
 
 const ordinal = (n) => `${n}${['th', 'st', 'nd', 'rd'][((n % 100) - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th'}`;
 
-/** The noise, the sparks and the way out. One place, so the three moments
- *  cannot drift apart. Sound and haptics honour their settings inside chime and
- *  haptic themselves, so nothing is checked here. */
+/** Noise, sparks and the way out, in one place so the three cannot drift. */
 function land(mount, sound, buzz, big = false) {
   chime(sound);
   haptic(buzz);

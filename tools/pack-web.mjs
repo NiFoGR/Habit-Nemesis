@@ -1,16 +1,9 @@
-// Builds a copy of the app that can be hosted, to be installed on a phone that
-// cannot sideload an APK - which in practice means an iPhone, where Add to Home
-// Screen is the only route there is.
+// The hostable build: www/ minus www/bible/, for a phone that cannot sideload.
+// The scripture is 7 MB of the app's 8 and a locked install cannot open it.
 //
-// It is `www/` minus `www/bible/`. The scripture is 7 MB of the app's 8, and
-// an install from this build is locked, so it has no Bible section to open:
-// shipping it would be a slower download and nothing else. sw.js caches those
-// files best-effort precisely so their absence costs nothing.
+//   node tools/pack-web.mjs   (npm run pack:web)
 //
-// Run: node tools/pack-web.mjs   (npm run pack:web)
-// Then serve dist-web/ over HTTPS, open it in Safari, Share, Add to Home
-// Screen. It has to be HTTPS or a service worker will not register and the app
-// will not work offline.
+// Serve dist-web/ over HTTPS or the service worker will not register.
 
 import { cp, rm, mkdir, readdir, stat } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -45,9 +38,7 @@ async function measure(dir) {
   return { bytes, files };
 }
 
-// Checked by looking rather than by trusting the filter above, because a copy
-// step that changes shape or a file that lands somewhere new would put the 7 MB
-// back without anything else noticing.
+// Measured, not trusted: a copy step that changes shape would put the 7 MB back.
 async function scriptureIn(dir, hits = []) {
   for (const e of await readdir(dir, { withFileTypes: true })) {
     const p = new URL(e.name + (e.isDirectory() ? '/' : ''), dir);

@@ -1,12 +1,5 @@
-// The Cabinet: what you have done, for ever.
-//
-// The Arena is *now* — the division you are in, the week you are playing, the
-// cup that is running. This is the other half, and splitting them is what
-// stopped the Arena being five stacked cards. Nothing here changes hour to
-// hour; everything here is finished.
-//
-// Four things, in the order you would want them: the cups you have won, the
-// feats, the years, and the lines you left for yourself.
+// The Cabinet: what is finished, for ever. Cups, feats, years, and the lines
+// you left. The Arena is now, this is the other half.
 
 import * as store from '../store.js';
 import * as arena from './program.js';
@@ -17,7 +10,7 @@ import { openWeekSheet } from './home.js';
 
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 
-/** '2026-summer' back into an arc object. */
+/** '2026-summer' back into an arc. */
 function arcFromKey(key) {
   const [y, id] = key.split('-');
   const arc = arena.ARCS.find((a) => a.id === id) || arena.ARCS[0];

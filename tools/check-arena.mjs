@@ -1,16 +1,12 @@
 // The Arena's maths, checked. `npm run check:arena`.
 //
-// There is no test runner in this repo and this is not one. It is the one
-// corner of the app whose answers cannot be read off a screen: ISO weeks, the
-// month a week belongs to, which arc a month is in and what came before it.
-// Every check here is one that has already been wrong once - the arc before
-// Winter 2026 was Autumn 2025, a week needed seven due cells so a person
-// keeping one habit could never play a fixture, and the division a score
-// earned was off by one rung.
+// Not a test runner. It covers the one corner whose answers cannot be read off
+// a screen: ISO weeks, which month a week is in, which arc, and what came
+// before it. Every check here has been wrong once.
 //
-// It runs in bare node with a few browser globals stubbed, because the domain
-// is deliberately free of the DOM. If that ever stops being true, this file
-// failing to start is the warning.
+// Runs in bare node with a few browser globals stubbed, because the domain has
+// no DOM in it. If that stops being true, this file failing to start is the
+// warning.
 
 const store = new Map();
 globalThis.localStorage = {
@@ -26,8 +22,7 @@ globalThis.document = {
   querySelector: () => null,
 };
 globalThis.window = { matchMedia: () => ({ matches: false }) };
-// node defines navigator itself and will not let it be replaced; nothing the
-// domain touches needs more than what is already on it.
+// node owns navigator and will not let it be replaced.
 
 const st = await import('../www/js/store.js');
 const a = await import('../www/js/arena/program.js');
@@ -172,12 +167,8 @@ st.update((s) => { s.habits.entries = {}; });
 is('a week you did nothing in is still a fixture, and lost',
   [a.scoreWeek('2026-W20').void, a.scoreWeek('2026-W20').score], [false, 0]);
 
-/* ---------------- frequencies ----------------
-   The one that was wrong in the shipped version: a habit asking for five days
-   in seven was scored out of seven, and the habits engine's trailing window
-   meant the same five days were worth 100% done Monday to Friday and 71% done
-   Wednesday to Sunday. A fixed week can see the whole of itself, so it counts
-   what the habit asks for and does not care which days. */
+/* -------------------- frequencies -------------------- */
+
 group('a habit that does not ask for every day');
 const week = (num, den, pattern) => {
   st.update((s) => {
@@ -198,13 +189,8 @@ is('every third day owes two in a week', week(1, 3, 'X__X__X'), [2, 2]);
 is('ten in thirty owes two in a week', week(10, 30, 'X_X____'), [2, 2]);
 is('a daily habit still owes every day', week(1, 1, 'XXXXX__'), [5, 7]);
 
-/* ---------------- the sanitiser, against the real catalogue ----------------
-   Every feat id has to survive a round trip through the store, and fourteen of
-   the forty did not: the key rule allowed lower case only, and the catalogue is
-   full of names like beatNemesis and perfectWeek. Every one of those was thrown
-   away on the next launch and had to be earned again - silently, visible only
-   as a count that would not go up. Asserted against the catalogue itself rather
-   than against a copy of the rule, so the two cannot drift. */
+/* ----- the sanitiser, against the real catalogue ----- */
+
 group('every feat survives being saved and read back');
 {
   const feats = await import('../www/js/arena/feats.js');

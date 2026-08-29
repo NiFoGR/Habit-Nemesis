@@ -1,8 +1,4 @@
-// The prayers you added yourself.
-//
-// The rest of the prayer section now lives in bible/, because prayer and the
-// reading are one practice and were being split across two tiles. This screen
-// stayed here with the prayer texts it edits.
+// The prayers you added yourself. The rest of the section lives in bible/.
 
 import * as store from '../store.js';
 import * as pray from './program.js';

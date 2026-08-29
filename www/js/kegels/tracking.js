@@ -1,5 +1,5 @@
-// The tracking screen: every day you trained, every rep you logged, and the
-// trend lines that only mean something once there are a few weeks of them.
+// Every day trained, every rep logged, and the trends that need weeks to mean
+// anything.
 
 import * as store from '../store.js';
 import * as program from './program.js';
@@ -25,7 +25,7 @@ function heatmap(state) {
   }
   const counts = state.sessions.reduce((m, s) => m.set(s.date, (m.get(s.date) || 0) + 1), new Map());
 
-  // Grid runs Monday-first, ending on the current week.
+  // Monday-first, ending on the current week.
   const today = new Date();
   const dow = (today.getDay() + 6) % 7;
   const end = store.addDays(store.dayKey(today), 6 - dow);
@@ -80,9 +80,7 @@ function sessionRow(s, idx) {
   </details>`;
 }
 
-/** How many of one section's feats are earned. The count lives here rather
- *  than a second copy of the catalogue: the tracking screen says how the
- *  kegel programme is going, and this is one line of that. */
+/** Feats earned in this section. One line of how the programme is going. */
 function sectionCount(section) {
   const sec = feats.bySection().find((s) => s.section === section);
   return sec ? `${sec.earned} of ${sec.items.length}` : '—';
@@ -92,9 +90,8 @@ export function renderTracking(mount) {
   const state = store.get();
   const sessions = state.sessions;
   const trained = sessions.filter((s) => s.type !== 'release');
-  // Cadence-following logged from a pump session has no measured reps behind
-  // it, so it counts for volume and streaks but is kept out of the quality
-  // trends, where a placeholder score would read as a bad session.
+  // Pump-cadence reps are unmeasured: they count for volume and streaks, never
+  // for the quality trends.
   const scored = trained.filter((s) => s.countsForPromotion !== false);
   const totals = store.totals();
   const st = store.streak();

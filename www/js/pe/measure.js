@@ -1,8 +1,5 @@
-// The monthly check-in, one measurement per screen.
-//
-// Five measurements, all required. Method inconsistency swamps real change, so
-// each step shows a diagram and the exact method rather than putting five bare
-// inputs on one page and hoping.
+// The monthly check-in, one measurement per screen. Five, all required, each
+// with a diagram and the method: inconsistent method swamps real change.
 
 import * as store from '../store.js';
 import * as pe from './program.js';
@@ -15,9 +12,8 @@ import { icon } from '../icons.js';
 import { escapeHtml, toast, haptic } from '../ui.js';
 import { leaveTo } from '../back.js';
 
-/* Schematic diagrams. Deliberately abstract, a shaft as a rounded bar, the
-   pubic bone as a wall, a tape as a ring, so they read instantly at phone
-   size and are unambiguous about *where* to measure. */
+/* Schematic: shaft as a rounded bar, pubic bone as a wall, tape as a ring.
+   They have to be unambiguous about where to measure at phone size. */
 const DIAGRAMS = {
   lengthFromBone: (label) => `
     <svg viewBox="0 0 220 90" class="diag" aria-hidden="true">
@@ -251,7 +247,7 @@ export function renderMeasure(mount) {
     });
 
     mount.querySelector('#shoot').addEventListener('click', () => {
-      // The ghost needs the vault open, since last month's photo is encrypted.
+      // The ghost needs the vault open: last month's photo is encrypted.
       const go = async () => {
         const ghost = await lastPhotoBlob();
         captureWithGhost(

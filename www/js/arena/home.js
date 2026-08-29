@@ -1,18 +1,6 @@
-// The Arena: the screen.
-//
-// One page, no tabs. The order is the order of the questions actually asked:
-// where do I stand, am I winning this week, how is the Arc going, what have I
-// done. A tab bar would have been four screens' worth of chrome hiding three
-// answers, and you would still have had to visit all four to know how you were
-// doing.
-//
-// Nothing here is a second view of the grid. The grid says which days you
-// ticked; this says what those ticks are worth against an opponent, which is
-// the only thing the grid cannot tell you.
-//
-// Every opponent on this screen is a real week out of your own record, and
-// every one of them is tappable: the point of beating your best week is being
-// able to look at it.
+// The Arena screen. One page, in the order the questions get asked: where do
+// I stand, am I winning this week, how is the Arc going, what have I done.
+// Every opponent is a real week and every one is tappable.
 
 import * as store from '../store.js';
 import * as habits from '../habits/program.js';
@@ -25,12 +13,8 @@ import { crest, UNRANKED } from './crest.js';
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 const hex = (h) => (h.colour ? habits.hexOf(h.colour) : 'var(--accent)');
 
-/* ---------------- the ladder ----------------
-   Seven segments, filled up to where you are. Not seven colours: the app has
-   one accent and colour answers "what state is this in", so the ladder says
-   how far up you are by how much of it is lit, which is the one thing it has
-   to say. Built from DIVISIONS rather than from the number seven, so adding a
-   division does not strand the last one. */
+/* --------------------- the ladder --------------------- */
+
 function ladder(id) {
   const at = arena.divisionIndex(id);
   return `<div class="ar-ladder" role="img" aria-label="Division ${escapeHtml(arena.divisionOf(id).name)}, ${at + 1} of ${arena.DIVISIONS.length}">
@@ -38,11 +22,8 @@ function ladder(id) {
   </div>`;
 }
 
-/** The ladder with nothing lit on it, and how long until something is. Shown
- *  instead of the bar, because a bar implies a position on it and the whole
- *  point of this state is that you do not have one yet. The app used to open on
- *  NPC, which meant a joke about Mike Mentzer aimed at someone who had not had
- *  the chance to do anything at all. */
+/** Unranked: the ladder unlit, and how long until it is not. A bar would imply
+ *  a position on it. */
 function unrankedHero() {
   const left = arena.daysLeftInWeek();
   return `<div class="ar-ladder none" role="img" aria-label="Unranked">
@@ -51,18 +32,15 @@ function unrankedHero() {
     <p class="ar-monthline"><span class="muted">your first week ends in ${left} day${left === 1 ? '' : 's'}</span></p>`;
 }
 
-/** The month, as a bar inside the division you are in: floor on the left, the
- *  next rung on the right. A bar spanning nought to a hundred put every
- *  threshold within a few pixels of the last and made a whole month's work
- *  invisible. Its colour says which way you are going, so nothing has to. */
+/** The month inside your division: floor left, next rung right. A 0-100 bar
+ *  put every threshold within a few pixels of the last. */
 function barTo(st) {
   const s = st.month.score;
   const floor = st.division.bar;
   const roof = st.next ? st.next.bar : 1;
   const span = Math.max(0.01, roof - floor);
   const at = Math.max(0, Math.min((s - floor) / span, 1));
-  // The readout follows the fill but never all the way to either end: at 0%
-  // and at 100% half of it hung off the side.
+  // The readout stops short of both ends, or half of it hangs off.
   const label = Math.min(92, Math.max(8, at * 100));
   const state = s >= roof ? 'up' : st.safe ? 'safe' : 'down';
   return `<div class="ar-bar ${state}">
@@ -77,9 +55,8 @@ function barTo(st) {
 
 /* ---------------- the week ---------------- */
 
-/** The two scores, side by side, each as a share of the pair. Two bars of the
- *  same length would be the honest chart and the useless one: what matters is
- *  the gap, and a shared scale is the only way to see it. */
+/** Both scores as a share of the pair: the gap is what matters, so they share
+ *  a scale. */
 function race(mine, theirs) {
   const total = Math.max(0.0001, mine + theirs);
   const a = (mine / total) * 100;
@@ -138,18 +115,13 @@ function weekCard() {
   </section>`;
 }
 
-/* ---------------- a past week, opened ----------------
-   The headline is the score that was *recorded* when the week closed, because
-   that is what the result was decided on and a result does not move. The rows
-   under it are read live, so they are labelled as the week rather than as a
-   second total; there is deliberately no sum under them, because two numbers
-   for one week is exactly the disagreement this app keeps getting wrong. */
+/* ---------------- a past week, opened ---------------- */
+
 export function openWeekSheet(key) {
   const stored = store.get().arena.weeks[key];
   const live = arena.scoreWeek(key);
   const score = stored ? stored.score : live.score;
-  // Only a played match has a result to report. A week the Arena scored out
-  // of older data is a performance and says so, without a verdict on it.
+  // Only a played match has a result. A 'record' week is a performance.
   const result = stored?.result === 'won' || stored?.result === 'lost' ? stored.result : '';
   const rows = live.rows
     .map((r) => {
@@ -176,9 +148,8 @@ export function openWeekSheet(key) {
 
 /* ---------------- form ---------------- */
 
-/** The last eight results, as a strip rather than as a card. A heading saying
- *  "Form" over eight W's and L's is a word doing a job the W's and L's have
- *  already done. */
+/** Last eight, as a strip. A "Form" heading over eight W and L is a word doing
+ *  their job. */
 function formStrip() {
   const weeks = Object.entries(store.get().arena.weeks)
     .filter(([k, w]) => k < arena.currentWeek() && (w.result === 'won' || w.result === 'lost'))
@@ -194,15 +165,7 @@ function formStrip() {
   </div>`;
 }
 
-/* ---------------- the arc ----------------
-   Not a permanent box. The cup has a shape - a build-up, an opening, a table,
-   a knockout, a ceremony, and then nothing at all for a fortnight - and the
-   screen has to have that shape too, or it is a scoreboard for a match that is
-   not being played.
-
-   Between cups it is one line and a date. That is the whole reason the arcs
-   stopped tiling the year end to end: while you were always in a cup, a cup
-   was never something you entered. */
+/* ---------------------- the arc ---------------------- */
 
 function arcCard() {
   const st = arena.arcState();
@@ -213,11 +176,9 @@ function arcCard() {
   return arcRound(st);
 }
 
-/** No cup on. A countdown, and what happened in the last one if anything did. */
+/** No cup on: a countdown, and the last one if there was one. */
 function arcClosed(st) {
-  // "Out at the group stage" is the wrong sentence for someone who never had
-  // enough weeks on the record to enter: they did not lose the cup, they were
-  // not in it. Saying otherwise is the app inventing a defeat.
+  // Never entered is not knocked out. Saying otherwise invents a defeat.
   const ended = st.phase !== 'out'
     ? ''
     : st.rec.qualified === false
@@ -234,8 +195,7 @@ function arcClosed(st) {
   </a>`;
 }
 
-/** The group stage, live. The line between third and fourth is the only thing
- *  on it that matters, so it is drawn. */
+/** The group, live. The line between third and fourth is the only thing on it. */
 function arcGroup(st) {
   const g = arena.groupTable(st.arc);
   return `<section class="card">
@@ -258,9 +218,7 @@ function arcGroup(st) {
   </section>`;
 }
 
-/** Why this is not a cup yet, in one line. Nothing on the table is coloured
- *  green until it is: a top-three row that cannot qualify is the screen
- *  telling you that you are through when you are not. */
+/** Why this is not a cup yet. Nothing is green until it can qualify. */
 function shortfall(g) {
   if (g.rivals < arena.ARC_MIN_RIVALS) return 'Not enough weeks on the record yet to make a field to beat.';
   return `${g.played} of ${g.need} weeks played. A cup wants at least ${g.need} of them.`;
@@ -338,9 +296,7 @@ export function renderArena(mount) {
   wire(mount);
 }
 
-/** The nemesis, named and reachable, on every visit. He is the one opponent
- *  who is always somewhere on the fixture list, so he gets a line of his own
- *  rather than only appearing in the weeks he happens to be drawn. */
+/** The Nemesis gets a line of his own: he is always somewhere on the fixture list. */
 function nemesisLine() {
   const n = arena.nemesisWeek();
   if (!n) return '';
@@ -362,7 +318,7 @@ function wire(mount) {
       openSheet(`
         <h2>${escapeHtml(fixture.name)}</h2>
         <p class="muted small">${escapeHtml(fixture.blurb)}</p>
-        <p>Your division's bar is ${pct(fixture.score)}. It stands in when the record cannot supply a real opponent yet — every other rival in here is a week you actually had, and there is no point inventing one.</p>
+        <p>Your division's bar is ${pct(fixture.score)}. It stands in until the record can supply a real week. Every other rival is one you actually had.</p>
         <button class="btn wide" data-close>Close</button>`);
     });
   }
@@ -375,8 +331,7 @@ function wire(mount) {
   );
 }
 
-/** "42 of 100" in the feat's own unit, rounded the way the unit wants: hours
- *  and centimetres to one place, counts to none. */
+/** "42 of 100" in the feat's unit: hours and cm to one place, counts to none. */
 function fmtNeed(f) {
   const dp = f.unit && /cm|h|s/.test(f.unit) ? 1 : 0;
   const round = (v) => (dp ? v.toFixed(1) : Math.round(v).toLocaleString());

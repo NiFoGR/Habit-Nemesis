@@ -1,5 +1,4 @@
-// PIN entry: setting one, and unlocking with it. Shared by the gallery and by
-// the measurement flow, since both need the vault open to touch photos.
+// PIN entry and unlock. Shared by the gallery and the check-in.
 
 import * as vault from './vault.js';
 import * as db from './db.js';
@@ -8,7 +7,7 @@ import { escapeHtml, haptic, toast } from '../ui.js';
 
 const PIN_LEN = 6;
 
-/** Renders a keypad. Resolves once the vault is unlocked, or calls onCancel. */
+/** Keypad. Resolves once the vault is open, or calls onCancel. */
 export function renderPinGate(mount, { onReady, onCancel, title }) {
   if (!vault.isAvailable()) {
     mount.innerHTML = `
@@ -129,7 +128,7 @@ export function renderPinGate(mount, { onReady, onCancel, title }) {
   draw();
 }
 
-/** Runs `fn` with the vault open, prompting for the PIN first if needed. */
+/** Run `fn` with the vault open, prompting first if needed. */
 export function withVault(mount, { onReady, onCancel, title }) {
   if (vault.isUnlocked()) {
     vault.armAutoLock();

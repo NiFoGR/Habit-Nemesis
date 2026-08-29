@@ -1,27 +1,20 @@
-// Persistence layer. Everything lives on-device in localStorage, no accounts,
-// no network, nothing leaves the phone.
+// Persistence. localStorage on device, no account, nothing leaves the phone.
 
 import { toast, setFeedback } from './ui.js';
 import { BOOKS } from './bible/canon.js';
 
-// The sanitiser needs to know how many chapters each book has, so a saved file
-// cannot smuggle "gen:9999" or a book that does not exist into the page.
+// Canon limits, so a saved file cannot smuggle in a fake book or chapter.
 const CANON_LIMITS = BOOKS.map((b) => [b.id, b.chapters.length]);
 
-// Listed here rather than imported from breathe/program.js, which imports this
-// module: the sanitiser cannot depend on a feature that depends on it.
+// Duplicated, not imported: the sanitiser cannot depend on a feature.
 const BREATHE_PATTERNS = ['exhale', 'coherent', '478'];
 
-// Same reasoning for the habit palette and the two kinds of habit. A colour is
-// stored as an id from a closed set rather than as a hex string, because it is
-// interpolated into a `style` attribute; a free-text colour would be a hole.
+// Closed sets. A colour id lands in a style attribute, free text would be a hole.
 const HABIT_COLOURS = ['teal', 'mint', 'lime', 'amber', 'orange', 'clay', 'rose', 'red', 'violet', 'indigo', 'sky', 'slate'];
 const HABIT_KINDS = ['yesno', 'number'];
 const HABIT_TARGET_TYPES = ['atleast', 'atmost'];
 
-// The ladder, listed here for the same reason as the habit palette: the
-// sanitiser cannot import the feature whose data it is checking, because that
-// feature imports the store. Order matters - it is the ladder, low to high.
+// The ladder, low to high.
 const ARENA_DIVISIONS = ['bottom', 'npc', 'prospect', 'contender', 'menace', 'locked', 'topg'];
 
 const KEY = 'nifo.state.v1';
@@ -34,11 +27,6 @@ function blank() {
     settings: {
       inputMode: 'hold', // 'hold' = press-and-hold tracking, 'auto' = hands-free
       haptics: true,
-      // App-wide, and on. It used to mean only the session player's per-rep
-      // tone, which is why it was off: a beep every three seconds is a thing
-      // you switch off. The Arena's motifs are the opposite - a few seconds,
-      // once a week, on a screen you opened on purpose - so the honest default
-      // for the pair of them is on, with one switch that still kills both.
       sound: true,
       discreet: false, // renames the Kegels section to "Core Training"
       restDay: 0, // 0 = Sunday
@@ -47,10 +35,7 @@ function blank() {
       appLock: false, // require the PIN to open the whole app, not just the gallery
       tutorialDone: false, // the one-off technique walkthrough
       weeklyReviewSeen: '', // dayKey of the last weekly review dismissed
-      // 0 locked, 1 unlocked, 2 answered wrong and gone for good. See nifo.js.
-      // A fresh install starts locked: the five preloaded sections are what
-      // this app is *for*, not what it *is*, and the person who installs it
-      // may be someone the five have nothing to say to.
+      // 0 locked, 1 unlocked, 2 burned. See nifo.js.
       nifoOnly: 0,
       onboarded: false, // the introduction has been seen at least once
     },
@@ -64,14 +49,8 @@ function blank() {
     },
     sessions: [],
     prs: { maxHoldMs: 0, tutMs: 0, score: 0, streak: 0 },
-    // There is no `badges` array any more, and no `pe.achievements`. Both were
-    // lists of ids handed out by whichever screen happened to be open, which
-    // meant a badge earned while the app was shut was never earned at all.
-    // arena/feats.js is a set of predicates over this same state, so it needs
-    // to store only the date each was first noticed.
 
-    // Second feature: PE training. Kept in its own slice so the two features
-    // never tread on each other's data.
+    // PE.
     pe: {
       settings: {
         units: 'cm',
@@ -91,9 +70,7 @@ function blank() {
       vault: null, // { salt, iv, check } once a gallery PIN is set
     },
 
-    // Third feature: the prayer rule. Morning and night are both required, so
-    // unlike the other features there is no target to configure, only whether
-    // each of the two was kept.
+    // Prayer. Morning and night, both required, so there is no target.
     pray: {
       settings: {
         lang: 'both', // 'en' | 'el' | 'both'
@@ -108,10 +85,8 @@ function blank() {
       best: 0,
     },
 
-    // Fourth feature: reading the Bible. `read` is the lifetime record, one
-    // entry per chapter, and `days` is what happened on each day. The two are
-    // kept apart because unreading a chapter must not erase the day it was
-    // read on for every other chapter beside it.
+    // Bible. `read` is the lifetime record, `days` the per-day one. Kept apart so
+    // unreading a chapter cannot erase the day beside it.
     bible: {
       settings: {
         remind: false,
@@ -125,9 +100,7 @@ function blank() {
       best: 0,
     },
 
-    // Fifth feature: the wind-down, the last thing in the day. One record per
-    // day and nothing more, because nothing here is scored: the only question
-    // ever asked of it is whether you did it and for how long.
+    // Wind-down. One record per day, nothing scored.
     breathe: {
       settings: {
         pattern: 'exhale', // 'exhale' | 'coherent' | '478'
@@ -142,14 +115,8 @@ function blank() {
       best: 0,
     },
 
-    // Sixth feature: habits. The general-purpose room, and the only section
-    // whose contents you define yourself, so nearly every field here is a
-    // setting rather than a constant. `entries` is keyed by habit id and then
-    // by day, because the only questions ever asked of it are "what was this
-    // habit on this day" and "every day of this habit", and a map answers both
-    // without a scan. Streaks and scores are computed rather than stored: the
-    // past is editable here, so a cached streak would go stale the moment you
-    // corrected last Tuesday.
+    // Habits. `entries` is habit id, then day. Streaks and scores are computed on
+    // read, never stored: the past is editable here.
     habits: {
       settings: {
         firstDay: 1, // 0 = Sunday
@@ -166,45 +133,26 @@ function blank() {
       entries: {}, // habitId -> { dayKey: value }, -1 skip, 0 lapse, else done
     },
 
-    // Seventh feature: the Arena. The competitive layer - a weekly match, a
-    // monthly division, a seasonal cup, and the feats.
-    //
-    // This is the one slice that stores things it could in principle derive,
-    // and the distinction is deliberate. A closed week's result is a historical
-    // fact: recomputing it would let a habit's frequency changed today rewrite
-    // a match won in March, and would let the calendar's edit-the-past turn a
-    // defeat into a victory. Standings are the same kind of fact. Everything
-    // live - this week's running score, the group table, the next fixture - is
-    // still computed on read.
+    // Arena. The one slice that stores what it could derive: a closed week is a
+    // historical fact, not a view. Anything live is still computed on read.
     arena: {
       division: 'npc', // where you currently sit on the ladder
       placed: false, // the first completed month places you and cannot relegate
       // 'YYYY-Www' -> { score, done, due, opponent, oppName, oppScore, result, arc }
-      // result: 'won' | 'lost' | 'void' | 'record' | null. 'record' is a week
-      // scored out of habit data older than the Arena - a performance, and a
-      // possible opponent, but never a result, because no match was played.
+      // result: won | lost | void | record | null. 'record' predates the Arena.
       weeks: {},
       months: {}, // 'YYYY-MM' -> { score, w, l, from, to, move }
       arcs: {}, // 'YYYY-season' -> { qualified, qf, sf, final, won }
       feats: {}, // featId -> the timestamp it was first earned
-      // The day the record starts, fixed once. Everything year-shaped is
-      // measured from here - a year is 365 days from it, not a calendar year -
-      // so it must not drift. Deriving it from the earliest recorded day would
-      // move every year boundary backwards the first time you corrected an old
-      // date from the calendar.
+      // Fixed. A year is 365 days from here, so it must not drift.
       anchor: '',
-      // Which rule the stored scores were computed under. Bumping it re-scores
-      // every week that was never actually played; `rescore` in
-      // arena/program.js says why a played one is left alone.
+      // Scoring rule version. A bump re-scores unplayed weeks only.
       scoring: 0,
       seenWeek: '', // the last closed week whose result screen was shown
       backfilled: false, // the one-time sweep that gives the Arena a history
     },
 
-    // The night light. App-wide rather than a section, so it has no `days` and
-    // nothing to track — only settings. It gets a slice of its own anyway
-    // because on the APK the real copy lives in the filter service's own
-    // SharedPreferences, and this is the copy that ends up in a backup.
+    // Night light. Settings only. On the APK the live copy is the service's.
     nightlight: {
       enabled: false,
       curve: 'gradual', // 'gradual' warms all day, 'flux' drops in the evening
@@ -218,20 +166,16 @@ function blank() {
   };
 }
 
-/* ---------------- input sanitising ----------------
-   Saved state is not trusted. It can come from an imported backup file, or
-   from localStorage that something else on the device has written to, and it
-   ends up interpolated into innerHTML all over the app. So every value is
-   coerced to the type and range it is supposed to be, before anything renders
-   it. Unknown keys are dropped rather than carried along. */
+/* ---------------- input sanitising ---------------- */
+// Saved state is untrusted and ends up in innerHTML. Coerce every value, drop
+// unknown keys.
 
-/** Clamping is right for settings, pull a silly value back into range. */
+/** Settings: pull a silly value back into range. */
 const num = (v, lo = -1e9, hi = 1e9) => {
   const n = Number(v);
   return Number.isFinite(n) ? Math.min(Math.max(n, lo), hi) : null;
 };
-/** Clamping is wrong for measurements: a 500 cm reading clamped to 100 becomes
- *  a fabricated data point in the middle of a chart. Out of range is dropped. */
+/** Measurements: drop out of range. Clamping would fabricate a data point. */
 const numIn = (v, lo, hi) => {
   const n = Number(v);
   return Number.isFinite(n) && n >= lo && n <= hi ? n : null;
@@ -244,21 +188,18 @@ const str = (v, max = 500) => (typeof v === 'string' ? v.slice(0, max) : '');
 const oneOf = (v, list, dflt) => (list.includes(v) ? v : dflt);
 const bool = (v) => v === true;
 const arr = (v, max) => (Array.isArray(v) ? v.slice(0, max) : []);
-/** Dates are used as object keys and rendered, so only the exact shape passes. */
+/** Exact shape only. Date keys are object keys and get rendered. */
 const dateKey = (v) => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : dayKey());
 const id = (v, prefix) => (typeof v === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(v) ? v : `${prefix}${Math.random().toString(36).slice(2)}`);
 const b64 = (v) => (typeof v === 'string' && /^[A-Za-z0-9+/=]{1,4096}$/.test(v) ? v : null);
-/** Reminder times end up as arguments to Android's alarm scheduler, so the
- *  shape passing is not enough: "99:99" matches HH:MM and then asks for hour 99.
- *  The range has to be checked as well. */
+/** HH:MM and a real time: "99:99" fits the shape, then asks for hour 99. */
 const timeStr = (v, dflt = '') => {
   if (typeof v !== 'string' || !/^\d{2}:\d{2}$/.test(v)) return dflt;
   const [h, m] = v.split(':').map(Number);
   return h <= 23 && m <= 59 ? v : dflt;
 };
 
-// Plausible human range in cm. Outside it the value is a typo, a unit mix-up
-// or junk, and keeping it would corrupt every trend and projection.
+// Plausible cm range. Outside it is a typo or a unit mix-up.
 const MIN_CM = 1;
 const MAX_CM = 60;
 
@@ -307,13 +248,12 @@ function cleanPeSession(s) {
     id: id(s.id, 'pe_'),
     ts: num(s.ts, 0, 4e12) ?? Date.now(),
     date: dateKey(s.date),
-    // Retired types stay readable so old logs are not relabelled.
+    // Retired types stay readable.
     type: oneOf(s.type, ['warmup', 'stretch', 'pump', 'jelq', 'clamp'], 'stretch'),
     durationSec: int(s.durationSec, 0, 86400, 0),
     plannedSec: int(s.plannedSec, 0, 86400, 0),
     tensionKg: numIn(s.tensionKg, 0.5, 10),
-    // Legacy fields from when pumping recorded an intensity. Kept so old logs
-    // still read correctly; nothing writes them any more.
+    // Legacy intensity fields. Read only, nothing writes them.
     pressure: numIn(s.pressure, 0.5, 100),
     hydroLevel: numIn(s.hydroLevel, 1, 5),
     bpfslBefore: numIn(s.bpfslBefore, MIN_CM, MAX_CM),
@@ -343,8 +283,7 @@ function cleanMeasurement(m) {
   };
 }
 
-// Merge saved state over the blank shape so new fields added in later versions
-// appear on old saves instead of coming back undefined.
+// Merge over blank() so new fields appear on old saves.
 function hydrate(saved) {
   const base = blank();
   if (!saved || typeof saved !== 'object') return base;
@@ -360,9 +299,7 @@ function hydrate(saved) {
     settings: {
       inputMode: oneOf(ss.inputMode, ['hold', 'auto'], base.settings.inputMode),
       haptics: ss.haptics !== false,
-      // `!== false` rather than `bool`: anyone who turned it off keeps it off,
-      // and a state saved before this was app-wide - which had no reason to
-      // carry the key at all - gets the new default rather than a silent no.
+      // !== false: a state saved before this key keeps the new default.
       sound: ss.sound !== false,
       discreet: bool(ss.discreet),
       restDay: int(ss.restDay, 0, 6, base.settings.restDay),
@@ -371,12 +308,8 @@ function hydrate(saved) {
       appLock: bool(ss.appLock),
       tutorialDone: bool(ss.tutorialDone),
       weeklyReviewSeen: /^\d{4}-\d{2}-\d{2}$/.test(ss.weeklyReviewSeen) ? ss.weeklyReviewSeen : '',
-      // Both default the other way here than in blank(), and that is the whole
-      // point of them living in hydrate rather than being read raw: reaching
-      // this function at all means there was already a saved state, so this is
-      // an install that has been in use. Taking the five away from it, or
-      // walking it through an introduction to an app it has been running for
-      // months, would both be the update breaking something that worked.
+      // Both default the opposite way to blank(): reaching hydrate means a saved
+      // state exists, so this install is already in use.
       nifoOnly: int(ss.nifoOnly, 0, 2, 1),
       onboarded: ss.onboarded !== false,
     },
@@ -422,7 +355,7 @@ function hydrate(saved) {
         bpfsl: numIn(savedPe.prs?.bpfsl, 0, MAX_CM) ?? 0,
         streak: int(savedPe.prs?.streak, 0, 100000, 0),
       },
-      // Only base64 of the right shape; anything else means no usable vault.
+      // Right-shaped base64, or no vault.
       vault: vault && b64(vault.salt) && b64(vault.iv) && b64(vault.check)
         ? { salt: b64(vault.salt), iv: b64(vault.iv), check: b64(vault.check) }
         : null,
@@ -436,9 +369,7 @@ function hydrate(saved) {
   };
 }
 
-/** The night light slice. Every value here is handed to Android as a schedule
- *  or a colour temperature, so each is clamped to a range the filter can
- *  actually use rather than merely to the right type. */
+/** Night light. Clamped to what the filter can use, not just to type. */
 function cleanNightlight(sn, base) {
   const src = sn && typeof sn === 'object' ? sn : {};
   return {
@@ -453,10 +384,7 @@ function cleanNightlight(sn, base) {
   };
 }
 
-/** The Bible slice. Book ids and chapter numbers are used as object keys and
- *  rendered into the page, so both are checked against the canon itself rather
- *  than against a pattern: a key that is not a real book, or a chapter beyond
- *  the end of one, is dropped instead of carried along. */
+/** Bible. Books and chapters checked against the canon, not against a pattern. */
 function cleanBible(sb, base) {
   const src = sb && typeof sb === 'object' ? sb : {};
   const bs = src.settings && typeof src.settings === 'object' ? src.settings : {};
@@ -491,8 +419,7 @@ function cleanBible(sb, base) {
     if (chapters.length) days[k] = { chapters };
   }
 
-  // The reading position is two values that index straight into the canon, so
-  // both are checked against it rather than trusted.
+  // The position indexes into the canon, so check it too.
   const rawPos = src.position && typeof src.position === 'object' ? src.position : {};
   const posMax = limits.get(rawPos.book);
   const position = posMax
@@ -513,9 +440,7 @@ function cleanBible(sb, base) {
   };
 }
 
-/** The wind-down slice. One entry per day: when it was done, how long it ran
- *  and which pattern. A day with no time on it is not a day, so it is dropped
- *  rather than kept as an empty record that would still light up the heatmap. */
+/** Wind-down. One entry per day. A day with no time is not a day. */
 function cleanBreathe(sb, base) {
   const src = sb && typeof sb === 'object' ? sb : {};
   const bs = src.settings && typeof src.settings === 'object' ? src.settings : {};
@@ -548,18 +473,8 @@ function cleanBreathe(sb, base) {
   };
 }
 
-/** The Arena slice.
- *
- *  Standings and results, which is the one place in this app where stored data
- *  is not a cache of something computable. So the sanitiser's job here is
- *  narrower than usual but stricter: every key is a period identifier that gets
- *  parsed and rendered, and every value decides a rank.
- *
- *  Keys are checked by shape - `YYYY-Www`, `YYYY-MM`, `YYYY-season` - and
- *  dropped rather than defaulted, for the same reason a bad day key is dropped
- *  in the habits slice: defaulting would pile a file's worth of junk onto one
- *  real period and quietly rewrite a season.
- */
+/** Arena. Stored facts, not a cache. Period keys are checked by shape and
+ *  dropped, never defaulted: defaulting would rewrite a real season. */
 function cleanArena(sa, base) {
   const src = sa && typeof sa === 'object' ? sa : {};
   const pctOf = (v) => num(v, 0, 1) ?? 0;
@@ -572,19 +487,13 @@ function cleanArena(sa, base) {
       score: pctOf(v.score),
       due: int(v.due, 0, 100000, 0),
       done: num(v.done, 0, 100000) ?? 0,
-      // 'record' is a week the Arena scored on the day it was installed, out
-      // of habit data older than itself. It counts as a performance - it can
-      // be your Nemesis, and it is in the month's average - but it is not a
-      // result, because no match was played on it and one cannot be invented
-      // retrospectively.
+      // 'record' is a pre-Arena week: a performance, never a result.
       opponent: str(v.opponent, 40),
       oppName: str(v.oppName, 40),
       oppScore: v.oppScore == null ? null : pctOf(v.oppScore),
       result: oneOf(v.result, ['won', 'lost', 'void', 'record'], null),
       arc: oneOf(v.arc, ['group', 'qf', 'sf', 'final'], null),
-      // A line you left on the week you set your best, for whoever has to beat
-      // it. It is the only free text in the Arena, so it is capped hard and
-      // every screen that shows it escapes it.
+      // The only free text in the Arena. Capped hard, escaped everywhere.
       note: str(v.note, 140),
     };
   }
@@ -615,9 +524,7 @@ function cleanArena(sa, base) {
       final: round(v.final),
       won: bool(v.won),
       note: str(v.note, 140),
-      // Which of the arc's three ceremonies have been shown. Each is a
-      // full-screen moment that fires once, so what is stored is that you have
-      // seen it, not that it happened - the record already says that.
+      // Which arc ceremonies have been shown.
       sawOpen: bool(v.sawOpen),
       sawGroup: bool(v.sawGroup),
       sawCup: bool(v.sawCup),
@@ -627,10 +534,7 @@ function cleanArena(sa, base) {
   const feats = {};
   const rawFeats = src.feats && typeof src.feats === 'object' ? src.feats : {};
   for (const [k, v] of Object.entries(rawFeats).slice(0, 200)) {
-    // Capitals allowed. They were not, and the catalogue is full of them -
-    // beatNemesis, perfectWeek, divTopG - so every camel-cased feat you earned
-    // was thrown away by the sanitiser on the next launch and had to be earned
-    // again. Silent, and only visible as a count that would not go up.
+    // Capitals allowed: feat ids are camelCase.
     if (!/^[A-Za-z][A-Za-z0-9_-]{1,40}$/.test(k)) continue;
     const ts = num(v, 0, 4e12);
     if (ts != null) feats[k] = ts;
@@ -650,24 +554,10 @@ function cleanArena(sa, base) {
   };
 }
 
-/** The habits slice.
- *
- *  The only slice whose *shape* is user-defined, which makes it the one most
- *  worth checking. Three rules run through it:
- *
- *  An id that does not match the pattern drops the habit rather than being
- *  regenerated. Everywhere else in this file a bad id is replaced with a fresh
- *  one, which is right for a session, because a session carries its own data.
- *  A habit does not: its record lives in `entries` under that id, so handing
- *  it a new one would silently orphan every day ever marked on it.
- *
- *  A day key that is not a date drops the entry rather than falling back to
- *  today. `dateKey()` defaults, which is right for a session that has to land
- *  somewhere; here it would pile a whole file of junk onto this morning.
- *
- *  Entries whose habit no longer exists are dropped, so deleting a habit
- *  cannot leave a record behind for a later habit to inherit by id collision.
- */
+/** Habits. The only user-shaped slice.
+ *  Bad habit id drops the habit: its record hangs off that id.
+ *  Bad day key drops the entry: defaulting would pile junk onto today.
+ *  Entries whose habit is gone are dropped. */
 function cleanHabits(sh, base) {
   const src = sh && typeof sh === 'object' ? sh : {};
   const hs = src.settings && typeof src.settings === 'object' ? src.settings : {};
@@ -686,8 +576,7 @@ function cleanHabits(sh, base) {
     .map((h) => {
       const hid = habitId(h?.id);
       if (!hid) return null;
-      // A frequency of n in d is meaningless with n above d: it would ask for
-      // more days than the window holds. So the numerator is capped by it.
+      // n in d is meaningless with n above d.
       const den = int(h?.freq?.den, 1, 365, 1);
       return {
         id: hid,
@@ -706,9 +595,7 @@ function cleanHabits(sh, base) {
           .map((d) => int(d, 0, 6, null))
           .filter((d) => d !== null),
         archived: bool(h?.archived),
-        // When it was archived, not just that it was. The Arena locks its
-        // scoring roster on Monday, so it has to know whether a habit was
-        // still yours during a week that has already been played.
+        // When, not just that: the Arena locks its roster on Monday.
         archivedAt: num(h?.archivedAt, 0, 4e12),
         createdAt: num(h?.createdAt, 0, 4e12) ?? Date.now(),
         order: int(h?.order, 0, 1000, 0),
@@ -748,10 +635,7 @@ function cleanHabits(sh, base) {
   };
 }
 
-/** The prayer slice. `days` is a map rather than a list because the only
- *  question ever asked of it is "was this day kept", and a map answers that
- *  without a scan. Keys are validated as dates so a hostile file cannot put
- *  arbitrary strings into the object. */
+/** Prayer. `days` is a map; keys validated as dates. */
 function cleanPray(sp, base) {
   const src = sp && typeof sp === 'object' ? sp : {};
   const ps = src.settings && typeof src.settings === 'object' ? src.settings : {};
@@ -792,9 +676,7 @@ function cleanPray(sp, base) {
 let state = load();
 const listeners = new Set();
 
-// Once at boot as well as on every save: a launch where nothing needed
-// rewriting never calls save(), and ui.js would sit on its defaults with the
-// sound switched on for somebody who had switched it off.
+// Also at boot: a launch that never saves would leave ui.js on defaults.
 setFeedback(state.settings);
 
 function load() {
@@ -805,14 +687,12 @@ function load() {
   } catch {
     return blank();
   } finally {
-    // If anything was dropped or coerced on the way in, write the cleaned
-    // version straight back rather than leaving the junk on disk to be
-    // re-parsed on every launch.
+    // Write the cleaned copy back rather than re-parsing junk every launch.
     queueMicrotask(() => {
       try {
         if (raw !== null && JSON.stringify(state) !== raw) save();
       } catch {
-        /* the next save will deal with it */
+        /* next save deals with it */
       }
     });
   }
@@ -825,16 +705,13 @@ export function get() {
 let saveFailed = false;
 
 export function save() {
-  // The two feedback switches live in settings and are read by ui.js, which
-  // cannot import this module back. Pushing them on every save is what keeps
-  // "sound off" meaning off everywhere rather than only in a session.
+  // ui.js cannot import this module, so the feedback switches are pushed to it.
   setFeedback(state.settings);
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
     saveFailed = false;
   } catch (err) {
-    // Silently losing a session is the worst possible failure for a tracker,
-    // so this is surfaced rather than logged and forgotten.
+    // Surfaced, not logged: losing a session is the worst failure a tracker has.
     console.warn('NiFo: could not save state', err);
     if (!saveFailed) {
       saveFailed = true;
@@ -870,9 +747,7 @@ export function exportJson() {
   return JSON.stringify(state, null, 2);
 }
 
-/** Restores a backup. `keepVault` holds on to the gallery key already on this
- *  device, without it, importing a backup made on another phone would leave
- *  the photos here encrypted under a key nothing knows any more. */
+/** Restore. `keepVault` keeps this device's gallery key. */
 export function importJson(text, { keepVault = false } = {}) {
   if (typeof text !== 'string' || text.length > 50e6) throw new Error('That file is too large to be a NiFo backup');
   const parsed = JSON.parse(text);
@@ -886,7 +761,7 @@ export function importJson(text, { keepVault = false } = {}) {
   return { vaultChanged: !keepVault && JSON.stringify(existingVault) !== JSON.stringify(state.pe.vault) };
 }
 
-/** True when the incoming backup would orphan photos already on this device. */
+/** Would this backup orphan photos already here? */
 export function backupChangesVault(text) {
   try {
     const incoming = JSON.parse(text)?.pe?.vault ?? null;
@@ -895,9 +770,6 @@ export function backupChangesVault(text) {
     return false;
   }
 }
-
-/* ---------- date helpers (local time, not UTC, a session at 23:50 belongs to
-   the day you did it, not to tomorrow) ---------- */
 
 export function dayKey(d = new Date()) {
   const dt = d instanceof Date ? d : new Date(d);
@@ -918,12 +790,9 @@ export function todaysSessions() {
   return sessionsOn(dayKey());
 }
 
-export function lastSession() {
-  return state.sessions.length ? state.sessions[state.sessions.length - 1] : null;
-}
+/* ---------------- dates (local, not UTC) ---------------- */
 
-/** Consecutive days ending today (or yesterday, if today is not done yet)
- *  that have at least one entry in `dates`. */
+/** Consecutive days ending today, or yesterday if today is not done yet. */
 export function streakOver(dates) {
   const done = dates instanceof Set ? dates : new Set(dates);
   if (!done.size) return 0;
@@ -937,13 +806,12 @@ export function streakOver(dates) {
   return n;
 }
 
-/** A day counts toward the streak if it has any session, or if it is a
- *  scheduled release day that was honoured (rest is part of the program). */
+/** A session, or an honoured release day. */
 export function streak() {
   const done = new Set(state.sessions.map((s) => s.date));
   if (!done.size) return 0;
   let cursor = dayKey();
-  // Today not being done yet must not break a streak that is still alive.
+  // Today unfinished must not break a live streak.
   if (!done.has(cursor)) cursor = addDays(cursor, -1);
   let n = 0;
   while (done.has(cursor)) {

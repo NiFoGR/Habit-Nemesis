@@ -1,34 +1,16 @@
-// Generates the study notes the app ships, from the same plain-text export of
-// The Orthodox Study Bible that tools/extract-bible-text.mjs reads.
-//
-// The notes are the point of a study Bible and were being thrown away:
-// www/js/bible/parse.js strips the "†" anchors off the verse text and never
-// looks for the commentary they point at. This puts them back.
+// Generates the study notes from the same OSB text export as
+// tools/extract-bible-text.mjs.
 //
 //   node tools/extract-bible-notes.mjs <path-to-osb.txt>
 //
-// Writes www/bible/notes/<book>.json, one file per book, keyed by "ch:v" so
-// the reader can look up a verse without loading every book's notes.
+// Writes www/bible/notes/<book>.json, keyed "ch:v".
 //
-// ---- how the notes are attributed to books ----
-//
-// In the export the annotations are one continuous run at the back of the
-// file, ordered by book, and the books are NOT labelled. The only structural
-// signal is the chapter number falling back to 1 where a new book starts.
-//
-// Walking that greedily does not work, and getting it wrong is not a cosmetic
-// failure: it silently attaches commentary to the wrong scripture, which is
-// worse than shipping no notes at all. A first attempt drifted so far that
-// Revelation absorbed 389 notes while every epistle got none.
-//
-// So it is done in two stages. First the refs are cut into runs wherever the
-// chapter resets, which yields more runs than there are books because a stray
-// backward ref inside a book splits it. Then those runs are assigned to books
-// by dynamic programming: runs stay in order, each book takes zero or more
-// consecutive runs, a book may never take a run containing a chapter it does
-// not have, and the cost prefers an assignment where a book's notes span most
-// of that book. That reunites the split runs and tolerates books the export
-// carries no notes for.
+// Attribution: in the export the notes are one unlabelled run at the back,
+// ordered by book, and the only structural signal is the chapter resetting to
+// 1. Walking that greedily attaches commentary to the wrong scripture, so it
+// is done in two stages: cut into runs at each chapter reset, then assign runs
+// to books by dynamic programming, in order, never giving a book a chapter it
+// does not have.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -43,8 +25,8 @@ if (!src) {
 const raw = fs.readFileSync(src, 'utf8');
 
 /* ---- the region ----
-   Everything earlier is running scripture, the lectionary, the glossary and
-   two indexes, all of which contain verse references that are not notes. */
+   Everything earlier is scripture, the lectionary, the glossary and two
+   indexes, all of which carry verse references that are not notes. */
 const start = raw.search(/INDEX TO STUDY ARTICLES/);
 if (start < 0) {
   console.error('could not find "INDEX TO STUDY ARTICLES"; this export may differ');
@@ -58,7 +40,7 @@ for (const m of region.matchAll(REF)) {
   hits.push({ ch: +m[1], v: +m[2], tail: (m[3] || '').trim(), at: m.index, len: m[0].length });
 }
 
-/** A note body runs from the end of its ref to the start of the next one. */
+/** A note body runs from its ref to the start of the next. */
 function bodyAt(i) {
   const h = hits[i];
   const end = i + 1 < hits.length ? hits[i + 1].at : region.length;
@@ -97,21 +79,15 @@ const runMax = runs.map((r) => Math.max(...r.map((h) => h.ch)));
 /* ---- stage 2: assign runs to books ---- */
 const R = runs.length;
 const B = BOOKS.length;
-// Leaving a book with no notes at all must be expensive, because nearly every
-// book in this edition has them. Without that, the DP happily folds a short
-// book's run into the long book before it -- every ref in Romans 1..16 "fits"
-// inside Acts 1..28 at no cost, so Acts ended up with 587 notes and every
-// epistle with none. A second penalty discourages giving one book several
-// runs, which is only ever needed to repair a spurious split.
+// An empty book must be expensive: nearly every book here has notes, and
+// without the penalty the DP folds a short book into the long one before it.
+// The second penalty discourages giving one book several runs.
 const EMPTY = Number(process.env.EMPTY ?? 400);
 const EXTRA_RUN = Number(process.env.EXTRA_RUN ?? 30);
 
-/* How many of run k's refs name a chapter and verse that book b does not
-   have. This is the thing actually worth minimising: a ref that does not fit
-   is a note about to be attached to scripture it was not written about. A
-   hard cutoff on the chapter count was too brittle, because one stray ref in
-   a run (a cross-reference the shape of a note) pushed the run's maximum past
-   the real book and pushed the whole assignment along by three books. */
+/* Refs in run k that name a chapter or verse book b does not have. The thing
+   worth minimising: a ref that does not fit is a note about to be attached to
+   scripture it was not written about. */
 const misfit = runs.map((r) => BOOKS.map((book) =>
   r.filter((h) => h.ch > book.chapters.length || h.v > (book.chapters[h.ch - 1] || 0)).length));
 
@@ -122,8 +98,7 @@ function cost(b, i, j) {
   let bad = 0;
   let max = 0;
   for (let k = i; k < j; k++) { bad += misfit[k][b]; max = Math.max(max, runMax[k]); }
-  // Mis-attribution dominates; the span term only breaks ties, by preferring
-  // the book whose length the run actually reaches the end of.
+  // Mis-attribution dominates; the span term only breaks ties.
   return bad * 10 + Math.max(0, nCh - Math.min(max, nCh)) + (j - i - 1) * EXTRA_RUN;
 }
 
@@ -164,21 +139,17 @@ BOOKS.forEach((book, b) => {
       if (h.ch > book.chapters.length || h.v > verses) { outOfRange++; continue; }
       const key = `${h.ch}:${h.v}`;
       bucket[key] = bucket[key] ? `${bucket[key]} ${h.text}` : h.text;
-      // The printed ref may cover a span ("9:14-16"); keep it so the reader can
-      // mark every verse the note applies to, not only the first.
+      // Keep the printed span ("9:14-16"), so the reader can mark every verse.
       if (h.tail) bucket[key + '@'] = h.tail;
       placed++;
     }
   }
 });
 
-/* ---- refuse to ship what cannot be shown to be right ----
-   A correctly attributed book runs from its opening chapters to its last one,
-   because this edition annotates throughout. That is a strong check: getting
-   it right for 68 books in a row cannot happen by accident, and a book that
-   fails it is one where the run boundaries were ambiguous. Notes on the wrong
-   verses are worse than no notes, so a book that fails is dropped rather than
-   published, and named in the output so it is not lost silently. */
+/* ---- refuse to ship what cannot be shown right ----
+   A correctly attributed book runs from its opening chapters to its last: this
+   edition annotates throughout. A book that fails is dropped and named, never
+   published. */
 const rejected = [];
 for (const book of BOOKS) {
   const bucket = notes.get(book.id);

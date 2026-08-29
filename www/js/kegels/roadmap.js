@@ -1,9 +1,4 @@
-// The two-year ladder, laid out so it is obvious the plan does not run out.
-//
-// A level is a week. Twelve of them was three months of progression and then
-// nothing; this screen exists partly to show the 104 weeks and six phases that
-// replaced them, and partly because "what am I working towards" is the question
-// a progression system has to answer or it is just a counter.
+// The 104 weeks and six phases, laid out so the plan visibly does not run out.
 
 import * as store from '../store.js';
 import * as program from './program.js';
@@ -19,9 +14,8 @@ const PHASE_ICON = {
   mastery: 'medal',
 };
 
-/** Every fourth week is a deload, and phases happen to end on one. Summarising
- *  a phase with its deload week makes the numbers read as if the plan gets
- *  *easier* over it, so the range is drawn between the working weeks. */
+/** Ranges are drawn between working weeks: including the deload makes a phase
+ *  read as if it gets easier. */
 function hardWeeks(from, to) {
   const weeks = [];
   for (let n = from; n <= to; n++) {
@@ -31,8 +25,7 @@ function hardWeeks(from, to) {
   return weeks.length ? weeks : [program.levelDef(from), program.levelDef(to)];
 }
 
-/** Weeks per level in practice: promotion needs both the qualifying sessions
- *  and the minimum days served, so real pace is the slower of the two. */
+/** Real pace is the slower of the qualifying sessions and the days served. */
 function pace(state) {
   const hist = state.program.history;
   if (hist.length < 2) return null;

@@ -1,9 +1,5 @@
-// The wind-down section, and its settings.
-//
-// The record lives on this screen rather than in a tracking.js of its own,
-// which is the one place this feature departs from the shape of the other
-// three. There is only one number worth keeping — whether you did it — so a
-// second screen to hold a single heatmap would be a room with nothing in it.
+// The wind-down section and its settings. The record lives here rather than in
+// a tracking.js: one number does not need a screen of its own.
 
 import * as store from '../store.js';
 import * as breathe from './program.js';
@@ -70,9 +66,7 @@ export function renderBreatheHome(mount) {
           Breathing out takes the brake off the vagus nerve; breathing in takes
           it off again. Make the out-breath the longer of the two, at around six
           breaths a minute, and the balance tips towards the parasympathetic
-          side — heart rate falls on every exhale, and it keeps falling after
-          you stop. Going to sleep from there is not the same as going to sleep
-          from a scroll.
+          side. Heart rate falls on every exhale, and keeps falling after you stop.
         </p>
         <p class="fineprint">
           The three sighs at the start are not decoration. Two inhales stacked

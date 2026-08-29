@@ -1,21 +1,11 @@
 // Feats. Not achievements.
 //
-// The app used to hand out badges from two separate places - fifteen in the
-// kegel program, a handful more in PE - neither of which knew the other
-// existed and neither of which was visible outside its own section. This
-// replaces both, and raises the bar, using one test:
+// One test: could you say it out loud to another person and have it mean
+// something? "Held a contraction for thirty seconds" passes, "opened the app
+// seven days running" does not.
 //
-//   Could you say it out loud to another person and have it mean something?
-//
-// "Held a contraction for thirty seconds" passes. "Opened the app seven days
-// running" does not: the second is a fact about using an app, and only the
-// first is a fact about your life. That rule retires the participation
-// trophies, including the one for finishing your first session.
-//
-// Every feat is a predicate over the record rather than a flag handed out by
-// whichever screen happened to be open when it happened. Only the date each
-// was first seen is stored, so a new one can be announced once - and if that
-// is ever lost, the feats themselves recompute from the data.
+// Each is a predicate over the record, so only the date first seen is stored
+// and the rest recomputes.
 
 import * as store from '../store.js';
 import * as habits from '../habits/program.js';
@@ -39,14 +29,11 @@ const NEW_TESTAMENT = ['mat', 'mrk', 'luk', 'jhn', 'act', 'rom', '1co', '2co', '
 const GOSPELS = ['mat', 'mrk', 'luk', 'jhn'];
 const TORAH = ['gen', 'exo', 'lev', 'num', 'deu'];
 
-const allRead = (ids) => ids.every(bookDone);
 const readOf = (ids) => ids.filter(bookDone).length;
 
 const stretchMs = () => store.get().pe.sessions.filter((s) => s.type === 'stretch').reduce((a, s) => a + s.durationSec * 1000, 0);
 
-/** The most consecutive days at or over the two-hour stretch target. The old
- *  achievement asked only about the last seven days, so it could be earned and
- *  then be untrue by the following Tuesday. */
+/** Longest run at or over the stretch target. */
 function bestStretchRun(target = 2 * 3600000) {
   const days = Object.entries(
     store.get().pe.sessions.reduce((acc, s) => {
@@ -66,13 +53,13 @@ function bestStretchRun(target = 2 * 3600000) {
   return best;
 }
 
-/** Growth on one measurement, first check-in to best, in centimetres. */
+/** Growth on one measurement, first check-in to best, in cm. */
 const grew = (key) => {
   const m = store.get().pe.measurements.filter((x) => x[key]);
   return m.length > 1 ? Math.max(...m.map((x) => x[key])) - m[0][key] : 0;
 };
 
-/** The longest run of consecutive days satisfying a predicate over day keys. */
+/** Longest run of days satisfying a predicate. */
 function longestRun(has, days = 1200) {
   let best = 0;
   let run = 0;
@@ -91,7 +78,7 @@ const ruleKept = (key) => {
   return !!(d && d.morning && d.evening);
 };
 
-/** A day where every row on the grid came good. */
+/** A day where every row came good. */
 function perfectDays() {
   const rows = [...habits.linkedHabits(), ...habits.active()];
   if (!rows.length) return { best: 0, count: 0 };
@@ -127,10 +114,7 @@ const reachedDivision = (id) => {
 };
 const arcsWon = () => Object.values(arenaState().arcs).filter((a) => a.won).length;
 
-/* ---------------- the catalogue ----------------
-   `at` is the number the feat needs and `now` is where you are, so a locked
-   feat can show how far off it is instead of just sitting there greyed out.
-   Anything without them is pass or fail and says so. */
+/* ------------------- the catalogue ------------------- */
 
 export const FEATS = [
   /* --- Kegels --- */
@@ -252,7 +236,7 @@ export const FEATS = [
     test: () => Object.values(arenaState().months).some((m) => m.to === 'topg' && m.from === 'topg') },
   { id: 'beatNemesis', section: 'The Arena', icon: 'flash', name: 'Beat the Nemesis',
     blurb: 'Out-scored the best week you had ever had, in a week that counted.',
-    // The Arc final is the Nemesis under another name, so winning it counts.
+    // The Arc final is the Nemesis under another name.
     test: () => Object.values(arenaState().weeks).some((w) => w.result === 'won' && (w.opponent === 'nemesis' || w.opponent === 'final')) },
   { id: 'arcWin', section: 'The Arena', icon: 'trophy', name: 'An Arc',
     blurb: 'Won an Arc. The final is always your own best week.', now: arcsWon, at: 1 },
@@ -273,7 +257,7 @@ export const FEATS = [
 
 /* ---------------- earning them ---------------- */
 
-/** Where a feat stands right now, without deciding whether it is earned. */
+/** Where a feat stands, without deciding whether it is earned. */
 export function progressOf(feat) {
   if (feat.test) return { earned: safely(feat.test, false), have: null, need: null, frac: 0 };
   const have = safely(feat.now, 0) || 0;
@@ -290,10 +274,8 @@ function safely(fn, fallback) {
 }
 
 export const earnedAt = (id) => store.get().arena.feats[id] || null;
-export const isEarned = (id) => !!store.get().arena.feats[id];
 
-/** Fold the record forward: anything now true that was not recorded gets a
- *  date, and is handed back so it can be announced once. */
+/** Fold forward: anything newly true gets a date and is handed back to announce. */
 export function check() {
   const fresh = [];
   store.update((st) => {
@@ -307,19 +289,10 @@ export function check() {
   return fresh;
 }
 
-/** The catalogue, grouped for display, in catalogue order inside each section.
- *  Not earned-first: several sections are ladders - twenty seconds, thirty,
- *  sixty - and sorting the earned ones to the top takes the ladder apart. */
-/* ---------------- what this install can earn ----------------
-   Written as the sections everyone has, not the sections the five own, for
-   the same reason the router is an allow-list: a section added later is
-   hidden from a locked install until someone lets it in on purpose, rather
-   than leaking on the day it is written.
+/** Grouped, in catalogue order. Not earned-first: several sections are ladders. */
 
-   The catalogue is filtered rather than the earned list, so the count under
-   the Cabinet is "3 of 12" against what you can actually earn instead of
-   "3 of 40" against a set that includes twenty-eight feats for features you
-   do not have. */
+/* ------------- what this install can earn ------------- */
+
 const OPEN_SECTIONS = ['The grid', 'The Arena'];
 
 const visible = () => (nifoUnlocked() ? FEATS : FEATS.filter((f) => OPEN_SECTIONS.includes(f.section)));
@@ -343,8 +316,7 @@ export function counts() {
   return { earned: all.filter((f) => f.earned).length, total: list.length };
 }
 
-/** The nearest thing to being earned, for the "next up" line. Only ones with a
- *  measurable distance: a pass-or-fail feat has nothing to show. */
+/** Nearest to earned, for the "next up" line. Measurable ones only. */
 export function closest(n = 3) {
   return visible().map((f) => ({ ...f, ...progressOf(f) }))
     .filter((f) => !f.earned && f.need)

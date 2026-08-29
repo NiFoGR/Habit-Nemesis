@@ -1,13 +1,6 @@
-/* NiFo, phone-first dark UI. One stylesheet, no framework.
-
-   One theme. Not one theme per section: for a while every section swapped the
-   accent on the body, which meant colour answered "where am I" and nothing
-   else could use it. Six accents later the app read as six apps sharing a
-   skeleton. Now there is a single accent, and colour answers the only question
-   worth spending it on: what state is this in - done, due, missed.
-
-   The one exception is a habit's own colour, which you choose, and which is
-   the only colour in the app carrying information the shape does not. */
+/* NiFo. Phone-first dark UI, one stylesheet, no framework.
+   One theme: colour means state (done, due, missed), never section.
+   The one exception is a habit's own colour, which you chose. */
 :root {
   /* ---- ground ---- */
   --bg: #0a0c10;
@@ -30,13 +23,9 @@
   --brand: linear-gradient(120deg, #22d3c5, #a78bfa);
 
   /* ---- type ----
-     A scale, not thirty ad-hoc rem values. Every size in the app comes from
-     one of these seven, which is most of what makes a screen look designed
-     rather than accumulated. */
-  /* One size above display, and it exists for exactly two things: the
-     division you are in, and the two scores of the week you are playing. If a
-     third use ever appears, the rule that one thing per screen gets to be loud
-     has already been broken. */
+     Seven sizes, and every size in the app is one of them. */
+  /* Above display, for two things only: the division, and the two scores
+     of the week you are playing. */
   --f-hero: 2.3rem;
   --f-display: 1.75rem;
   --f-title: 1.3rem;
@@ -49,10 +38,7 @@
   --w-medium: 600;
   --w-bold: 700;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  /* The only second face in the app, and only ever on scripture and prayer.
-     Reading 1,344 chapters in a UI sans is worse, and that is a reading tool
-     rather than a decoration. It appears nowhere else - not on headings, not
-     on buttons, not on the section's own furniture. */
+  /* The only second face, and only on scripture and prayer. */
   --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
 
   /* ---- shape ---- */
@@ -63,17 +49,14 @@
   --gap: 10px;
 
   /* ---- motion ----
-     One duration and one curve, used everywhere. Motion in this app is only
-     ever there to make a change legible - what moved, and where it went - so
-     it is short enough not to be waited on. */
+     One duration, one curve. Motion is only ever there to make a change
+     legible, so it is short enough not to be waited on. */
   --t-fast: 0.12s;
   --t-base: 0.2s;
   --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
 
-  /* Native controls follow this. Without it a checkbox renders as a white
-     platform box on a near-black card, because accent-color only takes effect
-     once the box is checked; the same went for select menus, the time picker
-     and the scrollbars. */
+  /* Native controls follow this. Without it a checkbox is a white platform
+     box on a near-black card: accent-color only lands once it is checked. */
   color-scheme: dark;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
@@ -90,20 +73,14 @@ html, body {
   color: var(--text);
   font: 16px/1.5 var(--sans);
   overscroll-behavior-y: none;
-  /* iOS inflates text in a rotated view unless it is told not to, which is how
-     a grid sized to seven columns comes back as five and a half. */
+  /* iOS inflates text in a rotated view unless told not to, which turns seven
+     columns into five and a half. */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
-/* The background goes on body alone, deliberately.
-   Each section swaps the palette by redefining the tokens on
-   body[data-section=...], so --bg read from html still resolves to the :root
-   value. With a background on html as well, the canvas was painted the default
-   blue-grey while body painted its own darker box on top, and any screen
-   shorter than the viewport showed the difference as a lighter band across the
-   bottom. Leaving html transparent makes the canvas take body's background
-   instead, section colour and all. */
+/* Background on body alone. With one on html too, the canvas painted the
+   default and any short screen showed a lighter band at the bottom. */
 body { background: var(--bg); }
 
 body.in-session { overflow: hidden; }
@@ -221,8 +198,8 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 .btn.primary { background: var(--accent); color: #04121a; border: 0; font-weight: 700; }
 .btn.big { padding: 17px; font-size: 1.05rem; }
 .btn.ghost { background: none; color: var(--muted); }
-/* Bottom margin as well as top: a card has margin-bottom and no margin-top, so
-   a full-width button directly above one sat flush against it. */
+/* Bottom margin too: a card has margin-bottom and no margin-top, so a
+   full-width button above one sat flush against it. */
 .btn.wide, .btn.big { margin: 14px 0; }
 .btn.danger { background: rgba(248, 113, 113, 0.14); color: var(--danger); border-color: rgba(248, 113, 113, 0.4); }
 .row-btns { display: flex; gap: 8px; }
@@ -321,8 +298,8 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 
 /* ---------- rating gate ---------- */
 
-/* Rendered while the session's no-scroll body class is still applied, so it
-   scrolls internally on short screens. */
+/* Rendered while the session's no-scroll class is on, so it scrolls
+   internally on short screens. */
 .rating-gate {
   min-height: 100dvh; max-height: 100dvh; overflow-y: auto;
   display: flex; flex-direction: column; justify-content: center;
@@ -402,16 +379,11 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 .heatmap i, .hm-key i { width: 13px; height: 13px; border-radius: 3px; display: block; }
 .heatmap i.none { background: var(--surface-2); }
 .heatmap i.future { background: transparent; border: 1px dashed var(--line); }
-/* Today, with nothing on it yet: without this the cell is invisible rather
-   than empty and the grid looks like it ends yesterday.
-   Called "now" and not "today" because .today is already the hub's Today
-   card - a block with its own padding and layout. A 13px heatmap cell that
-   also carried class="today" inherited all of it and rendered 34px square,
-   shouldering its column out of the grid. */
+/* Today with nothing on it yet, or the grid looks like it ends yesterday.
+   Called "now": .today is the hub card, and a 13px cell inheriting its
+   padding rendered 34px square. */
 .heatmap i.now { background: transparent; border: 1px dashed var(--line); }
-/* Mixed from --accent rather than written as a literal teal, so a section
-   only has to set its accent and the ramp follows. Each themed section used
-   to restate all four steps in its own colour. */
+/* Mixed from --accent, so a section sets one colour and the ramp follows. */
 .heatmap i.l1 { background: color-mix(in srgb, var(--accent) 22%, var(--surface-2)); }
 .heatmap i.l2 { background: color-mix(in srgb, var(--accent) 46%, var(--surface-2)); }
 .heatmap i.l3 { background: color-mix(in srgb, var(--accent) 72%, var(--surface-2)); }
@@ -561,8 +533,8 @@ input[type="range"] {
 
 /* stats */
 .segmented { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 4px; margin-bottom: 14px; }
-/* Every option one line, whatever it is called: one two-word label used to
-   make the whole control twice as tall as its neighbours. */
+/* Every option on one line: one two-word label made the whole control twice
+   as tall as its neighbours. */
 .segmented button { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .segmented button {
   flex: 1; background: none; border: 0; color: var(--muted); font: inherit; font-size: 0.82rem;
@@ -697,21 +669,13 @@ input[type="range"] {
 /* ---------- simplified nav bits ---------- */
 
 .linkbtn { text-align: center; text-decoration: none; display: block; }
-/* Except on an icon button, where `display: block` was quietly overriding the
-   grid that centres the glyph - so the settings gear sat nine pixels above the
-   plus sign beside it, on the home screen, for as long as both have existed. */
+/* Except on an icon button, where display: block overrode the grid that
+   centres the glyph: the gear sat nine pixels above the plus beside it. */
 .icon-btn.linkbtn { display: grid; place-items: center; }
 
-/* The section link rows. This was a four-column grid, on the reasoning that a
-   wrapping row leaves the last link alone underneath and it reads as a
-   different kind of link. Both halves of that turned out to be wrong once
-   there were five links: a fixed four columns put the fifth on its own row
-   AND left-aligned it, and a four-column grid narrow enough for five labels
-   broke "The books" across two lines.
-
-   A centred wrapping row fixes both. Whatever does not fit drops to the next
-   line in the middle, which reads as one group at four links or at six, and
-   no label ever breaks mid-phrase. */
+/* The section link rows, centred and wrapping. A fixed four columns put a
+   fifth link alone and left-aligned, and narrow enough for five labels broke
+   "The books" in half. Never encode how many there are. */
 .linkrow {
   display: flex; flex-wrap: wrap; justify-content: center;
   gap: 10px 18px; margin: 22px 0 8px;
@@ -735,13 +699,12 @@ input[type="range"] {
 
 /* ================= responsive ================= */
 
-/* Phones stay single-column; everything above that gets more columns rather
-   than a wider column, so line length stays readable. */
+/* Phones stay single-column. Wider screens get more columns, not a wider
+   column, so line length stays readable. */
 @media (min-width: 520px) {
   .stat-grid { grid-template-columns: repeat(4, 1fr); }
   .stat-grid.four { grid-template-columns: repeat(4, 1fr); }
-  /* Three stays three at every width: it is used where the six tiles are two
-     rows of three and read as one block, which four columns would break up. */
+  /* Three stays three: six tiles are two rows of three and read as one block. */
   .stat-grid.three { grid-template-columns: repeat(3, 1fr); }
   .rating-grid { grid-template-columns: repeat(4, 1fr); }
 }
@@ -903,8 +866,7 @@ input[type="range"] {
 .d-pull { stroke: var(--violet); stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .d-lab { fill: var(--muted); font-size: 9px; }
 
-/* One number, one screen: the input is the whole screen's job, so it is sized
-   like it. */
+/* One number, one screen: the input is the whole job, so it is sized like it. */
 .measure-row.big-input { justify-content: center; gap: 6px; margin-bottom: 4px; }
 .measure-row.big-input input {
   width: 62%; max-width: 220px; font-size: 2.4rem; font-weight: 700; text-align: center;
@@ -944,27 +906,17 @@ input[type="range"] {
 .cam-fallback { display: grid; place-items: center; height: 100%; color: var(--muted); font-size: 0.86rem; padding: 20px; text-align: center; }
 
 /* ================= per-section themes =================
-   One skeleton, three rooms. Spacing, radius, type scale and motion are shared
-   so the app stays one app; the accent, the surface tint and, for prayer, the
-   typeface are what change. Tokens are swapped on the body by the router, so
-   every existing component picks the section up without knowing about it. */
+   One skeleton. Spacing, radius, type and motion are shared; the accent, the
+   surface tint and, for prayer, the typeface are what change. */
 
 /* ---- section accents ----
-   One base palette, four accents.
-
-   Every section used to redefine the whole surface ramp as well as the accent,
-   which gave five different backgrounds across 27 screens and made the hub -
-   the screen you return to constantly - the lightest thing in the app. Moving
-   between sections read as moving between apps.
-
-   Now only the accent changes. The greys are the ones defined at :root and are
-   never overridden, so a card is the same card everywhere and the hub belongs
-   to the same app as the pages it opens. */
+   One base palette, four accents. The greys are never overridden, so a card is
+   the same card everywhere. Redefining the whole ramp per section made five
+   backgrounds across 27 screens and read as five apps. */
 
 
-/* Prayer is deliberately the darkest and the quietest: near-black ground, warm
-   gold instead of a cool accent, and a serif face. It should not look like the
-   training screens, because it is not one. */
+/* Prayer runs darkest and quietest: near-black, warm gold, a serif face. It
+   should not look like a training screen. */
 
 
 /* ---------- the prayer rule, inside the Bible section ---------- */
@@ -998,11 +950,8 @@ input[type="range"] {
 
 /* ---------- prayer ---------- */
 
-/* Fixed to the viewport rather than `min-height: 100dvh`, for the same reason
-   `.player` is: a flex column only hands its middle child a scrollbar when the
-   column's own height is definite. With min-height the column grew to fit the
-   prayer instead, `.pr-body` never scrolled, and the Next button sat below the
-   fold on a screen that `body.in-session` had already stopped scrolling. The
+/* Fixed to the viewport, not min-height: 100dvh. A flex column only gives its
+   middle child a scrollbar when its own height is definite; with min-height the
    long prayers were unfinishable. */
 .pray-run {
   position: fixed; inset: 0;
@@ -1014,9 +963,8 @@ input[type="range"] {
 .pr-bar i.on { background: var(--accent); }
 .pr-bar i.done { background: color-mix(in srgb, var(--accent) 40%, var(--line)); }
 
-/* min-height:0 is what actually lets this shrink below its content; overflow
-   alone is not enough in every engine. overscroll-behavior keeps a flick at
-   the end of a prayer from dragging the page behind it. */
+/* min-height: 0 is what lets this shrink below its content. overscroll keeps a
+   flick at the end of a prayer from dragging the page behind it. */
 .pr-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 20px; }
 .pr-title { font-size: 1.15rem; color: var(--accent); margin-bottom: 14px; font-weight: 600; }
 .pr-own { font-style: normal; font-size: 0.7rem; color: var(--muted); font-weight: 400; }
@@ -1074,14 +1022,12 @@ input[type="range"] {
 .text-input:focus { outline: none; border-color: var(--accent); }
 .field label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 6px; }
 
-/* The live-slot button sits between the prayer list and the stats card, so it
-   needs air on both sides rather than only above. */
+/* Sits between the prayer list and the stats card, so it needs air both sides. */
 .pr-nav .btn[disabled] { opacity: 0.35; }
 
 /* ---------- settings ---------- */
 
-/* The section jump list. Settings used to be one long page mixing app-wide
-   options with per-feature ones; this is the signpost for the split. */
+/* The section jump list: the signpost for app-wide against per-feature. */
 .set-nav { display: grid; gap: 8px; margin-bottom: 22px; }
 .set-nav a {
   display: flex; align-items: center; gap: 13px; text-decoration: none; color: inherit;
@@ -1093,19 +1039,14 @@ input[type="range"] {
 .set-nav b { font-size: 0.95rem; font-weight: 600; }
 .set-nav i { font-style: normal; font-size: 0.76rem; color: var(--muted); }
 
-/* A control is capped so it cannot grow into the label beside it. Without
-   this, one long <option> is enough to squeeze a setting's text into a
-   two-words-per-line column, which is what a night-light temperature list
-   did. */
+/* Capped, or one long <option> squeezes the label into a two-word column. */
 .setting select, .setting input[type="time"], .set-row select { min-width: 108px; max-width: 50%; }
 .setting input[type="range"] { flex: 0 1 46%; min-width: 120px; accent-color: var(--accent); }
 .card .h-row + .setting { border-top: 0; }
 .card.danger .h-row .ico { color: var(--danger); }
 
-/* Real switches for settings toggles. A default checkbox renders as a white
-   box on every Android WebView, which is the one control on these screens that
-   looked unfinished against a dark surface. Kept as a real checkbox underneath
-   so it stays keyboard and screen-reader correct. */
+/* Real switches. A default checkbox is a white box on every Android WebView.
+   A real checkbox underneath keeps it keyboard and screen-reader correct. */
 .setting.toggle input[type="checkbox"],
 .set-row input[type="checkbox"] {
   appearance: none; -webkit-appearance: none;
@@ -1136,22 +1077,18 @@ input[type="range"] {
 /* ==========================================================================
    Bible
    ==========================================================================
-   No longer a room of its own. The section used to redefine the accent, the
-   good colour and the heading weights, which is how four sections turned into
-   four apps. One thing survives, and it is a reading tool rather than a
-   decoration: the serif, on scripture and prayer text only. */
+   Not a room of its own any more. One thing survives, and it is a reading tool
+   rather than a decoration: the serif, on scripture and prayer text only. */
 
-/* Never on .screen: putting it there put Georgia on every button, pill and
-   settings row in the section, which was half of why it read as a different
-   app. Only the words you actually sit and read. */
+/* Never on .screen: that put Georgia on every button and settings row in the
+   section. Only the words you sit and read. */
 .verses,
 .vnote,
 .prayer-text {
   font-family: var(--serif);
 }
 
-/* A count on a card heading belongs at the far end of the row, not next to
-   the title, so the eye can run down a column of them. */
+/* A count belongs at the far end of the row, so the eye can run down them. */
 .screen.bible .h-row .pill { margin-left: auto; }
 
 .screen.bible .tiny { font-size: 0.74rem; }
@@ -1174,8 +1111,7 @@ input[type="range"] {
 .read-item:active { border-color: var(--accent); }
 .read-item.done { opacity: 0.6; }
 .read-item.done .ri-text b { text-decoration: line-through; }
-/* The tick box is a real target rather than a decoration: the whole row is
-   the button, but the box is what tells you the row is one. */
+/* The whole row is the button; the box is what says so. */
 .ri-box {
   flex: 0 0 auto; width: 22px; height: 22px; margin-top: 1px;
   border: 1.5px solid var(--line); border-radius: 6px;
@@ -1191,9 +1127,8 @@ input[type="range"] {
 
 /* ---------- bible: the reader ---------- */
 
-/* Scripture is set to be read, not scanned: a measured line length, generous
-   leading, and verse numbers small enough to stay out of the way but present
-   enough to find a reference by. */
+/* Set to be read, not scanned: measured line length, generous leading, verse
+   numbers small but findable. */
 .reader .verses { margin: 4px 0 22px; }
 .verse {
   margin: 0 0 10px; line-height: 1.7; font-size: 1.02rem;
@@ -1205,8 +1140,7 @@ input[type="range"] {
   color: var(--accent); font-family: system-ui, sans-serif;
 }
 .screen.large .verse { font-size: 1.18rem; line-height: 1.8; }
-/* A verse the import could not recover says so. Silently skipping one would
-   leave a hole you could not see, which is worse. */
+/* An unrecovered verse says so. A hole you cannot see is worse. */
 .verse.gap i { font-style: italic; color: var(--muted); font-size: 0.86rem; }
 
 .chapter-nav {
@@ -1238,8 +1172,7 @@ input[type="range"] {
 
 /* ---------- bible: the chapter grid ---------- */
 
-/* Sized so a thumb hits the right number while the other hand is holding an
-   actual Bible open, which is the whole situation this screen exists for. */
+/* Sized for a thumb while the other hand holds an actual Bible open. */
 .ch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; }
 .ch {
   aspect-ratio: 1; min-height: 44px; text-decoration: none;
@@ -1271,8 +1204,8 @@ input[type="range"] {
 
 /* ---------- bible: tracking ---------- */
 
-/* The section bars answer the question a whole-Bible reader actually has,
-   which is not "what percentage" but "which parts have I never opened". */
+/* The real question is not "what percentage" but "which parts have I never
+   opened". */
 .sec-prog { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
 .sp-name { flex: 0 0 96px; font-size: 0.84rem; }
 .sp-bar { flex: 1; height: 7px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
@@ -1293,9 +1226,8 @@ input[type="range"] {
 
 /* ---------- the wind-down ---------- */
 
-/* Indigo on near-black. The section is used lying down in an unlit room, so it
-   runs darker than the other three and its accent is the dimmest of the four:
-   every value here is a light source pointed at your face at bedtime. */
+/* Indigo on near-black. Used lying down in an unlit room, so it runs darker
+   than the other three: every value is a light pointed at your face. */
 
 .br-mark {
   width: 58px; height: 58px; border-radius: 50%;
@@ -1319,10 +1251,8 @@ input[type="range"] {
   user-select: none;
 }
 
-/* The orb is scaled, never resized: a transform does not reflow, so the phase
-   animation cannot cost a layout every frame on a five-minute loop. Its box
-   stays at full size and the scale happens inside it, which also stops the
-   labels beneath from shuffling up and down with the breath. */
+/* Scaled, never resized: a transform does not reflow, so a five-minute loop
+   costs no layout. The box stays full size, so the labels do not shuffle. */
 .br-orb {
   width: 46vw; height: 46vw;
   max-width: 250px; max-height: 250px;
@@ -1344,9 +1274,8 @@ input[type="range"] {
 
 .breathe-run #stop { width: 100%; }
 
-/* Tapping the face puts the screen out. Everything fades rather than vanishing,
-   because a hard cut is itself a small startle. The face keeps its pointer
-   events so the same tap brings it back. */
+/* Tapping the face puts the screen out. Everything fades: a hard cut is itself
+   a small startle. The face keeps its pointer events, so the tap brings it back. */
 body.blacked { background: #000; }
 body.blacked .breathe-run header,
 body.blacked .br-face b,
@@ -1373,11 +1302,9 @@ body.blacked .br-orb { opacity: 0.09; }
 
 /* ---------- night light ---------- */
 
-/* The browser's filter. In the APK this element is never used: there the
-   filter is a system overlay drawn by a service, over every app rather than
-   just this one. Here it can do the better thing, because CSS can multiply
-   where an Android window can only wash — multiply is what a colour
-   temperature actually is, and it leaves black alone. */
+/* The browser's filter. Never used in the APK, where a service draws over every
+   app. CSS can multiply where an Android window can only wash, and multiply is
+   what a colour temperature actually is: it leaves black alone. */
 #nightlight {
   position: fixed;
   inset: 0;
@@ -1408,9 +1335,8 @@ body.blacked .br-orb { opacity: 0.09; }
 .nl-strip + .nl-axis { margin-bottom: 4px; }
 
 /* ---- study notes ----
-   The commentary is the point of a study Bible, but it must not turn the
-   reading column into a conversation. So a noted verse only marks its number,
-   and the note opens beneath that verse when the number is tapped. */
+   The commentary must not turn the reading column into a conversation, so a
+   noted verse marks its number and the note opens beneath it when tapped. */
 .verse.noted b.vnum {
   cursor: pointer;
   border-bottom: 1px dotted currentColor;
@@ -1444,31 +1370,26 @@ body.blacked .br-orb { opacity: 0.09; }
 /* ==========================================================================
    Habits
    ==========================================================================
-   The sixth room, and the only one whose contents the app does not know in
-   advance. So it has two levels of colour rather than one: the section accent,
-   which says where you are, and a colour per habit, which is how you find a
-   row without reading it. Everything below is built so the second never fights
-   the first - the habit colour appears on names, rings, cells and calendars,
-   and never on a control. */
+   The only room whose contents the app does not know in advance, so it has two
+   levels of colour: the accent, and a colour per habit. The habit colour goes
+   on names, rings, cells and calendars, and never on a control. */
 
 
 /* ---------- the home screen ----------
-   The grid is the app's front door, so it gets an app header rather than a
-   back arrow, and the day's ring above it counts every row on screen. */
+   The front door, so it gets an app header rather than a back arrow, and the
+   ring counts every row on screen. */
 
 .head-actions { display: flex; gap: 8px; flex: 0 0 auto; }
 .hub-head .brand-row h1 { font-size: var(--f-title); letter-spacing: -0.02em; }
 .home-today { margin-bottom: 14px; }
-/* The longest run still going. The one number on this screen that is there to
-   make you open the app rather than to tell you what to do. */
+/* The one number here that exists to make you open the app. */
 .run-line { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: var(--f-fine); color: var(--muted); }
 .run-line .ico { color: var(--warn); }
 .run-line b { color: var(--text); font-weight: var(--w-medium); }
 .screen.home .btn.ghost.wide { margin-top: 18px; }
 
-/* The line under a row's name. On one of the five it is that section saying
-   what is still outstanding, which is the whole of what the old Today list
-   did, in the row that now replaces it. */
+/* The line under the name. On one of the five it is that section saying what
+   is still outstanding. */
 .hg-label { display: grid; gap: 1px; min-width: 0; }
 .hg-label b,
 .hg-label i {
@@ -1478,9 +1399,8 @@ body.blacked .br-orb { opacity: 0.09; }
 .hg-label b { font-weight: var(--w-medium); font-size: var(--f-body); }
 .hg-label i { font-style: normal; font-size: var(--f-fine); color: var(--muted); }
 
-/* Today, on one of the five, is that section's start button: tapping it opens
-   the session rather than marking anything. So it is drawn as something to
-   press, not as a day you failed to tick. */
+/* Today on one of the five is that section's start button, so it is drawn as
+   something to press, not a day you failed to tick. */
 .hg-cell.go { opacity: 1; }
 .hg-cell.go .ico { opacity: 0.9; }
 
@@ -1499,10 +1419,8 @@ body.blacked .br-orb { opacity: 0.09; }
 .h-row .chipbtn { margin-left: auto; }
 
 /* ---------- the grid ----------
-   Rows are habits and columns are days, which means the widths have to survive
-   both a long habit name and seven columns on a 360px phone. The cells are
-   given a maximum rather than a fixed width and the name takes what is left,
-   so nothing scrolls sideways and nothing is clipped. */
+   The widths have to survive a long name and seven columns on a 360px phone,
+   so cells take a maximum and the name takes what is left. */
 
 .hgrid { display: grid; gap: 6px; margin-bottom: 18px; }
 
@@ -1523,17 +1441,13 @@ body.blacked .br-orb { opacity: 0.09; }
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 6px 10px; min-height: 48px;
 }
-/* One of the five. A first-class row: today starts the thing, and only the
-   days behind it are a reading of that section's own record rather than
-   something you can edit here. Of two editable copies of one morning, the one
-   you can reach from the grid is always the one that ends up wrong. */
+/* One of the five. Today starts the thing; the days behind it are a reading of
+   that section's record, not a second editable copy. */
 .hg-row.linked .hg-cell:not(.go) { pointer-events: none; }
 .hg-row.dragging { opacity: 0.6; border-color: var(--accent); }
 
-/* The name has to survive four day columns on a 360px phone, so it takes
-   whatever the cells leave and gives up the rest to an ellipsis. Five columns
-   is a setting rather than the default for exactly this reason: at five,
-   "Calisthenics" becomes "Calisth...". */
+/* The name takes what the cells leave and ellipsises the rest. Five columns is
+   a setting for this reason: at five, "Calisthenics" becomes "Calisth...". */
 .hg-name {
   display: flex; align-items: center; gap: 8px; min-width: 0;
   text-decoration: none; color: inherit; font-size: 0.9rem; font-weight: 600;
@@ -1553,9 +1467,8 @@ body.blacked .br-orb { opacity: 0.09; }
 .hg-cell.on { opacity: 1; }
 .hg-cell.no { opacity: 1; color: var(--danger); }
 .hg-cell.skip { opacity: 0.8; color: var(--calm); }
-/* A day inside a "three times a week" window that you did not do today. It is
-   not a tick, because you did not do it; it is not nothing either, because the
-   habit is being kept. A ring, not a fill. */
+/* Carried: inside the window but not done today. Not a tick and not nothing,
+   so a ring rather than a fill. */
 .hg-cell.carried { opacity: 1; }
 .hg-cell.carried::after {
   content: ''; width: 13px; height: 13px; border-radius: 50%;
@@ -1566,15 +1479,11 @@ body.blacked .br-orb { opacity: 0.09; }
 .hg-cell:active { background: var(--surface-2); }
 
 /* ---------- a day, turning on ----------
-   The one interaction in the app you perform dozens of times a week, and it
-   used to be a whole-page repaint with nothing to look at. Three things, all
-   on the compositor, all under a third of a second, and none of them on the
-   way back down: turning a day OFF gets the press and silence, because a
-   tracker that celebrates a miss is a tracker that has started lying to you.
-
-   `position: relative` is for the flash and for the sparks, both of which
-   anchor to the cell. `.carried` already owns ::after, so the flash is
-   ::before. */
+   The interaction performed dozens of times a week. Three things, all on the
+   compositor, none of them on the way back down: turning a day off gets the
+   press and silence.
+   position: relative anchors the flash and the sparks. .carried owns ::after,
+   so the flash is ::before. */
 .hg-cell { position: relative; }
 .hg-cell.just-on { animation: cell-pop 0.3s var(--ease); z-index: 1; }
 .hg-cell.just-on::before {
@@ -1582,8 +1491,8 @@ body.blacked .br-orb { opacity: 0.09; }
   background: currentColor; opacity: 0.3; pointer-events: none;
   animation: cell-flash 0.42s var(--ease) forwards;
 }
-/* The tick draws itself rather than appearing. 24 is a little over the path's
-   own length, which is what keeps the sweep from finishing early. */
+/* The tick draws itself. 24 is a little over the path length, which keeps the
+   sweep from finishing early. */
 .hg-cell.just-on .ico path {
   stroke-dasharray: 24; animation: tick-draw 0.26s var(--ease) forwards;
 }
@@ -1591,13 +1500,11 @@ body.blacked .br-orb { opacity: 0.09; }
 @keyframes cell-flash { to { opacity: 0; transform: scale(1.55); } }
 @keyframes tick-draw { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
 
-/* Both rings sweep to their new length instead of jumping to it, which is only
-   possible because the elements survive the tap now. */
+/* Both rings sweep, which is only possible because the elements survive the tap. */
 .hg-ring-fill, .gh-ring-fill { transition: stroke-dashoffset 0.45s var(--ease), stroke 0.3s var(--ease); }
 .hg-q { font-size: 0.95rem; font-weight: 700; }
 
-/* A measurement, with no unit stamped on it: the row says what is being
-   counted, so the cell only has to carry the number. */
+/* No unit on the cell: the row says what is being counted. */
 .hg-cell.num {
   opacity: 1; overflow: hidden;
   font-size: var(--f-small); font-weight: var(--w-medium);
@@ -1635,9 +1542,7 @@ body.blacked .br-orb { opacity: 0.09; }
 .icon-btn.small.danger { color: var(--danger); border-color: rgba(248, 113, 113, 0.35); }
 
 /* ---------- the sheet ----------
-   Bottom-anchored on a phone, because that is where your thumb is, and centred
-   from tablet width up, where a strip across the bottom of a wide screen looks
-   like a mistake. */
+   Bottom-anchored on a phone, where your thumb is; centred from tablet width up. */
 
 .sheet-scrim {
   position: fixed; inset: 0; z-index: 60;
@@ -1704,8 +1609,7 @@ body.blacked .br-orb { opacity: 0.09; }
 }
 .pick.on { border-color: var(--accent); color: var(--accent); }
 
-/* The habit form's own fields. Everywhere else in the app a text input sits
-   inside a .measure-row, which stretches it; these stand on their own. */
+/* These stand on their own, where every other input sits in a .measure-row. */
 .screen.habits .field input[type="text"],
 .screen.habits .field input[type="number"] {
   width: 100%; background: var(--surface-2); color: var(--text);
@@ -1762,19 +1666,10 @@ body.blacked .br-orb { opacity: 0.09; }
   border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font-size: 0.78rem;
 }
 
-/* The calendar. Weeks as columns and weekdays as rows, the same shape as every
-   other heatmap in the app, with the dates written in and the habit's own
-   colour rather than the section accent.
-
-   Seventeen weeks, all of them, sized to whatever width there is. This used to
-   be fixed 26px cells in a horizontally scrolling box, opened scrolled hard to
-   the right. Two things were wrong with that and both were visible: the
-   container is never a whole number of columns wide, so wherever it came to
-   rest a column was sliced down the middle at one edge - a calendar that looks
-   broken rather than scrollable - and half the record sat off screen behind a
-   gesture nothing advertised. Letting the columns divide the width instead
-   means every cell is whole, the whole history is there at a glance, and there
-   is no scroll position to restore. */
+/* The calendar. Weeks as columns, weekdays as rows, in the habit's own colour.
+   Seventeen weeks, sized to the width available. Fixed cells in a scrolling box
+   sliced a column in half at whichever edge it came to rest, and hid half the
+   record behind a gesture nothing advertised. */
 .hcal { display: flex; gap: 6px; }
 .hcal-body { display: flex; gap: 2px; flex: 1; min-width: 0; }
 .hcal-col { display: flex; flex-direction: column; gap: 2px; flex: 1 1 0; min-width: 0; }
@@ -1783,20 +1678,13 @@ body.blacked .br-orb { opacity: 0.09; }
   overflow: visible; display: block;
 }
 .hc-cell {
-  /* Proportional, so a cell is the same rounded square at 11px on a small
-     phone as at 18px on a large one. A fixed radius turns into a circle once
-     the cell is small enough, which is a different shape, not a smaller one. */
+  /* Proportional: a fixed radius turns into a circle once the cell is small. */
   width: 100%; aspect-ratio: 1; border-radius: 22%; border: 0;
-  /* A step above the card, not a whisper above it. At --surface-2 the empty
-     cells were six values off the card behind them, so a calendar with a
-     week's data on it read as a black hole with a few coloured squares in it
-     rather than as a grid you have not filled in yet. The grid has to be
-     visible for the gaps in it to mean anything. */
+  /* A step above the card, not a whisper: at --surface-2 the empty cells read as
+   a black hole with squares in it. The grid has to be visible for the gaps to
+   mean anything. */
   background: var(--line); color: var(--muted);
-  /* Seventeen weeks across a phone leaves about 15px a cell, so the date has
-     to be small enough to sit inside one with air around it rather than fill
-     it corner to corner. Two digits at this size take a bit over half the
-     width, which is what the app this is measured against does. */
+  /* About 15px a cell, so the date sits inside one with air around it. */
   font-size: 0.5rem; font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
   display: grid; place-items: center; padding: 0; cursor: default;
 }
@@ -1805,17 +1693,12 @@ body.blacked .br-orb { opacity: 0.09; }
 .hc-cell.carried { background: color-mix(in srgb, var(--hc, var(--accent)) 38%, var(--line)); color: var(--text); }
 .hc-cell.skip { background: var(--line); color: var(--calm); box-shadow: inset 0 0 0 1px var(--calm); }
 .hc-cell.lapse { color: var(--danger); box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.4); }
-/* Inset rather than an outline: an outline sits outside the box and was the
-   one thing on this grid that could still overlap its neighbour. */
+/* Inset: an outline sits outside the box and overlapped its neighbour. */
 .hc-cell.now { box-shadow: inset 0 0 0 1.5px var(--text); }
 .hc-cell.on.now { box-shadow: inset 0 0 0 1.5px var(--bg); }
 .hc-cell.future { visibility: hidden; }
-/* The labels read the rows; they must never set them. Left at the inherited
-   1.5 line-height each one wanted about 15px, which is taller than a row gets
-   on a narrow phone - so the side column grew past the grid beside it and the
-   two fell out of step, Mon against the first row and Sun a whole row below
-   the last. line-height 1 and a floor of zero put the height back under the
-   calendar's control. */
+/* The labels read the rows and must never set them. At the inherited
+   line-height the side column outgrew the grid and Mon fell a row out of step. */
 .hcal-side { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
 .hcal-side i {
   flex: 1 1 0; min-height: 0; display: flex; align-items: center;
@@ -1834,8 +1717,8 @@ body.blacked .br-orb { opacity: 0.09; }
   font-style: normal; font-size: 0.74rem; font-weight: 700; color: #0a0c10;
 }
 
-/* Weekday against month. The dot's diameter carries the count, which is the
-   one encoding that reads at this size: seven rows of bars would be a wall. */
+/* Weekday against month. Diameter carries the count: seven rows of bars would
+   be a wall. */
 .freq-grid { display: grid; gap: 4px; }
 .fq-row { display: flex; align-items: center; gap: 4px; }
 .fq-row i { flex: 1; height: 17px; position: relative; }
@@ -1850,14 +1733,9 @@ body.blacked .br-orb { opacity: 0.09; }
 /* ==========================================================================
    Motion
    ==========================================================================
-   One duration, one curve, and only on properties that are cheap to animate.
-   Motion here is never decoration: it exists so a change is legible - what
-   moved, and where it went. Anything longer than --t-base is something you
-   end up waiting for, which is the opposite of smooth.
-
-   The reduced-motion query at the top of the file collapses every duration to
-   nothing, so this whole block turns itself off rather than being overridden
-   rule by rule. */
+   One duration, one curve, only on cheap properties. Anything longer than
+   --t-base is something you wait for. The reduced-motion query at the top
+   collapses every duration, so this block turns itself off. */
 
 .btn, .chipbtn, .icon-btn, .hg-cell, .hg-row, .task, .pill, .swatch,
 .day-chip, .pick, .type-card, .rowbtn, .set-nav a, .arch-row, .hc-cell {
@@ -1868,27 +1746,19 @@ body.blacked .br-orb { opacity: 0.09; }
               transform var(--t-fast) var(--ease);
 }
 
-/* Press feedback, on everything you can press, at one depth. Before this some
-   controls scaled, some changed background and most did nothing, so the app
-   felt inert in some places and springy in others. */
+/* Press feedback everywhere, at one depth. */
 .btn:active, .chipbtn:active, .icon-btn:active,
 .type-card:active, .pick:active, .day-chip:active { transform: scale(0.97); }
 .hg-cell:active, .hc-cell:active { transform: scale(0.88); }
 .hg-row:active { transform: scale(0.995); }
 
-/* A screen arriving. Short, and only on the container, so it costs one
-   composited layer rather than one per row.
-   On *arriving*, which is the whole point and was not what it did: the rule
-   used to sit on `.screen` itself, so every in-screen redraw - every cell you
-   ticked on the grid - replayed the whole page fading in from four pixels
-   down. The router adds this class after a route renders and nothing else
-   does, so a screen updating part of itself now stays still. */
+/* A screen arriving. On the container only, so it costs one layer.
+   On arriving: this used to sit on .screen, so every cell you ticked replayed
+   the whole page fading in. The router adds this class after a route renders. */
 .screen.enter { animation: screen-in var(--t-base) var(--ease); }
 @keyframes screen-in { from { opacity: 0; transform: translateY(4px); } }
 
-/* The grid changing width when you change the day count: the rows stay put
-   and the columns grow, which is the one transition in the app worth having,
-   because it is the same rows either way. */
+/* Changing the day count: the rows stay put and the columns grow. */
 .hgrid { transition: none; }
 .hg-row, .hg-head { transition: grid-template-columns var(--t-base) var(--ease); }
 
@@ -1898,16 +1768,12 @@ body.blacked .br-orb { opacity: 0.09; }
 /* ==========================================================================
    The Arena
    ==========================================================================
-   No new palette. The one accent is you, --danger is the opponent, --good is
-   a win and --muted is everything that has not happened yet. Seven divisions
-   with seven colours would have been the section-palette mistake again, one
-   version later, so the ladder says how high you are by how much of it is lit.
-
-   Every count here is driven by the data. `.ar-ladder` lays out with `1fr`
-   per segment rather than a seven-column grid, `.ar-form` wraps, and the
-   bracket stacks: the one rule this stylesheet has learnt the hard way is that
-   a layout which knows how many of something there are breaks silently the
-   first time that number changes. */
+   No new palette: the accent is you, --danger the opponent, --good a win,
+   --muted what has not happened. The ladder says how high you are by how much
+   of it is lit.
+   Every count is driven by the data: 1fr per segment, .ar-form wraps, the
+   bracket stacks. A layout that knows how many of something there are breaks
+   silently the first time that number changes. */
 
 /* ---------- the season line, on the home screen ---------- */
 
@@ -1936,15 +1802,9 @@ body.blacked .br-orb { opacity: 0.09; }
 .season-line.new .sl-text b { color: var(--accent); }
 
 /* ---------- the rank, as the head of the page ----------
-   Not a card. It was one, with a chip, a name, a blurb, a ladder, a bar with a
-   floating label, two threshold captions and a three-clause sentence - eight
-   things, all at the same volume, which is what "there's too much going on"
-   meant. What is left is the crest, the name, the ladder and the bar, and the
-   sentence has been reduced to one coloured word.
-
-   The glow behind it grows with the rung. It is the same accent throughout;
-   what changes is how much of it there is, which is the only way to make a
-   ladder feel like a climb without handing each rung its own colour. */
+   Not a card. The crest, the name, the ladder and the bar, and the sentence
+   reduced to one coloured word.
+   The glow grows with the rung: same accent, more of it. */
 
 .ar-hero {
   position: relative; text-align: center;
@@ -1971,10 +1831,8 @@ body.blacked .br-orb { opacity: 0.09; }
   font-size: var(--f-hero); line-height: 1.05; letter-spacing: -0.035em;
   margin: 0 0 4px;
 }
-/* The one line in the app allowed to be rude. Small, muted, and never wrapped
-   into a paragraph: the moment it needs two lines it has stopped being a
-   caption on a picture and become an explanation, which is what this hero had
-   too much of before. */
+/* The one line allowed to be rude. Never wrapped into a paragraph: at two
+   lines it has stopped being a caption. */
 .ar-blurb {
   margin: 0 0 14px; font-size: var(--f-micro); color: var(--muted);
   letter-spacing: 0.01em;
@@ -1989,9 +1847,8 @@ body.blacked .br-orb { opacity: 0.09; }
 .ar-ladder i.on { background: var(--accent); opacity: 0.42; }
 .ar-ladder i.here { opacity: 1; box-shadow: 0 0 10px rgba(34, 211, 197, 0.5); }
 
-/* The month, inside its own division: floor on the left, promotion on the
-   right. A nought-to-a-hundred bar put every threshold within a few pixels of
-   the last and made a whole month's work invisible. */
+/* The month inside its division: floor left, promotion right. A 0-100 bar put
+   every threshold within a few pixels of the last. */
 .ar-bar {
   position: relative; height: 8px; border-radius: 5px;
   background: var(--surface-2); border: 1px solid var(--line);
@@ -2002,8 +1859,7 @@ body.blacked .br-orb { opacity: 0.09; }
 .ar-bar-fill { height: 100%; border-radius: 5px; background: var(--accent); transition: width 0.6s var(--ease); }
 .ar-bar.down .ar-bar-fill { background: var(--warn); }
 .ar-bar.up .ar-bar-fill { background: var(--good); }
-/* Clamped away from both ends: at 0% and at 100% half the readout hung off
-   the side of the card. */
+/* Clamped: at 0% and 100% half the readout hung off the card. */
 .ar-bar-now {
   position: absolute; top: -19px; transform: translateX(-50%);
   font-size: var(--f-micro); color: var(--text); font-variant-numeric: tabular-nums;
@@ -2021,9 +1877,7 @@ body.blacked .br-orb { opacity: 0.09; }
 
 /* ---------- the week ---------- */
 
-/* The match is the one elevated surface on the screen. Everything else here is
-   flat on the ground, which is what makes this read as the thing that is
-   happening rather than as the third card down. */
+/* The one elevated surface here, so it reads as the thing that is happening. */
 .card.ar-week {
   border-color: rgba(34, 211, 197, 0.22);
   box-shadow: 0 14px 40px -20px rgba(34, 211, 197, 0.5);
@@ -2050,8 +1904,7 @@ body.blacked .br-orb { opacity: 0.09; }
 .ar-side.them:active { background: var(--surface); transform: scale(0.98); }
 .ar-vs { display: grid; place-items: center; color: var(--faint); flex: 0 0 30px; }
 .ar-week.ahead .ar-side.me b { color: var(--good); }
-/* Not enough due yet to be a fixture. Neither side is winning, so neither
-   side is coloured. */
+/* Not a fixture yet. Neither side is winning, so neither is coloured. */
 .ar-week.void .ar-side b, .ar-week.void .ar-verdict b { color: var(--muted); }
 .ar-week.behind .ar-side.them b { color: var(--danger); }
 
@@ -2069,8 +1922,8 @@ body.blacked .br-orb { opacity: 0.09; }
 .ar-week.behind .ar-verdict b { color: var(--warn); }
 .ar-oppline { margin-bottom: 0; }
 
-/* Row by row. The same rows as the grid and in the same order, because the eye
-   has to be able to map one onto the other; what is new is the fraction. */
+/* The same rows as the grid, in the same order, so the eye can map one onto
+   the other. What is new is the fraction. */
 .ar-rows { margin-top: 14px; border-top: 1px solid var(--line-soft); padding-top: 10px; }
 .ar-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: var(--f-small); }
 .ar-row-name { flex: 1 1 40%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -2080,8 +1933,7 @@ body.blacked .br-orb { opacity: 0.09; }
 
 /* ---------- form + the nemesis ---------- */
 
-/* Eight results on one line, whatever the width: fixed-width chips wrapped to
-   a second row on a 360px phone and the last two looked like an afterthought. */
+/* Eight on one line at any width: fixed-width chips wrapped on a 360px phone. */
 .ar-form { display: flex; gap: 5px; margin-bottom: 12px; }
 .ar-chip {
   flex: 1 1 0; min-width: 0; padding: 7px 0; text-align: center;
@@ -2119,11 +1971,8 @@ body.blacked .br-orb { opacity: 0.09; }
 .ar-tr .ar-pos { flex: 0 0 20px; color: var(--faint); font-variant-numeric: tabular-nums; }
 .ar-tr .ar-tn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
 .ar-tr b { font-variant-numeric: tabular-nums; }
-/* Qualification, said in colour rather than in a sentence.
-   The three that go through are green and lit; the ones that do not are dimmed
-   out of the way. There used to be a dashed line labelled "qualification" and a
-   paragraph underneath explaining that the top three went through - which is
-   two ways of saying what the eye can be told in one. */
+/* Qualification in colour, not in a sentence: the three going through are lit,
+   the rest are dimmed. */
 .ar-tr { border-radius: 9px; transition: background var(--t-base) var(--ease), box-shadow var(--t-base) var(--ease); }
 .ar-tr.q {
   background: rgba(74, 222, 128, 0.08);
@@ -2138,8 +1987,7 @@ body.blacked .br-orb { opacity: 0.09; }
 .ar-tr[data-week] { cursor: pointer; }
 .ar-tr[data-week]:active { transform: scale(0.995); }
 
-/* The three rounds stack. A three-column bracket at 360px gave each round
-   forty pixels and a name that wrapped to four lines. */
+/* The rounds stack: three columns at 360px gave each round forty pixels. */
 .ar-bracket { display: grid; gap: 8px; }
 .ar-round {
   padding: 11px 12px; border-radius: 10px;
@@ -2166,9 +2014,7 @@ body.blacked .br-orb { opacity: 0.09; }
 .ar-nextrow .ar-row-bar { flex: 0 0 64px; }
 .ar-nextrow .ar-nname i { font-size: var(--f-micro); }
 
-/* Three across on a normal phone, two on a narrow one, without either
-   number appearing anywhere: auto-fill works it out from the width it is
-   given. */
+/* Three across, two on a narrow phone, with neither number written down. */
 .ft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(98px, 1fr)); gap: 8px; }
 .ft {
   position: relative; padding: 12px 9px 10px; text-align: center; cursor: pointer;
@@ -2176,10 +2022,8 @@ body.blacked .br-orb { opacity: 0.09; }
   color: var(--muted); font: inherit;
 }
 .ft b { display: block; font-size: var(--f-micro); font-weight: 600; line-height: 1.25; margin-top: 6px; }
-/* No `margin: 0 auto` here. It centred the icon on a tile and then, in the
-   flex rows that reuse it, quietly ate all the free space and shoved the text
-   to the right edge - visibly only when the text was short enough to leave
-   any. The tile asks for the centring itself. */
+/* No margin: 0 auto: in the flex rows that reuse this it ate the free space and
+   shoved the text to the right edge. The tile asks for the centring itself. */
 .ft-ico { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 34px;
   border-radius: 10px; background: var(--surface); color: var(--faint); }
 .ft .ft-ico { margin: 0 auto; }
@@ -2203,9 +2047,8 @@ body.blacked .br-orb { opacity: 0.09; }
 .ar-sheet-score.lost b { color: var(--danger); }
 
 /* ---------- the result screen ----------
-   No header and no back arrow of its own: it is one moment with one way out,
-   and the extra top padding is what a screen with no header needs so the first
-   thing on it is not hard against the status bar. */
+   No header and no back arrow: one moment, one way out. The extra top padding
+   is what a headerless screen needs to clear the status bar. */
 
 .screen.result { padding-top: calc(var(--safe-t) + 30px); }
 .rs-hero { position: relative; text-align: center; padding: 26px 12px 22px; margin-bottom: 14px;
@@ -2270,10 +2113,8 @@ body.blacked .br-orb { opacity: 0.09; }
 .fp-text b { display: block; font-size: var(--f-small); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ---------- sparks ----------
-   A dozen dots that animate out on the compositor and delete themselves. No
-   canvas and no library: this is the whole of the app's celebration, it costs
-   one paint, and `prefers-reduced-motion` is honoured in celebrate() by never
-   creating them at all. */
+   A dozen dots on the compositor that delete themselves. No canvas, no library.
+   celebrate() honours reduced motion by never creating them. */
 
 .sparks { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
 .sparks i {
@@ -2293,8 +2134,8 @@ body.blacked .br-orb { opacity: 0.09; }
 .yr-nav .icon-btn:disabled { opacity: 0.3; }
 .icon-btn.flip .ico { transform: rotate(180deg); }
 
-/* Nought to a hundred, always: a chart that scales to its own tallest bar
-   turns a flat year into a dramatic one. The dotted line is the division bar. */
+/* Always 0 to 100: a chart that scales to its tallest bar turns a flat year
+   into a dramatic one. The dotted line is the division bar. */
 .yr-chart { position: relative; display: flex; align-items: flex-end; gap: 4px; height: 120px; margin-bottom: 10px; }
 .yr-chart::after {
   content: ''; position: absolute; left: 0; right: 0; bottom: calc(var(--bar-line) * 0.86);
@@ -2318,8 +2159,7 @@ body.blacked .br-orb { opacity: 0.09; }
 .yr-step.down { border-color: rgba(248, 113, 113, 0.36); color: var(--danger); }
 
 .yr-arcs { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
-/* Name over label, not beside it. Side by side, "Spring Arc" and "Group
-   stage" shared 140px and both ellipsised down to "S..." and "Gro...". */
+/* Name over label: side by side they shared 140px and both ellipsised. */
 .yr-arc { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 2px 10px;
   padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--line);
   border-radius: 10px; color: var(--muted); }
@@ -2330,9 +2170,7 @@ body.blacked .br-orb { opacity: 0.09; }
 .yr-arc.final { border-color: rgba(251, 191, 36, 0.2); }
 
 /* ---------- narrow phones ----------
-   At 340px the two scores and the divider stop fitting on one line beside a
-   long opponent name, and the feat tiles want to be two across rather than a
-   third of a tile short of three. */
+   At 340px the two scores stop fitting beside a long opponent name. */
 @media (max-width: 359px) {
   .ar-side b { font-size: var(--f-title); }
   .ar-vs { flex: 0 0 20px; }
@@ -2343,19 +2181,13 @@ body.blacked .br-orb { opacity: 0.09; }
 /* ==========================================================================
    The bottom bar
    ==========================================================================
-   Three rooms, and the grid sits proud in the middle because it is the thing
-   you opened the app to do. The brand gradient appears here and on the logo
-   mark, and nowhere else in the app: it is the one element allowed to look
-   like a button in a game.
+   Three rooms, the grid proud in the middle. The brand gradient is here and on
+   the logo mark and nowhere else.
+   Three equal columns rather than a flex row, so the raised centre stays
+   centred whatever the labels say. */
 
-   Laid out with three equal columns rather than a flex row, so the raised
-   centre stays centred whatever the labels say - and so a fourth room, if one
-   ever earns its place, is a change to one number. */
-
-/* The `hidden` attribute only maps to `display: none` through the UA
-   stylesheet, so any author `display` at all beats it. Without this line the
-   bar sat on top of the Bible reader and every session player, which is
-   exactly the screen it must not be on. */
+/* `hidden` only maps to display: none through the UA stylesheet, so any author
+   display beats it. Without this the bar sat on the reader and the players. */
 .tabbar[hidden] { display: none; }
 
 .tabbar {
@@ -2365,9 +2197,8 @@ body.blacked .br-orb { opacity: 0.09; }
   border-top: 1px solid var(--line-soft);
   background: var(--bg-2);
 }
-/* Translucent where the platform can blur behind it, so the grid scrolls under
-   the bar instead of stopping dead at a solid strip. Solid everywhere else,
-   because a see-through bar over unblurred text is worse than an opaque one. */
+/* Translucent where the platform can blur, so the grid scrolls under it. Solid
+   elsewhere: see-through over unblurred text is worse than opaque. */
 @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
   .tabbar {
     background: color-mix(in srgb, var(--bg-2) 78%, transparent);
@@ -2391,9 +2222,8 @@ body.blacked .br-orb { opacity: 0.09; }
 .tab.on .tab-ico { background: rgba(34, 211, 197, 0.13); }
 .tab:active .tab-ico { transform: scale(0.9); }
 
-/* The one you came for. Raised out of the bar, on the brand ramp, with the
-   only real shadow in the app - which is what makes it read as a button rather
-   than as a third link. */
+/* The one you came for. Raised, on the brand ramp, with the only real shadow
+   in the app. */
 .tab.main { margin-top: -24px; }
 .tab.main .tab-ico {
   width: 58px; height: 58px; border-radius: 20px;
@@ -2411,15 +2241,11 @@ body.blacked .br-orb { opacity: 0.09; }
 }
 .tab.main .tab-dot { top: 6px; right: 10px; background: var(--bg); }
 
-/* Room for the bar. Only when it is there, so a pushed screen still ends where
-   the screen ends. */
+/* Room for the bar, only where it is there. */
 body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 
 /* ---------- the grid's header ----------
-   The today card is gone. It was a bordered box holding a number, a date and a
-   ring, sitting above a grid that is itself a bordered box holding rows that
-   are bordered boxes. The same three facts are the header now, with no border
-   around them, which is one less box and the same information. */
+   The today card is gone: the same three facts with no border around them. */
 
 .grid-head {
   display: flex; align-items: center; gap: 12px;
@@ -2434,9 +2260,8 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 /* ==========================================================================
    The Cabinet
    ==========================================================================
-   The room where nothing changes. Everything in here is finished, which is
-   what lets it be still: no live bars, no countdowns except the one that is
-   the point, and the cups given the room to be objects rather than list rows. */
+   Everything here is finished, which is what lets it be still: no live bars, no
+   countdowns except the one that is the point. */
 
 .cab-cups { display: grid; gap: 10px; margin-bottom: 14px; }
 .cab-cups:not(.empty) { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
@@ -2462,9 +2287,8 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .cup-empty b { color: var(--text); font-size: var(--f-small); }
 
 /* ---------- the vault ----------
-   A review you can open early is not a review, it is a dashboard. So the year
-   is a number counting down and a lock, and that is the whole screen until it
-   is not. */
+   A review you can open early is a dashboard, so the year is a number counting
+   down and a lock. */
 
 .vault {
   display: grid; justify-items: center; text-align: center;
@@ -2490,8 +2314,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .yr-span { text-align: center; color: var(--muted); font-size: var(--f-fine); margin: -8px 0 16px; }
 
 /* ---------- what you said ----------
-   The only free text in the Arena, and it is quoted rather than presented as
-   data, because that is what it is: something you said, read back to you. */
+   Quoted rather than presented as data: it is something you said. */
 
 .said {
   display: flex; gap: 11px; width: 100%; text-align: left;
@@ -2506,8 +2329,8 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .said-body i { display: block; font-style: normal; font-size: var(--f-micro); color: var(--muted); margin-top: 3px; }
 
 
-/* No cup on. One line and a date, and it is a link because the date is the
-   only thing you can do anything with. */
+/* No cup on. One line and a date, and a link, because the date is the only
+   thing you can act on. */
 .arc-wait {
   display: flex; align-items: center; gap: 11px;
   padding: 13px 14px; margin-bottom: 14px;
@@ -2526,8 +2349,8 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .ar-won i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); }
 .ar-won .cup-art { flex: 0 0 54px; margin: 0; }
 
-/* The one free-text field in the Arena. Deliberately unlike a settings input:
-   this is something you are saying, not something you are configuring. */
+/* Deliberately unlike a settings input: you are saying something, not
+   configuring one. */
 .note-ask input {
   width: 100%; margin: 12px 0 4px; padding: 13px 14px;
   background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
@@ -2540,13 +2363,9 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 /* ==========================================================================
    The moments
    ==========================================================================
-   Three times a year a cup stops being a screen and becomes an event. These
-   are the only screens in the app with no header, no bar and one way out, and
-   that is the point: there is nothing else to do here.
-
-   The group is dealt rather than listed - the rows arrive one after another on
-   a stagger driven by --i, so it reads as a draw instead of as a table that
-   was already there. */
+   The only screens with no header, no bar and one way out.
+   The group is dealt rather than listed: the rows arrive on a stagger driven
+   by --i, so it reads as a draw. */
 
 .screen.moment { padding-top: calc(var(--safe-t) + 34px); text-align: left; }
 
@@ -2560,8 +2379,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .mo-head.lost .mo-title { color: var(--danger); }
 .mo-head.cup .mo-title { color: var(--warn); }
 .mo-cup { display: grid; place-items: center; color: var(--warn); margin-bottom: 10px; }
-/* The cup draws itself. Four times a year at the very most, after the best
-   week you have had, so it is allowed to take a second over it. */
+/* The cup draws itself. Four times a year at most, so it may take a second. */
 .mo-cup .ico path { stroke-dasharray: 240; animation: cup-draw 1.1s var(--ease) forwards; }
 @keyframes cup-draw { from { stroke-dashoffset: 240; } to { stroke-dashoffset: 0; } }
 
@@ -2578,8 +2396,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .mo-who { flex: 1; min-width: 0; font-size: var(--f-small); color: var(--muted);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mo-card b { font-variant-numeric: tabular-nums; font-size: var(--f-small); }
-/* Same rule as the group table, because it is the same table: the three that
-   go through are lit, the rest are not, and nothing has to say so. */
+/* Same rule as the group table: the three going through are lit. */
 .mo-card.q {
   border-color: rgba(74, 222, 128, 0.32);
   background: rgba(74, 222, 128, 0.08);
@@ -2593,23 +2410,18 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .mo-card.you.nq { opacity: 0.9; border-color: rgba(248, 113, 113, 0.4); background: rgba(248, 113, 113, 0.07); }
 .mo-card.you.nq .mo-seed, .mo-card.you.nq b { color: var(--danger); }
 
-/* A moment that is not animating is still a moment; reduced motion already
-   kills the stagger globally, which would leave the dealt rows at opacity 0. */
+/* Reduced motion kills the stagger globally, which would leave the dealt rows
+   at opacity 0. */
 @media (prefers-reduced-motion: reduce) {
   .mo-card { opacity: 1; }
 }
 
 /* ---------- the introduction ----------
-   One idea per page and mostly a picture, so the page is a column with the art
-   given the room and the words given a width they cannot exceed. The art box
-   has a floor under its height rather than taking what it is given, because
-   five pages whose headings sit at five different heights read as five
-   unrelated screens rather than as one thing being turned over. */
+   One idea per page, mostly a picture. The art box has a floor under its height
+   so five pages do not put their headings at five different heights. */
 
-/* The one screen in the app that owns the whole window: there is no bottom bar
-   on it and nothing below it to scroll to, so a Next button floating in the
-   middle of a half-empty page is just a page that has not been laid out. Full
-   height, the words centred in what is left, the button on the floor. */
+/* Owns the whole window: no bottom bar and nothing to scroll to. Full height,
+   words centred in what is left, button on the floor. */
 .screen.intro { min-height: 100dvh; display: flex; flex-direction: column; }
 .intro .screen-head { justify-content: space-between; margin-bottom: 12px; }
 .intro-body {
@@ -2628,8 +2440,8 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .intro-crest { filter: drop-shadow(0 6px 22px rgba(0, 0, 0, 0.5)); }
 .intro-icon { color: var(--accent); filter: drop-shadow(0 0 26px rgba(34, 211, 197, 0.3)); }
 
-/* The bar at the bottom, drawn at rest so the page can point at it. Not the
-   real .tabbar: that one is fixed to the viewport and there is only ever one. */
+/* Drawn at rest so the page can point at it. Not .tabbar: that one is fixed to
+   the viewport and there is only ever one. */
 .intro-rooms { display: flex; gap: 18px; align-items: flex-end; }
 .intro-rooms i {
   display: grid; justify-items: center; gap: 6px;
@@ -2638,8 +2450,8 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .intro-rooms i b { font-size: var(--f-micro); font-weight: 600; letter-spacing: 0.04em; }
 .intro-rooms i.on { color: var(--accent); }
 
-/* Built from the grid's own classes, so what you are told to tap looks like
-   the thing you then tap. Only the sizing is overridden. */
+/* Built from the grid's own classes, so what you are told to tap looks like the
+   thing you then tap. */
 .intro-grid { width: 100%; margin: 0; pointer-events: none; }
 .intro-grid .hg-cell { min-height: 34px; }
 .intro-grid .hg-row { min-height: 44px; }
@@ -2659,9 +2471,8 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 }
 
 /* ---------- the quiet row at the foot of Settings ----------
-   Two things that are not settings: a screen you can replay, and a door. Both
-   are deliberately the smallest text on the page. The door is not hidden - it
-   says what it is - it just does not ask to be found. */
+   A screen you can replay, and a door. The smallest text on the page: the door
+   says what it is, it just does not ask to be found. */
 .set-tail {
   display: flex; justify-content: center; gap: 22px;
   margin-top: 22px; padding-top: 4px;
@@ -2674,16 +2485,8 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .tail-btn:active { color: var(--muted); }
 
 /* ---------- settings ----------
-   The old shape was seven bordered cards, each a heading over rows of bold
-   label, two lines of grey explanation, and a control. Three thousand pixels
-   of identical boxes in which the explanations outweighed the settings, and
-   indistinguishable from the settings screen of every other app ever written.
-
-   What is here instead: one loud true thing at the top, then the settings as
-   a dense index - name on the left, what it is set to on the right, and no
-   explanation unless the behaviour is genuinely surprising. A settings screen
-   should read like a list of what the app is set to, which is the question you
-   actually came to answer. */
+   A dense index: name on the left, what it is set to on the right, and no
+   explanation unless the behaviour is genuinely surprising. */
 
 .settings .set-hero {
   padding: 4px 2px 22px; margin-bottom: 6px;
@@ -2701,8 +2504,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
   margin: 22px 0 8px; padding: 0 2px;
 }
 
-/* Hairlines between rows, not a border around a box: the group already says
-   where the group starts and a card around it says it a second time. */
+/* Hairlines, not a border around a box: the group already says where it starts. */
 .set-rows { display: grid; }
 .set-row {
   display: flex; align-items: center; gap: 14px;

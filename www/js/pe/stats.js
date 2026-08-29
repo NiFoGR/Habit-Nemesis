@@ -1,5 +1,5 @@
-// The numbers screen: size over time with a projection, training volume,
-// BPFSL response, insights, feats and the full session log.
+// The numbers: size over time with a projection, volume, BPFSL response,
+// insights, feats, session log.
 
 import * as store from '../store.js';
 import * as pe from './program.js';
@@ -11,9 +11,8 @@ let period = '30d';
 
 /* ---------------- size chart with projection ---------------- */
 
-/** History as a solid line, the projection as a dashed continuation inside a
- *  shaded band. The band is the honest part: it is wide when the app is mostly
- *  guessing and narrows as real measurements accumulate. */
+/** History solid, projection dashed inside a band. The band is wide while the
+ *  app is guessing and narrows as measurements accumulate. */
 function sizeChart(points, proj, colour, key) {
   if (points.length < 1) return '<div class="chart-empty">Log a check-in to start this chart</div>';
   const w = 320;
@@ -285,8 +284,7 @@ export function renderStats(mount) {
 
 function logRow(x) {
   const d = pe.typeDef(x.type);
-  // pressure/hydroLevel only ever appear on sessions logged by an older build;
-  // nothing records them now, but the log should still show what was saved.
+  // pressure and hydroLevel only appear on sessions from an older build.
   const detail = [
     x.tensionKg ? `${x.tensionKg} kg` : null,
     x.pressure ? `${x.pressure.toFixed(1)} inHg` : null,

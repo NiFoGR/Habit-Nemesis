@@ -1,10 +1,5 @@
-// The reader. One chapter on screen, Genesis 1 through to Revelation 22.
-//
-// There is no plan and no daily portion. You open it where you left off and
-// you keep going, which is how anyone actually reads a book, and the only
-// navigation that matters is next and previous. Reaching the end of a chapter
-// marks it read, so the record builds itself out of reading rather than out of
-// remembering to tick something.
+// The reader. One chapter, Genesis 1 to Revelation 22. Reaching the end of a
+// chapter marks it read, so the record builds itself out of reading.
 
 import * as store from '../store.js';
 import * as bible from './program.js';
@@ -53,10 +48,8 @@ export async function renderReader(mount, { book, ch }) {
         if (v.missing) {
           return `<p class="verse gap"><b>${v.n}</b><i>Not separated out by the parser. Its text is usually folded into the verse above; check your Bible.</i></p>`;
         }
-        // A noted verse gets a marked number and nothing else, so the page
-        // still reads as scripture. The commentary is one tap away rather
-        // than wedged between every verse, which is the printed edition's own
-        // arrangement: notes at the foot, not in the column.
+        // A noted verse gets a marked number and nothing else. Notes are one tap away,
+        // which is the printed edition's own arrangement.
         const note = text.noteAt(notes, n, v.n);
         if (!note) return `<p class="verse"><b>${v.n}</b>${escapeHtml(v.text)}</p>`;
         const id = `n${n}-${v.n}`;
@@ -80,8 +73,7 @@ export async function renderReader(mount, { book, ch }) {
       ${next ? `<a class="btn primary" href="#/bible/reader?book=${next.book}&ch=${next.ch}">${escapeHtml(bible.refName(`${next.book}:${next.ch}`))} ${icon('play', 16)}</a>` : '<span></span>'}
     </nav>`;
 
-  // One listener on the container rather than one per verse: a long chapter
-  // can carry a hundred noted verses.
+  // One listener on the container: a chapter can carry a hundred noted verses.
   body.addEventListener('click', (e) => {
     const num = e.target.closest('[data-note]');
     if (!num) return;
@@ -112,8 +104,7 @@ export async function renderReader(mount, { book, ch }) {
     renderReader(mount, { book: b.id, ch: n });
   });
 
-  // Reaching the bottom is the honest signal that a chapter was read, so it
-  // marks itself. Anything already marked is left alone.
+  // Reaching the bottom marks it read. Already marked is left alone.
   if (!read) {
     const sentinel = body.querySelector('.chapter-nav');
     const io = new IntersectionObserver((entries) => {
@@ -127,4 +118,3 @@ export async function renderReader(mount, { book, ch }) {
     if (sentinel) io.observe(sentinel);
   }
 }
-

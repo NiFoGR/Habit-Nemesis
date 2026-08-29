@@ -121,11 +121,11 @@ BIBLE - the whole Orthodox canon, bundled with the app.
   because a plan is a thing to fall behind on and the book already has an
   order.
 
-  The text is parsed from a PDF export of the Orthodox Study Bible, which
-  arrives with kerning turned into spaces ("B lessed is the m an") and every
-  chapter opening transposed by its drop cap. Both are undone; about 99% of
-  the 35,903 verses come out clean, and where a verse could not be recovered
-  the reader says so rather than skipping it quietly.
+  tools/lib/bible-parse.js reads a PDF export of the Orthodox Study Bible,
+  which arrives with kerning turned into spaces ("B lessed is the m an") and
+  every chapter opening transposed by its drop cap. Both are undone; about 99%
+  of the 35,903 verses come out clean, and where a verse could not be
+  recovered the reader says so rather than skipping it quietly.
 
   Every book has a screen answering the same six questions before you open it
   - who wrote it, when, where it sits in the story, what it is for, what to
@@ -277,6 +277,8 @@ native/
 signing/            the fixed APK key, so updates install over the top
 tools/              dev server, icon generation, signing patch, data
                     extraction, and the Arena's calendar check
+  lib/              the OSB parser, run by the extractors
+CLAUDE.md           the standing rules: comments, writing, structure, theme
 docs/
   CODEMAP.md        where every file is and what it does - the map
   KEGEL_PROGRAM.md  the kegel protocol and where it comes from
@@ -291,10 +293,14 @@ docs/
 Conventions the tree follows: one folder per feature; the same filenames in
 each (program.js is domain logic, home.js the section's screens, session.js
 the thing that runs); a setting lives where the thing it affects lives; Back
-is not a link, it is a data-back attribute that back.js answers for. Every
-file opens with a comment saying what it is and why it works the way it does.
-Long files are split by /* ---- section ---- */ banners, so
-grep -n "^/\* ---" <file> gives a table of contents.
+is not a link, it is a data-back attribute that back.js answers for; nothing
+ships in www/ that only the tooling needs.
+
+Comments are labels, not prose. Every file opens with one or two lines saying
+what it is, a rule gets a line where the code cannot say it, and long files are
+split by /* ---- section ---- */ banners, so grep -n "^/\* ---" <file> gives a
+table of contents. CLAUDE.md is the full set of rules and is read before any
+change.
 
 --------------------------------------------------------------------------------
 6. RUNNING IT

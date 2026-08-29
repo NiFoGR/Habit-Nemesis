@@ -1,25 +1,18 @@
-// The wind-down: paced breathing, and the last thing in the day.
+// The wind-down: paced breathing, last thing at night.
 //
-// The lever this pulls is vagal. An exhale that runs longer than the inhale,
-// at somewhere near six breaths a minute, is what actually shifts you out of
-// sympathetic arousal, and falling asleep already there is the difference
-// between sleeping and lying in the dark waiting to. Everything here serves
-// that one mechanism: the patterns are all slow, two of the three are
-// exhale-weighted, and every session opens with physiological sighs because
-// they drop arousal faster than anything else you can do voluntarily.
+// The lever is vagal: an exhale longer than the inhale, near six breaths a
+// minute. Every pattern is slow, two of three are exhale-weighted, and each
+// session opens with physiological sighs, which drop arousal faster than
+// anything else voluntary.
 //
-// There is no score and no grading, for exactly the reason the prayer rule has
-// none. This is the last thing before sleep. Being marked out of ten at 23:00
-// is the opposite of the point, so the app records that it was done and stops
-// there.
+// No score. Being marked out of ten at 23:00 is the opposite of the point.
 
 import * as store from '../store.js';
 import { scheduleDaily, cancelAlarm, ALARM_BREATHE } from '../native.js';
 
 /* ---------------- the patterns ---------------- */
 
-/** Three, and no more. Every extra pattern is a decision to make at bedtime,
- *  which is the worst time to be offered one. */
+/** Three, and no more: an extra pattern is a decision to make at bedtime. */
 export const PATTERNS = {
   exhale: {
     id: 'exhale',
@@ -50,18 +43,15 @@ export const PATTERNS = {
   },
 };
 
-// Listed rather than taken from Object.keys: '478' is an integer-like key, so
-// JavaScript enumerates it before every string key and the picker came out
-// offering 4-7-8 first, which is the one pattern that does not suit everybody.
+// Listed, not Object.keys: '478' is integer-like and enumerates first, which
+// put 4-7-8 at the head of the picker.
 export const PATTERN_IDS = ['exhale', 'coherent', '478'];
 
 export const MIN_MINUTES = 3;
 export const MAX_MINUTES = 20;
 
-/** The opening. Two inhales stacked on top of each other and then a long
- *  release: the physiological sigh, which reinflates collapsed alveoli and
- *  offloads CO2 in one breath. It is the fastest voluntary way down, so it
- *  goes at the front where it can do the most good. */
+/** The physiological sigh: two stacked inhales and a long release. The fastest
+ *  voluntary way down, so it goes at the front. */
 const SIGHS = 3;
 const SIGH = [
   { kind: 'in', ms: 1700, label: 'Breathe in', sub: 'Through the nose' },
@@ -69,12 +59,8 @@ const SIGH = [
   { kind: 'out', ms: 6000, label: 'Let it go', sub: 'Slowly, through the mouth' },
 ];
 
-/** The timeline, as absolute offsets from the start.
- *
- *  Precomputed the way `pocket.js` does it, and for the same reason: every
- *  tick is then resolved against the wall clock, so a throttled timer lands on
- *  the phase you should actually be on instead of resuming where it paused.
- *  A pacer that drifts is worse than no pacer, and it drifts silently. */
+/** Absolute offsets from the start, like pocket.js: every tick resolves against
+ *  the wall clock, so a throttled timer lands on the right phase. */
 export function buildTimeline(patternId = 'exhale', totalMs = 300000) {
   const p = PATTERNS[patternId] || PATTERNS.exhale;
   const steps = [];
@@ -87,8 +73,7 @@ export function buildTimeline(patternId = 'exhale', totalMs = 300000) {
   push({ kind: 'settle', ms: 5000, label: 'Settle', sub: 'Phone on your chest, eyes closed' });
   for (let i = 0; i < SIGHS; i++) for (const s of SIGH) push({ ...s, sigh: true });
 
-  // Whole breaths only. Cutting off mid-exhale to hit a round number would end
-  // the session on the one phase you want it to end after.
+  // Whole breaths only: cutting mid-exhale ends on the wrong phase.
   const breathMs = p.inMs + p.holdMs + p.outMs;
   let n = 0;
   while (at + breathMs <= totalMs) {
@@ -102,20 +87,13 @@ export function buildTimeline(patternId = 'exhale', totalMs = 300000) {
   return { steps, totalMs: at, pattern: p, breaths: n };
 }
 
-/** What a session of this length will actually run to, which is not the
- *  setting: the last whole breath decides. */
-export function plannedMs(patternId, minutes) {
-  return buildTimeline(patternId, minutes * 60000).totalMs;
-}
-
 /* ---------------- the record ---------------- */
 
 export function settings() {
   return store.get().breathe.settings;
 }
 
-/** One entry per day, because this is a once-a-day close. Doing it twice adds
- *  the time rather than counting as two, since there is nothing to count. */
+/** One entry per day. Twice adds the time rather than counting as two. */
 export function dayState(key = store.dayKey()) {
   const d = store.get().breathe.days[key];
   return { key, done: !!d, at: d?.at || null, ms: d?.ms || 0, pattern: d?.pattern || null };
@@ -134,10 +112,8 @@ export function markDone({ ms, pattern }) {
   });
 }
 
-/** Consecutive days ending today, or yesterday if tonight has not happened
- *  yet. A wind-down at 00:30 belongs to the day it was done, like everything
- *  else here, which does mean a very late night lands on the next day. That is
- *  the honest reading: you did it after midnight. */
+/** Consecutive days, ending today or yesterday. A wind-down at 00:30 lands on
+ *  the day it was done. */
 export function streak(state = store.get()) {
   const days = state.breathe.days;
   let cursor = store.dayKey();
@@ -150,7 +126,7 @@ export function streak(state = store.get()) {
   return n;
 }
 
-/** Grid data for the heatmap. Oldest first, one entry per day. */
+/** Heatmap data, oldest first. */
 export function history(weeks = 13) {
   const days = store.get().breathe.days;
   const out = [];
@@ -193,8 +169,7 @@ export function lifetime() {
   return { nights, ms };
 }
 
-/** The nightly reminder, on Android's alarm clock so it fires whether or not
- *  the app is running. Called at boot and whenever the time changes. */
+/** The nightly reminder, as a real alarm. */
 export function syncAlarm() {
   const s = settings();
   if (!s.remind || !/^\d{2}:\d{2}$/.test(s.remindAt)) return cancelAlarm(ALARM_BREATHE);

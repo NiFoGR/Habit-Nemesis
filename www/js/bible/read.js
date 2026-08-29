@@ -1,12 +1,5 @@
-// The canon: every book, every chapter, and what you have read of it.
-//
-// One screen with two states. With no book chosen it is the shelf, seventy-six
-// books in the order the Orthodox Study Bible prints them, grouped into the
-// eight parts of the story. With a book chosen it is a grid of its chapters,
-// and tapping one opens it in the reader.
-//
-// The grid is for jumping. Reading straight through needs nothing from this
-// screen at all, which is why the reader has its own next and previous.
+// The shelf, and one book as a grid of chapters. For jumping: reading straight
+// through needs only the reader's own next and previous.
 
 import * as store from '../store.js';
 import * as bible from './program.js';
@@ -116,8 +109,7 @@ function renderBook(mount, b) {
       </div>
     </div>`;
 
-  // Both of these are destructive enough to be worth a question. Marking a
-  // fifty-chapter book read in one tap is a claim about fifty days of reading.
+  // Worth a question: marking a fifty-chapter book read is a claim about fifty days.
   mount.querySelector('#allRead').addEventListener('click', () => {
     if (!confirm(`Mark all ${b.chapters.length} chapters of ${b.name} as read?`)) return;
     for (let n = 1; n <= b.chapters.length; n++) bible.markChapter(b.id, n);

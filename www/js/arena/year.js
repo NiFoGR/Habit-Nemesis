@@ -1,21 +1,10 @@
-// The Year.
+// The Year: 365 days from the day the record starts, written 26/27, locked
+// until it has been lived.
 //
-// Not a calendar year: 365 days from the day the record starts, written like a
-// season - 26/27 - and locked until it has actually been lived. A calendar year
-// would hand somebody who installed in November a six-week "year" to review,
-// and the whole point of this screen is that it covers a long time.
-//
-// It is a review, not a second competition. The Arc is the competition, and
-// putting another one on top of it would mean two tables saying the same thing
-// four times a year apart. Everything here is a fact the record already holds.
-//
-// The months chart is drawn here rather than through the shared barChart, which
-// scales to its own tallest bar. For percentages that is a lie: a 44% month
-// beside a 46% one would draw as a near-miss of a full column. Nought to a
-// hundred, always, so a flat year looks flat. It has as many columns as the
-// year has months, which for a 365-day span is thirteen - counted from the
-// data rather than assumed, because a layout that knows how many of something
-// there are breaks the first time that number changes.
+// A review, not a second competition. The months chart is drawn here rather
+// than with barChart, which scales to its tallest bar: on percentages that
+// draws a 44% month as a near-miss of a full column. Always 0 to 100, and as
+// many columns as the year has months, counted from the data.
 
 import * as store from '../store.js';
 import * as habits from '../habits/program.js';
@@ -130,8 +119,7 @@ const span = (y) => {
   return `${fmt(y.from)} – ${fmt(y.to)}`;
 };
 
-/** No year has finished yet. This is the countdown, and it is the whole screen:
- *  a review you can open early is not a review, it is a dashboard. */
+/** The countdown, and the whole screen: a review you can open early is a dashboard. */
 function renderLocked(mount) {
   const left = arena.daysLeftInYear();
   const y = arena.yearAt(arena.currentYearIndex());
@@ -176,7 +164,7 @@ function monthChart(year) {
   </div>`;
 }
 
-/** The division you finished each month in, as a track. */
+/** The division each month finished in, as a track. */
 function ladderTrack(year) {
   const months = store.get().arena.months;
   const seen = arena.monthsOfYear(year).map((m) => (months[m] ? { m, ...months[m] } : null)).filter(Boolean);
@@ -235,17 +223,13 @@ function arcRow(year) {
   </section>`;
 }
 
-/** '2026-summer' back into an arc object. */
+/** '2026-summer' back into an arc. */
 function arcFromKey(key) {
   const [y, id] = key.split('-');
   const arc = arena.ARCS.find((a) => a.id === id) || arena.ARCS[0];
   return { ...arc, year: Number(y) };
 }
 
-/** The rows that made the year, summed across every week of it. This is the
- *  only place the app adds a habit up over a whole year, and it is worth it: a
- *  score is a decay curve and answers "lately", where this answers "all year",
- *  which are different questions and were being confused. */
 function rowsOfYear(weeks) {
   if (!weeks.length) return '';
   const tally = new Map();

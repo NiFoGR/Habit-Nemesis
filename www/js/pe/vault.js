@@ -1,11 +1,6 @@
-// Gallery encryption.
-//
-// A PIN screen that only hides a view is theatre: anyone with the phone
-// unlocked, or any script that can read IndexedDB, still gets the photos. So
-// the photos are genuinely encrypted with AES-GCM under a key derived from the
-// PIN, and the key exists only in memory while the gallery is open. Forgetting
-// the PIN means the photos are unrecoverable, that is the point, and the UI
-// says so before you set one.
+// Gallery encryption. AES-GCM under a key derived from the PIN, held in memory
+// only while the gallery is open. Forgetting the PIN loses the photos, and the
+// UI says so before you set one.
 
 import * as store from '../store.js';
 
@@ -27,15 +22,8 @@ const b64 = {
 export const isSet = () => !!store.get().pe.vault;
 export const isUnlocked = () => !!key;
 
-/** WebCrypto only exists in a secure context. Served over plain http on a LAN
- *  it is simply absent, and the gallery would otherwise fail with something
- *  cryptic at the first keypress. */
+/** WebCrypto needs a secure context. Over plain http it is simply absent. */
 export const isAvailable = () => typeof crypto !== 'undefined' && !!crypto.subtle;
-
-export function onLockChange(fn) {
-  listeners.add(fn);
-  return () => listeners.delete(fn);
-}
 
 const emit = () => listeners.forEach((fn) => fn(isUnlocked()));
 
@@ -50,8 +38,7 @@ async function deriveKey(pin, salt) {
   );
 }
 
-/** Creates the vault. The stored "check" blob is what a PIN attempt is tested
- *  against, so a wrong PIN fails fast instead of handing back garbage bytes. */
+/** Create. The stored check blob is what a PIN attempt is tested against. */
 export async function setPin(pin) {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -87,8 +74,7 @@ export function lock() {
   emit();
 }
 
-/** Re-locks after a period of inactivity so an open gallery does not stay
- *  readable on a phone left on a table. */
+/** Idle re-lock, so an open gallery does not stay readable on a table. */
 export function armAutoLock() {
   clearTimeout(lockTimer);
   const mins = store.get().pe.settings.autoLockMin || 2;
@@ -108,13 +94,8 @@ export async function decryptBlob({ iv, data, type }) {
   return new Blob([plain], { type: type || 'image/jpeg' });
 }
 
-/** Changing the PIN re-encrypts every photo under the new key.
- *
- *  Order matters: everything is decrypted and re-encrypted under the new key
- *  in memory *before* anything is written, and the stored vault material is
- *  swapped last. A failure at any point therefore leaves the old PIN and the
- *  old files intact, instead of half a gallery encrypted under a key that is
- *  no longer recorded anywhere. */
+/** Re-encrypt everything under the new key in memory before writing anything,
+ *  and swap the vault material last: a failure leaves the old PIN working. */
 export async function changePin(oldPin, newPin, reencrypt) {
   if (!(await unlock(oldPin))) return false;
 
@@ -152,8 +133,7 @@ async function encryptWith(k, blob) {
   return { iv, data, type: blob.type || 'image/jpeg' };
 }
 
-/** Wipes the vault and everything it protects. Used by "forgot PIN", which
- *  cannot be a recovery flow, there is no key escrow by design. */
+/** Wipe. "Forgot PIN" cannot be recovery: there is no escrow by design. */
 export function destroy() {
   lock();
   store.update((s) => {

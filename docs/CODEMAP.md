@@ -32,19 +32,19 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/app.js` | 313 | Route table, shell state, boot. Nothing renders here. |
-| `js/back.js` | 213 | What Back means: the corner arrow, the hardware button, history. |
-| `js/icons.js` | 129 | The inline SVG icon set and the logo mark. |
-| `js/lock.js` | 70 | The optional PIN gate. Owns whether the app is unlocked. |
-| `js/nifo.js` | 53 | Whether this install has the five preloaded sections. |
-| `js/intro.js` | 139 | The introduction, shown once on a new install. |
-| `js/names.js` | 10 | What each section is called, under discreet mode. |
-| `js/native.js` | 136 | Capacitor bridge for real Android alarms. |
-| `js/nightlight.js` | 474 | The night light: the bridge, its settings screen, the browser fallback. |
-| `js/settings.js` | 315 | App-wide settings: the grid, marking, feedback, privacy, data, reset. |
-| `js/tabs.js` | 74 | The bottom bar: Cabinet, Grid, Arena. Drawn once, never rebuilt. |
-| `js/store.js` | 948 | localStorage persistence and the input sanitiser. |
-| `js/ui.js` | 523 | Shared helpers: formatting, haptics, notifications, SVG charts, the sheet. |
+| `js/app.js` | 273 | Route table, shell state, boot. Nothing renders here. |
+| `js/back.js` | 141 | What Back means: the corner arrow, the hardware button, history. |
+| `js/icons.js` | 106 | The inline SVG icon set and the logo mark. |
+| `js/lock.js` | 61 | The optional PIN gate. Owns whether the app is unlocked. |
+| `js/nifo.js` | 28 | Whether this install has the five preloaded sections. |
+| `js/intro.js` | 115 | The introduction, shown once on a new install. |
+| `js/names.js` | 6 | What each section is called, under discreet mode. |
+| `js/native.js` | 116 | Capacitor bridge for real Android alarms. |
+| `js/nightlight.js` | 444 | The night light: the bridge, its settings screen, the browser fallback. |
+| `js/settings.js` | 278 | App-wide settings: the grid, marking, feedback, privacy, data, reset. |
+| `js/tabs.js` | 52 | The bottom bar: Cabinet, Grid, Arena. Drawn once, never rebuilt. |
+| `js/store.js` | 834 | localStorage persistence and the input sanitiser. |
+| `js/ui.js` | 507 | Shared helpers: formatting, haptics, notifications, SVG charts, the sheet. |
 
 **A new install does not have the five.** `nifo.js` holds that, and it is a
 structural fact about the tree rather than a setting: with it locked,
@@ -57,31 +57,31 @@ locked install is shown instead, once.
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/kegels/home.js` | 239 | Kegels home, how-to, and Kegels settings. |
-| `js/kegels/pocket.js` | 264 | Vibration-only session pacing. |
-| `js/kegels/program.js` | 459 | The 104-week plan, scoring, progression. |
+| `js/kegels/home.js` | 231 | Kegels home, how-to, and Kegels settings. |
+| `js/kegels/pocket.js` | 249 | Vibration-only session pacing. |
+| `js/kegels/program.js` | 430 | The 104-week plan, scoring, progression. |
 | `js/kegels/report.js` | 99 | End-of-session debrief. |
-| `js/kegels/review.js` | 134 | The weekly review. |
-| `js/kegels/roadmap.js` | 134 | All 104 weeks and the six phases. |
-| `js/kegels/session.js` | 476 | The guided player and per-rep measurement. |
-| `js/kegels/tracking.js` | 193 | Heatmap, charts, session log. |
-| `js/kegels/tutorial.js` | 322 | Technique walkthrough, including the reverse kegel. |
+| `js/kegels/review.js` | 127 | The weekly review. |
+| `js/kegels/roadmap.js` | 127 | All 104 weeks and the six phases. |
+| `js/kegels/session.js` | 475 | The guided player and per-rep measurement. |
+| `js/kegels/tracking.js` | 190 | Heatmap, charts, session log. |
+| `js/kegels/tutorial.js` | 304 | Technique walkthrough, including the reverse kegel. |
 
 ## PE
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/pe/camera.js` | 246 | Ghost-overlay photo capture and alignment. |
-| `js/pe/db.js` | 133 | IndexedDB photo storage and downscaling. |
-| `js/pe/gallery.js` | 241 | Encrypted gallery, viewer, compare. |
-| `js/pe/guide.js` | 165 | Safety reference and PE settings. |
-| `js/pe/home.js` | 124 | PE home and the one-time safety gate. |
-| `js/pe/measure.js` | 401 | The five-measurement monthly check-in. |
-| `js/pe/pin.js` | 140 | PIN keypad and unlock flow. |
-| `js/pe/program.js` | 445 | Session types, limits, projection. |
-| `js/pe/stats.js` | 312 | Charts, period selector, projection, log. |
-| `js/pe/timer.js` | 591 | Session runner, set breaks, kegels during pump. |
-| `js/pe/vault.js` | 162 | PIN-derived AES-GCM encryption. |
+| `js/pe/camera.js` | 229 | Ghost-overlay photo capture and alignment. |
+| `js/pe/db.js` | 93 | IndexedDB photo storage and downscaling. |
+| `js/pe/gallery.js` | 240 | Encrypted gallery, viewer, compare. |
+| `js/pe/guide.js` | 159 | Safety reference and PE settings. |
+| `js/pe/home.js` | 123 | PE home and the one-time safety gate. |
+| `js/pe/measure.js` | 398 | The five-measurement monthly check-in. |
+| `js/pe/pin.js` | 139 | PIN keypad and unlock flow. |
+| `js/pe/program.js` | 399 | Session types, limits, projection. |
+| `js/pe/stats.js` | 310 | Charts, period selector, projection, log. |
+| `js/pe/timer.js` | 579 | Session runner, set breaks, kegels during pump. |
+| `js/pe/vault.js` | 142 | PIN-derived AES-GCM encryption. |
 
 ## Bible
 
@@ -89,27 +89,26 @@ The prayer rule lives in this section too.
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/bible/book.js` | 92 | One book's context screen, the six questions. |
-| `js/bible/canon.js` | 88 | **Generated.** 76 books, 1,344 chapters, verse counts. |
-| `js/bible/context.js` | 841 | What every book is and what to watch for. |
-| `js/bible/home.js` | 172 | Section home and settings. |
-| `js/bible/parse.js` | 385 | The parser. Unused at runtime; kept for `tools/extract-bible-text.mjs`. |
-| `js/bible/program.js` | 259 | Progress, streaks, marking, reading position. |
-| `js/bible/read.js` | 133 | The shelf and the chapter grid. |
-| `js/bible/reader.js` | 86 | One chapter on screen, Genesis to Revelation. |
-| `js/bible/text.js` | 51 | Loads a book from `www/bible/`, cached in memory. |
-| `js/bible/tracking.js` | 114 | Heatmap, canon progress, prayer, log. |
-| `js/pray/home.js` | 104 | The prayers you added yourself. |
-| `js/pray/prayers.js` | 240 | The bundled prayers and the two rules. |
-| `js/pray/program.js` | 182 | What is owed today, streaks, heatmap data, alarms. |
-| `js/pray/session.js` | 151 | The guided rule. |
+| `js/bible/book.js` | 83 | One book's context screen, the six questions. |
+| `js/bible/canon.js` | 84 | **Generated.** 76 books, 1,344 chapters, verse counts. |
+| `js/bible/context.js` | 823 | What every book is and what to watch for. |
+| `js/bible/home.js` | 165 | Section home and settings. |
+| `js/bible/program.js` | 200 | Progress, streaks, marking, reading position. |
+| `js/bible/read.js` | 125 | The shelf and the chapter grid. |
+| `js/bible/reader.js` | 120 | One chapter on screen, Genesis to Revelation. |
+| `js/bible/text.js` | 65 | Loads a book from `www/bible/`, cached in memory. |
+| `js/bible/tracking.js` | 109 | Heatmap, canon progress, prayer, log. |
+| `js/pray/home.js` | 100 | The prayers you added yourself. |
+| `js/pray/prayers.js` | 233 | The bundled prayers and the two rules. |
+| `js/pray/program.js` | 161 | What is owed today, streaks, heatmap data, alarms. |
+| `js/pray/session.js` | 148 | The guided rule. |
 
 **The scripture ships with the app**, as `www/bible/<id>.json`, one file per
 book, generated by `tools/extract-bible-text.mjs` and precached for offline
 reading by the service worker. It is 7 MB, which is why `tools/pack-web.mjs`
 leaves it out of the hosted build — see [`docs/BIBLE.md`](BIBLE.md).
-`parse.js` stays in the app unused at runtime, because it is what the extractor
-runs.
+The parser itself is `tools/lib/bible-parse.js`: it is build tooling, so it
+lives in `tools/` and does not ship in the app.
 
 ## Native
 
@@ -132,10 +131,10 @@ lives in Java, and why there are two filters rather than one.
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/habits/program.js` | 842 | The record, the frequency model, the score, the streaks, the charts, the five linked rows. |
-| `js/habits/home.js` | 710 | **The home screen.** The grid, marking, reordering, groups, the archive, the install prompt. |
-| `js/habits/edit.js` | 360 | Creating and editing: the type, colour, frequency and reminder pickers. |
-| `js/habits/tracking.js` | 313 | One habit in full, and the calendar you can write to. |
+| `js/habits/program.js` | 724 | The record, the frequency model, the score, the streaks, the charts, the five linked rows. |
+| `js/habits/home.js` | 646 | **The home screen.** The grid, marking, reordering, groups, the archive, the install prompt. |
+| `js/habits/edit.js` | 339 | Creating and editing: the type, colour, frequency and reminder pickers. |
+| `js/habits/tracking.js` | 293 | One habit in full, and the calendar you can write to. |
 
 This folder is not a section any more, it is the front door: `#/hub` renders
 `renderHome` from `home.js`. There used to be a `hub.js` holding a Today list
@@ -155,14 +154,14 @@ app options**, on `settings.js`, because the grid is the app.
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/arena/program.js` | 1100 | Weeks, divisions, opponents, arcs, and the only part of the app that writes down what it could recompute. |
-| `js/arena/home.js` | 484 | The Arena in one scrolling screen, and every feat on another. |
-| `js/arena/year.js` | 297 | The Year: twelve months, four arcs, the rows that carried it. |
-| `js/arena/result.js` | 252 | Telling you what happened — the full screen, and the one-line feat pop. |
-| `js/arena/cabinet.js` | 147 | The Cabinet: cups, feats, years, and the lines you left. |
-| `js/arena/feats.js` | 339 | Forty predicates over the record. The one catalogue. |
-| `js/arena/crest.js` | 53 | The seven division crests: one file of artwork per rung, in `www/img/`. |
-| `js/arena/moment.js` | 183 | The Arc's three ceremonies: it opens, you qualify, you win. |
+| `js/arena/program.js` | 960 | Weeks, divisions, opponents, arcs, and the only part of the app that writes down what it could recompute. |
+| `js/arena/home.js` | 409 | The Arena in one scrolling screen, and every feat on another. |
+| `js/arena/year.js` | 279 | The Year: twelve months, four arcs, the rows that carried it. |
+| `js/arena/result.js` | 239 | Telling you what happened — the full screen, and the one-line feat pop. |
+| `js/arena/cabinet.js` | 140 | The Cabinet: cups, feats, years, and the lines you left. |
+| `js/arena/feats.js` | 327 | Forty predicates over the record. The one catalogue. |
+| `js/arena/crest.js` | 30 | The seven division crests: one file of artwork per rung, in `www/img/`. |
+| `js/arena/moment.js` | 151 | The Arc's three ceremonies: it opens, you qualify, you win. |
 
 Two rooms of the three, and the split is what stopped either being a stack of
 cards: **Arena** is *now* — the division, this week's match, the cup that is
@@ -188,9 +187,9 @@ the parts that cannot be read off a screen.
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/breathe/program.js` | 203 | The patterns, the timeline, the nightly record and the streak. |
-| `js/breathe/session.js` | 309 | The five minutes: the audio timeline, the buzzes, the orb. |
-| `js/breathe/home.js` | 185 | Section home, the record, and wind-down settings. |
+| `js/breathe/program.js` | 178 | The patterns, the timeline, the nightly record and the streak. |
+| `js/breathe/session.js` | 284 | The five minutes: the audio timeline, the buzzes, the orb. |
+| `js/breathe/home.js` | 179 | Section home, the record, and wind-down settings. |
 
 The record lives on the section home rather than in a `tracking.js` of its own,
 which is the one place this feature departs from the shape of the other three.

@@ -1,26 +1,21 @@
-// Small shared helpers: feedback, formatting, saving a file, and
-// dependency-free SVG charts.
+// Shared helpers: feedback, formatting, file saving, dependency-free SVG charts.
 
 import { isNative } from './native.js';
 
-/* ---------------- whether the app is allowed to make a noise ----------------
-   Two switches, held here rather than read here. This module is imported *by*
-   the store and cannot import it back, so the store pushes the pair in through
-   `setFeedback` on every save. Before that each caller checked for itself,
-   which meant the session players honoured the setting and the grid, the
-   Arena and every toast did not. */
-
 let feedback = { haptics: true, sound: true };
 
-/** Called by store.js. Never call it from a screen. */
+/* ---------------- feedback switches ---------------- */
+// Held here, not read here: store.js imports this module and cannot be imported
+// back, so it pushes the pair in on every save.
+
+/** Called by store.js only. */
 export function setFeedback(s) {
   feedback = { haptics: s?.haptics !== false, sound: s?.sound !== false };
 }
 
 const PATTERNS = {
   tick: 12, press: 18, hit: [0, 30, 60, 30], go: 25, rest: 10, done: 22, miss: [0, 40, 40, 40], phase: [0, 20, 40, 20], level: [0, 40, 60, 40, 60, 80],
-  // The Arena. A win is two beats and a promotion is three rising ones, so
-  // the phone tells you which happened before you have read anything.
+  // Arena: two beats for a win, three rising for a promotion.
   win: [0, 35, 50, 90], loss: [0, 120], promote: [0, 40, 50, 40, 50, 120], relegate: [0, 160, 80, 160],
   feat: [0, 25, 40, 25, 40, 60], trophy: [0, 60, 60, 60, 60, 60, 60, 200],
 };
@@ -32,7 +27,7 @@ export function haptic(kind) {
     try {
       navigator.vibrate(p);
     } catch {
-      /* some browsers refuse without a gesture; not worth surfacing */
+      /* no gesture yet */
     }
   }
 }
@@ -53,22 +48,15 @@ export function beep(freq = 880, ms = 60) {
     osc.start();
     osc.stop(audioCtx.currentTime + ms / 1000 + 0.02);
   } catch {
-    /* audio is a nicety, never a requirement */
+    /* audio is optional */
   }
 }
 
-/* ---------------- the Arena's own sound and light ----------------
-   The app had one beep and one buzz, which is right for a session player where
-   a cue must not become a performance. A result is different: a week you won
-   should land, and landing is what a short rise in pitch and a handful of
-   sparks are for.
-
-   Whether either is allowed is decided once, at the top of this file. */
-
 const NOTES = { c: 261.63, e: 329.63, g: 392.0, a: 440.0, b: 493.88, C: 523.25, E: 659.25, G: 783.99, C2: 1046.5 };
 
-/** One note in an envelope that opens fast and closes slowly, so a motif reads
- *  as music rather than as a row of clicks. */
+/* ---------------- Arena sound and light ---------------- */
+
+/** One note, fast attack and slow release, so a motif reads as music. */
 function tone(ctx, freq, at, dur, peak = 0.14, type = 'sine') {
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -82,8 +70,7 @@ function tone(ctx, freq, at, dur, peak = 0.14, type = 'sine') {
   osc.stop(ctx.currentTime + at + dur + 0.02);
 }
 
-/** Motifs, not sound effects. Each one is the shape of what happened: up for
- *  a win, down for a loss, a full triad for a promotion, and a run for a feat. */
+/** Motifs: up for a win, down for a loss, a triad for a promotion, a run for a feat. */
 const MOTIFS = {
   win: [[NOTES.g, 0, 0.16], [NOTES.C, 0.09, 0.3]],
   loss: [[NOTES.e, 0, 0.18], [NOTES.c, 0.1, 0.34]],
@@ -99,21 +86,15 @@ export function chime(kind) {
   if (!motif || !feedback.sound) return;
   try {
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    // A context created before the first gesture starts suspended, and a
-    // suspended context swallows the whole motif silently.
+    // A context made before the first gesture starts suspended and swallows the motif.
     if (audioCtx.state === 'suspended') audioCtx.resume();
     for (const [freq, at, dur] of motif) tone(audioCtx, freq, at, dur);
   } catch {
-    /* audio is a nicety, never a requirement */
+    /* audio is optional */
   }
 }
 
-/** A short burst of sparks from the middle of an element.
- *
- *  No library and no canvas: a dozen absolutely positioned dots that animate
- *  out on the compositor and delete themselves. It costs nothing, it cannot
- *  leak - the wrapper removes itself on the longest animation's end - and it
- *  does nothing at all when the reader has asked for less motion. */
+/** Sparks from the centre of an element. Self-removing, and off under reduced motion. */
 export function celebrate(el, { colour = 'var(--accent)', count = 14, spread = 90 } = {}) {
   if (!el || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
   const wrap = document.createElement('div');
@@ -145,7 +126,7 @@ export function fmtDuration(sec) {
   return sec < 90 ? `${Math.round(sec)}s` : `${Math.round(sec / 60)} min`;
 }
 
-/** mm:ss, or h:mm:ss once it runs past an hour. */
+/** mm:ss, or h:mm:ss past an hour. */
 export function fmtClock(ms) {
   const total = Math.max(0, Math.round(ms / 1000));
   const h = Math.floor(total / 3600);
@@ -175,8 +156,7 @@ export async function askNotifyPermission() {
   }
 }
 
-/** Fires through the service worker when possible, so the notification still
- *  appears when the app is in the background. */
+/** Through the service worker where possible, so it shows in the background. */
 export async function notify(title, body) {
   haptic('hit');
   if (!('Notification' in window) || Notification.permission !== 'granted') return false;
@@ -193,7 +173,7 @@ export async function notify(title, body) {
 
 /* ---------------- small components ---------------- */
 
-/** Segmented control. Returns markup; wire it up with `onSegment`. */
+/** Segmented control. Markup only, wire it with `onSegment`. */
 export function segmented(name, options, active) {
   return `<div class="segmented" data-seg="${escapeHtml(name)}">${options
     .map((o) => `<button type="button" data-val="${escapeHtml(o.id)}" class="${o.id === active ? 'on' : ''}">${escapeHtml(o.label)}</button>`)
@@ -211,25 +191,18 @@ export function onSegment(root, name, fn) {
   });
 }
 
-/** Tiny inline trend line for a headline number. No axes, no labels, it is
- *  there to show shape at a glance, not to be read off. */
+/** Inline trend line for a headline number. Shape at a glance, not read off. */
 export function sparkline(values, { color = 'var(--accent)', w = 120, h = 34, fill = true } = {}) {
   const vals = values.filter((v) => Number.isFinite(v));
   if (vals.length < 2) return '';
-  // Nothing ever happened, so draw nothing. A per-day series is zero-filled
-  // rather than empty, so without this a section you have never touched gets a
-  // confident straight line across its tile — which reads as steady activity
-  // and is the exact opposite of the truth. Sections whose series is genuinely
-  // empty already render no line, so this also stops two tiles from carrying a
-  // graph while the other two do not.
+  // All zeroes draws nothing: a flat line across an untouched tile reads as steady activity.
   if (vals.every((v) => v === 0)) return '';
   const min = Math.min(...vals);
   const max = Math.max(...vals);
   const flat = max - min < 1e-9;
   const span = flat ? 1 : max - min;
   const x = (i) => (i * w) / (vals.length - 1);
-  // A flat series sits on the mid-line rather than pinned to the floor, which
-  // would read as "zero" instead of "unchanged".
+  // Flat sits mid-height, not on the floor: that would read as zero.
   const y = (v) => (flat ? h / 2 : h - 3 - ((v - min) / span) * (h - 6));
   const pts = vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
   const area = fill
@@ -242,39 +215,7 @@ export function sparkline(values, { color = 'var(--accent)', w = 120, h = 34, fi
   </svg>`;
 }
 
-/** Donut for a small set of parts, weekly volume by session type. */
-export function donut(parts, { size = 104, thickness = 13, centre = '' } = {}) {
-  const total = parts.reduce((a, p) => a + p.value, 0);
-  const r = (size - thickness) / 2;
-  const c = 2 * Math.PI * r;
-  let offset = 0;
-  const arcs = total
-    ? parts
-        .filter((p) => p.value > 0)
-        .map((p) => {
-          const len = (p.value / total) * c;
-          const seg = `<circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none"
-            stroke="${p.colour}" stroke-width="${thickness}"
-            stroke-dasharray="${Math.max(0, len - 2).toFixed(1)} ${(c - len + 2).toFixed(1)}"
-            stroke-dashoffset="${(-offset).toFixed(1)}"/>`;
-          offset += len;
-          return seg;
-        })
-        .join('')
-    : '';
-  return `<div class="ringwrap" style="--size:${size}px">
-    <svg viewBox="0 0 ${size} ${size}">
-      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="var(--line)" stroke-width="${thickness}"/>
-      ${arcs}
-    </svg>
-    ${centre ? `<div class="ringwrap-core"><b>${escapeHtml(centre)}</b></div>` : ''}
-  </div>`;
-}
-
-/** Vertical bars with labels, used for volume by day.
- *  `colour` exists for the one caller that is not drawing in the app accent:
- *  a habit's own screen, where every other mark takes the colour you chose for
- *  it and a teal chart in the middle read as a piece of another screen. */
+/** Vertical bars. `colour` is for a habit's own screen, which is not in the accent. */
 export function barChart(bars, { h = 120, unit = '', colour = null } = {}) {
   if (!bars.length) return '<div class="chart-empty">Nothing logged in this period</div>';
   const max = Math.max(...bars.map((b) => b.value), 1);
@@ -298,6 +239,9 @@ export function barChart(bars, { h = 120, unit = '', colour = null } = {}) {
 export function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
+
+export const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+export const WEEKDAYS_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export function fmtDate(key) {
   const [y, m, d] = key.split('-').map(Number);
@@ -329,7 +273,7 @@ export function toast(msg) {
 
 /* ---------------- charts ---------------- */
 
-/** Line chart with an area fill. Values are plain numbers; gaps are not drawn. */
+/** Line chart with area fill. Gaps are not drawn. */
 export function lineChart(values, { w = 320, h = 110, pad = 10, color = 'var(--accent)', fill = true, labels = null } = {}) {
   if (!values.length) return '<div class="chart-empty">Not enough data yet</div>';
   const max = Math.max(...values, 1);
@@ -351,8 +295,7 @@ export function lineChart(values, { w = 320, h = 110, pad = 10, color = 'var(--a
   </svg>`;
 }
 
-/** Two or more series on shared axes, plotted against real timestamps so
- *  irregular check-ins are not stretched into an even rhythm. */
+/** Shared axes, plotted against real timestamps so irregular check-ins stay irregular. */
 export function multiLine(series, { w = 320, h = 150, padL = 34, padR = 8, padT = 10, padB = 22 } = {}) {
   const all = series.flatMap((s) => s.points);
   if (all.length < 2) return '<div class="chart-empty">Two check-ins fill this in</div>';
@@ -389,8 +332,7 @@ export function multiLine(series, { w = 320, h = 150, padL = 34, padR = 8, padT 
   </svg>`;
 }
 
-/** Scatter with an optional least-squares trend line. Used for "did the hours
- *  actually buy anything", the one chart that can talk you out of a habit. */
+/** Scatter with a least-squares trend. */
 export function scatter(points, { w = 320, h = 160, xLabel = '', yLabel = '', color = 'var(--accent)', trend = true } = {}) {
   if (points.length < 2) return '<div class="chart-empty">Three check-ins fill this in</div>';
   const padL = 34;
@@ -436,9 +378,7 @@ export function scatter(points, { w = 320, h = 160, xLabel = '', yLabel = '', co
       <title>${escapeHtml(p.label || `${p.x.toFixed(0)} → ${p.y.toFixed(2)}`)}</title></circle>`)
     .join('');
 
-  // Axis captions sit at the far end of the axis they name, y at the top of
-  // the vertical, x at the right of the horizontal, so neither is mistaken
-  // for the other, which is exactly what happens with both in the same corner.
+  // Captions at the far end of the axis they name, never both in one corner.
   return `<svg class="chart tall" viewBox="0 0 ${w} ${h}" role="img">
     ${ticks}${zero}${line}${dots}
     <text x="2" y="${padT}" class="ct">${escapeHtml(yLabel)}</text>
@@ -446,7 +386,7 @@ export function scatter(points, { w = 320, h = 160, xLabel = '', yLabel = '', co
   </svg>`;
 }
 
-/** Per-rep bars, the fatigue curve for a single session. */
+/** Per-rep bars: the fatigue curve for one session. */
 export function repBars(reps, { h = 54 } = {}) {
   if (!reps.length) return '';
   return `<div class="repbars" style="--h:${h}px">${reps
@@ -459,13 +399,12 @@ export function repBars(reps, { h = 54 } = {}) {
     .join('')}</div>`;
 }
 
-/** Progress ring used on the report and the hub. */
+/** Progress ring. */
 export function ringSvg(fraction, label, sub, { size = 168, color = null } = {}) {
   const r = 70;
   const c = 2 * Math.PI * r;
   const off = c * (1 - Math.max(0, Math.min(fraction, 1)));
-  // Unless a specific colour is asked for, the ring uses the logo's teal-to-
-  // violet sweep, which is where the app gets its identity from.
+  // Default is the logo's teal-to-violet sweep.
   const gid = `rg${Math.random().toString(36).slice(2, 8)}`;
   const stroke = color || `url(#${gid})`;
   return `<div class="ringwrap" style="--size:${size}px">
@@ -482,23 +421,12 @@ export function ringSvg(fraction, label, sub, { size = 168, color = null } = {})
 }
 
 /* ---------------- handing a file to the user ----------------
-   `<a download>` is the whole story on a desktop and none of it on a phone.
-   The APK's WebView has no download handler at all, so the anchor click
-   returned, the toast said "downloaded", and nothing had happened anywhere -
-   which is what "I clicked export and I cannot find it" was. iOS in standalone
-   mode is nearly as bad: it opens the blob in a viewer you cannot save from.
+   Three routes, in the order a phone can use: share sheet, then download
+   (browser only, it fails silently in the APK), then clipboard. Returns which
+   one ran, so the toast can name it. */
 
-   So there are three routes, tried in the order that a phone can actually
-   use, and the toast names the one that ran rather than guessing.
-     1. The share sheet, if the platform can share a real file. This is the
-        good answer on iOS and in a mobile browser: Files, Drive, a message.
-     2. A download, in a browser only. Skipped in the APK precisely because it
-        is the route that fails silently there.
-     3. The clipboard, which works everywhere and cannot fail quietly.
-
-   Returns what happened, so a caller that wants to say more can. */
 export async function saveFile(name, text, mime = 'application/json') {
-  // `text` is a string for the exports and a Blob for a gallery photo.
+  // String for exports, Blob for a gallery photo.
   const file = (() => {
     try {
       return new File([text], name, { type: mime });
@@ -513,7 +441,7 @@ export async function saveFile(name, text, mime = 'application/json') {
       toast('Saved');
       return 'shared';
     } catch (e) {
-      // Dismissing the share sheet is an answer, not a failure to fall through.
+      // Dismissing the sheet is an answer, not a reason to fall through.
       if (e?.name === 'AbortError') return 'cancelled';
     }
   }
@@ -529,15 +457,14 @@ export async function saveFile(name, text, mime = 'application/json') {
     return 'downloaded';
   }
 
-  // Text only: a photo on the clipboard as the string "[object Blob]" is worse
-  // than an honest refusal.
+  // Text only: "[object Blob]" on the clipboard is worse than refusing.
   if (typeof text === 'string') {
     try {
       await navigator.clipboard.writeText(text);
       toast('Copied to the clipboard. Paste it somewhere that keeps it.');
       return 'copied';
     } catch {
-      /* falls through to the same message */
+      /* same message */
     }
   }
   toast('Could not save that here. Open NiFo in a browser and save from there.');
@@ -545,17 +472,9 @@ export async function saveFile(name, text, mime = 'application/json') {
 }
 
 /* ---------------- the sheet ----------------
-   A modal, which the app went five features without needing. Habits needs
-   three: the frequency picker, the value keypad and the type chooser, all of
-   which are questions asked in the middle of a screen you must not lose your
-   place on.
-
-   It mounts as the first child of `#app` rather than on `<body>`, which is the
-   whole trick: `back.js` answers a back gesture by clicking the first
-   `#app [data-back]` in document order, and a bare `data-back` means "this
-   screen handles back itself". So a sheet in that position takes the hardware
-   button, the browser's back and the scrim tap through one path, and the
-   underlying screen's corner arrow is left alone underneath it. */
+   Mounts as the first child of #app, not on <body>: back.js clicks the first
+   #app [data-back] in document order, so the sheet takes the back gesture and
+   the screen's own arrow underneath is left alone. */
 
 export function openSheet(html, { onClose } = {}) {
   const app = document.getElementById('app');
@@ -576,8 +495,7 @@ export function openSheet(html, { onClose } = {}) {
   function onKey(e) {
     if (e.key === 'Escape') close();
   }
-  // Only a tap on the scrim itself, and only a click whose target is the scrim
-  // — which is also what back.js's synthetic click produces.
+  // The scrim itself only, which is also what back.js's synthetic click hits.
   scrim.addEventListener('click', (e) => {
     if (e.target === scrim) close();
   });

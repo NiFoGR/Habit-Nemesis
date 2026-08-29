@@ -1,14 +1,5 @@
-// The pretext: one book, and what you need in your head before you open it.
-//
-// The same six questions for every book, in the same order, because the value
-// of this screen is that it is comparable. You can read Habakkuk's and
-// Colossians' and get the same six answers, which is what makes it possible to
-// hold seventy-six books in one map rather than as seventy-six unrelated facts.
-//
-// The Gospels get two more questions, because "who was this written for" and
-// "what does only this one give me" are the two things that actually
-// distinguish four accounts of the same events, and no one ever says them out
-// loud.
+// One book, and what to have in your head before opening it. The same six
+// questions every time, so books are comparable. The Gospels get two more.
 
 import * as store from '../store.js';
 import * as bible from './program.js';

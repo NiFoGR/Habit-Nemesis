@@ -1,12 +1,6 @@
-// One habit, in full: the score, the history, the calendar, every streak it
-// has ever had, and which days of the week it actually happens on.
-//
-// The calendar is the only chart in the app you can write to. Editing the past
-// is not an escape hatch here, it is the point: a tracker you cannot correct
-// stops being a record of what happened and becomes a record of what you
-// remembered to press, and the second one is worth nothing. Everything else on
-// this screen recomputes from the entries, so a corrected Tuesday moves the
-// score, the streaks and the bars with it.
+// One habit in full: score, history, calendar, every streak, and which days of
+// the week it happens on. The calendar is the one chart you can write to, and
+// everything else recomputes from it.
 
 import * as store from '../store.js';
 import * as habits from './program.js';
@@ -22,9 +16,7 @@ const SCORE_PERIODS = {
   year: { label: 'Year', buckets: 10 },
 };
 
-// Which period each chart is showing. Module state rather than a setting: it
-// is a way of looking at the screen you are on, not a preference to carry
-// between habits, and a stored one would be one more thing to sanitise.
+// Module state, not a setting: a way of looking at this screen, not a preference.
 let scorePeriod = 'month';
 let historyPeriod = 'week';
 let editing = false;
@@ -44,9 +36,7 @@ function bucketKey(key, period, firstDay) {
   return String(y);
 }
 
-/** The score at the end of each bucket. The end and not the mean: the score is
- *  already an average with a memory, and averaging it again would flatten the
- *  one thing the chart is for. */
+/** End of bucket, not mean: the score is already an average with a memory. */
 function scoreSeries(sum, period) {
   const firstDay = habits.settings().firstDay;
   const { buckets } = SCORE_PERIODS[period];
@@ -64,10 +54,7 @@ function periodSelect(id, value, options) {
 
 /* ---------------- the screen ---------------- */
 
-/** One habit's own screen. Only a habit you made: the five the app asks of you
- *  have far richer screens of their own inside their sections, and a second,
- *  thinner view of the same record is the exact thing this redesign removed
- *  everywhere else. Their row's name goes to the section instead. */
+/** Habits you made only. The five have richer screens inside their sections. */
 export function renderHabitDetail(mount, id) {
   const habit = habits.byId(id);
   if (!habit) {
@@ -94,8 +81,7 @@ export function renderHabitDetail(mount, id) {
     const freq = habits.weekdayByMonth(sum, 8);
     const month = Math.round((sum.score - habits.scoreAgo(sum, 30)) * 100);
     const year = Math.round((sum.score - habits.scoreAgo(sum, 365)) * 100);
-    // The tile is the delta, so it is coloured rather than carrying a second
-    // copy of itself underneath in green.
+    // The tile is the delta, so it is coloured rather than repeated underneath.
     const deltaClass = (v) => (v > 0 ? 'good-text' : v < 0 ? 'warn-inline' : '');
 
     mount.innerHTML = `

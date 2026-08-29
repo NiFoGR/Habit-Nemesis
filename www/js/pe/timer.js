@@ -1,10 +1,8 @@
-// PE session runner: set up → run → log.
+// PE session: set up, run, log.
 //
-// The countdown is wall-clock (Date.now), not accumulated frame time, so it
-// keeps counting with the screen off or the app backgrounded. On the APK the
-// end is also scheduled as a real Android alarm, so it rings even if the app
-// has been killed. The kegel cadence runs on performance.now, because haptics
-// only matter while you are actually looking at the phone.
+// The countdown is wall-clock, so it keeps counting with the screen off, and on
+// the APK the end is a real alarm. The kegel cadence uses performance.now:
+// haptics only matter while you are looking at the phone.
 
 import * as store from '../store.js';
 import * as pe from './program.js';
@@ -17,7 +15,7 @@ import { leaveTo } from '../back.js';
 
 const R = 132;
 const CIRC = 2 * Math.PI * R;
-// If the user forgets the app entirely, logged time stops growing here.
+// Logged time stops growing here if the app is forgotten.
 const OVERTIME_CAP_MS = 15 * 60000;
 
 function parseNum(raw) {
@@ -38,10 +36,6 @@ export function renderTimer(mount, opts = {}) {
     setBreakMin: 10,
   };
   const def = () => pe.typeDef(cfg.type);
-
-  /* ---------------- 1. setup ----------------
-     Choosing the session: type, duration, intensity, and the warnings that
-     object before the timer ever starts. */
 
   function defaults() {
     const d = def();
@@ -163,7 +157,7 @@ export function renderTimer(mount, opts = {}) {
     return `${cfg.setBreakMin} min`;
   }
 
-  /** How this session sits against the two-hour daily stretching target. */
+  /** This session against the two-hour daily target. */
   function goalLine() {
     const doneMs = store
       .get()
@@ -183,10 +177,6 @@ export function renderTimer(mount, opts = {}) {
   }
 
   /* ---------------- running (wall clock) ---------------- */
-
-  /* ---------------- 2. the live session ----------------
-     All timing is wall-clock, never accumulated frames, so the countdown
-     keeps running with the screen off and recomputes on return. */
 
   let endsAt = 0; // wall-clock end of the work countdown
   let pausedRemaining = null; // ms left while paused
@@ -405,9 +395,6 @@ export function renderTimer(mount, opts = {}) {
 
   /* ---------------- finish ---------------- */
 
-  /* ---------------- 3. finishing ----------------
-     What happened, what to record, and the debrief. */
-
   function renderFinish(durationSec) {
     mount.innerHTML = `
       <div class="screen">
@@ -532,8 +519,7 @@ export function renderTimer(mount, opts = {}) {
       kegelLogged = record.kegelCycles;
     }
 
-    // One catalogue now, so a stretch that also ran kegels no longer has to
-    // ask two modules whether anything was earned and paste the answers together.
+    // One catalogue: a stretch that also ran kegels asks once.
     const earned = feats.check();
     store.save();
     renderReport(record, earned, kegelLogged);

@@ -2,33 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <!-- No inline scripts and no remote anything: the whole app is local, so the
-       policy can be strict. This is the main structural defence against an
-       injected string ever executing. Inline styles are allowed because the
-       UI sets element styles directly; blob: and data: images are needed for
-       decrypted gallery photos and the icons.
-       Capacitor injects its bridge with addDocumentStartJavaScript, which runs
-       before this tag is parsed, so the APK build is unaffected. If a native
-       build ever comes up blank, this meta is the first thing to check. -->
+  <!-- Local app, so the policy is strict. Inline styles are allowed because
+       the UI sets element styles; blob: and data: images are the gallery and
+       the icons. Capacitor injects its bridge before this tag is parsed.
+       A blank native build: check here first. -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
-  <!-- Pinch-zoom stays available; blocking it is an accessibility problem, not
-       a polish detail. -->
+  <!-- Pinch-zoom stays available: blocking it is an accessibility problem. -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b0f14">
   <meta name="description" content="NiFo. Personal app for kegels, length training, prayer, Bible reading and habits.">
   <title>NiFo</title>
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icons/icon-192.png">
-  <!-- iPhone. Added to the Home Screen, iOS reads these rather than the
-       manifest on anything before 16.4, and the icon it takes is this one:
-       180 square and opaque, because iOS composites transparency onto white
-       and then rounds the corners itself.
-       `black-translucent` puts the app behind the status bar and the home
-       indicator, which is only safe because every screen already pads itself
-       with --safe-t and --safe-b. If a screen ever appears with its title
-       under the clock, that pair is what to look at, not this tag.
-       `mobile-web-app-capable` is the standard spelling of the same thing and
-       is here only because Chrome warns when it finds the Apple one alone. -->
+  <!-- iPhone. Before 16.4 iOS reads these rather than the manifest, and takes
+       this icon: 180 square and opaque, because iOS composites transparency
+       onto white and rounds the corners itself.
+       black-translucent is safe only because every screen pads with --safe-t
+       and --safe-b. A title under the clock means that pair, not this tag. -->
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
@@ -38,10 +28,8 @@
 </head>
 <body>
   <div id="app"></div>
-  <!-- Outside #app on purpose: the router replaces #app wholesale on every
-       route, and a bar that is rebuilt on every navigation cannot animate and
-       flickers on a slow frame. js/tabs.js fills this once and only ever
-       toggles a class on it afterwards. -->
+  <!-- Outside #app: the router replaces #app on every route, and a bar rebuilt
+       every navigation cannot animate. js/tabs.js fills it once. -->
   <nav id="tabs" class="tabbar" hidden></nav>
   <noscript>NiFo needs JavaScript enabled.</noscript>
   <script type="module" src="./js/app.js"></script>
