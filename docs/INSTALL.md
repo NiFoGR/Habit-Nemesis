@@ -27,6 +27,24 @@ tab it is just a web page.
 Leave it open for a few seconds on the first run. That is the service worker
 caching the app, and after it finishes the app works with no signal.
 
+## If the link 404s
+
+Two causes, in order of likelihood.
+
+**The path is missing.** `nifogr.github.io` on its own is a user site and there
+is not one. The app is a project site, so the repo name is part of the address
+and it is case-sensitive: `NiFo-App`, not `nifo-app`.
+
+**Pages is serving the wrong thing.** Under **Settings -> Pages**, Source has
+to be **GitHub Actions**. On "Deploy from a branch" it serves the repository
+root, and the root is not the app, so every URL 404s. The tell is a
+`pages build and deployment` run in the Actions tab that did not come from
+`pages.yml`, and one appearing on a branch `pages.yml` does not even run on.
+
+There is a root `index.html` that redirects into `www/` so a branch-served site
+works anyway, but it serves the full 8 MB rather than the packed 1 MB. Fix the
+Source setting rather than living on it.
+
 ## Android
 
 Same link in Chrome, then **Install app** from the menu, or the prompt that
