@@ -86,25 +86,28 @@ is('months sit in their meteorological season',
   ['2026-01', '2026-03', '2026-05', '2026-06', '2026-08', '2026-09', '2026-11', '2026-12'].map((m) => a.arcKey(a.arcOfMonth(m))),
   ['2025-winter', '2026-spring', '2026-spring', '2026-summer', '2026-summer', '2026-autumn', '2026-autumn', '2026-winter']);
 is('winter runs into the next year under its own December', a.arcOfMonth('2027-01').year, 2026);
-is('each arc knows the one immediately before it',
-  ['winter', 'spring', 'summer', 'autumn'].map((id) => a.arcKey(a.previousArc({ ...a.ARCS.find((x) => x.id === id), year: 2026 }))),
-  ['2026-autumn', '2025-winter', '2026-spring', '2026-summer']);
+is('each cup knows the one immediately before it',
+  ['winter', 'spring', 'autumn'].map((id) => a.arcKey(a.previousArc({ ...a.ARCS.find((x) => x.id === id), year: 2026 }))),
+  ['2026-autumn', '2025-winter', '2026-spring']);
+is('and summer is stepped over, never counted down to',
+  ['winter', 'spring', 'autumn'].map((id) => a.arcKey(a.nextArc({ ...a.ARCS.find((x) => x.id === id), year: 2026 }))),
+  ['2027-spring', '2026-autumn', '2026-winter']);
+is('summer holds no cup', a.CUPS.map((c) => c.id), ['winter', 'spring', 'autumn']);
+is('and every week of it is off-season',
+  a.arcWeeks({ ...a.ARCS.find((x) => x.id === 'summer'), year: 2026 }).every((w) => a.arcStage(w).stage === 'break'), true);
 is('an arc is twelve to fourteen weeks',
   a.ARCS.every((x) => { const n = a.arcWeeks({ ...x, year: 2026 }).length; return n >= 12 && n <= 14; }), true);
-is('the last two weeks of a quarter are the off-season',
-  a.arcWeeks(a.arcOfMonth('2026-07')).slice(-2).map((w) => a.arcStage(w).stage), ['break', 'break']);
+is('the last two weeks of a cup quarter are the off-season',
+  a.arcWeeks(a.arcOfMonth('2026-10')).slice(-2).map((w) => a.arcStage(w).stage), ['break', 'break']);
 is('and the three before those are the knockout, in order',
-  a.arcSeason(a.arcOfMonth('2026-07')).slice(-4).map((w) => a.arcStage(w).stage), ['group', 'qf', 'sf', 'final']);
+  a.arcSeason(a.arcOfMonth('2026-10')).slice(-4).map((w) => a.arcStage(w).stage), ['group', 'qf', 'sf', 'final']);
 is('the group stage is the season less its knockout',
-  a.ARCS.every((x) => {
+  a.CUPS.every((x) => {
     const arc = { ...x, year: 2026 };
     return a.arcGroupWeeks(arc).length === a.arcSeason(arc).length - 3 && a.arcGroupWeeks(arc).length >= 5;
   }), true);
-is('every arc knows the one after it',
-  ['winter', 'spring', 'summer', 'autumn'].map((id) => a.arcKey(a.nextArc({ ...a.ARCS.find((x) => x.id === id), year: 2026 }))),
-  ['2027-spring', '2026-summer', '2026-autumn', '2026-winter']);
-is('and next undoes previous',
-  a.ARCS.every((x) => {
+is('and next undoes previous, for every cup',
+  a.CUPS.every((x) => {
     const arc = { ...x, year: 2026 };
     return a.arcKey(a.previousArc(a.nextArc(arc))) === a.arcKey(arc);
   }), true);

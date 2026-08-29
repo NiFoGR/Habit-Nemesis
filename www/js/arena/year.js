@@ -223,7 +223,7 @@ function arcRow(year) {
   </section>`;
 }
 
-/** '2026-summer' back into an arc. */
+/** '2026-autumn' back into an arc. */
 function arcFromKey(key) {
   const [y, id] = key.split('-');
   const arc = arena.ARCS.find((a) => a.id === id) || arena.ARCS[0];

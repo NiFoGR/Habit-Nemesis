@@ -10,7 +10,7 @@ import { openWeekSheet } from './home.js';
 
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 
-/** '2026-summer' back into an arc. */
+/** '2026-autumn' back into an arc. */
 function arcFromKey(key) {
   const [y, id] = key.split('-');
   const arc = arena.ARCS.find((a) => a.id === id) || arena.ARCS[0];
@@ -55,7 +55,7 @@ export function renderCabinet(mount) {
           : `<div class="cup-empty">
               <span class="cup-art">${icon('trophy', 30)}</span>
               <b>No cups yet</b>
-              <i>Four a year. Winter, spring, summer, autumn.</i>
+              <i>Three a year. Winter, spring, autumn.</i>
             </div>`}
       </section>
 

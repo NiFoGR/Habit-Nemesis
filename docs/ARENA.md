@@ -188,14 +188,20 @@ the Cabinet changes hour to hour, which is what lets that room be still.
 
 ## The Arc
 
-Four a year, on the meteorological seasons: **Winter** (Dec–Feb), **Spring**
-(Mar–May), **Summer** (Jun–Aug), **Autumn** (Sep–Nov).
+Three a year, on the meteorological seasons: **Winter** (Dec to Feb), **Spring**
+(Mar to May), **Autumn** (Sep to Nov). **Summer holds no cup.**
 
-**A cup has an off-season.** The last two weeks of every quarter are not part
-of any tournament. The arcs used to tile the year end to end, which meant you
-were always in one — and something you are always in is not something you
-*enter*. Two weeks of nothing is what buys the countdown its meaning, and it is
-why the Arc leaves the screen entirely between cups and comes back as a date.
+**A cup has an off-season.** The last two weeks of every cup quarter are not
+part of any tournament, and the whole of summer is off-season. The arcs used to
+tile the year end to end, which meant you were always in one, and something you
+are always in is not something you *enter*. The gap is what buys the countdown
+its meaning, and it is why the Arc leaves the screen entirely between cups and
+comes back as a date.
+
+Summer is modelled as a quarter with `cup: false` rather than as a hole in the
+calendar. Every function stays total, `arcSeason` returns nothing for it so
+every week of it reads as off-season, and `nextArc` and `previousArc` step over
+it, so the quarter-final after summer still plays the best week of Spring.
 
 So a thirteen-week quarter is eight group weeks, three knockout weeks and a
 fortnight of nothing.

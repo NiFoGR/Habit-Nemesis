@@ -453,7 +453,7 @@ export const FEATS = [
   { id: 'arcThree', section: 'The Arena', icon: 'trophy', name: 'Three Arcs',
     blurb: 'Three trophies in the cabinet.', now: arcsWon, at: 3 },
   { id: 'arcYear', section: 'The Arena', icon: 'medal', name: 'The clean sweep',
-    blurb: 'All four Arcs of one year. Winter, spring, summer, autumn.',
+    blurb: 'Every cup of one year. Winter, spring, autumn.',
     test: () => {
       const byYear = {};
       for (const [k, a] of Object.entries(arenaState().arcs)) {
@@ -461,7 +461,7 @@ export const FEATS = [
         const y = k.split('-')[0];
         byYear[y] = (byYear[y] || 0) + 1;
       }
-      return Object.values(byYear).some((n) => n >= 4);
+      return Object.values(byYear).some((n) => n >= 3);
     } },
 ];
 

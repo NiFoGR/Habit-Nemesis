@@ -257,12 +257,18 @@ export const currentMonth = () => monthOfWeek(currentWeek());
 
 /* ------------------------ arcs ------------------------ */
 
+// Three cups a year. Summer is a quarter with no tournament in it: the calendar
+// still names it, so every function here stays total, but `cup` is what decides
+// whether anything is played.
 export const ARCS = [
-  { id: 'winter', name: 'Winter Arc', from: 11, to: 1 }, // Dec, Jan, Feb
-  { id: 'spring', name: 'Spring Arc', from: 2, to: 4 },
-  { id: 'summer', name: 'Summer Arc', from: 5, to: 7 },
-  { id: 'autumn', name: 'Autumn Arc', from: 8, to: 10 },
+  { id: 'winter', name: 'Winter Arc', from: 11, to: 1, cup: true }, // Dec, Jan, Feb
+  { id: 'spring', name: 'Spring Arc', from: 2, to: 4, cup: true },
+  { id: 'summer', name: 'Summer', from: 5, to: 7, cup: false },
+  { id: 'autumn', name: 'Autumn Arc', from: 8, to: 10, cup: true },
 ];
+
+/** The three that are played, in calendar order. */
+export const CUPS = ARCS.filter((a) => a.cup);
 
 /** The arc a month is in. Winter crosses New Year, so it files under December. */
 export function arcOfMonth(month) {
@@ -291,8 +297,10 @@ export function arcWeeks(arc) {
   return months.flatMap(weeksOfMonth);
 }
 
-/** The quarter less its break. Floored at four so there is always a group stage. */
+/** The quarter less its break. Floored at four so there is always a group stage.
+ *  A quarter with no cup in it is season-less: every week of it is off-season. */
 export function arcSeason(arc) {
+  if (!arc.cup) return [];
   const weeks = arcWeeks(arc);
   return weeks.slice(0, Math.max(4, weeks.length - ARC_BREAK));
 }
@@ -312,12 +320,40 @@ export function arcStage(key) {
   return { arc, weeks, season, stage, index: i };
 }
 
-/** The arc after this one. */
+/** The next cup. Summer holds no cup, so it is stepped over rather than counted
+ *  down to: a countdown to a tournament that never opens is a lie. */
 export function nextArc(arc) {
-  if (arc.id === 'autumn') return { ...ARCS[0], year: arc.year };
-  if (arc.id === 'winter') return { ...ARCS[1], year: arc.year + 1 };
-  const i = ARCS.findIndex((a) => a.id === arc.id);
-  return { ...ARCS[i + 1], year: arc.year };
+  let cursor = arc;
+  for (let i = 0; i < ARCS.length; i++) {
+    cursor = stepArc(cursor, 1);
+    if (cursor.cup) return cursor;
+  }
+  return { ...ARCS[0], year: arc.year };
+}
+
+/** The cup before this one, for the quarter-final's opponent. */
+export function previousArc(arc) {
+  let cursor = arc;
+  for (let i = 0; i < ARCS.length; i++) {
+    cursor = stepArc(cursor, -1);
+    if (cursor.cup) return cursor;
+  }
+  return { ...ARCS[0], year: arc.year - 1 };
+}
+
+/** One quarter forward or back, cup or not.
+ *
+ *  ARCS is not in chronological order: winter is filed under its own December
+ *  and runs into the next year, so within a filing year it comes last, after
+ *  autumn. Stepping has to walk that order, not the array's. */
+const ARC_ORDER = ['spring', 'summer', 'autumn', 'winter'];
+
+function stepArc(arc, dir) {
+  const i = ARC_ORDER.indexOf(arc.id);
+  const j = (i + dir + ARC_ORDER.length) % ARC_ORDER.length;
+  // The only year change is the winter wrap, in either direction.
+  const year = arc.year + (dir > 0 && j === 0 ? 1 : dir < 0 && i === 0 ? -1 : 0);
+  return { ...ARCS.find((a) => a.id === ARC_ORDER[j]), year };
 }
 
 /** `name` is the round, `who` is the opponent. Two different things. */
@@ -365,15 +401,6 @@ export function arcFixture(key) {
     return { id: stage, name: round.who, blurb: `${round.name} · ${round.opponent}`, score: divisionOf(store.get().arena.division).bar, week: null, knockout: stage };
   }
   return { id: stage, name: round.who, blurb: `${round.name} · ${round.opponent} · ${weekLabel(w.key)}`, score: w.score, week: w.key, knockout: stage };
-}
-
-/** The arc before this one. Winter is filed under its December and runs into
- *  the next year, so the year cannot be taken at face value. */
-export function previousArc(arc) {
-  if (arc.id === 'winter') return { ...ARCS[3], year: arc.year };
-  if (arc.id === 'spring') return { ...ARCS[0], year: arc.year - 1 };
-  const i = ARCS.findIndex((a) => a.id === arc.id);
-  return { ...ARCS[i - 1], year: arc.year };
 }
 
 /** Turn-up threshold. A share of the group, so a differently shaped cup does
