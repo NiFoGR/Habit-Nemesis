@@ -155,6 +155,43 @@ let reorderMode = false;
 /** The router calls this, and it always arrives in the normal state: reorder
  *  mode is something you are doing, not a preference. Internal redraws go
  *  through `redraw`. */
+/* ---------------- the first five ---------------- */
+// An empty grid is the worst first screen this app can show, and "New habit" on
+// its own asks someone to invent a system before they have used one. Five to
+// tap, already sensible. They go the moment there is a habit on the grid.
+
+const STARTERS = [
+  { name: 'Gym', colour: 'orange', kind: 'yesno', freq: { num: 4, den: 7 }, question: 'Did you train?' },
+  { name: 'Water', colour: 'sky', kind: 'number', unit: 'L', target: 3, question: 'How much water?' },
+  { name: 'Read', colour: 'violet', kind: 'number', unit: 'pages', target: 20, question: 'How many pages?' },
+  { name: 'Protein', colour: 'amber', kind: 'number', unit: 'g', target: 150, question: 'How much protein?' },
+  { name: 'No sugar', colour: 'rose', kind: 'yesno', freq: { num: 6, den: 7 }, question: 'Stayed off sugar?' },
+];
+
+function starterPack() {
+  return `<section class="starters">
+    <h2>Start with one of these</h2>
+    <p class="muted small">Tap to add. Everything about it can change later.</p>
+    <div class="starter-list">
+      ${STARTERS.map((h, i) => `<button class="starter" data-starter="${i}" style="--sc:${habits.hexOf(h.colour)}">
+        <span class="starter-dot"></span>
+        <span class="starter-name">${escapeHtml(h.name)}</span>
+        <span class="starter-meta">${escapeHtml(h.kind === 'number' ? `${h.target} ${h.unit} a day` : habits.freqLabel(h.freq))}</span>
+        <span class="starter-add">${icon('plus', 15)}</span>
+      </button>`).join('')}
+    </div>
+  </section>`;
+}
+
+function addStarter(mount, i) {
+  const pick = STARTERS[i];
+  if (!pick) return;
+  habits.save({ ...habits.draft(pick.kind), ...pick, order: habits.active().length });
+  haptic('hit');
+  chime('mark');
+  redraw(mount);
+}
+
 export function renderHome(mount) {
   reorderMode = false;
   redraw(mount);
@@ -216,12 +253,14 @@ function redraw(mount) {
       </div>
 
       <div class="hgrid ${reorderMode ? 'reordering' : ''}" style="--cols:${reorderMode ? 1 : s.columns}">
-        ${reorderMode ? '' : head}
+        ${reorderMode || !(linked.length || habits.active().length) ? '' : head}
         ${linked.length && !reorderMode
           ? `<div class="hg-rows">${linked.map((h) => rowHtml(h, days, s)).join('')}</div>`
           : ''}
         ${groupSections}
       </div>
+
+      ${habits.active().length ? '' : starterPack()}
 
       <button class="btn ghost wide" id="addBtn2">${icon('plus', 16)}<span>New habit</span></button>
 
@@ -229,6 +268,8 @@ function redraw(mount) {
     </div>`;
 
   mount.querySelectorAll('#addBtn, #addBtn2').forEach((b) => b.addEventListener('click', openTypePicker));
+  mount.querySelectorAll('[data-starter]').forEach((b) =>
+    b.addEventListener('click', () => addStarter(mount, Number(b.dataset.starter))));
   mountInstall();
   wireGrid(mount, days);
 }

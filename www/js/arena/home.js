@@ -51,7 +51,29 @@ function barTo(st) {
   <div class="ar-bar-ends">
     <span>${escapeHtml(st.division.name)} · ${pct(floor)}</span>
     <span>${st.next ? `${escapeHtml(st.next.name)} · ${pct(roof)}` : 'the top'}</span>
-  </div>`;
+  </div>
+  ${fromHere(st)}`;
+}
+
+/** The number the rest of the month has to average. The most useful line on
+ *  the screen and the one nobody could work out for themselves. */
+function fromHere(st) {
+  const hold = arena.needFromHere(st.division.bar);
+  const up = st.next ? arena.needFromHere(st.next.bar) : null;
+  if (!hold) return '';
+  const weeks = hold.weeks === 1 ? 'this week' : `each of the ${hold.weeks} weeks left`;
+
+  // Already clear of the floor with nothing left to lose it in.
+  if (hold.need <= 0 && (!up || up.need > 1)) {
+    return `<p class="ar-need safe">${escapeHtml(st.division.name)} is safe whatever happens now.</p>`;
+  }
+  if (up && up.need <= 1 && up.need > 0) {
+    return `<p class="ar-need up">${pct(up.need)} ${escapeHtml(weeks)} takes you to ${escapeHtml(st.next.name)}.</p>`;
+  }
+  if (hold.need > 1) {
+    return `<p class="ar-need gone">${escapeHtml(st.division.name)} is out of reach this month. Play for next.</p>`;
+  }
+  return `<p class="ar-need">${pct(hold.need)} ${escapeHtml(weeks)} holds ${escapeHtml(st.division.name)}.</p>`;
 }
 
 /* ---------------- the week ---------------- */

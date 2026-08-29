@@ -9,7 +9,7 @@
     "icons": "node tools/gen-icons.mjs",
     "android:add": "cap add android",
     "android:sync": "cap sync android",
-    "android:apk": "cap sync android && cd android && ./gradlew assembleDebug",
+    "android:apk": "cap sync android && node tools/patch-signing.mjs && node tools/patch-backup.mjs && cd android && ./gradlew assembleDebug",
     "check:arena": "node tools/check-arena.mjs",
     "pack:web": "node tools/pack-web.mjs",
     "art": "node tools/art.mjs"

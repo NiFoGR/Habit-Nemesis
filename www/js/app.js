@@ -219,6 +219,9 @@ document.addEventListener('click', (e) => {
 // Never left on the back stack: these start on arrival.
 const EPHEMERAL = ['#/session', '#/bible/pray', '#/pe/timer', '#/pe/measure', '#/pocket', '#/breathe/run', '#/habits/edit', '#/arena/result', '#/arena/rank', '#/arena/moment', '#/intro'];
 
+// One restore point a day, before anything can write over the day's record.
+store.snapshot();
+
 // Close the Arena's books before the first render.
 collect();
 

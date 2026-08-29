@@ -2686,8 +2686,10 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .rk-name { grid-area: name; font-size: var(--f-small); color: var(--muted); }
 .rk-need { grid-area: need; font-size: var(--f-fine); color: var(--faint); font-variant-numeric: tabular-nums; }
 .rk-bar { grid-area: bar; height: 4px; border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; margin-top: 5px; }
+/* Each rung's bar is as long as that rung costs, so the ladder climbs across as
+   well as up. Uniform bars made five of the seven rows decoration. */
 .rk-bar i { display: block; height: 100%; width: 0; background: var(--line); border-radius: inherit; transition: width 0.5s var(--ease); }
-.rank-moment[data-beat='2'] .rk-rung .rk-bar i { width: 100%; }
+.rank-moment[data-beat='2'] .rk-rung .rk-bar i { width: var(--w); }
 
 /* Where you are: named in full, lit, and carrying the score that got you here. */
 .rk-rung.here .rk-name { color: var(--text); font-size: var(--f-head); font-weight: var(--w-bold); }
@@ -2708,3 +2710,42 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 @media (prefers-reduced-motion: reduce) {
   .rk-verdict, .rk-line, .rk-rung, .rk-bar i { transition: none; }
 }
+
+/* ---------- the first five ----------
+   Shown only on an empty grid. Each row wears the colour it will have, so
+   tapping one is a preview rather than a promise. */
+.starters { margin-top: 18px; }
+.starters h2 { font-size: var(--f-head); margin: 0 0 2px; }
+.starters p { margin: 0 0 12px; }
+.starter-list { display: grid; gap: 8px; }
+.starter {
+  display: grid;
+  grid-template-columns: 12px 1fr auto 22px;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--text);
+  text-align: left;
+  font-size: var(--f-body);
+}
+.starter:active { transform: scale(0.985); }
+.starter-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--sc);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--sc) 22%, transparent);
+}
+.starter-name { font-weight: var(--w-medium); color: var(--sc); }
+.starter-meta { font-size: var(--f-fine); color: var(--muted); }
+.starter-add { color: var(--faint); display: grid; place-items: center; }
+
+/* ---------- restore points ----------
+   Under the backup buttons, because it is the same question: what happens to
+   the record when something goes wrong. */
+.restore { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+.restore h4 { margin: 0 0 4px; font-size: var(--f-small); color: var(--text); }
+.restore .fineprint { margin: 0 0 8px; }
+.restore .set-actions { margin-bottom: 8px; }

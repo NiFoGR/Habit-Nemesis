@@ -770,6 +770,24 @@ export function standing() {
   };
 }
 
+/** What the weeks left have to average to land on a target.
+ *
+ *  A month is the mean of its scored weeks, so hitting T over n weeks when k
+ *  are already banked at a total of `have` needs (T*n - have) / (n - k) from
+ *  what is left. Returns null when the month is out of weeks, and the number is
+ *  reported even when it is above 100%: 'you cannot get there from here' is a
+ *  fact worth knowing on the 24th. */
+export function needFromHere(target, month = currentMonth()) {
+  const keys = weeksOfMonth(month);
+  const now = currentWeek();
+  const banked = keys.filter((k) => k < now).map(weekScore).filter((w) => !w.void && w.due >= VOID_CELLS);
+  const left = keys.filter((k) => k >= now);
+  if (!left.length) return null;
+  const total = banked.length + left.length;
+  const have = banked.reduce((a, w) => a + w.score, 0);
+  return { need: (target * total - have) / left.length, weeks: left.length };
+}
+
 /** Weeks left this month, counting the one being played. */
 export function weeksLeft() {
   const keys = weeksOfMonth(currentMonth());

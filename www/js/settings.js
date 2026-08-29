@@ -3,12 +3,13 @@
 import * as store from './store.js';
 import * as vault from './pe/vault.js';
 import { usage as photoUsage } from './pe/db.js';
-import { escapeHtml, toast, openSheet, saveFile, haptic, WEEKDAYS_LONG } from './ui.js';
+import { escapeHtml, toast, openSheet, saveFile, haptic, relDay, WEEKDAYS_LONG } from './ui.js';
 import * as habits from './habits/program.js';
 import { icon } from './icons.js';
 import { kegelName, peName } from './names.js';
 import { markUnlocked } from './lock.js';
 import { nifoOffered, nifoUnlocked, tryNifoPin } from './nifo.js';
+import { isNative } from './native.js';
 
 /** One row per section with its own settings screen. Prayer's live on the
  *  Bible row: prayer lives in the Bible section. */
@@ -97,6 +98,8 @@ export function renderSettings(mount) {
       <input type="file" id="importFile" accept="application/json" hidden>
       <p class="fineprint">Exporting opens your share sheet, so the file can go to Files, Drive or a message. In a browser it lands in your downloads.</p>
 
+      ${restorePoints()}
+
       <button class="btn danger wide" id="reset">Erase all data</button>
       <p class="fineprint">${nifoUnlocked()
         ? 'Every session, measurement, prayer day, chapter read, habit and feat. No undo.'
@@ -161,6 +164,25 @@ export function renderSettings(mount) {
   });
 }
 
+/** What is kept, and what each thing actually protects against. Every change
+ *  saves the instant it happens; these are the daily copies, and Android's own
+ *  backup is the only one that survives the app being uninstalled. */
+function restorePoints() {
+  const snaps = store.snapshots();
+  return `<div class="restore">
+    <h4>Restore points</h4>
+    ${snaps.length
+      ? `<p class="fineprint">One a day, last three kept. Undoes a bad import or a day you would rather not have had.</p>
+         <div class="set-actions">${snaps
+           .map((s) => `<button class="btn" data-restore="${escapeHtml(s.day)}">${escapeHtml(relDay(s.day))}</button>`)
+           .join('')}</div>`
+      : '<p class="fineprint">The first one is written the next time you open the app.</p>'}
+    <p class="fineprint">${isNative()
+      ? 'This phone also backs the record up to your Google account, so reinstalling brings it back.'
+      : 'These live in the app. Export a backup as well: nothing here survives clearing your browser data.'}</p>
+  </div>`;
+}
+
 /* ---------------- the door at the bottom ---------------- */
 // One attempt, and it says so first. The sheet never names what is behind it.
 
@@ -217,6 +239,20 @@ function wireBackup(mount) {
 
   const file = mount.querySelector('#importFile');
   mount.querySelector('#importBtn').addEventListener('click', () => file.click());
+
+  mount.querySelectorAll('[data-restore]').forEach((b) =>
+    b.addEventListener('click', () => {
+      const day = b.dataset.restore;
+      if (!confirm(`Roll everything back to ${relDay(day)}? Anything recorded since is lost.`)) return;
+      try {
+        store.restoreSnapshot(day);
+        haptic('done');
+        toast(`Rolled back to ${relDay(day)}`);
+        renderSettings(document.getElementById('app'));
+      } catch (e) {
+        toast(e.message);
+      }
+    }));
   file.addEventListener('change', async () => {
     const f = file.files?.[0];
     if (!f) return;

@@ -757,6 +757,54 @@ export function reset() {
   save();
 }
 
+/* ---------------- restore points ---------------- */
+// Every change already saves the moment it happens. This is the other half: one
+// snapshot a day, so a bad import or a day of nonsense can be undone.
+//
+// It does not survive the app being uninstalled, and nothing kept inside the
+// app can. Android's own backup is what carries the record off the device, and
+// tools/patch-backup.mjs turns it on.
+
+const SNAP = 'nifo.snap.';
+const SNAPS_KEPT = 3;
+// Snapshots share localStorage with the state itself, so a big record keeps
+// fewer of them rather than filling the quota and losing the lot.
+const SNAP_MAX_BYTES = 400000;
+
+export function snapshots() {
+  const out = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(SNAP)) out.push({ day: k.slice(SNAP.length), key: k, bytes: (localStorage.getItem(k) || '').length });
+  }
+  return out.sort((a, b) => (a.day < b.day ? 1 : -1));
+}
+
+/** Once a day, on boot. Returns the day it wrote, or '' when it did not. */
+export function snapshot() {
+  const day = dayKey();
+  const key = SNAP + day;
+  if (localStorage.getItem(key)) return '';
+  const text = JSON.stringify(state);
+  if (text.length > SNAP_MAX_BYTES) return '';
+  try {
+    localStorage.setItem(key, text);
+  } catch {
+    // Out of room. The state itself is what matters, so the snapshots go first.
+    for (const s of snapshots()) localStorage.removeItem(s.key);
+    return '';
+  }
+  for (const old of snapshots().slice(SNAPS_KEPT)) localStorage.removeItem(old.key);
+  return day;
+}
+
+/** Roll back to a snapshot. Same path as an import, so it is sanitised too. */
+export function restoreSnapshot(day) {
+  const text = localStorage.getItem(SNAP + day);
+  if (!text) throw new Error('That restore point is gone');
+  return importJson(text, { keepVault: true });
+}
+
 export function exportJson() {
   return JSON.stringify(state, null, 2);
 }

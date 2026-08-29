@@ -78,7 +78,7 @@ export function renderRank(mount) {
       <span class="rk-mark">${here ? crest(i, 40) : ''}</span>
       <span class="rk-name">${escapeHtml(d.name)}</span>
       <span class="rk-need">${here ? pct(m.score) : i > rung ? `needs ${pct(d.bar)}` : ''}</span>
-      <span class="rk-bar"><i></i></span>
+      <span class="rk-bar"><i style="--w:${((here ? m.score : d.bar) * 100).toFixed(0)}%"></i></span>
     </li>`;
   }).reverse().join('');
 
