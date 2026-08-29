@@ -51,8 +51,7 @@ export function renderSettings(mount) {
            about itself that is worth making twice. -->
       <section class="set-hero">
         <b id="usage">checking</b>
-        <span>on this phone, and nowhere else. No account, no server, nobody
-        else. Clearing the app's data is the only thing that can take it.</span>
+        <span>on this phone, and nowhere else.</span>
       </section>
 
       ${nifoUnlocked() ? `<h3 class="set-group">Sections</h3>${settingsNav()}` : ''}
@@ -61,7 +60,7 @@ export function renderSettings(mount) {
         row('Week starts', select('firstDay', WEEKDAYS_LONG.map((d, i) => [i, d]), hs.firstDay)),
         row('A new day begins at', select('dayStart', [0, 1, 2, 3, 4, 5, 6].map((h) => [h, h === 0 ? 'Midnight' : `${String(h).padStart(2, '0')}:00`]), hs.dayStartHour),
           'The grid only. Sessions and readings record against midnight.'),
-        row('Days on screen', select('columns', [1, 3, 4, 5, 6, 7].map((n) => [n, n]), hs.columns)),
+        row('Days on screen', select('columns', [3, 4, 5, 6, 7].map((n) => [n, n]), hs.columns)),
         row('Oldest first', toggle('reverseDays', hs.reverseDays)),
         nifoUnlocked() ? row('Show the five', toggle('showLinked', hs.showLinked)) : '',
       ].join(''))}
@@ -96,7 +95,6 @@ export function renderSettings(mount) {
         <button class="btn" id="importBtn">Import backup</button>
       </div>
       <input type="file" id="importFile" accept="application/json" hidden>
-      <p class="fineprint">Exporting opens your share sheet, so the file can go to Files, Drive or a message. In a browser it lands in your downloads.</p>
 
       ${restorePoints()}
 
@@ -172,14 +170,14 @@ function restorePoints() {
   return `<div class="restore">
     <h4>Restore points</h4>
     ${snaps.length
-      ? `<p class="fineprint">One a day, last three kept. Undoes a bad import or a day you would rather not have had.</p>
+      ? `<p class="fineprint">One a day, last three kept.</p>
          <div class="set-actions">${snaps
            .map((s) => `<button class="btn" data-restore="${escapeHtml(s.day)}">${escapeHtml(relDay(s.day))}</button>`)
            .join('')}</div>`
       : '<p class="fineprint">The first one is written the next time you open the app.</p>'}
     <p class="fineprint">${isNative()
       ? 'This phone also backs the record up to your Google account, so reinstalling brings it back.'
-      : 'These live in the app. Export a backup as well: nothing here survives clearing your browser data.'}</p>
+      : 'Nothing here survives clearing your browser data.'}</p>
   </div>`;
 }
 

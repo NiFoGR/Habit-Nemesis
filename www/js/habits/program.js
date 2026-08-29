@@ -626,37 +626,6 @@ export function history(sum, period = 'week', buckets = 14) {
   });
 }
 
-/** Weekday against month: which days this actually happens on. */
-export function weekdayByMonth(sum, months = 8) {
-  const first = settings().firstDay;
-  const rows = Array.from({ length: 7 }, (_, i) => (first + i) % 7);
-  const cols = [];
-  const now = new Date();
-  for (let i = months - 1; i >= 0; i--) {
-    const dt = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    cols.push({ key: `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`, label: MONTHS[dt.getMonth()] });
-  }
-  const counts = new Map();
-  for (const d of sum.days) {
-    if (!d.hit) continue;
-    const [y, m, day] = d.key.split('-').map(Number);
-    const dow = new Date(y, m - 1, day).getDay();
-    const k = `${d.key.slice(0, 7)}|${dow}`;
-    counts.set(k, (counts.get(k) || 0) + 1);
-  }
-  let max = 0;
-  for (const v of counts.values()) max = Math.max(max, v);
-  return {
-    cols,
-    max,
-    rows: rows.map((dow) => ({
-      dow,
-      label: WEEKDAYS[dow],
-      cells: cols.map((c) => counts.get(`${c.key}|${dow}`) || 0),
-    })),
-  };
-}
-
 /** Weeks as columns, weekdays as rows, with the dates written in. */
 export function calendar(sum, weeks = 17) {
   const first = settings().firstDay;

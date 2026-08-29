@@ -193,6 +193,9 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 
 .btn {
   display: block; width: 100%;
+  /* An <a class="btn"> and a <button class="btn"> in one row measure the same
+     only if the line height is stated. */
+  line-height: 1.2;
   border: 1px solid var(--line);
   background: var(--surface-2);
   color: var(--text);
@@ -1449,7 +1452,7 @@ body.blacked .br-orb { opacity: 0.09; }
 
 .hg-row {
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 6px 10px; min-height: 48px;
+  padding: 6px 10px; min-height: 68px;
 }
 /* One of the five. Today starts the thing; the days behind it are a reading of
    that section's record, not a second editable copy. */
@@ -1639,7 +1642,7 @@ body.blacked .br-orb { opacity: 0.09; }
   padding: 12px 0; border: 0; border-bottom: 1px solid var(--line);
   background: none; color: inherit; text-align: left; cursor: pointer;
 }
-.rowbtn:last-of-type { border-bottom: 0; }
+.rowbtn:last-child { border-bottom: 0; }
 .rowbtn span { flex: 1; }
 .rowbtn b { display: block; font-size: var(--f-body); font-weight: 600; }
 .rowbtn i { display: block; font-style: normal; color: var(--muted); font-size: var(--f-fine); margin-top: 2px; }
@@ -2762,6 +2765,8 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .restore h4 { margin: 0 0 4px; font-size: var(--f-small); color: var(--text); }
 .restore .fineprint { margin: 0 0 8px; }
 .restore .set-actions { margin-bottom: 8px; }
+/* One restore point is a full width button, not half a row of nothing. */
+.restore .set-actions:has(> :only-child) { grid-template-columns: 1fr; }
 
 /* ---------- the week in review ----------
    Five beats, one tap apart, each one filling the screen. Every beat is one

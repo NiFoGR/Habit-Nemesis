@@ -78,9 +78,8 @@ export function renderHabitDetail(mount, id) {
     const scores = scoreSeries(sum, scorePeriod);
     const bars = habits.history(sum, historyPeriod, 14);
     const cal = habits.calendar(sum, 17);
-    const freq = habits.weekdayByMonth(sum, 8);
     const month = Math.round((sum.score - habits.scoreAgo(sum, 30)) * 100);
-    const year = Math.round((sum.score - habits.scoreAgo(sum, 365)) * 100);
+    const year = sum.days.length > 365 ? Math.round((sum.score - habits.scoreAgo(sum, 365)) * 100) : null;
     // The tile is the delta, so it is coloured rather than repeated underneath.
     const deltaClass = (v) => (v > 0 ? 'good-text' : v < 0 ? 'warn-inline' : '');
 
@@ -104,11 +103,11 @@ export function renderHabitDetail(mount, id) {
         <section class="card">
           <div class="h-row">${icon('chart', 16)}<h2>Overview</h2></div>
           <div class="stat-grid three">
-            <div class="stat"><b style="color:${colour}">${Math.round(sum.score * 100)}%</b><span>score</span></div>
+            <div class="stat"><b>${Math.round(sum.score * 100)}%</b><span>score</span></div>
             <div class="stat"><b class="${deltaClass(month)}">${month > 0 ? '+' : ''}${month}%</b><span>month</span></div>
-            <div class="stat"><b class="${deltaClass(year)}">${year > 0 ? '+' : ''}${year}%</b><span>year</span></div>
+            ${year === null ? '' : `<div class="stat"><b class="${deltaClass(year)}">${year > 0 ? '+' : ''}${year}%</b><span>year</span></div>`}
             <div class="stat"><b>${sum.streak}</b><span>streak</span></div>
-            <div class="stat"><b>${sum.best}</b><span>best</span></div>
+            
             <div class="stat"><b>${fmtTotal(habit, sum)}</b><span>total</span></div>
           </div>
         </section>
@@ -137,17 +136,11 @@ export function renderHabitDetail(mount, id) {
             ${habits.settings().skipDays ? '<i class="hc-cell skip"></i> skipped' : ''}
             <i class="hc-cell"></i> not done
           </div>
-          ${editing ? '<p class="fineprint">Tap any day to change it. This is the record, not a scoreboard: correcting it is the right thing to do.</p>' : ''}
         </section>
 
         <section class="card">
           <div class="h-row">${icon('flame', 16)}<h2>Best streaks</h2></div>
           ${streaksHtml(sum, colour)}
-        </section>
-
-        <section class="card">
-          <div class="h-row">${icon('repeat', 16)}<h2>Frequency</h2></div>
-          ${freq.max ? freqHtml(freq, colour) : '<div class="chart-empty">Which days of the week this happens on, once it has happened</div>'}
         </section>
 
         ${habit.notes
@@ -279,16 +272,4 @@ function streaksHtml(sum, colour) {
 function shortDate(key) {
   const [y, m, d] = key.split('-').map(Number);
   return new Date(y, m - 1, d).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: '2-digit' });
-}
-
-function freqHtml(freq, colour) {
-  return `<div class="freq-grid">
-    ${freq.rows
-      .map((r) => `<div class="fq-row">
-        ${r.cells.map((n) => `<i style="--d:${n ? Math.max(4, Math.round((n / freq.max) * 15)) : 0}px;color:${colour}" title="${n}"></i>`).join('')}
-        <span>${r.label}</span>
-      </div>`)
-      .join('')}
-    <div class="fq-row months">${freq.cols.map((c) => `<em>${c.label}</em>`).join('')}<span></span></div>
-  </div>`;
 }

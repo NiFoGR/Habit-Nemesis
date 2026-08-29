@@ -91,7 +91,7 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
             </div>
           </div>
           <div class="field">
-            <label for="question"><b>Question</b> <em>What the app asks you, every day</em></label>
+            <label for="question"><b>Question</b></label>
             <input type="text" id="question" maxlength="120" placeholder="e.g. Did you exercise today?" value="${escapeHtml(h.question)}">
           </div>
         </section>
@@ -104,11 +104,11 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
                 <input type="text" id="unit" maxlength="20" placeholder="e.g. Liters, pages, kcal" value="${escapeHtml(h.unit)}">
               </div>
               <label class="setting">
-                <span><b>Target</b><i>A day counts when it reaches this. Leave it at zero and anything above nothing counts.</i></span>
+                <span><b>Target</b><i>A day counts when it reaches this.</i></span>
                 <input type="number" id="target" inputmode="decimal" step="any" min="0" value="${h.target}">
               </label>
               <label class="setting">
-                <span><b>The target is a</b><i>A ceiling scores the day when you stay at or under it, and falls away above it. That is the shape of a calorie cap, or of anything you are trying to do less of.</i></span>
+                <span><b>The target is a</b></span>
                 <select id="targetType">
                   <option value="atleast" ${h.targetType === 'atleast' ? 'selected' : ''}>Floor, at least</option>
                   <option value="atmost" ${h.targetType === 'atmost' ? 'selected' : ''}>Ceiling, at most</option>
@@ -128,7 +128,7 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
             ${icon('bell', 16)}
           </button>
           <label class="setting">
-            <span><b>Group</b><i>A heading in the grid, with a score of its own.</i></span>
+            <span><b>Group</b></span>
             <select id="group">
               <option value="" ${h.group ? '' : 'selected'}>No group</option>
               ${habits.groups().map((g) => `<option value="${escapeHtml(g.id)}" ${g.id === h.group ? 'selected' : ''}>${escapeHtml(g.name)}</option>`).join('')}

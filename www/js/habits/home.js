@@ -292,7 +292,6 @@ function wireGrid(mount, days) {
   mount.querySelector('#colsBtn').addEventListener('click', () => {
     const sheet = openSheet(`
       <h2>Days on screen</h2>
-      <p class="muted small">How many day columns the grid shows. Fewer means wider cells, which matters more than it sounds when you are tapping one on a phone.</p>
       <div class="pickrow">${[3, 4, 5, 6, 7]
         .map((n) => `<button class="pick ${n === s.columns ? 'on' : ''}" data-cols="${n}">${n}</button>`)
         .join('')}</div>
@@ -580,7 +579,7 @@ function openGroupSheet(mount) {
     const list = habits.groups();
     const sheet = openSheet(`
       <h2>Groups</h2>
-      <p class="muted small">A group is a heading with a score of its own. Deleting one never deletes the habits in it; they come back out and carry on.</p>
+      <p class="muted small">A group is a heading with a score of its own.</p>
       ${list.length
         ? `<div class="grp-list">${list
             .map((g) => `<div class="grp-row" data-id="${escapeHtml(g.id)}">
@@ -648,15 +647,14 @@ export function renderArchive(mount) {
               return `<div class="arch-row" data-id="${escapeHtml(h.id)}">
                 <span class="arch-text">
                   <b style="color:${habits.hexOf(h.colour)}">${escapeHtml(h.name)}</b>
-                  <i>${escapeHtml(habits.freqLabel(h.freq))} · ${sum.total} recorded · best ${sum.best} day${sum.best === 1 ? '' : 's'}</i>
+                  <i>${escapeHtml(habits.freqLabel(h.freq))} · best ${sum.best} day${sum.best === 1 ? '' : 's'}</i>
                 </span>
                 <button class="btn small-btn" data-restore>Restore</button>
                 <button class="icon-btn small danger" data-del aria-label="Delete">${icon('trash', 15)}</button>
               </div>`;
             })
             .join('')}</div>`
-        : `<div class="empty-state">${icon('archive', 30)}<h2>Nothing archived</h2>
-            <p class="muted">Archiving a habit takes it out of the grid and keeps every day you ever marked on it.</p></div>`}
+        : `<div class="empty-state">${icon('archive', 30)}<h2>Nothing archived</h2></div>`}
     </div>`;
 
   mount.querySelectorAll('.arch-row').forEach((row) => {
