@@ -1,6 +1,6 @@
 // Offline-first service worker. Bump CACHE to drop everything stored.
 // Code is revalidated against the network; the cache is the offline answer.
-const CACHE = 'nifo-v35';
+const CACHE = 'nifo-v36';
 
 const SHELL = [
   './',
@@ -96,6 +96,8 @@ const SHELL = [
   './icons/apple-touch-icon.png',
 
   // Crests. Precached: one arriving late leaves a hole where the screen is.
+  './img/rank-full.webp',
+  './img/rank-mentzer.webp',
   './img/rank-bottom.webp',
   './img/rank-contender.webp',
   './img/rank-locked.webp',

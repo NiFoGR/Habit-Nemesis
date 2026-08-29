@@ -91,7 +91,7 @@ group('divisions');
 is('the bars climb', a.DIVISIONS.every((d, i) => i === 0 || d.bar > a.DIVISIONS[i - 1].bar), true);
 is('a score earns the division whose bar it clears',
   [0, 0.24, 0.25, 0.59, 0.6, 0.91, 0.92, 1].map((s) => a.divisionForScore(s).id),
-  ['bottom', 'bottom', 'npc', 'prospect', 'contender', 'locked', 'topg', 'topg']);
+  ['bottom', 'mentzer', 'npc', 'prospect', 'contender', 'locked', 'topg', 'topg']);
 
 /* ---------------- arcs ---------------- */
 group('arcs');

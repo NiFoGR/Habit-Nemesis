@@ -4,7 +4,7 @@ Drop a file here named after the asset it becomes and run `npm run art`. It is
 downscaled to the size that asset appears at, written to www/img/, added to the
 service worker's precache list, and the manifest the app reads is regenerated.
 
-  rank-unranked  rank-bottom  rank-npc  rank-prospect
+  rank-unranked  rank-bottom  rank-mentzer  rank-npc  rank-full  rank-prospect
   rank-contender  rank-menace  rank-locked  rank-topg
   cup-winter   cup-spring   cup-autumn   cup-blank
   share-banner  share-<division>   the week card's background, 1080x1350

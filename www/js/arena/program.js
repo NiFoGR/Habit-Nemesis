@@ -13,7 +13,9 @@ import * as native from '../native.js';
 /** Low to high. `bar` is the month score that holds you in the division. */
 export const DIVISIONS = [
   { id: 'bottom', name: 'Bottom G', bar: 0, blurb: 'You have the app. That is the whole of it so far.' },
-  { id: 'npc', name: 'NPC', bar: 0.25, blurb: 'BiGgEr aNd StRoNgEr ThAn MiKe MeNtZeR' },
+  { id: 'mentzer', name: 'Mentzer', bar: 0.12, blurb: 'BiGgEr aNd StRoNgEr ThAn MiKe MeNtZeR' },
+  { id: 'npc', name: 'NPC', bar: 0.25, blurb: 'Doing it. Nobody would notice if you stopped.' },
+  { id: 'full', name: 'Full', bar: 0.36, blurb: 'Not fat. Full.' },
   { id: 'prospect', name: 'Prospect', bar: 0.45, blurb: 'Something is happening. Not reliably.' },
   { id: 'contender', name: 'Contender', bar: 0.6, blurb: 'You are in it now. A bad week costs you.' },
   { id: 'menace', name: 'Menace', bar: 0.74, blurb: 'Most weeks go your way and it shows.' },

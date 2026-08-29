@@ -54,12 +54,22 @@ ladder would otherwise renumber every file above it.
 |---|---|---|
 | `rank-unranked.webp` | none | No record yet. Nobody knows what you are. Quiet, empty, waiting |
 | `rank-bottom.webp` | 0 Bottom G | You own the app and nothing else. The joke rung |
-| `rank-npc.webp` | 1 NPC | Going through the motions |
-| `rank-prospect.webp` | 2 Prospect | Something is happening, not reliably. First metal |
-| `rank-contender.webp` | 3 Contender | In it now. A bad week costs you |
-| `rank-menace.webp` | 4 Menace | Most weeks go your way and it shows |
-| `rank-locked.webp` | 5 Locked In | Serious. Relentless |
-| `rank-topg.webp` | 6 Top G | You do not miss. The top of the ladder |
+| `rank-mentzer.webp` | 1 Mentzer | Delusional confidence. The second joke rung |
+| `rank-npc.webp` | 2 NPC | Going through the motions |
+| `rank-full.webp` | 3 Full | Size without discipline. The third joke rung |
+| `rank-prospect.webp` | 4 Prospect | Something is happening, not reliably. First metal |
+| `rank-contender.webp` | 5 Contender | In it now. A bad week costs you |
+| `rank-menace.webp` | 6 Menace | Most weeks go your way and it shows |
+| `rank-locked.webp` | 7 Locked In | Serious. Relentless |
+| `rank-topg.webp` | 8 Top G | You do not miss. The top of the ladder |
+
+Nine rungs, and a month moves you at most one, so the floor to the top is
+eight months at the very fastest.
+
+**Eight files, not nine: the three joke rungs share nothing with the six real
+ones.** That is deliberate. Bottom G, Mentzer and Full are photographs in a
+frame and are supposed to look like a bit; from Prospect up the set has one
+silhouette and climbs by metal.
 
 The progression has to be readable with the labels covered. Pick one thing that
 climbs and let it climb: metal (dull to bright), rim weight, how much of the rim
@@ -286,6 +296,8 @@ different colour every time: the composition has to differ, not just the hue.
 |---|---|---|
 | `share-unranked` | a single closed grey shutter door in an empty concrete room, one dim bulb, dust, nothing else. Cold grey and gunmetal, no accent colour at all | dead centre and symmetrical, almost empty, the door small in a lot of nothing |
 | `share-bottom` | a pink marble staircase that leads nowhere, bubblegum clouds, party balloons drifting up, a disco floor, confetti. Bubblegum pink and hot pink, silly and camp | bottom heavy: the staircase fills the lower third, balloons rising into empty sky above |
+| `share-mentzer` | a suburban garage gym with one bench and a mirror, a wall of participation medals, a protein shaker, a novelty trophy. Blood red and black, proud and deluded | centred and flat, everything facing the viewer, the mirror dead centre |
+| `share-full` | a diner table piled with food, a rainbow neon gym sign behind it, plates, tubs, an enormous chair. Rainbow neon on black, gluttonous | bottom heavy: the table across the lower half, the neon sign floating in the dark above |
 | `share-npc` | an endless beige suburb of identical houses and identical doors, a queue of identical figures seen from behind, loading bars, a conveyor of grey cubes. Beige, tan and brown, drab | one-point perspective receding to a vanishing point dead centre, everything repeating |
 | `share-prospect` | copper digital rain falling in vertical streams, glowing code, a bronze doorway of light opening at the far end, circuit traces. Copper, bronze and dark green | vertical: streams falling top to bottom the full height, the doorway small and far away |
 | `share-contender` | two crossed spotlight beams over an empty boxing ring, chrome ropes, steel chevrons, chalk dust in the air. Chrome, silver and gunmetal | a big X: the two beams crossing diagonally corner to corner, the ring floor at the bottom |
@@ -294,8 +306,8 @@ different colour every time: the composition has to differ, not just the hue.
 | `share-topg` | a purple crown bursting with confetti and streamers, lightning bolts, championship ribbons, glossy purple orbs. Violet, purple and a thin line of gold | low horizon: the crown and the burst across the top quarter, wide open sky below |
 
 Save each result as `share-<division>.webp`: `share-unranked`, `share-bottom`,
-`share-npc`, `share-prospect`, `share-contender`, `share-menace`,
-`share-locked`, `share-topg`. `share-banner` is the fallback used when a
+`share-mentzer`, `share-npc`, `share-full`, `share-prospect`,
+`share-contender`, `share-menace`, `share-locked`, `share-topg`. `share-banner` is the fallback used when a
 division has no file of its own: for that one drop the attachment and say
 "teal and violet, confetti and sunburst rays over a bold gradient".
 
