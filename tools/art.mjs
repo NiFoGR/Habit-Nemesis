@@ -29,7 +29,7 @@ const MANIFEST = root + 'www/js/artwork.js';
 // sent: 1080x1350 is what the card wants and the budget says the rest.
 const FAMILIES = [
   { match: /^rank-/, size: 256, budget: 60000 },
-  { match: /^cup-/, size: 256, budget: 60000 },
+  { match: /^cup-/, size: 384, budget: 70000 },
   { match: /^mark-/, size: 512, budget: 90000 },
   { match: /^feat-/, size: 128, budget: 20000 },
   { match: /^share-/, pass: true, budget: 300000 },
@@ -153,33 +153,41 @@ function encodePng(size, rgba) {
 
 /* ---------------- resize ---------------- */
 
-/** Box filter, premultiplied. Averaging straight RGBA drags the colour of fully
- *  transparent pixels into the edge, which is the halo you get around cut-out
- *  artwork downscaled naively. */
+/** Box filter, premultiplied, padded to square.
+ *
+ *  Premultiplied: averaging straight RGBA drags the colour of fully transparent
+ *  pixels into the edge, which is the halo you get around cut-out artwork
+ *  downscaled naively.
+ *
+ *  Padded: one scale for both axes, centred, and outside the source reads as
+ *  transparent. A 626x616 export is a square canvas with a little air at the
+ *  sides, never a squashed cup. */
 function resize(src, sw, sh, size) {
   const out = Buffer.alloc(size * size * 4);
-  const xs = sw / size;
-  const ys = sh / size;
+  const step = Math.max(sw, sh) / size;
+  const offX = (sw - step * size) / 2;
+  const offY = (sh - step * size) / 2;
   for (let y = 0; y < size; y++) {
-    const y0 = Math.floor(y * ys);
-    const y1 = Math.max(y0 + 1, Math.floor((y + 1) * ys));
+    const y0 = Math.floor(offY + y * step);
+    const y1 = Math.max(y0 + 1, Math.floor(offY + (y + 1) * step));
     for (let x = 0; x < size; x++) {
-      const x0 = Math.floor(x * xs);
-      const x1 = Math.max(x0 + 1, Math.floor((x + 1) * xs));
+      const x0 = Math.floor(offX + x * step);
+      const x1 = Math.max(x0 + 1, Math.floor(offX + (x + 1) * step));
       let r = 0;
       let g = 0;
       let b = 0;
       let a = 0;
       let n = 0;
-      for (let sy = y0; sy < y1 && sy < sh; sy++) {
-        for (let sx = x0; sx < x1 && sx < sw; sx++) {
+      for (let sy = y0; sy < y1; sy++) {
+        for (let sx = x0; sx < x1; sx++) {
+          n++;
+          if (sy < 0 || sy >= sh || sx < 0 || sx >= sw) continue;
           const i = (sy * sw + sx) * 4;
           const al = src[i + 3] / 255;
           r += src[i] * al;
           g += src[i + 1] * al;
           b += src[i + 2] * al;
           a += src[i + 3];
-          n++;
         }
       }
       const d = (y * size + x) * 4;
@@ -232,10 +240,10 @@ for (const file of files.sort()) {
 
   try {
     const { width, height, rgba } = decodePng(src);
-    if (width !== height) problems.push(`${file} is ${width}x${height}: it should be square, and it has been squashed.`);
     const out = encodePng(family.size, resize(rgba, width, height, family.size));
     writeFileSync(`${OUT}${name}.png`, out);
-    written.push({ name: `${name}.png`, bytes: out.length, note: `${width}px to ${family.size}px` });
+    const pad = width === height ? '' : ', padded';
+    written.push({ name: `${name}.png`, bytes: out.length, note: `${width}x${height} to ${family.size}px${pad}` });
     if (out.length > family.budget) {
       problems.push(`${name}.png is ${kb(out.length)}, over the ${kb(family.budget)} budget. Export it as .webp instead and it will be about a quarter of that.`);
     }
@@ -257,21 +265,32 @@ function writeManifest() {
 }
 
 /* The service worker precaches by name, so a new asset has to be listed and the
-   cache version has to move or nobody who already has the app will see it. */
-if (written.length) {
-  writeManifest();
+   cache version has to move or nobody who already has the app will see it. A
+   listed file that no longer exists is worse than a missing one: cache.addAll
+   rejects on the first 404 and the whole install fails. */
+function syncSw() {
+  const have = new Set(readdirSync(OUT).filter((f) => /\.(png|webp)$/i.test(f)));
   let sw = readFileSync(SW, 'utf8');
-  const listed = new Set([...sw.matchAll(/'\.\/img\/([^']+)'/g)].map((m) => m[1]));
-  const fresh = written.map((w) => w.name).filter((n) => !listed.has(n));
+  const listed = [...sw.matchAll(/^\s*'\.\/img\/([^']+)',\n/gm)];
+  const stale = listed.filter((m) => !have.has(m[1]));
+  const fresh = [...have].sort().filter((f) => !listed.some((m) => m[1] === f));
+  if (!stale.length && !fresh.length) return;
+
+  for (const m of stale) sw = sw.replace(m[0], '');
   if (fresh.length) {
     const anchor = "  // Crests. Precached: one arriving late leaves a hole where the screen is.\n";
     const block = fresh.map((n) => `  './img/${n}',\n`).join('');
     sw = sw.includes(anchor) ? sw.replace(anchor, anchor + block) : sw.replace("  './img/", block + "  './img/");
-    const version = Number(sw.match(/nifo-v(\d+)/)[1]) + 1;
-    sw = sw.replace(/nifo-v\d+/, `nifo-v${version}`);
-    writeFileSync(SW, sw);
-    console.log(`sw.js: ${fresh.length} added, cache bumped to nifo-v${version}`);
   }
+  const version = Number(sw.match(/nifo-v(\d+)/)[1]) + 1;
+  sw = sw.replace(/nifo-v\d+/, `nifo-v${version}`);
+  writeFileSync(SW, sw);
+  console.log(`sw.js: ${fresh.length} added, ${stale.length} dropped, cache bumped to nifo-v${version}`);
+}
+
+if (written.length) {
+  writeManifest();
+  syncSw();
 }
 
 console.log(`\n${written.length} written to www/img/`);

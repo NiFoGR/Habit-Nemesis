@@ -2,6 +2,9 @@
 // Asset name to the file that holds it, so the extension is the tool's problem.
 
 export const ARTWORK = {
+  'cup-autumn': 'cup-autumn.webp',
+  'cup-spring': 'cup-spring.webp',
+  'cup-winter': 'cup-winter.webp',
   'rank-0-bottom': 'rank-0-bottom.webp',
   'rank-1-npc': 'rank-1-npc.webp',
   'rank-2-prospect': 'rank-2-prospect.webp',
