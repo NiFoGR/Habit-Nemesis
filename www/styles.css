@@ -1792,13 +1792,6 @@ body.blacked .br-orb { opacity: 0.09; }
 .screen.enter { animation: screen-in var(--t-base) var(--ease); }
 @keyframes screen-in { from { opacity: 0; transform: translateY(4px); } }
 
-/* A swipe: the screen arrives from the side the finger came from. Overrides
-   the plain arrival, which is why it sits after it. */
-.screen.swiped-left { animation: swipe-in-left var(--t-base) var(--ease); }
-.screen.swiped-right { animation: swipe-in-right var(--t-base) var(--ease); }
-@keyframes swipe-in-left { from { opacity: 0; transform: translateX(18px); } }
-@keyframes swipe-in-right { from { opacity: 0; transform: translateX(-18px); } }
-
 /* Changing the day count: the rows stay put and the columns grow. */
 .hgrid { transition: none; }
 .hg-row, .hg-head { transition: grid-template-columns var(--t-base) var(--ease); }

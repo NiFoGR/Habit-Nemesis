@@ -391,11 +391,16 @@ precaches it best-effort, so on that build those files are a 404 by design and
 the app still installs and still works offline. pack-web.mjs measures its own
 output, so the build stays small by measurement rather than by intention.
 
-WHAT AN IPHONE DOES NOT GET, because Safari does not have it: real alarms that
-fire with the app closed (reminders become in-app notifications only), the
-night light, and the Android navigation-bar hiding. Everything else - the
-grid, the Arena, the Cabinet, the sessions, the vibration on newer phones - is
-the same app.
+WHAT AN IPHONE DOES NOT GET, because Safari does not have it: reminders, the
+night light, and the Android navigation-bar hiding. Every alarm in the app is
+scheduled through Capacitor's LocalNotifications, and every one of those calls
+returns early when hasAlarms() is false, so on an iPhone the reminder switches
+save their time and nothing ever fires. Everything else - the grid, the Arena,
+the Cabinet, the sessions, the vibration on newer phones - is the same app.
+
+HANDING THE LINK TO SOMEONE ELSE: docs/INSTALL.md is written for them rather
+than for you. Add to Home Screen step by step, what a locked install gets, and
+why the backup matters on a phone that can clear its own storage.
 
 --------------------------------------------------------------------------------
 8. YOUR DATA
