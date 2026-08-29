@@ -61,12 +61,6 @@ function pop(feat) {
 
 /* ---------------- the full screen ---------------- */
 
-const MOVES = {
-  up: { word: 'Promoted', chime: 'promote', haptic: 'promote' },
-  down: { word: 'Relegated', chime: 'relegate', haptic: 'relegate' },
-  held: { word: 'Held', chime: null, haptic: null },
-  placed: { word: 'Placed', chime: 'promote', haptic: 'promote' },
-};
 
 /* Marked seen on the way OUT. Marking as it draws makes the screen eat what
  * put it there, and a reload loses it for good. Leaving is seeing, feats
@@ -113,7 +107,6 @@ export function renderResult(mount) {
 
 function drawFull(mount, res, fresh) {
   const won = res?.week.result === 'won';
-  const move = res?.month ? MOVES[res.month.move] || MOVES.held : null;
   // Rows read live, as fractions with no total: the headline is the decided score.
   const rows = res ? arena.scoreWeek(res.key).rows.filter((r) => r.due) : [];
   const ranked = [...rows].sort((a, b) => b.done / b.due - a.done / a.due);
@@ -148,7 +141,6 @@ function drawFull(mount, res, fresh) {
         : ''}
 
       ${res?.arc ? arcBlock(res.arc) : ''}
-      ${move ? moveBlock(res.month, move) : ''}
 
       ${fresh.length
         ? `<section class="card">
@@ -169,11 +161,12 @@ function drawFull(mount, res, fresh) {
     </div>`;
 
   const hero = mount.querySelector('#hero');
-  // One sound, the biggest thing that happened. Three at once was noise.
-  const kind = res?.arc?.won && res.arc.round === 'final' ? 'trophy' : move?.chime || (res ? (won ? 'win' : 'loss') : 'feat');
+  // One sound, the biggest thing that happened here. The month's verdict has a
+  // screen of its own now and brings its own.
+  const kind = res?.arc?.won && res.arc.round === 'final' ? 'trophy' : res ? (won ? 'win' : 'loss') : 'feat';
   chime(kind);
-  haptic(move?.haptic || (res ? (won ? 'win' : 'loss') : 'feat'));
-  if (hero && (won || move?.word === 'Promoted')) {
+  haptic(kind);
+  if (hero && won) {
     setTimeout(() => celebrate(hero, { count: 22, spread: 130, colour: 'var(--good)' }), 120);
   }
 
@@ -254,18 +247,3 @@ function arcBlock(arc) {
   </section>`;
 }
 
-function moveBlock(month, move) {
-  const from = arena.divisionOf(month.from);
-  const to = arena.divisionOf(month.to);
-  const monthName = new Date(`${month.month}-04T00:00:00`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-  return `<section class="card rs-move ${month.move}">
-    <p class="eyebrow">${escapeHtml(monthName)} · ${pct(month.score)} · ${month.w}W–${month.l}L</p>
-    <h2>${escapeHtml(move.word)}</h2>
-    <div class="rs-move-row">
-      <span class="rs-div ${month.move === 'down' ? 'gone' : ''}">${escapeHtml(from.name)}</span>
-      ${month.from === month.to ? '' : `<span class="rs-arrow">${icon(month.move === 'down' ? 'arrowDown' : 'arrowUp', 16)}</span>
-      <span class="rs-div now">${escapeHtml(to.name)}</span>`}
-    </div>
-    <p class="muted small">${escapeHtml(to.blurb)}</p>
-  </section>`;
-}

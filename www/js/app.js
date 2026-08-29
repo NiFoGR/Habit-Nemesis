@@ -35,6 +35,7 @@ import * as arenaProgram from './arena/program.js';
 import { renderYear } from './arena/year.js';
 import { renderResult, collect, hasResults, leaveResult } from './arena/result.js';
 import { renderMoment, hasMoment, leaveMoment } from './arena/moment.js';
+import { renderRank, hasRank, leaveRank } from './arena/rank.js';
 import { renderBreatheHome, renderBreatheSettings } from './breathe/home.js';
 import { startBreathe } from './breathe/session.js';
 import * as breatheProgram from './breathe/program.js';
@@ -127,6 +128,7 @@ const ROUTES = {
   '#/arena': () => renderArena(app),
   '#/arena/result': () => renderResult(app),
   '#/arena/moment': () => renderMoment(app),
+  '#/arena/rank': () => renderRank(app),
   '#/cabinet': () => renderCabinet(app),
   '#/cabinet/feats': () => renderFeats(app),
   '#/cabinet/year': (params) => renderYear(app, params.get('y')),
@@ -172,6 +174,7 @@ function route() {
   // Both consume their payload on the way out.
   if (lastHash.startsWith('#/arena/result') && !location.hash.startsWith('#/arena/result')) leaveResult();
   if (lastHash.startsWith('#/arena/moment') && !location.hash.startsWith('#/arena/moment')) leaveMoment();
+  if (lastHash.startsWith('#/arena/rank') && !location.hash.startsWith('#/arena/rank')) leaveRank();
   lastHash = location.hash;
 
   if (lockActive()) return renderLock(app, route);
@@ -188,8 +191,12 @@ function route() {
   nightlight.suspend(path.startsWith('#/pe/gallery') || path.startsWith('#/pe/measure'));
 
   // Result, then cup, on the way to the grid.
+  // The week, then the month, then the cup. Each screen's way out is the grid,
+  // and the grid sends you on to the next, so they queue with no code to
+  // sequence them.
   if (path === '#/hub') {
     if (hasResults()) return replaceWith('#/arena/result');
+    if (hasRank()) return replaceWith('#/arena/rank');
     if (hasMoment()) return replaceWith('#/arena/moment');
   }
 
@@ -210,7 +217,7 @@ document.addEventListener('click', (e) => {
 });
 
 // Never left on the back stack: these start on arrival.
-const EPHEMERAL = ['#/session', '#/bible/pray', '#/pe/timer', '#/pe/measure', '#/pocket', '#/breathe/run', '#/habits/edit', '#/arena/result', '#/arena/moment', '#/intro'];
+const EPHEMERAL = ['#/session', '#/bible/pray', '#/pe/timer', '#/pe/measure', '#/pocket', '#/breathe/run', '#/habits/edit', '#/arena/result', '#/arena/rank', '#/arena/moment', '#/intro'];
 
 // Close the Arena's books before the first render.
 collect();
@@ -235,7 +242,7 @@ document.addEventListener('visibilitychange', () => {
     collect();
     native.hideNavBar();
     if (lockActive()) route();
-    else if (location.hash.startsWith('#/hub') && (hasResults() || hasMoment())) route();
+    else if (location.hash.startsWith('#/hub') && (hasResults() || hasRank() || hasMoment())) route();
     return;
   }
   // Not mid-session: a running timer survives a glance away.

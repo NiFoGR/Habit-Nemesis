@@ -527,6 +527,26 @@ export function arcMoment() {
   return null;
 }
 
+/** The division move you have not been shown. A month that held is not an
+ *  event, but it must not bury an earlier promotion either, so the search is
+ *  over every month since the last one seen. */
+export function rankMoment() {
+  const st = store.get().arena;
+  const months = Object.keys(st.months).sort();
+  const pending = months.filter((m) => m > st.seenMonth && st.months[m].move !== 'held');
+  const month = pending[pending.length - 1];
+  return month ? { month, ...st.months[month] } : null;
+}
+
+/** Marks every month up to the newest as shown, so a held month behind an
+ *  announced one does not queue itself later. */
+export function markRankSeen() {
+  store.update((sst) => {
+    const months = Object.keys(sst.arena.months).sort();
+    sst.arena.seenMonth = months[months.length - 1] || sst.arena.seenMonth;
+  });
+}
+
 export function markArcSeen(key, which) {
   store.update((sst) => {
     const rec = (sst.arena.arcs[key] ||= blankArc());

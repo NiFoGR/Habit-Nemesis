@@ -149,6 +149,7 @@ function blank() {
       // Scoring rule version. A bump re-scores unplayed weeks only.
       scoring: 0,
       seenWeek: '', // the last closed week whose result screen was shown
+      seenMonth: '', // the last month whose promotion or relegation was shown
       backfilled: false, // the one-time sweep that gives the Arena a history
       // Your face, taken on the week that became your best. { src, week, at }
       face: null,
@@ -562,6 +563,7 @@ function cleanArena(sa, base) {
     anchor: /^\d{4}-\d{2}-\d{2}$/.test(src.anchor) ? src.anchor : '',
     scoring: int(src.scoring, 0, 1000, 0),
     seenWeek: /^\d{4}-W\d{2}$/.test(src.seenWeek) ? src.seenWeek : '',
+    seenMonth: /^\d{4}-\d{2}$/.test(src.seenMonth) ? src.seenMonth : '',
     backfilled: bool(src.backfilled),
   };
 }
