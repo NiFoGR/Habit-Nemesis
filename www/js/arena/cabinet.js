@@ -6,6 +6,7 @@ import * as arena from './program.js';
 import * as feats from './feats.js';
 import { escapeHtml, haptic } from '../ui.js';
 import { icon } from '../icons.js';
+import { cup } from './cup.js';
 import { openWeekSheet } from './home.js';
 
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
@@ -46,14 +47,14 @@ export function renderCabinet(mount) {
         ${cups.length
           ? cups
               .map(({ k, rec, arc }) => `<button class="cup" data-cup="${escapeHtml(k)}">
-                <span class="cup-art">${icon('trophy', 30)}</span>
+                <span class="cup-art">${cup(arc.id, 64)}</span>
                 <b>${escapeHtml(arc.name)} Trophy</b>
                 <i>${escapeHtml(String(arc.year))}${arc.id === 'winter' ? `/${String(arc.year + 1).slice(2)}` : ''}</i>
                 ${rec.note ? `<em>“${escapeHtml(rec.note)}”</em>` : ''}
               </button>`)
               .join('')
           : `<div class="cup-empty">
-              <span class="cup-art">${icon('trophy', 30)}</span>
+              <span class="cup-art empty">${cup('', 64)}</span>
               <b>No cups yet</b>
               <i>Three a year. Winter, spring, autumn.</i>
             </div>`}

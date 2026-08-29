@@ -10,6 +10,7 @@ import * as habits from './habits/program.js';
 import * as arena from './arena/program.js';
 import { icon, logoMark } from './icons.js';
 import { crest } from './arena/crest.js';
+import { cup } from './arena/cup.js';
 import { escapeHtml, chime, haptic, celebrate } from './ui.js';
 import { navigate } from './back.js';
 
@@ -77,9 +78,9 @@ function ladder() {
 }
 
 function cabinet() {
-  const cup = (colour) => `<span class="intro-cup" style="--cc:${colour}">${icon('trophy', 30)}</span>`;
+  const shelf = (id, colour) => `<span class="intro-cup" style="--cc:${colour}">${cup(id, 56)}</span>`;
   return `<div class="intro-cabinet">
-    <div class="intro-cups">${cup('#8fd0ff')}${cup('#4ade80')}${cup('#fbbf24')}</div>
+    <div class="intro-cups">${shelf('winter', '#8fd0ff')}${shelf('spring', '#4ade80')}${shelf('autumn', '#fbbf24')}</div>
     <div class="intro-feats">
       <span class="intro-feat">${icon('flame', 14)}A month straight</span>
       <span class="intro-feat">${icon('medal', 14)}Beat the Nemesis</span>

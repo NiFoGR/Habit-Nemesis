@@ -1,6 +1,6 @@
 // Offline-first service worker. Bump CACHE to drop everything stored.
 // Code is revalidated against the network; the cache is the offline answer.
-const CACHE = 'nifo-v28';
+const CACHE = 'nifo-v29';
 
 const SHELL = [
   './',
@@ -65,6 +65,7 @@ const SHELL = [
   './js/arena/feats.js',
   './js/arena/cabinet.js',
   './js/arena/crest.js',
+  './js/arena/cup.js',
   './js/artwork.js',
   './js/arena/face.js',
   './js/arena/moment.js',

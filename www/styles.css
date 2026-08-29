@@ -1844,6 +1844,9 @@ body.blacked .br-orb { opacity: 0.09; }
 
 .ar-crest { display: block; margin-bottom: 2px; }
 .crest { display: block; object-fit: contain; -webkit-user-select: none; user-select: none; }
+/* Same rules as a crest: artwork, drawn at the size it is asked for. */
+.cup-img { display: block; object-fit: contain; -webkit-user-select: none; user-select: none; }
+.cup-img.cup-none { opacity: 0.35; }
 .ar-crest .crest { margin: 0 auto; }
 .ar-rank {
   font-size: var(--f-hero); line-height: 1.05; letter-spacing: -0.035em;

@@ -5,6 +5,7 @@
 import * as arena from './program.js';
 import { escapeHtml, chime, celebrate, haptic } from '../ui.js';
 import { icon } from '../icons.js';
+import { cup } from './cup.js';
 import { navigate, replaceWith } from '../back.js';
 
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
@@ -103,7 +104,7 @@ function ceremony(mount, st) {
   mount.innerHTML = `
     <div class="screen moment">
       <section class="mo-head cup" id="hero">
-        <span class="mo-cup">${icon('trophy', 68)}</span>
+        <span class="mo-cup">${cup(st.arc.id, 132)}</span>
         <p class="eyebrow">Champion</p>
         <h1 class="mo-title">${escapeHtml(st.trophy)}</h1>
         <p class="mo-sub">${escapeHtml(arena.arcLabel(st.arc))}</p>
