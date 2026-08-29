@@ -2878,3 +2878,11 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 @media (prefers-reduced-motion: reduce) {
   .rv-body > *, .rv-bar, .rv-rbar i, .rv-gauge i { animation: none; }
 }
+
+/* ---------- the week, as a card ----------
+   Drawn on a canvas at 1080x1350 and previewed here before it goes anywhere. */
+.sh-card {
+  display: block; width: 100%; aspect-ratio: 4 / 5;
+  border-radius: var(--radius); border: 1px solid var(--line);
+  margin: 0 0 12px; background: var(--bg-2);
+}

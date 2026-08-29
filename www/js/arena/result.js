@@ -6,6 +6,7 @@ import * as store from '../store.js';
 import * as arena from './program.js';
 import * as feats from './feats.js';
 import { captureFace, face, faceAvatar } from './face.js';
+import { shareWeek } from './share.js';
 import { escapeHtml, chime, celebrate, haptic } from '../ui.js';
 import { icon } from '../icons.js';
 import { navigate, replaceWith } from '../back.js';
@@ -157,6 +158,7 @@ function drawFull(mount, res, fresh) {
       ${res && arena.isBestWeek(res.key) ? noteBlock(res.key) : ''}
 
       <button class="btn primary big" id="onward" data-back>${escapeHtml(res ? 'Into the week' : 'Good')}</button>
+      ${res ? `<button class="btn ghost wide" id="shareWeek">${icon('external', 16)}<span>Share this week</span></button>` : ''}
       <a class="btn ghost wide" href="#/arena">${icon('trophy', 16)}<span>The Arena</span></a>
     </div>`;
 
@@ -170,6 +172,7 @@ function drawFull(mount, res, fresh) {
     setTimeout(() => celebrate(hero, { count: 22, spread: 130, colour: 'var(--good)' }), 120);
   }
 
+  mount.querySelector('#shareWeek')?.addEventListener('click', () => shareWeek(res.key));
   wireNote(mount, res);
   mount.querySelector('#onward').addEventListener('click', () => navigate('#/hub'));
   window.scrollTo(0, 0);

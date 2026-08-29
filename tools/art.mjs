@@ -25,11 +25,14 @@ const MANIFEST = root + 'www/js/artwork.js';
 /* ---------------- what each family is for ---------------- */
 
 // Ranks and cups are heroes as well as badges; a feat medal never exceeds 44px.
+// A share banner is not square and is drawn to cover, so it goes through as
+// sent: 1080x1350 is what the card wants and the budget says the rest.
 const FAMILIES = [
   { match: /^rank-/, size: 256, budget: 60000 },
   { match: /^cup-/, size: 256, budget: 60000 },
   { match: /^mark-/, size: 512, budget: 90000 },
   { match: /^feat-/, size: 128, budget: 20000 },
+  { match: /^share-/, pass: true, budget: 300000 },
 ];
 
 const familyOf = (name) => FAMILIES.find((f) => f.match.test(name));
@@ -212,15 +215,18 @@ for (const file of files.sort()) {
   const name = file.replace(/\.(png|webp)$/i, '');
   const family = familyOf(name);
   if (!family) {
-    problems.push(`${file}: name it rank-*, cup-*, mark-* or feat-*. See docs/ART.md.`);
+    problems.push(`${file}: name it rank-*, cup-*, mark-*, feat-* or share-*. See docs/ART.md.`);
     continue;
   }
   const src = readFileSync(SRC + file);
 
-  if (/\.webp$/i.test(file)) {
-    writeFileSync(`${OUT}${name}.webp`, src);
-    written.push({ name: `${name}.webp`, bytes: src.length, note: 'passed through' });
-    if (src.length > family.budget) problems.push(`${name}.webp is ${kb(src.length)}, over the ${kb(family.budget)} budget.`);
+  if (family.pass || /\.webp$/i.test(file)) {
+    const ext = /\.webp$/i.test(file) ? 'webp' : 'png';
+    writeFileSync(`${OUT}${name}.${ext}`, src);
+    written.push({ name: `${name}.${ext}`, bytes: src.length, note: 'passed through' });
+    if (src.length > family.budget) {
+      problems.push(`${name}.${ext} is ${kb(src.length)}, over the ${kb(family.budget)} budget. Send it as WebP.`);
+    }
     continue;
   }
 

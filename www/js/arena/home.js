@@ -6,6 +6,7 @@ import * as store from '../store.js';
 import * as habits from '../habits/program.js';
 import * as arena from './program.js';
 import { captureFace, face, faceAvatar } from './face.js';
+import { shareWeek } from './share.js';
 import * as feats from './feats.js';
 import { escapeHtml, openSheet, haptic, toast } from '../ui.js';
 import { icon } from '../icons.js';
@@ -163,7 +164,7 @@ export function openWeekSheet(key) {
   const now = arena.scoreWeek(arena.currentWeek());
   const gap = Math.round((now.score - score) * 100);
 
-  openSheet(`
+  const sheet = openSheet(`
     ${isNemesis
       ? `<div class="nem-head">${faceAvatar(56)}<div><h2>Your Nemesis</h2>
           <p class="muted small">${escapeHtml(arena.weekLabel(key))} · your best week</p></div></div>`
@@ -183,7 +184,14 @@ export function openWeekSheet(key) {
     <h3 class="ar-sub">The week, row by row</h3>
     <div class="ar-rows">${rows || '<p class="muted small">No rows were on the grid that week.</p>'}</div>
     ${isNemesis ? `<button class="btn ghost wide" id="faceSwap">${face() ? 'Change his face' : 'Give him a face'}</button>` : ''}
+    ${live.due ? `<button class="btn ghost wide" id="shareWeek">${icon('external', 16)}<span>Share this week</span></button>` : ''}
     <button class="btn wide" data-close>Close</button>`);
+
+  // Closed first: the card is a sheet of its own and two do not stack.
+  document.getElementById('shareWeek')?.addEventListener('click', () => {
+    sheet.close();
+    shareWeek(key);
+  });
 
   document.getElementById('faceSwap')?.addEventListener('click', async () => {
     haptic('press');

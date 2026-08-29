@@ -10,7 +10,7 @@ dropped in with the right name is picked up with no further work.
 | | |
 |---|---|
 | Format to send | PNG or SVG, transparent background |
-| Size to send | 1024 x 1024 for ranks and cups, 512 x 512 for feat medals |
+| Size to send | 1024 x 1024 for ranks and cups, 512 x 512 for feat medals, 1080 x 1350 for share banners |
 | What ships | 256px WebP, generated from your file by `npm run art` |
 | Safe area | keep the artwork inside the middle 88%. Nothing touches the edge |
 | Shape | square canvas, and the art optically centred inside it |
@@ -66,18 +66,18 @@ is closed, or a count of marks inside. Do not change all four at once.
 
 ## 2. Cups
 
-Four a year, on the seasons. Won at the end of an Arc, kept in the Cabinet for
-ever. These are objects: they should have weight and read as something awarded.
+Three a year. Summer is a quarter with no tournament in it, so there is no
+summer cup. Won at the end of an Arc, kept in the Cabinet for ever. These are
+objects: they should have weight and read as something awarded.
 
 | File | Cup | Feel |
 |---|---|---|
 | `cup-winter.webp` | Winter Arc | Cold, blue-white, hard |
 | `cup-spring.webp` | Spring Arc | Green, sharp, new |
-| `cup-summer.webp` | Summer Arc | Gold, hot, bright |
 | `cup-autumn.webp` | Autumn Arc | Amber, heavy, low sun |
 | `cup-blank.webp` | not won | The same cup, unlit. Drawn in outline, no fill |
 
-One cup, four finishes. `cup-blank` is what an empty Cabinet shelf shows, so it
+One cup, three finishes. `cup-blank` is what an empty Cabinet shelf shows, so it
 has to be the same object with the light off, not a different drawing.
 
 Optional, if you want the bracket to have art: `cup-final.webp`,
@@ -100,9 +100,8 @@ the feat is a count.
 
 These work for anyone, because they read only the grid and the Arena. This is
 the set a public build ships with, and it is the one worth your time first.
-Twelve of them exist in the code today. The other twenty-eight are proposed:
-tell me to build them and they are a day's work, and the art is the same job
-either way.
+All forty-five are built and earnable today: twenty-three on the grid,
+twenty-two in the Arena. A public build ships these and nothing else.
 
 **Streaks, on any one habit**
 
@@ -228,12 +227,63 @@ they sit behind text rather than beside it.
 
 ---
 
+## 5. Share banners
+
+The background of the week card, the picture you send someone. Optional: with no
+file the card draws its own gradient, glow and grain, which already works. A
+banner replaces that.
+
+**1080 x 1350, WebP, under 300KB.** No transparency, no text, no people, no
+logos. The card lays its own dark veil over the top, so send it brighter than
+you think.
+
+| File | When it is used |
+|---|---|
+| `share-banner.webp` | any week, unless a division file exists |
+| `share-bottom.webp` … `share-topg.webp` | that division only, one per rung |
+
+Eight files at most, and one is enough to start. The division set is the version
+worth having: the card looks different at Top G to how it looks at NPC, which is
+the whole point of a ladder.
+
+### The prompts
+
+One base prompt, one line swapped per file. Paste the base, replace `SUBJECT`,
+and ask for 1080 x 1350.
+
+> A vertical 4:5 poster background for a dark mobile app, 1080 x 1350. Near
+> black ground, hex 0a0c10. Abstract: no text, no letters, no numbers, no
+> people, no logos, no watermark. SUBJECT. Keep the middle third quiet and dark
+> so white type can sit over it; put the detail at the top and bottom edges.
+> Palette: near black and greyscale, with teal hex 22d3c5 and violet hex a78bfa
+> used sparingly as light only. Fine film grain, soft volumetric haze, no harsh
+> highlights, no lens flare. Flat, graphic, premium sports app. Photoreal
+> lighting, illustrated forms.
+
+| File | SUBJECT |
+|---|---|
+| `share-banner` | a wide field of thin vertical light lines on near black, brightening slightly towards the centre, like a stadium seen from a long way off |
+| `share-bottom` | a bare concrete floor under one weak overhead bulb, dust hanging in the beam, nothing else in the frame |
+| `share-npc` | an endless grid of identical faint panels receding into fog, one panel very slightly brighter than the rest |
+| `share-prospect` | the first shaft of teal light breaking across a dark rough wall, a few embers rising through it |
+| `share-contender` | two low teal spotlights crossing over an empty ring floor, rope shadows thrown long across the ground |
+| `share-menace` | a dark storm front lit from behind by teal lightning, low horizon, heavy air |
+| `share-locked` | a long dark corridor of thin vertical teal lines converging on one bright point far away |
+| `share-topg` | a black polished surface under a violet to teal gradient horizon, one restrained rim of gold light along the top edge |
+
+If a generator refuses the hex codes, say "deep cyan" for the teal and "soft
+purple" for the violet. Ask for the same seed across the eight so the set holds
+together.
+
+---
+
 ## What happens to your files
 
-Drop them anywhere and tell me where. `npm run art` converts each one to a
-256px WebP with the app's naming, writes it to `www/img/`, adds it to the
-service worker's precache list and bumps the cache version. Nothing is resized
-by the browser and nothing arrives late on screen.
+Put them in `art/` named after the asset, then run `npm run art`. Ranks, cups,
+marks and medals are downscaled to the size they appear at; share banners are
+passed through as sent. Everything is written to `www/img/`, added to the
+service worker's precache list, and the cache version is bumped. Nothing is
+resized by the browser and nothing arrives late on screen.
 
 Send a rough one first and I will put it in the app at every size it appears at,
 so you can judge it where it actually lives rather than in a folder.

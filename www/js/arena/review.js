@@ -13,6 +13,7 @@ import * as feats from './feats.js';
 import { escapeHtml, chime, celebrate, haptic, WEEKDAYS_LONG } from '../ui.js';
 import { icon } from '../icons.js';
 import { navigate } from '../back.js';
+import { shareWeek } from './share.js';
 
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 const points = (v) => Math.round(v * 100);
@@ -226,7 +227,7 @@ function draw(mount, w) {
       </div>
 
       <button class="btn primary big" id="next">${cover ? 'Open it' : last ? 'Back to the grid' : escapeHtml(beat.next)}</button>
-      ${last ? '<a class="btn ghost wide" href="#/arena">' + icon('trophy', 16) + '<span>The Arena</span></a>' : ''}
+      ${last ? `<button class="btn ghost wide" id="share">${icon('external', 16)}<span>Share this week</span></button>` : ''}
     </div>`;
 
   if (step === 1) countUp(mount.querySelector('#count'), w.score);
@@ -236,6 +237,7 @@ function draw(mount, w) {
     haptic('tick');
   }
 
+  mount.querySelector('#share')?.addEventListener('click', () => shareWeek(w.key));
   mount.querySelector('#next').addEventListener('click', () => {
     haptic('press');
     if (last) return navigate('#/hub');
