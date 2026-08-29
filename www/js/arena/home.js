@@ -99,7 +99,7 @@ function weekCard() {
       const frac = r.due ? r.done / r.due : 0;
       const colour = r.linked ? 'var(--accent)' : hex(r);
       return `<div class="ar-row">
-        <span class="ar-row-name" style="color:${colour}">${escapeHtml(r.name)}</span>
+        <span class="ar-row-name">${escapeHtml(r.name)}</span>
         <span class="ar-row-bar"><i style="width:${(frac * 100).toFixed(0)}%;background:${colour}"></i></span>
         <b>${r.done}/${r.due}</b>
       </div>`;
@@ -142,7 +142,7 @@ export function openWeekSheet(key) {
     .map((r) => {
       const colour = r.linked ? 'var(--accent)' : hex(r);
       return `<div class="ar-row">
-        <span class="ar-row-name" style="color:${colour}">${escapeHtml(r.name)}</span>
+        <span class="ar-row-name">${escapeHtml(r.name)}</span>
         <span class="ar-row-bar"><i style="width:${((r.done / Math.max(1, r.due)) * 100).toFixed(0)}%;background:${colour}"></i></span>
         <b>${r.done}/${r.due}</b>
       </div>`;
@@ -435,7 +435,7 @@ function featTile(f) {
     <span class="ft-ico">${icon(f.icon, 19)}</span>
     <b>${escapeHtml(f.name)}</b>
     ${f.earned
-      ? '<i class="ft-tick">' + icon('check', 12) + '</i>'
+      ? ''
       : f.need
         ? `<span class="ft-bar"><i style="width:${(f.frac * 100).toFixed(0)}%"></i></span>`
         : '<i class="ft-locked">·</i>'}

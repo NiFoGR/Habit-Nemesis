@@ -148,7 +148,7 @@ function drawFull(mount, res, fresh) {
             ${fresh
               .map((f) => `<div class="rs-feat">
                 <span class="ft-ico on">${icon(f.icon, 18)}</span>
-                <span><b>${escapeHtml(f.name)}</b><i>${escapeHtml(f.blurb)}</i></span>
+                <span><b>${escapeHtml(f.name)}</b></span>
               </div>`)
               .join('')}
           </section>`
@@ -186,18 +186,17 @@ function noteBlock(key) {
   const has = !!face();
   return `<section class="card note-ask" id="noteAsk">
     <h2>Your best week</h2>
-    <p class="muted small">You have never had a better one. This week is your Nemesis now.</p>
+    <p class="muted small">This week is your Nemesis now.</p>
 
     <div class="nem-ask">
       ${faceAvatar(64)}
       <div>
         <b>${has ? 'Put this week on him' : 'Give him a face'}</b>
-        <i class="muted small">He is you at your best. He may as well look like it.</i>
       </div>
       <button class="btn small-btn" id="faceGo">${has ? 'Retake' : 'Take one'}</button>
     </div>
 
-    <label class="fine" for="noteText">And a line for whoever has to beat it. That will be you.</label>
+    <label class="fineprint" for="noteText">A line for whoever beats it.</label>
     <input type="text" id="noteText" maxlength="${arena.MAX_NOTE}" autocomplete="off"
       placeholder="Beat that." value="${escapeHtml(existing)}">
     <button class="btn" id="noteSave">${existing ? 'Change it' : 'Leave it'}</button>

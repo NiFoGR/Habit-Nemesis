@@ -74,7 +74,7 @@ function qualification(mount, st) {
         <p class="eyebrow">${escapeHtml(st.arc.name)} · group stage</p>
         <h1 class="mo-title">${through ? 'Through' : 'Out'}</h1>
         <p class="mo-sub">${through
-          ? `You finished ${ordinal(g.place)} of ${g.table.length}. The knockout starts now.`
+          ? `You finished ${ordinal(g.place)} of ${g.table.length}.`
           : `You finished ${ordinal(g.place)} of ${g.table.length}. Top three went through.`}</p>
       </section>
 

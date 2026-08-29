@@ -186,9 +186,11 @@ export function renderWeekReview(mount) {
 function empty(mount) {
   mount.innerHTML = `
     <div class="screen rv">
-      <p class="eyebrow">The week in review</p>
-      <h1 class="rv-title">Not yet</h1>
-      <p class="rv-sub">Come back Sunday.</p>
+      <div class="rv-body">
+        <p class="eyebrow">The week in review</p>
+        <h1 class="rv-title">Not yet</h1>
+        <p class="rv-sub">Come back Sunday.</p>
+      </div>
       <button class="btn primary big" id="out" data-back>Back to the grid</button>
     </div>`;
 

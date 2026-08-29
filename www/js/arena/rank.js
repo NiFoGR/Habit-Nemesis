@@ -1,8 +1,4 @@
-// The month settles: you go up, or you go down.
-//
-// The whole ladder, every division with the number it costs and the badge on
-// the one you are on. Relegation marks the division you lost as a target:
-// dashed, with an arrow back at it.
+// The month settles: the whole ladder, and the badge on the rung you are now.
 //
 // Marked seen on the way OUT: marking as it draws makes the screen eat what
 // put it there, and a reload loses it for good.
@@ -14,7 +10,6 @@ import { crest } from './crest.js';
 import { navigate, replaceWith } from '../back.js';
 
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
-const points = (v) => Math.round(v * 100);
 
 export const hasRank = () => !!arena.rankMoment();
 
@@ -33,12 +28,12 @@ function whatItWanted(month, score, bar) {
   const short = bar - score;
   if (short <= 0) return '';
   const weeks = arena.weeksOfMonth(month).map((k) => arena.scoreWeek(k)).filter((w) => !w.void && w.due);
-  if (!weeks.length) return `${points(short)} points short.`;
+  if (!weeks.length) return '';
   const worst = weeks.reduce((a, w) => (w.score < a.score ? w : a));
   const needed = worst.score + short * weeks.length;
   return needed <= 1
-    ? `${points(short)} points short. Your worst week at ${pct(needed)} would have held it.`
-    : `${points(short)} points short. That is more than one week.`;
+    ? `Your worst week at ${pct(needed)} would have held it.`
+    : 'More than one week short.';
 }
 
 export function renderRank(mount) {

@@ -449,8 +449,9 @@ export function groupTable(arc = arcOfMonth(currentMonth())) {
   const eligible = mine.length >= need && rivals.length >= ARC_MIN_RIVALS;
 
   const table = [
-    ...rivals.map((r, i) => ({ you: false, name: `You, ${weekLabel(r.key)}`, week: r.key, score: r.score, seed: i + 1 })),
-    { you: true, name: 'You, this Arc', week: null, score: you, played: mine.length, of: groupWeeks.length },
+    // Every row is you: the subtitle says so and the bold row marks which one.
+    ...rivals.map((r, i) => ({ you: false, name: weekLabel(r.key), week: r.key, score: r.score, seed: i + 1 })),
+    { you: true, name: 'This Arc', week: null, score: you, played: mine.length, of: groupWeeks.length },
   ].sort((a, b) => b.score - a.score);
 
   const place = table.findIndex((r) => r.you) + 1;

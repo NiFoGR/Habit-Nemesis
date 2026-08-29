@@ -48,7 +48,6 @@ export function renderYear(mount, want) {
       ${open.length > 1
         ? `<div class="yr-nav">
             <button class="icon-btn" id="prevY" ${at <= 0 ? 'disabled' : ''} aria-label="Earlier year">${icon('back', 18)}</button>
-            <b>${escapeHtml(year.label)}</b>
             <button class="icon-btn flip" id="nextY" ${at >= open.length - 1 ? 'disabled' : ''} aria-label="Later year">${icon('back', 18)}</button>
           </div>`
         : ''}
@@ -78,12 +77,12 @@ export function renderYear(mount, want) {
         ? `<section class="card">
             <h2>Two weeks</h2>
             <button class="ar-nemesis" data-week="${best.key}">
-              <span class="ar-nico good">${icon('flash', 16)}</span>
+              <span class="ar-nico">${icon('flash', 16)}</span>
               <span class="ar-nname"><b>Best week</b><i>${escapeHtml(arena.weekLabel(best.key))}</i></span>
               <b class="ar-nscore">${pct(best.score)}</b>
             </button>
             <button class="ar-nemesis" data-week="${worst.key}">
-              <span class="ar-nico bad">${icon('warn', 16)}</span>
+              <span class="ar-nico">${icon('flash', 16)}</span>
               <span class="ar-nname"><b>Worst week</b><i>${escapeHtml(arena.weekLabel(worst.key))}</i></span>
               <b class="ar-nscore">${pct(worst.score)}</b>
             </button>
