@@ -1061,6 +1061,9 @@ input[type="range"] {
 
 /* Real switches. A default checkbox is a white box on every Android WebView.
    A real checkbox underneath keeps it keyboard and screen-reader correct. */
+/* A value beside its own label, so a slider is not the one control with none. */
+.setting b em { font-style: normal; color: var(--muted); font-weight: var(--w-normal); }
+
 .setting.toggle input[type="checkbox"],
 .set-row input[type="checkbox"] { margin: 0;
   appearance: none; -webkit-appearance: none;

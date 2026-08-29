@@ -247,13 +247,13 @@ export async function renderNightlightSettings(mount) {
   const st = await status();
 
   const modeLine = {
-    hardware: ['good', 'System filter', 'Driving Android’s own Night Light. This is the real thing: a hardware colour transform over everything, including the lock screen, and it does not lift blacks.'],
-    overlay: ['ok', 'Overlay', 'An amber layer drawn over every app. It works everywhere, but it lifts blacks slightly, because a window cannot multiply. See below for the way around that.'],
-    blocked: ['bad', 'Needs permission', 'NiFo cannot draw over other apps yet, so there is nothing to filter with.'],
-    page: ['ok', 'This app only', 'Running in a browser, so the filter covers NiFo’s own screens and nothing else. Install the APK for a phone-wide one.'],
-    suspended: ['ok', 'Held off', 'A photo screen is open, so the filter is out of the way until you leave it.'],
-    off: ['muted', 'Off', 'Nothing is being filtered.'],
-  }[st?.mode || 'off'] || ['muted', 'Off', ''];
+    hardware: ['good', 'System filter'],
+    overlay: ['ok', 'Overlay'],
+    blocked: ['bad', 'Needs permission'],
+    page: ['ok', 'This app only'],
+    suspended: ['ok', 'Held off'],
+    off: ['muted', 'Off'],
+  }[st?.mode || 'off'] || ['muted', 'Off'];
 
   mount.innerHTML = `
     <div class="screen">
@@ -266,23 +266,20 @@ export async function renderNightlightSettings(mount) {
       <section class="card">
         <div class="h-row">${icon('warmth', 16)}<h2>Right now</h2>
           <span class="pill ${modeLine[0] === 'good' ? 'done' : 'ghost'}">${escapeHtml(modeLine[1])}</span></div>
-        <p class="small muted">${modeLine[2]}</p>
         ${st && st.enabled && !st.neutral ? `<div class="kv"><span>Screen temperature</span><b>${st.kelvin}K</b></div>` : ''}
         ${st?.mode === 'blocked' ? `<button class="btn primary" id="grant">Allow drawing over other apps</button>` : ''}
         ${st?.native && st.enabled ? `<button class="btn ghost" id="pauseBtn">${st.pausedUntil > Date.now() ? 'Resume now' : 'Pause for an hour'}</button>` : ''}
       </section>
 
       <section class="card">
-        <div class="h-row">${icon('flash', 16)}<h2>On</h2></div>
         <label class="setting toggle">
           <span><b>Night light</b><i>${isNative() ? 'Filters the whole phone, not just NiFo, and keeps running with the app closed.' : 'Filters NiFo’s own screens. A phone-wide filter needs the APK.'}</i></span>
           <input type="checkbox" id="enabled" ${n.enabled ? 'checked' : ''}>
         </label>
         <label class="setting">
-          <span><b>Shape</b><i>How the warmth arrives across the day.</i></span>
+          <span><b>Shape</b></span>
         </label>
         ${segmented('curve', [{ id: 'gradual', label: 'All day' }, { id: 'flux', label: 'Evening only' }], n.curve)}
-        <p class="small muted" id="curveNote"></p>
       </section>
 
       <section class="card">
@@ -301,7 +298,7 @@ export async function renderNightlightSettings(mount) {
       <section class="card">
         <div class="h-row">${icon('moon', 16)}<h2>Warmth</h2></div>
         <label class="setting">
-          <span><b>At night</b><i>Where the ramp ends up by bedtime. A bulb is about 2700K, a candle 1900K.</i></span>
+          <span><b>At night</b><i>A bulb is 2700K, a candle 1900K.</i></span>
           <select id="nightKelvin">
             ${NIGHT_CHOICES.map((k) => `<option value="${k}" ${n.nightKelvin === k ? 'selected' : ''}>${k}K</option>`).join('')}
           </select>
@@ -313,7 +310,7 @@ export async function renderNightlightSettings(mount) {
           </select>
         </label>
         <label class="setting">
-          <span><b>Strength</b><i>Weakens the tint without changing the temperatures.</i></span>
+          <span><b>Strength <em id="intensityVal">${Math.round(n.intensity * 100)}%</em></b><i>Weakens the tint, not the temperatures.</i></span>
           <input type="range" id="intensity" min="20" max="100" step="5" value="${Math.round(n.intensity * 100)}">
         </label>
         <label class="setting">
@@ -331,7 +328,7 @@ export async function renderNightlightSettings(mount) {
         <p class="fineprint">White, as it will look at each hour.${isNative() ? ' Drawn from the service’s own numbers, not a copy of them.' : ''}</p>
       </section>
 
-      <section class="card">
+      ${isNative() && st?.mode !== 'hardware' ? `<section class="card">
         <div class="h-row">${icon('help', 16)}<h2>The honest version</h2></div>
         <p class="fineprint">The overlay washes amber over the screen: correct on bright pixels, and it lifts black a little. No app can avoid that, because windows are blended over one another and none can ask for a multiply.</p>
         <p class="fineprint">Android's own filter is a real colour transform, so it does not. NiFo drives it instead once this is granted. Granted once, and it survives reboots and updates.</p>
@@ -339,8 +336,8 @@ export async function renderNightlightSettings(mount) {
         <button class="btn ghost wide" id="nlCopy">${icon('key', 16)}<span>Copy the command</span></button>
         <p class="fineprint"><b>From a computer:</b> USB debugging on, plug in, run it.</p>
         <p class="fineprint"><b>From the phone alone:</b> Developer options, then Wireless debugging, then Shizuku (free) or LADB (paid).</p>
-        <p class="fineprint"><b>Or nothing.</b> The overlay is a real filter and works on every app. This buys black staying black, and stops near 2600K where the overlay reaches 1900K.</p>
-      </section>
+        <p class="fineprint"><b>Or nothing.</b> This buys black staying black, and stops near 2600K where the overlay reaches 1900K.</p>
+      </section>` : ''}
     </div>`;
 
   /* ---- wiring ---- */
@@ -367,7 +364,6 @@ export async function renderNightlightSettings(mount) {
     store.update((s) => Object.assign(s.nightlight, patch));
     sync();
     drawStrip();
-    drawCurveNote();
   };
 
   const $ = (id) => mount.querySelector('#' + id);
@@ -387,7 +383,11 @@ export async function renderNightlightSettings(mount) {
   $('nightKelvin').addEventListener('change', (e) => set({ nightKelvin: Number(e.target.value) }));
   $('dayKelvin').addEventListener('change', (e) => set({ dayKelvin: Number(e.target.value) }));
   $('transitionMin').addEventListener('change', (e) => set({ transitionMin: Number(e.target.value) }));
-  $('intensity').addEventListener('input', (e) => set({ intensity: Number(e.target.value) / 100 }));
+  $('intensity').addEventListener('input', (e) => {
+    const el = $('intensityVal');
+    if (el) el.textContent = `${e.target.value}%`;
+    set({ intensity: Number(e.target.value) / 100 });
+  });
 
   $('matchRule')?.addEventListener('click', () => {
     const p = store.get().pray.settings;
@@ -406,15 +406,6 @@ export async function renderNightlightSettings(mount) {
     await pause();
     renderNightlightSettings(mount);
   });
-
-  function drawCurveNote() {
-    const c = cfg();
-    const el2 = $('curveNote');
-    if (!el2) return;
-    el2.textContent = c.curve === 'gradual'
-      ? `Warming from ${fromMin(c.wakeMin)}, so slowly you will not catch it happening, and fully warm by ${fromMin(c.sleepMin)}.`
-      : `Daylight until ${fromMin(mod(c.sleepMin - c.transitionMin, 1440))}, then down to ${c.nightKelvin}K over ${c.transitionMin} minutes.`;
-  }
 
   /** The day as swatches. On the APK the samples come from the service's own maths. */
   async function drawStrip() {
@@ -438,7 +429,5 @@ export async function renderNightlightSettings(mount) {
       .map((s) => `<i style="background:${whiteUnder(s.kelvin, c.dayKelvin, c.intensity)}" title="${fromMin(s.min)} · ${s.kelvin}K"></i>`)
       .join('');
   }
-
-  drawCurveNote();
   drawStrip();
 }
