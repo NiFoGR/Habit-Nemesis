@@ -265,23 +265,40 @@ nobody would post.
 > lighting, no film grain, no haze, no ruins, no realistic architecture, no
 > cinematic darkness.
 >
-> Take the emblem's colour and its idea and build a scene from them: bold
-> gradient sky, big geometric shapes, sunburst rays, floating confetti, glossy
-> orbs, motion streaks. The emblem itself must NOT appear: no badge, no shield,
-> no crest, no ribbon, no text, no letters, no logo, no face.
+> The emblem itself must NOT appear: no badge, no shield, no crest, no ribbon,
+> no text, no letters, no logo, no face. Use it only for the palette and the
+> idea.
 >
-> Composition: a wide empty middle where big white type will sit, and all the
-> energy pushed to the top and bottom edges. Rich but not muddy, so white type
-> stays readable over it.
+> Composition: **SHAPE**. A wide empty middle where big white type will sit,
+> and all the energy pushed to the top and bottom edges. Rich but not muddy,
+> so white type stays readable over it.
+>
+> Scene: **SCENE**.
 
-Save each result as `share-<division>.webp`: `share-bottom`, `share-npc`,
-`share-prospect`, `share-contender`, `share-menace`, `share-locked`,
-`share-topg`. A ninth, `share-banner`, is the fallback for a week played
-unranked; for that one drop the attachment and say "teal and violet, confetti
-and sunburst rays over a bold gradient".
+Then add the rank's own **SCENE** line from the table below, and its
+**SHAPE** line. Without those the generator returns the same picture in a
+different colour every time: the composition has to differ, not just the hue.
+
+| File | SCENE | SHAPE |
+|---|---|---|
+| `share-unranked` | a single closed grey shutter door in an empty concrete room, one dim bulb, dust, nothing else. Cold grey and gunmetal, no accent colour at all | dead centre and symmetrical, almost empty, the door small in a lot of nothing |
+| `share-bottom` | a pink marble staircase that leads nowhere, bubblegum clouds, party balloons drifting up, a disco floor, confetti. Bubblegum pink and hot pink, silly and camp | bottom heavy: the staircase fills the lower third, balloons rising into empty sky above |
+| `share-npc` | an endless beige suburb of identical houses and identical doors, a queue of identical figures seen from behind, loading bars, a conveyor of grey cubes. Beige, tan and brown, drab | one-point perspective receding to a vanishing point dead centre, everything repeating |
+| `share-prospect` | copper digital rain falling in vertical streams, glowing code, a bronze doorway of light opening at the far end, circuit traces. Copper, bronze and dark green | vertical: streams falling top to bottom the full height, the doorway small and far away |
+| `share-contender` | two crossed spotlight beams over an empty boxing ring, chrome ropes, steel chevrons, chalk dust in the air. Chrome, silver and gunmetal | a big X: the two beams crossing diagonally corner to corner, the ring floor at the bottom |
+| `share-menace` | dumbbells, weight plates and protein tubs raining down and piling up, gold chains, a gym under gold light. Gold, black and amber, excessive | top heavy raining into a bottom heavy pile, the middle left open between them |
+| `share-locked` | concentric gold rings tunnelling inward to one bright keyhole of light, monastic, sealed, absolutely still. Gold, tan and deep black | radial: rings centred and tunnelling to a point in the middle distance |
+| `share-topg` | a purple crown bursting with confetti and streamers, lightning bolts, championship ribbons, glossy purple orbs. Violet, purple and a thin line of gold | low horizon: the crown and the burst across the top quarter, wide open sky below |
+
+Save each result as `share-<division>.webp`: `share-unranked`, `share-bottom`,
+`share-npc`, `share-prospect`, `share-contender`, `share-menace`,
+`share-locked`, `share-topg`. `share-banner` is the fallback used when a
+division has no file of its own: for that one drop the attachment and say
+"teal and violet, confetti and sunburst rays over a bold gradient".
 
 If a result comes back dark or photographic, add: "flat vector, cel shaded,
-bright, cartoon, no photorealism, no 3D render."
+bright, cartoon, no photorealism, no 3D render." If two ranks come back
+looking alike, the SHAPE line is being ignored: put it first.
 
 **With no artwork at all** the card draws its own version of this: a diagonal
 gradient in the week's state colour, a sunburst behind the crest, two soft
