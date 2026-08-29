@@ -1,36 +1,22 @@
-// The Arena: the screen.
-//
-// One page, no tabs. The order is the order of the questions actually asked:
-// where do I stand, am I winning this week, how is the Arc going, what have I
-// done. A tab bar would have been four screens' worth of chrome hiding three
-// answers, and you would still have had to visit all four to know how you were
-// doing.
-//
-// Nothing here is a second view of the grid. The grid says which days you
-// ticked; this says what those ticks are worth against an opponent, which is
-// the only thing the grid cannot tell you.
-//
-// Every opponent on this screen is a real week out of your own record, and
-// every one of them is tappable: the point of beating your best week is being
-// able to look at it.
+// The Arena screen. One page, in the order the questions get asked: where do
+// I stand, am I winning this week, how is the Arc going, what have I done.
+// Every opponent is a real week and every one is tappable.
 
 import * as store from '../store.js';
 import * as habits from '../habits/program.js';
 import * as arena from './program.js';
+import { captureFace, face, faceAvatar } from './face.js';
+import { shareWeek } from './share.js';
 import * as feats from './feats.js';
-import { escapeHtml, openSheet, haptic } from '../ui.js';
+import { escapeHtml, openSheet, haptic, toast } from '../ui.js';
 import { icon } from '../icons.js';
 import { crest, UNRANKED } from './crest.js';
 
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 const hex = (h) => (h.colour ? habits.hexOf(h.colour) : 'var(--accent)');
 
-/* ---------------- the ladder ----------------
-   Seven segments, filled up to where you are. Not seven colours: the app has
-   one accent and colour answers "what state is this in", so the ladder says
-   how far up you are by how much of it is lit, which is the one thing it has
-   to say. Built from DIVISIONS rather than from the number seven, so adding a
-   division does not strand the last one. */
+/* --------------------- the ladder --------------------- */
+
 function ladder(id) {
   const at = arena.divisionIndex(id);
   return `<div class="ar-ladder" role="img" aria-label="Division ${escapeHtml(arena.divisionOf(id).name)}, ${at + 1} of ${arena.DIVISIONS.length}">
@@ -38,31 +24,29 @@ function ladder(id) {
   </div>`;
 }
 
-/** The ladder with nothing lit on it, and how long until something is. Shown
- *  instead of the bar, because a bar implies a position on it and the whole
- *  point of this state is that you do not have one yet. The app used to open on
- *  NPC, which meant a joke about Mike Mentzer aimed at someone who had not had
- *  the chance to do anything at all. */
+/** Unranked: the ladder unlit, and a countdown to the week that places you.
+ *  A bar would imply a position on it. */
 function unrankedHero() {
   const left = arena.daysLeftInWeek();
-  return `<div class="ar-ladder none" role="img" aria-label="Unranked">
-      ${arena.DIVISIONS.map(() => '<i></i>').join('')}
+  const live = arena.scoreWeek(arena.currentWeek());
+  return `<div class="ar-count">
+      <b>${left}</b>
+      <i>day${left === 1 ? '' : 's'} until you are placed</i>
     </div>
-    <p class="ar-monthline"><span class="muted">your first week ends in ${left} day${left === 1 ? '' : 's'}</span></p>`;
+    <p class="ar-need">${live.void
+      ? 'Nothing marked yet.'
+      : `On ${pct(live.score)} you go in at ${escapeHtml(arena.divisionForScore(live.score).name)}.`}</p>`;
 }
 
-/** The month, as a bar inside the division you are in: floor on the left, the
- *  next rung on the right. A bar spanning nought to a hundred put every
- *  threshold within a few pixels of the last and made a whole month's work
- *  invisible. Its colour says which way you are going, so nothing has to. */
+/** The month inside your division: floor left, next rung right. A 0-100 bar
+ *  put every threshold within a few pixels of the last. */
 function barTo(st) {
   const s = st.month.score;
   const floor = st.division.bar;
   const roof = st.next ? st.next.bar : 1;
   const span = Math.max(0.01, roof - floor);
   const at = Math.max(0, Math.min((s - floor) / span, 1));
-  // The readout follows the fill but never all the way to either end: at 0%
-  // and at 100% half of it hung off the side.
+  // The readout stops short of both ends, or half of it hangs off.
   const label = Math.min(92, Math.max(8, at * 100));
   const state = s >= roof ? 'up' : st.safe ? 'safe' : 'down';
   return `<div class="ar-bar ${state}">
@@ -72,21 +56,34 @@ function barTo(st) {
   <div class="ar-bar-ends">
     <span>${escapeHtml(st.division.name)} · ${pct(floor)}</span>
     <span>${st.next ? `${escapeHtml(st.next.name)} · ${pct(roof)}` : 'the top'}</span>
-  </div>`;
+  </div>
+  ${fromHere(st)}`;
+}
+
+/** The number the rest of the month has to average. The most useful line on
+ *  the screen and the one nobody could work out for themselves. */
+function fromHere(st) {
+  const hold = arena.needFromHere(st.division.bar);
+  const up = st.next ? arena.needFromHere(st.next.bar) : null;
+  if (!hold) return '';
+  const weeks = hold.weeks === 1 ? 'this week' : `each of the ${hold.weeks} weeks left`;
+
+  // Promotion first when it is still reachable, then the floor. A need at or
+  // below zero is already banked and is never printed: -94% is not a target.
+  if (up && up.need > 0 && up.need <= 1) {
+    return `<p class="ar-need">${pct(up.need)} ${escapeHtml(weeks)} takes you to ${escapeHtml(st.next.name)}.</p>`;
+  }
+  if (up && up.need <= 0) return '';
+  if (hold.need <= 0) {
+    return `<p class="ar-need">${escapeHtml(st.division.name)} is safe whatever happens.</p>`;
+  }
+  if (hold.need > 1) {
+    return `<p class="ar-need">${escapeHtml(st.division.name)} is out of reach this month.</p>`;
+  }
+  return `<p class="ar-need">${pct(hold.need)} ${escapeHtml(weeks)} holds ${escapeHtml(st.division.name)}.</p>`;
 }
 
 /* ---------------- the week ---------------- */
-
-/** The two scores, side by side, each as a share of the pair. Two bars of the
- *  same length would be the honest chart and the useless one: what matters is
- *  the gap, and a shared scale is the only way to see it. */
-function race(mine, theirs) {
-  const total = Math.max(0.0001, mine + theirs);
-  const a = (mine / total) * 100;
-  return `<div class="ar-race">
-    <div class="ar-race-bar"><i class="me" style="width:${a.toFixed(1)}%"></i><i class="them" style="width:${(100 - a).toFixed(1)}%"></i></div>
-  </div>`;
-}
 
 function weekCard() {
   const key = arena.currentWeek();
@@ -95,18 +92,14 @@ function weekCard() {
   const left = arena.daysLeftInWeek();
   const gap = live.score - opp.score;
   const state = live.void ? 'void' : gap > 0 ? 'ahead' : gap < 0 ? 'behind' : 'level';
-  const verdict = live.void
-    ? 'Not a fixture yet'
-    : state === 'level'
-      ? 'Level'
-      : `${state === 'ahead' ? 'Ahead' : 'Behind'} by ${pct(Math.abs(gap))}`;
+  const verdict = live.void ? 'Not a fixture yet' : state === 'level' ? 'Level' : state === 'ahead' ? 'Ahead' : 'Behind';
 
   const rows = live.rows
     .map((r) => {
       const frac = r.due ? r.done / r.due : 0;
       const colour = r.linked ? 'var(--accent)' : hex(r);
       return `<div class="ar-row">
-        <span class="ar-row-name" style="color:${colour}">${escapeHtml(r.name)}</span>
+        <span class="ar-row-name">${escapeHtml(r.name)}</span>
         <span class="ar-row-bar"><i style="width:${(frac * 100).toFixed(0)}%;background:${colour}"></i></span>
         <b>${r.done}/${r.due}</b>
       </div>`;
@@ -126,59 +119,83 @@ function weekCard() {
       </div>
       <div class="ar-vs">${icon('versus', 20)}</div>
       <button class="ar-side them" id="oppBtn">
+        ${opp.id === 'nemesis' || opp.knockout === 'final' ? faceAvatar(38) : ''}
         <b>${pct(opp.score)}</b>
         <span>${escapeHtml(opp.name)}</span>
       </button>
     </div>
-    ${race(live.score, opp.score)}
     <p class="ar-verdict"><b>${escapeHtml(verdict)}</b><i>${left === 1 ? 'Last day' : `${left} days left`}</i></p>
-    <p class="muted small ar-oppline">${live.void ? 'Not enough owed yet to be a match.' : escapeHtml(opp.blurb)}</p>
 
     <div class="ar-rows">${rows || '<p class="muted small">Nothing is due this week yet.</p>'}</div>
   </section>`;
 }
 
-/* ---------------- a past week, opened ----------------
-   The headline is the score that was *recorded* when the week closed, because
-   that is what the result was decided on and a result does not move. The rows
-   under it are read live, so they are labelled as the week rather than as a
-   second total; there is deliberately no sum under them, because two numbers
-   for one week is exactly the disagreement this app keeps getting wrong. */
+/* ---------------- a past week, opened ---------------- */
+
 export function openWeekSheet(key) {
   const stored = store.get().arena.weeks[key];
   const live = arena.scoreWeek(key);
   const score = stored ? stored.score : live.score;
-  // Only a played match has a result to report. A week the Arena scored out
-  // of older data is a performance and says so, without a verdict on it.
+  // Only a played match has a result. A 'record' week is a performance.
   const result = stored?.result === 'won' || stored?.result === 'lost' ? stored.result : '';
   const rows = live.rows
     .map((r) => {
       const colour = r.linked ? 'var(--accent)' : hex(r);
       return `<div class="ar-row">
-        <span class="ar-row-name" style="color:${colour}">${escapeHtml(r.name)}</span>
+        <span class="ar-row-name">${escapeHtml(r.name)}</span>
         <span class="ar-row-bar"><i style="width:${((r.done / Math.max(1, r.due)) * 100).toFixed(0)}%;background:${colour}"></i></span>
         <b>${r.done}/${r.due}</b>
       </div>`;
     })
     .join('');
-  openSheet(`
-    <h2>${escapeHtml(arena.weekLabel(key))}</h2>
+  const nemesis = arena.nemesisWeek();
+  const isNemesis = !!nemesis && nemesis.key === key;
+  const said = arena.noteFor(key);
+  const now = arena.scoreWeek(arena.currentWeek());
+  const gap = Math.round((now.score - score) * 100);
+
+  const sheet = openSheet(`
+    ${isNemesis
+      ? `<div class="nem-head">${faceAvatar(56)}<div><h2>Your Nemesis</h2>
+          <p class="muted small">${escapeHtml(arena.weekLabel(key))} · your best week</p></div></div>`
+      : `<h2>${escapeHtml(arena.weekLabel(key))}</h2>`}
     <p class="muted small">${escapeHtml(key.replace('-W', ', week '))}${
       result ? ` · ${result} against ${escapeHtml(stored.oppName || 'the bar')}` : ' · on the record, not played'
     }</p>
     <div class="ar-sheet-score ${result}"><b>${pct(score)}</b><span>${
       stored ? `${stored.done} of ${stored.due} cells` : `${live.done} of ${live.due} cells`
     }</span></div>
+    ${said ? `<p class="said-quote">“${escapeHtml(said)}”</p>` : ''}
+    ${isNemesis && key !== arena.currentWeek()
+      ? `<p class="nem-gap ${gap >= 0 ? 'ahead' : 'behind'}">${
+          gap >= 0 ? `You are ${gap} points ahead of him this week.` : `You are ${Math.abs(gap)} points behind him this week.`
+        }</p>`
+      : ''}
     <h3 class="ar-sub">The week, row by row</h3>
     <div class="ar-rows">${rows || '<p class="muted small">No rows were on the grid that week.</p>'}</div>
+    ${isNemesis ? `<button class="btn ghost wide" id="faceSwap">${face() ? 'Change his face' : 'Give him a face'}</button>` : ''}
+    ${live.due ? `<button class="btn ghost wide" id="shareWeek">${icon('external', 16)}<span>Share this week</span></button>` : ''}
     <button class="btn wide" data-close>Close</button>`);
+
+  // Closed first: the card is a sheet of its own and two do not stack.
+  document.getElementById('shareWeek')?.addEventListener('click', () => {
+    sheet.close();
+    shareWeek(key);
+  });
+
+  document.getElementById('faceSwap')?.addEventListener('click', async () => {
+    haptic('press');
+    if (await captureFace(key)) {
+      toast('That is him now');
+      openWeekSheet(key);
+    }
+  });
 }
 
 /* ---------------- form ---------------- */
 
-/** The last eight results, as a strip rather than as a card. A heading saying
- *  "Form" over eight W's and L's is a word doing a job the W's and L's have
- *  already done. */
+/** Last eight, as a strip. A "Form" heading over eight W and L is a word doing
+ *  their job. */
 function formStrip() {
   const weeks = Object.entries(store.get().arena.weeks)
     .filter(([k, w]) => k < arena.currentWeek() && (w.result === 'won' || w.result === 'lost'))
@@ -188,21 +205,13 @@ function formStrip() {
   return `<div class="ar-form">
     ${weeks
       .map(([k, w]) => `<button class="ar-chip ${w.result}" data-week="${k}" aria-label="${escapeHtml(arena.weekLabel(k))}, ${w.result}">
-        <b>${w.result === 'won' ? 'W' : 'L'}</b><i>${pct(w.score)}</i>
+        <b>${pct(w.score)}</b>
       </button>`)
       .join('')}
   </div>`;
 }
 
-/* ---------------- the arc ----------------
-   Not a permanent box. The cup has a shape - a build-up, an opening, a table,
-   a knockout, a ceremony, and then nothing at all for a fortnight - and the
-   screen has to have that shape too, or it is a scoreboard for a match that is
-   not being played.
-
-   Between cups it is one line and a date. That is the whole reason the arcs
-   stopped tiling the year end to end: while you were always in a cup, a cup
-   was never something you entered. */
+/* ---------------------- the arc ---------------------- */
 
 function arcCard() {
   const st = arena.arcState();
@@ -213,11 +222,9 @@ function arcCard() {
   return arcRound(st);
 }
 
-/** No cup on. A countdown, and what happened in the last one if anything did. */
+/** No cup on: a countdown, and the last one if there was one. */
 function arcClosed(st) {
-  // "Out at the group stage" is the wrong sentence for someone who never had
-  // enough weeks on the record to enter: they did not lose the cup, they were
-  // not in it. Saying otherwise is the app inventing a defeat.
+  // Never entered is not knocked out. Saying otherwise invents a defeat.
   const ended = st.phase !== 'out'
     ? ''
     : st.rec.qualified === false
@@ -234,8 +241,7 @@ function arcClosed(st) {
   </a>`;
 }
 
-/** The group stage, live. The line between third and fourth is the only thing
- *  on it that matters, so it is drawn. */
+/** The group, live. The line between third and fourth is the only thing on it. */
 function arcGroup(st) {
   const g = arena.groupTable(st.arc);
   return `<section class="card">
@@ -258,9 +264,7 @@ function arcGroup(st) {
   </section>`;
 }
 
-/** Why this is not a cup yet, in one line. Nothing on the table is coloured
- *  green until it is: a top-three row that cannot qualify is the screen
- *  telling you that you are through when you are not. */
+/** Why this is not a cup yet. Nothing is green until it can qualify. */
 function shortfall(g) {
   if (g.rivals < arena.ARC_MIN_RIVALS) return 'Not enough weeks on the record yet to make a field to beat.';
   return `${g.played} of ${g.need} weeks played. A cup wants at least ${g.need} of them.`;
@@ -310,23 +314,16 @@ export function renderArena(mount) {
 
   mount.innerHTML = `
     <div class="screen">
-      <section class="ar-hero ${st.unranked ? 'unranked' : `rung-${rung}`}">
+      <section class="ar-hero ${st.unranked ? 'unranked' : ''} ${!st.unranked && !st.next ? 'top' : ''}"
+        style="--lift:${st.unranked ? 0 : rung}">
         <span class="ar-crest">${crest(rung, 92)}</span>
         <h1 class="ar-rank">${escapeHtml(st.division.name)}</h1>
-        <p class="ar-blurb">${escapeHtml(st.division.blurb)}</p>
         ${st.unranked
           ? unrankedHero()
           : `${ladder(a.division)}
         ${st.month.empty
-          ? `<p class="ar-monthline"><span class="muted">${st.placed ? 'nothing scored this month yet' : 'placement month'}</span></p>`
-          : `${barTo(st)}
-             <p class="ar-monthline">
-               <b>${st.month.w}W–${st.month.l}L</b>
-               <span class="muted">· ${arena.weeksLeft()} week${arena.weeksLeft() === 1 ? '' : 's'} left ·</span>
-               <em class="${st.next && st.month.score >= st.next.bar ? 'up' : st.safe ? 'safe' : 'down'}">${
-                 st.next && st.month.score >= st.next.bar ? 'promoting' : st.safe ? 'holding' : 'below the bar'
-               }</em>
-             </p>`}`}
+          ? `<p class="ar-monthline">${st.placed ? 'nothing scored this month yet' : 'placement month'}</p>`
+          : barTo(st)}`}
       </section>
 
       ${weekCard()}
@@ -338,14 +335,14 @@ export function renderArena(mount) {
   wire(mount);
 }
 
-/** The nemesis, named and reachable, on every visit. He is the one opponent
- *  who is always somewhere on the fixture list, so he gets a line of his own
- *  rather than only appearing in the weeks he happens to be drawn. */
+/** A line of his own, except on the weeks he is the fixture: the card above
+ *  already carries the same face, the same week and the same score. */
 function nemesisLine() {
+  if (arena.fixtureFor(arena.currentWeek()).id === 'nemesis') return '';
   const n = arena.nemesisWeek();
   if (!n) return '';
   return `<button class="ar-nemesis" data-week="${n.key}">
-    <span class="ar-nico">${icon('flash', 16)}</span>
+    ${face() ? faceAvatar(36) : `<span class="ar-nico">${icon('flash', 16)}</span>`}
     <span class="ar-nname"><b>Your Nemesis</b><i>${escapeHtml(arena.weekLabel(n.key))} · your best week</i></span>
     <b class="ar-nscore">${pct(n.score)}</b>
   </button>`;
@@ -362,7 +359,7 @@ function wire(mount) {
       openSheet(`
         <h2>${escapeHtml(fixture.name)}</h2>
         <p class="muted small">${escapeHtml(fixture.blurb)}</p>
-        <p>Your division's bar is ${pct(fixture.score)}. It stands in when the record cannot supply a real opponent yet — every other rival in here is a week you actually had, and there is no point inventing one.</p>
+        <p>Your division's bar is ${pct(fixture.score)}. It stands in until the record can supply a real week. Every other rival is one you actually had.</p>
         <button class="btn wide" data-close>Close</button>`);
     });
   }
@@ -375,8 +372,7 @@ function wire(mount) {
   );
 }
 
-/** "42 of 100" in the feat's own unit, rounded the way the unit wants: hours
- *  and centimetres to one place, counts to none. */
+/** "42 of 100" in the feat's unit: hours and cm to one place, counts to none. */
 function fmtNeed(f) {
   const dp = f.unit && /cm|h|s/.test(f.unit) ? 1 : 0;
   const round = (v) => (dp ? v.toFixed(1) : Math.round(v).toLocaleString());
@@ -394,22 +390,15 @@ export function renderFeats(mount) {
       <header class="screen-head">
         <button class="icon-btn" data-back="arena" aria-label="Back">${icon('back')}</button>
         <h1>Feats</h1>
-        <span class="icon-btn ghost"></span>
+        <span class="pill ghost">${c.earned} of ${c.total}</span>
       </header>
-
-      <div class="today">
-        <div class="today-left">
-          <h2>${c.earned} of ${c.total}</h2>
-          <p class="muted small">Not achievements. Every one of these is something you could say out loud to another person and have it mean something.</p>
-        </div>
-      </div>
 
       ${sections
         .map(
           (s) => `<section class="card">
             <div class="ar-week-head">
               <h2>${escapeHtml(s.section)}</h2>
-              <span class="pill ghost">${s.earned}/${s.items.length}</span>
+              <span class="pill ghost">${s.earned} of ${s.items.length}</span>
             </div>
             <div class="ft-grid">
               ${s.items.map(featTile).join('')}
@@ -446,9 +435,9 @@ function featTile(f) {
     <span class="ft-ico">${icon(f.icon, 19)}</span>
     <b>${escapeHtml(f.name)}</b>
     ${f.earned
-      ? '<i class="ft-tick">' + icon('check', 12) + '</i>'
+      ? ''
       : f.need
         ? `<span class="ft-bar"><i style="width:${(f.frac * 100).toFixed(0)}%"></i></span>`
-        : '<i class="ft-locked">—</i>'}
+        : '<i class="ft-locked">·</i>'}
   </button>`;
 }

@@ -1,12 +1,8 @@
-// The prayers you added yourself.
-//
-// The rest of the prayer section now lives in bible/, because prayer and the
-// reading are one practice and were being split across two tiles. This screen
-// stayed here with the prayer texts it edits.
+// The prayers you added yourself. The rest of the section lives in bible/.
 
 import * as store from '../store.js';
 import * as pray from './program.js';
-import { escapeHtml, toast } from '../ui.js';
+import { escapeHtml, haptic, toast } from '../ui.js';
 import { icon } from '../icons.js';
 
 export function renderMyPrayers(mount) {
@@ -20,7 +16,7 @@ export function renderMyPrayers(mount) {
           <span class="icon-btn ghost"></span>
         </header>
 
-        <p class="small muted">The app ships the ancient core only. Add what you say from your own prayer book and it joins your morning or your night in the slot you choose.</p>
+        <p class="small muted">The app ships the ancient core. Add your own to either slot.</p>
 
         ${['morning', 'evening'].map((slot) => {
           const list = mine.filter((p) => p.slot === slot);

@@ -1,21 +1,13 @@
-// The technique walkthrough. Runs once on the first visit to Kegels, and stays
-// reachable from the guide afterwards.
-//
-// Written for someone who has never done this and does not know what a reverse
-// kegel is. Every instruction is a physical thing you can check on yourself,
-// there is no anatomy vocabulary that is not immediately explained, and every
-// idea gets practised before the next one arrives, reading about a muscle you
-// cannot see does not teach you to find it.
+// The technique walkthrough. Once on the first visit, then from the guide.
+// Written for someone who has never done this: every instruction is something
+// you can check on yourself, and every idea is practised before the next.
 
 import * as store from '../store.js';
 import { icon } from '../icons.js';
 import { haptic, toast } from '../ui.js';
 import { leaveTo } from '../back.js';
 
-/* ---------------- diagrams ----------------
-   Deliberately schematic: a side-on outline with the floor drawn as a sling,
-   and one arrow showing which way it is supposed to move. A realistic drawing
-   would be less clear, not more. */
+/* ---------------------- diagrams ---------------------- */
 
 const sling = (arrow) => {
   const arrows = {
@@ -25,8 +17,7 @@ const sling = (arrow) => {
            <path d="M92 106 L100 120 L108 106" fill="none" stroke="var(--calm)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`,
     none: '',
   };
-  // The viewBox has to leave room below the sling for both the deepest curve
-  // (the reverse kegel) and its label, or the caption falls off the canvas.
+  // Room below the sling for the reverse kegel curve and its label.
   return `<svg class="diagram" viewBox="0 0 200 172" role="img" aria-hidden="true">
     <path d="M40 20 Q100 6 160 20" fill="none" stroke="var(--line)" stroke-width="3" stroke-linecap="round"/>
     <text x="100" y="16" text-anchor="middle" class="dg-lab">belly</text>
@@ -133,9 +124,8 @@ const STEPS = [
 
 /* ---------------- the practice pad ---------------- */
 
-/** A stripped-down version of the session player: no scoring, no records, just
- *  the feeling of the interaction so the first real session is not the first
- *  time they have ever pressed the pad. */
+/** The pad without scoring or records, so the first real session is not the
+ *  first time the interaction has been felt. */
 function practicePad(host, cfg, onDone) {
   let rep = 0;
   let holding = false;
@@ -189,7 +179,7 @@ function practicePad(host, cfg, onDone) {
     try {
       pad.setPointerCapture(e.pointerId);
     } catch {
-      /* not essential */
+      /* optional */
     }
   }
 
@@ -231,13 +221,7 @@ function practicePad(host, cfg, onDone) {
 
 /* ---------------- screen ---------------- */
 
-/**
- * @param {HTMLElement} mount
- * @param {object} opts
- * @param {string} [opts.only] render a single step by id, used for the
- *        "what is a reverse kegel?" link, which should not replay everything
- * @param {()=>void} [opts.onExit]
- */
+/** `only` renders one step by id, for the "what is a reverse kegel?" link. */
 export function renderTutorial(mount, { only = null, onExit = null } = {}) {
   const steps = only ? STEPS.filter((s) => s.id === only) : STEPS;
   let i = 0;
@@ -318,5 +302,3 @@ export function renderTutorial(mount, { only = null, onExit = null } = {}) {
 
   draw();
 }
-
-export const TUTORIAL_STEP_IDS = STEPS.map((s) => s.id);

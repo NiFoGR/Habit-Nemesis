@@ -1,12 +1,5 @@
-// The Bible section, which is also where the prayer rule lives.
-//
-// One room for the whole of it: what you are reading, and the two rules that
-// bracket the day. They belong together because they are the same practice,
-// and splitting them across two tiles meant the hub asked you to choose
-// between them every morning.
-//
-// Reading comes first on the screen because it is the thing with no fixed
-// time. The two prayers sit under it with their own times and their own streak.
+// The Bible section, and the prayer rule, which is the same practice.
+// Reading first: it has no fixed time. The two rules sit under it.
 
 import * as store from '../store.js';
 import * as bible from './program.js';
@@ -54,7 +47,7 @@ export function renderBibleHome(mount) {
       <div class="today bible-today">
         <div class="today-left">
           <h2>${escapeHtml(bible.refName(`${pos.book}:${pos.ch}`))}</h2>
-          <p class="muted small">${prog.read} of ${bible.TOTAL_CHAPTERS} chapters${streak ? ` · ${streak}d reading streak` : ''}</p>
+          <p class="muted small">${streak ? `${streak} day reading streak` : `${prog.read} of ${bible.TOTAL_CHAPTERS} chapters`}</p>
         </div>
         ${ringSvg(prog.frac, `${Math.round(prog.frac * 100)}%`, 'read', { size: 92, color: 'var(--accent)' })}
       </div>
@@ -64,13 +57,12 @@ export function renderBibleHome(mount) {
       </a>
 
       <section class="card">
-        <div class="h-row">${icon('sun', 16)}<h2>Prayer</h2>
-          <span class="pill ${today.complete ? 'done' : 'ghost'}">${today.kept}/2 today</span></div>
+        <div class="h-row">${icon('sun', 16)}<h2>Prayer</h2></div>
         <div class="prayer-list">
           ${prayerCard('morning')}
           ${prayerCard('evening')}
         </div>
-        <p class="muted small">${prayStreak ? `${prayStreak} day prayer streak` : 'Both are required. A day counts when both are kept.'}</p>
+        ${prayStreak ? `<p class="muted small">${prayStreak} day prayer streak</p>` : ''}
       </section>
 
       <a class="btn ghost linkbtn ext" href="${GOARCH}" target="_blank" rel="noopener noreferrer">
@@ -79,8 +71,7 @@ export function renderBibleHome(mount) {
 
       <div class="linkrow">
         <a href="#/bible/books">${icon('book')} The books</a>
-        <a href="#/bible/prayers">${icon('book')} My prayers</a>
-        <a href="#/bible/track">${icon('chart')} Tracking</a>
+        <a href="#/bible/prayers">${icon('sun')} My prayers</a>
         <a href="#/bible/settings">${icon('settings')} Settings</a>
       </div>
     </div>`;

@@ -23,9 +23,8 @@ run: you opened the section and it was empty until you had gone and found a
 file. The parsed text is committed under `www/bible/` now, one JSON file per
 book, and the reader loads it directly. There is no import step.
 
-`www/js/bible/parse.js` stays in the app, unused at runtime, because it is what
-`tools/extract-bible-text.mjs` runs and because it is the way back to importing
-on the device if that is ever wanted again.
+The parser lives in `tools/lib/bible-parse.js`. It is build tooling rather than
+app code, so it does not ship in `www/`; `tools/extract-bible-text.mjs` runs it.
 
 The text is 7 MB, which is most of the app's size and all of the reason
 `tools/pack-web.mjs` leaves it out of the hosted build: that build exists to be
@@ -36,8 +35,8 @@ is just a slower download.
 ## What the export does to the text, and how it is undone
 
 A PDF conversion of a print Bible arrives with two faults. Both are repaired in
-`www/js/bible/parse.js`, which is also what `tools/extract-bible-text.mjs` runs
-to generate the files in `www/bible/`. The reasoning is in the code beside each
+`tools/lib/bible-parse.js`, which `tools/extract-bible-text.mjs` runs to
+generate the files in `www/bible/`. The reasoning is in the code beside each
 fix.
 
 ### Letter spacing
@@ -135,9 +134,8 @@ first time you open a chapter in it and keeps it in memory after that, and the
 service worker precaches every file, so reading works offline from the first
 launch rather than only after each book has been touched once.
 
-`www/js/bible/parse.js` is still in the app, unused at runtime, because it is
-the thing that would be needed again if this ever goes back to a device-side
-import.
+The parser is kept in `tools/lib/bible-parse.js` for a re-run against a cleaner
+export.
 
 ## The reader
 

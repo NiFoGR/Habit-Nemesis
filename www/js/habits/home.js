@@ -1,52 +1,38 @@
 // The home screen: the grid.
 //
-// This is the whole app in one screen. Rows are the things you keep - the five
-// the app itself asks of you and every one you added - columns are the last few
-// days, and a cell is one tap. There is no menu above it and no dashboard
-// beside it, because both were the same list a third time.
+// Rows are what you keep, columns are the last few days, a cell is one tap.
 //
-// Two rules, and they hold for every row without exception:
+//   The name goes there.  Tapping a row's name opens it.
+//   The cell does it.     Tapping today starts the thing, or marks the day.
 //
-//   The name goes there.  Tapping "Kegels" opens the Kegels section; tapping a
-//                         habit opens its own screen.
-//   The cell does it.     Tapping today on Kegels starts a session; on a habit
-//                         it marks the day.
-//
-// Only today acts. A past cell on one of the five is a reading of that
-// section's own record and cannot be edited here, because two editable copies
-// of one morning disagree by Friday.
+// Only today acts. A past cell on one of the five is that section's record.
 
 import * as store from '../store.js';
 import * as habits from './program.js';
-import { escapeHtml, toast, openSheet, haptic, chime, celebrate } from '../ui.js';
+import { escapeHtml, toast, openSheet, haptic, chime, celebrate, WEEKDAYS } from '../ui.js';
 import { icon } from '../icons.js';
 import { navigate } from '../back.js';
 import { openTypePicker } from './edit.js';
 import * as arena from '../arena/program.js';
 import { announce } from '../arena/result.js';
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const WEEKDAYS_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const LONG_PRESS_MS = 420;
 
 const rowColour = (habit) => (habit.colour ? habits.hexOf(habit.colour) : 'var(--accent)');
 
-/** The line under a row's name. One of the five says what that section still
- *  owes today; a measurable habit says what it is counting and what counts as
- *  done, which is the context its bare numbers need and which used to be
- *  stamped on every cell instead. */
+/** The line under the name: what one of the five still owes today, or what a
+ *  measurable habit counts. */
 function detailOf(habit) {
   if (habit.linked) return habit.detail;
   if (habit.kind !== 'number') return '';
   const unit = habit.unit || '';
   if (!habit.target) return unit;
   const aim = `${habit.targetType === 'atmost' ? 'under' : 'at least'} ${fmtNumber(habit.target)}`;
-  return unit ? `${unit} · ${aim}` : aim;
+  return unit ? `${aim} ${unit}` : aim;
 }
 
-/** The small ring beside a habit's name: its score, in its own colour.
- *  `ringSvg` is the 168px one from the report screen and carries a gradient,
- *  a label and a caption, none of which survive being shrunk to 26px. */
+/** The small ring: the score in the habit's own colour. ringSvg is the 168px
+ *  one and does not survive being shrunk to 26px. */
 function miniRing(frac, colour) {
   const r = 9;
   const c = 2 * Math.PI * r;
@@ -58,9 +44,7 @@ function miniRing(frac, colour) {
   </svg>`;
 }
 
-/** One cell. Four states for a yes/no habit and the measurement for a number,
- *  drawn so that "nothing recorded" and "recorded a miss" can be told apart
- *  when you have asked for that and are one thing when you have not. */
+/** One cell. Four states for a yes/no habit, the measurement for a number. */
 function cellHtml(habit, key, sum, s) {
   const d = sum.index.get(key);
   const raw = d?.raw;
@@ -68,8 +52,7 @@ function cellHtml(habit, key, sum, s) {
   const future = key > habits.today();
   if (future) return `<button class="hg-cell future" data-day="${key}" disabled aria-hidden="true"></button>`;
 
-  // One of the five: only today does anything, and what it does is start the
-  // thing. Everything behind today is that section's record, shown not edited.
+  // One of the five: only today acts. Behind it is that section's record.
   const go = habit.linked && key === habits.today() && habit.action
     ? ` data-go="${escapeHtml(habit.action)}"`
     : '';
@@ -80,9 +63,7 @@ function cellHtml(habit, key, sum, s) {
   if (habit.kind === 'number') {
     const has = typeof raw === 'number';
     const met = !!d?.hit;
-    // No unit here. It was on every cell, four identical copies of "Liters"
-    // across one row, crowding out the one thing that actually differs. It is
-    // said once, under the name, where it belongs.
+    // No unit here. It is said once, under the name.
     return `<button class="hg-cell num ${met ? 'on' : has ? 'part' : ''}" data-day="${key}"${go}
       style="${met ? `color:${colour}` : ''}" aria-label="${escapeHtml(label)}: ${has ? fmtNumber(raw) : 'nothing'} ${escapeHtml(habit.unit || '')}">
       ${has ? escapeHtml(fmtNumber(raw)) : '–'}</button>`;
@@ -93,12 +74,9 @@ function cellHtml(habit, key, sum, s) {
   if (raw === habits.NO) {
     return `<button class="hg-cell no" data-day="${key}"${go} aria-label="${escapeHtml(label)}: missed">${icon('close', 16)}</button>`;
   }
-  // Nothing recorded. A satisfied day inside a "three times a week" window is
-  // still shown as carried rather than as done, because you did not do it
-  // today and a tick would say you had.
+  // Carried, not done: a satisfied day inside a window is not a day you did it.
   const carried = d?.satisfied ? ' carried' : '';
-  // One of the five, still owed today: this cell starts it, so it is drawn as
-  // something to press rather than as a day you have already failed to tick.
+  // Still owed: this cell starts it, so it is drawn as something to press.
   if (go) {
     return `<button class="hg-cell go" data-day="${key}"${go} style="color:${colour}"
       aria-label="Start ${escapeHtml(habit.name)}">${icon('play', 15)}</button>`;
@@ -108,9 +86,14 @@ function cellHtml(habit, key, sum, s) {
   }</button>`;
 }
 
+/** A cell is about 45px wide, so "23.18" reads as noise. One decimal under ten,
+ *  none above it, and k past a thousand. */
 function fmtNumber(v) {
   if (typeof v !== 'number') return '–';
-  return Number.isInteger(v) ? String(v) : String(Math.round(v * 100) / 100);
+  if (Number.isInteger(v)) return v >= 10000 ? `${Math.round(v / 1000)}k` : String(v);
+  if (Math.abs(v) >= 1000) return `${(v / 1000).toFixed(1)}k`;
+  if (Math.abs(v) >= 10) return String(Math.round(v));
+  return String(Math.round(v * 10) / 10);
 }
 
 function headCell(key) {
@@ -121,12 +104,9 @@ function headCell(key) {
 
 function rowHtml(habit, days, s, { reorder = false, groupOptions = () => '' } = {}) {
   const sum = habits.summary(habit);
-  // The five the app asks of you take the accent; the ones you made take the
-  // colour you chose. Colour on this screen therefore means "mine", which is
-  // the only thing left for it to mean once the section palettes are gone.
+  // The five take the accent, yours take your colour. Colour here means "mine".
   const colour = rowColour(habit);
-  // The name goes there: a habit to its own screen, one of the five to its
-  // section. Never to the same place as the cell beside it.
+  // The name goes there, never to the same place as the cell beside it.
   const href = habit.linked ? habit.href : `#/habits/habit?id=${encodeURIComponent(habit.id)}`;
   return `<div class="hg-row ${habit.linked ? 'linked' : ''}" data-id="${escapeHtml(habit.id)}">
     ${reorder && !habit.linked ? `<button class="hg-drag" aria-label="Reorder ${escapeHtml(habit.name)}">${icon('reorder', 16)}</button>` : ''}
@@ -147,26 +127,8 @@ function rowHtml(habit, days, s, { reorder = false, groupOptions = () => '' } = 
   </div>`;
 }
 
-/* ---------------- the header ----------------
-   The today card is gone, and with it the last bordered box above the grid.
-   Its three facts - how many are left, what day it is, how far round the ring
-   is - are the header now. The ring carries no number of its own: a "5" inside
-   it beside a "6 left today" is two numbers for one fact, which is the mistake
-   this app keeps having to un-make.
+/* --------------------- the header --------------------- */
 
-   Drawn here rather than through ringSvg because this one has to *sweep*. A
-   cell tapped on the grid updates this element in place instead of rebuilding
-   the screen, so the arc animates to its new length, which is the whole point
-   of not redrawing. */
-/** The two readings at the top of the grid, in one place because they are the
- *  same fact twice: a header drawn one way on render and patched another way
- *  on a tap is exactly the kind of disagreement this screen is not allowed to
- *  have.
- *
- *  Nothing due is not the same as everything done. A grid with no rows on it
- *  used to say "All done today" over a full green ring, which was a lie told
- *  to the one person guaranteed to see it: someone who has just installed the
- *  app and has not added anything yet. */
 function dueHead(due) {
   if (!due.total) return { text: 'Nothing here yet', frac: 0 };
   if (due.pending.length) return { text: `${due.pending.length} left today`, frac: due.done / due.total };
@@ -190,11 +152,50 @@ function headRing(frac) {
 
 let reorderMode = false;
 
-/** The home screen. The router calls this, and it always arrives with the grid
- *  in its normal state: reorder mode is a thing you are doing, not a
- *  preference, and coming back from a habit's own screen to a grid full of
- *  arrows and no cells reads as a bug. Redraws from inside the screen go
- *  through `redraw` instead. */
+/** The router calls this, and it always arrives in the normal state: reorder
+ *  mode is something you are doing, not a preference. Internal redraws go
+ *  through `redraw`. */
+/* ---------------- the first five ---------------- */
+// An empty grid is the worst first screen this app can show, and "New habit" on
+// its own asks someone to invent a system before they have used one. Five to
+// tap, already sensible. They go the moment there is a habit on the grid.
+
+function starterPack() {
+  return `<section class="starters">
+    <h2>Start with one of these</h2>
+    <p class="muted small">Tap to add. Everything about it can change later.</p>
+    <div class="starter-list">
+      ${habits.STARTERS.map((h, i) => `<button class="starter" data-starter="${i}" style="--sc:${habits.hexOf(h.colour)}">
+        <span class="starter-dot"></span>
+        <span class="starter-name">${escapeHtml(h.name)}</span>
+        <span class="starter-meta">${escapeHtml(habits.starterMeta(h))}</span>
+        <span class="starter-add">${icon('plus', 15)}</span>
+      </button>`).join('')}
+    </div>
+  </section>`;
+}
+
+function addStarter(mount, i) {
+  if (!habits.addStarter(i)) return;
+  haptic('hit');
+  chime('mark');
+  redraw(mount);
+}
+
+/** The one card on the grid that is not a habit. Sunday, and the two days after
+ *  it in case Sunday was missed. */
+function reviewCta() {
+  if (!arena.reviewDue()) return '';
+  const key = arena.reviewWeek();
+  return `<a class="rv-cta" href="#/arena/review">
+    <span class="rv-cta-ico">${icon('chart', 18)}</span>
+    <span class="rv-cta-text">
+      <b>The week in review</b>
+      <i>${key === arena.currentWeek() ? 'Sunday. One day left.' : escapeHtml(arena.weekLabel(key))}</i>
+    </span>
+  </a>`;
+}
+
 export function renderHome(mount) {
   reorderMode = false;
   redraw(mount);
@@ -249,6 +250,8 @@ function redraw(mount) {
         </div>
       </header>
 
+      ${reviewCta()}
+
       <div class="hg-tools">
         <button class="chipbtn ${reorderMode ? 'on' : ''}" id="reorderBtn">${icon('reorder', 15)}<span>${reorderMode ? 'Done' : 'Reorder'}</span></button>
         <button class="chipbtn" id="colsBtn">${icon('calendar', 15)}<span>${s.columns} day${s.columns === 1 ? '' : 's'}</span></button>
@@ -256,12 +259,14 @@ function redraw(mount) {
       </div>
 
       <div class="hgrid ${reorderMode ? 'reordering' : ''}" style="--cols:${reorderMode ? 1 : s.columns}">
-        ${reorderMode ? '' : head}
+        ${reorderMode || !(linked.length || habits.active().length) ? '' : head}
         ${linked.length && !reorderMode
           ? `<div class="hg-rows">${linked.map((h) => rowHtml(h, days, s)).join('')}</div>`
           : ''}
         ${groupSections}
       </div>
+
+      ${habits.active().length ? '' : starterPack()}
 
       <button class="btn ghost wide" id="addBtn2">${icon('plus', 16)}<span>New habit</span></button>
 
@@ -269,6 +274,8 @@ function redraw(mount) {
     </div>`;
 
   mount.querySelectorAll('#addBtn, #addBtn2').forEach((b) => b.addEventListener('click', openTypePicker));
+  mount.querySelectorAll('[data-starter]').forEach((b) =>
+    b.addEventListener('click', () => addStarter(mount, Number(b.dataset.starter))));
   mountInstall();
   wireGrid(mount, days);
 }
@@ -285,7 +292,6 @@ function wireGrid(mount, days) {
   mount.querySelector('#colsBtn').addEventListener('click', () => {
     const sheet = openSheet(`
       <h2>Days on screen</h2>
-      <p class="muted small">How many day columns the grid shows. Fewer means wider cells, which matters more than it sounds when you are tapping one on a phone.</p>
       <div class="pickrow">${[3, 4, 5, 6, 7]
         .map((n) => `<button class="pick ${n === s.columns ? 'on' : ''}" data-cols="${n}">${n}</button>`)
         .join('')}</div>
@@ -329,17 +335,7 @@ function wireGrid(mount, days) {
   wireCells(grid, mount, s);
 }
 
-/* ---------------- one cell, changed ----------------
-   Marking a day used to call `redraw`, which rebuilt the whole screen's HTML.
-   Two things were wrong with that and only one of them was slow. It replayed
-   the screen's entry animation on every single tap, which is the flicker; and
-   it destroyed and recreated the very elements that were supposed to animate,
-   so the rings could never sweep to their new value - they could only appear
-   at it. Nothing that is replaced can move.
-
-   So one cell is swapped, its row's ring and the day's totals are nudged, and
-   everything else on screen is left alone. The click handler is delegated on
-   the grid, so the new node needs no wiring. */
+/* ----------------- one cell, changed ----------------- */
 
 function nodeFrom(html) {
   const t = document.createElement('template');
@@ -349,7 +345,7 @@ function nodeFrom(html) {
 
 const ringLen = (r) => 2 * Math.PI * r;
 
-/** The habit's own ring beside its name. */
+/** The habit's own ring. */
 function patchRowRing(row, habit) {
   const fill = row.querySelector('.hg-ring-fill');
   if (!fill) return;
@@ -357,9 +353,8 @@ function patchRowRing(row, habit) {
   fill.setAttribute('stroke-dashoffset', (ringLen(9) * (1 - f)).toFixed(1));
 }
 
-/** What the header says, and what the group pills say. Both are readings of
- *  the same record the cell just changed, so both move together or the screen
- *  disagrees with itself. */
+/** Header and group pills: readings of the record the cell just changed, so
+ *  they move together. */
 function patchTotals(mount, wasDone) {
   const due = habits.dueToday();
   const { text, frac: f } = dueHead(due);
@@ -376,18 +371,17 @@ function patchTotals(mount, wasDone) {
     el.textContent = score == null ? '' : `${Math.round(score * 100)}%`;
   });
 
-  // The day closing out is the one moment on this screen worth a noise. Once a
-  // day, on the tap that earned it, and never on the way back down.
+  // Once a day, on the tap that earns it, never on the way back down.
   const done = due.total > 0 && due.pending.length === 0;
   if (done && !wasDone) {
     haptic('level');
-    chime('win');
+    chime('complete');
     const ring = mount.querySelector('.gh-ring');
     if (ring) celebrate(ring, { count: 20, spread: 74, colour: 'var(--good)' });
   }
 }
 
-/** Mark a day and show it, without redrawing anything that did not change. */
+/** Mark a day and show it, without redrawing what did not change. */
 function markCell(mount, habit, key, cell) {
   const before = habits.dueToday();
   const wasDone = before.total > 0 && before.pending.length === 0;
@@ -402,12 +396,11 @@ function markCell(mount, habit, key, cell) {
   if (row) patchRowRing(row, habit);
   patchTotals(mount, wasDone);
 
-  // The reward, and only for the direction that deserves one: turning a day on
-  // gets the tick drawn and a handful of sparks in the habit's own colour.
-  // Turning it off, skipping it or clearing it gets the press and nothing else,
-  // because celebrating a miss is how a tracker starts lying to you.
+  // Only for the direction that earns one: celebrating a miss is a lie.
   const nowOn = !!habits.summary(habit).index.get(key)?.hit;
+  const skipped = !!habits.summary(habit).index.get(key)?.skipped;
   haptic(nowOn ? 'hit' : 'tick');
+  chime(nowOn ? 'mark' : skipped ? 'skip' : 'unmark');
   if (nowOn && !wasOn) {
     next.classList.add('just-on');
     celebrate(next, { count: 8, spread: 26, colour: rowColour(habit) });
@@ -415,17 +408,14 @@ function markCell(mount, habit, key, cell) {
   }
 }
 
-/* ---------------- marking ----------------
-   Two ways in, because the setting says so. A short press is fast and is what
-   you want at the end of a day; press-and-hold is what you want when the grid
-   lives one thumb-width from where you scroll. */
+/* ---------------------- marking ---------------------- */
 
 function wireCells(grid, mount, s) {
   let timer = null;
   let held = false;
 
   const act = (cell) => {
-    // One of the five: today's cell is the section's own start button.
+    // One of the five: today's cell is that section's start button.
     if (cell.dataset.go) return navigate(cell.dataset.go);
     const row = cell.closest('.hg-row');
     if (!row || row.classList.contains('linked')) return;
@@ -440,11 +430,9 @@ function wireCells(grid, mount, s) {
   grid.addEventListener('click', (e) => {
     const cell = e.target.closest('.hg-cell');
     if (!cell) return;
-    // Starting a session is navigation, not marking, so it never waits for a
-    // long press even when marking does.
+    // Navigation, not marking, so it never waits for a long press.
     if (cell.dataset.go) return navigate(cell.dataset.go);
-    // A long press has already acted; the click that follows it must not undo
-    // that by cycling a second time.
+    // The click after a long press must not cycle a second time.
     if (held) {
       held = false;
       return;
@@ -471,8 +459,7 @@ function wireCells(grid, mount, s) {
   grid.addEventListener('scroll', cancel, true);
 }
 
-/** The keypad for a measurable habit. A number is not a toggle, so it gets a
- *  field, and the two other states a cell can hold get a button each. */
+/** Keypad for a measurable habit, plus a button for each of the other states. */
 function openValueSheet(mount, habit, key) {
   const s = habits.settings();
   const current = habits.valueOn(habit, key);
@@ -494,9 +481,7 @@ function openValueSheet(mount, habit, key) {
   const input = sheet.el.querySelector('#val');
   input.focus();
   const done = (value) => {
-    // A measurable habit is marked from a sheet rather than by cycling the
-    // cell, but what happens on the grid behind it is the same event, so it
-    // takes the same path: one cell swapped, the totals nudged, no rebuild.
+    // Same event as a cell tap, so it takes the same path: swap, nudge, no rebuild.
     const before = habits.dueToday();
     const wasDone = before.total > 0 && before.pending.length === 0;
     const wasOn = !!habits.summary(habit).index.get(key)?.hit;
@@ -527,12 +512,7 @@ function openValueSheet(mount, habit, key) {
   });
 }
 
-/* ---------------- reordering ----------------
-   Drag inside a group, arrows for anyone who would rather not, and a picker to
-   move a habit between groups. The row is moved in the DOM as the pointer
-   crosses its neighbours rather than being floated above them on a transform:
-   the same result with none of the arithmetic, and nothing to get out of step
-   when a row is a different height from the one it is passing. */
+/* --------------------- reordering --------------------- */
 
 function wireReorder(grid, mount) {
   const commit = () => {
@@ -599,7 +579,7 @@ function openGroupSheet(mount) {
     const list = habits.groups();
     const sheet = openSheet(`
       <h2>Groups</h2>
-      <p class="muted small">A group is a heading with a score of its own. Deleting one never deletes the habits in it; they come back out and carry on.</p>
+      <p class="muted small">A group is a heading with a score of its own.</p>
       ${list.length
         ? `<div class="grp-list">${list
             .map((g) => `<div class="grp-row" data-id="${escapeHtml(g.id)}">
@@ -647,9 +627,7 @@ function openGroupSheet(mount) {
   draw();
 }
 
-/* ---------------- the archive ----------------
-   Archiving is the answer to a habit you have finished with but whose record
-   you would rather not delete. It leaves the grid and keeps everything. */
+/* -------------------- the archive -------------------- */
 
 export function renderArchive(mount) {
   const list = habits.archived();
@@ -669,15 +647,14 @@ export function renderArchive(mount) {
               return `<div class="arch-row" data-id="${escapeHtml(h.id)}">
                 <span class="arch-text">
                   <b style="color:${habits.hexOf(h.colour)}">${escapeHtml(h.name)}</b>
-                  <i>${escapeHtml(habits.freqLabel(h.freq))} · ${sum.total} recorded · best ${sum.best} day${sum.best === 1 ? '' : 's'}</i>
+                  <i>${escapeHtml(habits.freqLabel(h.freq))} · best ${sum.best} day${sum.best === 1 ? '' : 's'}</i>
                 </span>
                 <button class="btn small-btn" data-restore>Restore</button>
                 <button class="icon-btn small danger" data-del aria-label="Delete">${icon('trash', 15)}</button>
               </div>`;
             })
             .join('')}</div>`
-        : `<div class="empty-state">${icon('archive', 30)}<h2>Nothing archived</h2>
-            <p class="muted">Archiving a habit takes it out of the grid and keeps every day you ever marked on it.</p></div>`}
+        : `<div class="empty-state">${icon('archive', 30)}<h2>Nothing archived</h2></div>`}
     </div>`;
 
   mount.querySelectorAll('.arch-row').forEach((row) => {
@@ -698,11 +675,7 @@ export function renderArchive(mount) {
   });
 }
 
-/* ---------------- install prompt ----------------
-   Lives here because the slot it fills is on this screen. Chrome fires the
-   event once, whenever it feels like it, which may be before or after the home
-   screen has rendered, so the prompt is stashed and mounted from both
-   directions. Moved here wholesale when the hub became the grid. */
+/* ------------------- install prompt ------------------- */
 
 let installPrompt = null;
 

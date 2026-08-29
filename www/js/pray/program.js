@@ -1,8 +1,5 @@
-// Prayer domain logic: what is owed today, what has been kept, and the streak.
-//
-// Prayer, kept as a rule: two fixed slots a day and both are required. There is no daily
-// target to tune and no partial credit, so the state of a day is just two
-// booleans. That is deliberate: a rule you can negotiate with is not a rule.
+// Prayer domain. Two fixed slots a day, both required, no partial credit:
+// a rule you can negotiate with is not a rule.
 
 import * as store from '../store.js';
 import { RULES, buildRule, ruleMinutes } from './prayers.js';
@@ -10,7 +7,7 @@ import { scheduleDaily, cancelAlarm, ALARM_PRAY_MORNING, ALARM_PRAY_EVENING } fr
 
 export const SLOTS = ['morning', 'evening'];
 
-/** What has been kept on a given day. */
+/** What was kept on a day. */
 export function dayState(key = store.dayKey()) {
   const d = store.get().pray.days[key] || {};
   return {
@@ -22,10 +19,8 @@ export function dayState(key = store.dayKey()) {
   };
 }
 
-/** Which slot the app should be pushing you towards right now.
- *  Before the evening hour, an unkept morning is still the live one. After it,
- *  the night rule takes over even if the morning was missed, because there is
- *  no point sending you back to a morning that is gone. */
+/** The live slot. Before the evening hour an unkept morning still counts;
+ *  after it the night rule takes over, missed morning or not. */
 export function currentSlot(now = new Date()) {
   const s = store.get().pray.settings;
   const today = dayState();
@@ -38,13 +33,13 @@ export function currentSlot(now = new Date()) {
   return null;
 }
 
-/** Outstanding slots today, in the order they should be done. */
+/** Outstanding slots today, in order. */
 export function outstanding(key = store.dayKey()) {
   const d = dayState(key);
   return SLOTS.filter((s) => !d[s]);
 }
 
-/** Records a kept rule. Idempotent: praying twice does not double-count. */
+/** Idempotent: praying twice does not double-count. */
 export function markKept(slot, key = store.dayKey()) {
   if (!SLOTS.includes(slot)) return null;
   return store.update((st) => {
@@ -57,8 +52,7 @@ export function markKept(slot, key = store.dayKey()) {
   });
 }
 
-/** Consecutive complete days ending today, or yesterday if today is not done.
- *  A day only counts when both slots were kept. Half a rule is not a day. */
+/** Consecutive complete days. Half a rule is not a day. */
 export function streak(state = store.get()) {
   const days = state.pray.days;
   const done = (k) => !!(days[k] && days[k].morning && days[k].evening);
@@ -72,20 +66,7 @@ export function streak(state = store.get()) {
   return n;
 }
 
-/** Slot-level streak, so a run of mornings still shows even when nights slip. */
-export function slotStreak(slot) {
-  const days = store.get().pray.days;
-  let cursor = store.dayKey();
-  if (!days[cursor]?.[slot]) cursor = store.addDays(cursor, -1);
-  let n = 0;
-  while (days[cursor]?.[slot]) {
-    n++;
-    cursor = store.addDays(cursor, -1);
-  }
-  return n;
-}
-
-/** Grid data for the heatmap. Oldest first, one entry per day. */
+/** Heatmap data, oldest first. */
 export function history(weeks = 13) {
   const days = store.get().pray.days;
   const out = [];
@@ -99,7 +80,7 @@ export function history(weeks = 13) {
   return out;
 }
 
-/** Counts over a window, for the stats screen. */
+/** Counts over a window. */
 export function totals(days = 30) {
   const map = store.get().pray.days;
   let full = 0;
@@ -114,8 +95,7 @@ export function totals(days = 30) {
   return { days, full, morning, evening, rate: days ? full / days : 0 };
 }
 
-/** Lifetime count of kept rules, which is the number worth watching early on
- *  when the streak keeps resetting. */
+/** Lifetime kept, which is the number worth watching while streaks reset. */
 export function lifetime() {
   const map = store.get().pray.days;
   let n = 0;
@@ -166,8 +146,7 @@ export function minutes(slot) {
   return ruleMinutes(slot, store.get().pray.custom);
 }
 
-/** Puts the two reminders on Android's alarm clock, so they fire whether or not
- *  the app is running. Called at boot and whenever the times change. */
+/** The two reminders as real alarms. Called at boot and when the times change. */
 export function syncAlarms() {
   const s = store.get().pray.settings;
   const set = (id, at, title) => {

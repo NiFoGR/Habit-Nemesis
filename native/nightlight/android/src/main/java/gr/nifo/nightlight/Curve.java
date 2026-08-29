@@ -3,18 +3,11 @@ package gr.nifo.nightlight;
 import android.content.SharedPreferences;
 
 /**
- * Colour temperature, and the schedule that decides which one it is right now.
+ * Colour temperature and the schedule that picks it.
  *
- * <p>This is in Java rather than in the web layer for one reason: the service
- * has to keep working when NiFo is not running. The whole point of the feature
- * is that the screen is still warm at 23:00 whether or not the app has been
- * opened since breakfast, so the schedule and the maths belong on the side that
- * survives the WebView being torn down. The web layer writes the configuration
- * and mirrors this maths only to draw a preview swatch.
- *
- * <p>Everything here is pure: given a config and a minute of the day it returns
- * a colour. That is what makes it testable by eye — the settings screen can ask
- * for 03:00 and see what 03:00 would look like.
+ * <p>In Java because the service has to keep working with NiFo closed. Pure:
+ * config plus a minute of the day gives a colour, so the settings screen can
+ * ask what 03:00 looks like. The web layer mirrors this only for the preview.
  */
 public final class Curve {
 
@@ -23,33 +16,26 @@ public final class Curve {
     public static final int MIN_KELVIN = 1900;
     public static final int MAX_KELVIN = 6500;
 
-    /**
-     * The overlay lifts blacks, because window compositing is source-over and
-     * cannot multiply (see OverlayService). Past roughly this much alpha the
-     * lift is worse than the blue it removes, so the wash is capped here and
-     * the fine print says so rather than pretending otherwise.
-     */
+    /** Cap on the wash. The overlay lifts blacks (see OverlayService), and past
+         *  this the lift is worse than the blue it removes. */
     private static final float MAX_ALPHA = 0.55f;
 
-    /** Config, as the service holds it. Plain fields; it is read every minute. */
+    /** Config as the service holds it. Read every minute. */
     public static final class Config {
         public boolean enabled = false;
-        /** "gradual" warms all day; "flux" stays neutral and drops in the evening. */
+        /** "gradual" warms all day, "flux" holds neutral and drops in the evening. */
         public String curve = "gradual";
         public int wakeMin = 7 * 60;
         public int sleepMin = 22 * 60;
         public int dayKelvin = 6500;
         public int nightKelvin = 2700;
         public int transitionMin = 60;
-        /** 0..1, scales the whole effect without changing the temperatures. */
+        /** 0..1, scales the effect without moving the temperatures. */
         public float intensity = 1f;
-        /** Epoch millis; while now is under this the filter is off. */
+        /** Epoch millis. Under this, the filter is off. */
         public long pausedUntil = 0L;
-        /**
-         * Held off for as long as a screen that needs true colour is open —
-         * the progress gallery and the camera. Cleared when the app next
-         * starts, so a crash with it set cannot leave the filter off forever.
-         */
+        /** Held off while the gallery or camera is open. Cleared at app start, so a
+                 *  crash cannot leave the filter off for ever. */
         public boolean suspended = false;
 
         public static Config from(SharedPreferences p) {
@@ -82,15 +68,10 @@ public final class Curve {
     }
 
     /**
-     * Interpolates in mireds rather than in Kelvin.
-     *
-     * <p>Kelvin is perceptually lopsided: the step from 6500K to 5500K is
-     * barely visible and the step from 3000K to 2000K is enormous, so a ramp
-     * that is linear in Kelvin does almost nothing for most of its length and
-     * then lurches at the end. Mireds (a million over Kelvin) are close enough
-     * to perceptually even that a linear ramp in them looks like a steady
-     * change, which is the entire illusion this feature depends on.
-     */
+         * Interpolates in mireds, not Kelvin. Kelvin is perceptually lopsided:
+         * 6500K to 5500K is barely visible, 3000K to 2000K is enormous, so a
+         * linear Kelvin ramp does nothing and then lurches.
+         */
     public static int lerpKelvin(int from, int to, double f) {
         double a = 1e6 / clampKelvin(from);
         double b = 1e6 / clampKelvin(to);
@@ -99,13 +80,10 @@ public final class Curve {
     }
 
     /**
-     * The colour temperature this config asks for at a given minute of the day.
-     *
-     * <p>The day runs wake to sleep, wrapping over midnight, and is treated as
-     * three stretches: a short warm-to-neutral ramp just after waking, the long
-     * body of the day, and the night, which simply holds the night temperature
-     * until the alarm goes off.
-     */
+         * The temperature this config asks for at a minute of the day. The day runs
+         * wake to sleep over midnight, in three stretches: the morning ramp, the
+         * body of the day, and the night holding until the alarm.
+         */
     public static int kelvinAt(Config c, int minuteOfDay) {
         int dayLen = mod(c.sleepMin - c.wakeMin, 1440);
         if (dayLen == 0) dayLen = 1440; // wake == sleep: treat as always daytime
@@ -115,25 +93,21 @@ public final class Curve {
 
         int warmUp = Math.min(c.transitionMin, dayLen);
         if (since < warmUp) {
-            // Waking up. Coming back to daylight is the one transition that
-            // should be quick: nobody wants to read a warm screen at breakfast.
+            // Waking: the one transition that should be quick.
             return lerpKelvin(c.nightKelvin, c.dayKelvin, (double) since / warmUp);
         }
 
         double t = (double) (since - warmUp) / Math.max(1, dayLen - warmUp);
 
         if ("flux".equals(c.curve)) {
-            // Neutral until the transition window opens before bedtime, then
-            // down to the night temperature. This is what f.lux does by default.
+            // Neutral until the window before bedtime, then down. What f.lux does.
             double startsAt = 1.0 - Math.min(1.0, (double) c.transitionMin / Math.max(1, dayLen - warmUp));
             if (t < startsAt) return c.dayKelvin;
             return lerpKelvin(c.dayKelvin, c.nightKelvin, (t - startsAt) / Math.max(1e-6, 1 - startsAt));
         }
 
-        // "gradual": warming from the moment you get up, which is what was
-        // asked for. Raised to a power so the first half of the day is nearly
-        // imperceptible and the change is still mostly where it matters — a
-        // straight line makes the middle of the afternoon visibly orange.
+        // "gradual": raised to a power, so the first half of the day is nearly
+                // imperceptible. A straight line makes the afternoon visibly orange.
         return lerpKelvin(c.dayKelvin, c.nightKelvin, Math.pow(t, 1.6));
     }
 
@@ -162,17 +136,10 @@ public final class Curve {
     }
 
     /**
-     * The overlay colour for a target temperature, as ARGB.
-     *
-     * <p>Normalised against the day temperature, so at the day temperature the
-     * multipliers are all 1, the alpha is 0 and the overlay is literally
-     * invisible. That matters more than it sounds: it means "night light on"
-     * during the day is a no-op rather than a permanent faint tint, and the
-     * feature can be left enabled all year.
-     *
-     * <p>Alpha comes from the blue channel because blue is the channel this
-     * exists to remove, and blue is always the most attenuated of the three.
-     */
+         * Overlay colour as ARGB, normalised against the day temperature: at the day
+         * temperature alpha is 0 and the overlay is invisible, so "on" in daylight
+         * is a genuine no-op. Alpha comes from blue, the channel this removes.
+         */
     public static int overlayArgb(int kelvin, int dayKelvin, float intensity) {
         float[] target = kelvinToRgb(kelvin);
         float[] day = kelvinToRgb(dayKelvin);
@@ -181,8 +148,7 @@ public final class Curve {
         float mg = day[1] <= 0 ? 1 : target[1] / day[1];
         float mb = day[2] <= 0 ? 1 : target[2] / day[2];
 
-        // Normalise so the brightest channel is untouched: this is a colour
-        // shift, not a dimmer. Dimming is the user's brightness slider.
+        // Normalise so the brightest channel is untouched: a colour shift, not a dimmer.
         float max = Math.max(mr, Math.max(mg, mb));
         if (max > 0) {
             mr /= max;
@@ -193,9 +159,7 @@ public final class Curve {
         float alpha = Math.min(MAX_ALPHA, (1f - Math.min(1f, mb)) * Math.max(0f, Math.min(1f, intensity)));
         if (alpha <= 0.002f) return 0; // fully transparent: nothing to draw
 
-        // The wash itself is the warm colour at full strength; alpha decides how
-        // much of it lands. Scaling the colour instead would darken rather than
-        // warm, which is a different feature.
+        // Alpha decides how much lands. Scaling the colour would darken, not warm.
         int r = Math.round(255 * mr);
         int g = Math.round(255 * mg);
         int b = Math.round(255 * mb);
@@ -203,7 +167,7 @@ public final class Curve {
         return (a << 24) | (r << 16) | (g << 8) | b;
     }
 
-    /** True when the filter should be doing anything at all right now. */
+    /** Should the filter be doing anything right now? */
     public static boolean active(Config c, long nowMillis) {
         return c.enabled && !c.suspended && nowMillis >= c.pausedUntil;
     }

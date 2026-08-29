@@ -16,18 +16,10 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import java.util.Calendar;
 
 /**
- * The bridge. Deliberately thin.
- *
- * <p>Everything the filter actually does is in {@link OverlayService} and
- * {@link Curve}, because it has to keep happening when the WebView is gone.
- * What crosses this boundary is only ever configuration going in and a status
- * readout coming back, so there is no state here that can drift out of step
- * with what is on screen.
- *
- * <p>{@link #curve} is the one exception, and it earns its place: it lets the
- * settings screen plot the whole day from the same maths the service runs,
- * instead of a JavaScript reimplementation that would be subtly wrong by the
- * second edit.
+ * The bridge. Configuration in, status out, nothing else: everything the filter
+ * does lives in {@link OverlayService} and {@link Curve}, which outlive the
+ * WebView. {@link #curve} is the exception, so the settings screen plots the
+ * service's own maths rather than a reimplementation.
  */
 @CapacitorPlugin(name = "NightLight")
 public class NightLightPlugin extends Plugin {
@@ -36,7 +28,7 @@ public class NightLightPlugin extends Plugin {
         return getContext().getSharedPreferences(OverlayService.PREFS, Context.MODE_PRIVATE);
     }
 
-    /** What the filter can do on this device, and what it is doing now. */
+    /** What this device can do, and what it is doing now. */
     @PluginMethod
     public void status(PluginCall call) {
         Context ctx = getContext();
@@ -60,15 +52,14 @@ public class NightLightPlugin extends Plugin {
         r.put("hardware", hardware);
         r.put("hardwareMin", HardwareTint.minKelvin());
         r.put("hardwareMax", HardwareTint.maxKelvin());
-        // Which of the two roads a colour would take right now, so the settings
-        // screen can say so instead of the user guessing from how it looks.
+        // Which road a colour would take now, so the screen can say so.
         r.put("mode", !live ? (c.suspended ? "suspended" : "off")
                 : hardware ? "hardware" : canOverlay ? "overlay" : "blocked");
         r.put("packageName", ctx.getPackageName());
         call.resolve(r);
     }
 
-    /** Writes the schedule the service reads, then wakes it. */
+    /** Write the schedule and wake the service. */
     @PluginMethod
     public void configure(PluginCall call) {
         SharedPreferences.Editor e = prefs().edit();
@@ -80,8 +71,7 @@ public class NightLightPlugin extends Plugin {
         if (call.hasOption("nightKelvin")) e.putInt("nightKelvin", Curve.clampKelvin(call.getInt("nightKelvin", 2700)));
         if (call.hasOption("transitionMin")) e.putInt("transitionMin", Math.max(1, Math.min(240, call.getInt("transitionMin", 60))));
         if (call.hasOption("intensity")) e.putFloat("intensity", (float) Math.max(0, Math.min(1, call.getDouble("intensity", 1.0))));
-        // Changing anything cancels a pause: you came here to adjust it, so you
-        // want to see the adjustment.
+        // Changing anything cancels a pause: you came here to see the change.
         if (call.hasOption("clearPause")) e.putLong("pausedUntil", 0L);
         e.apply();
 
@@ -89,7 +79,7 @@ public class NightLightPlugin extends Plugin {
         status(call);
     }
 
-    /** Pauses for an hour, or resumes if already paused. */
+    /** Pause for an hour, or resume. */
     @PluginMethod
     public void pause(PluginCall call) {
         long until = prefs().getLong("pausedUntil", 0L);
@@ -102,15 +92,8 @@ public class NightLightPlugin extends Plugin {
         status(call);
     }
 
-    /**
-     * Holds the filter off while a screen that needs true colour is open.
-     *
-     * <p>Judging a progress photo through an amber wash is misleading and
-     * comparing two of them is worse, so the gallery and the camera turn this
-     * on while they are up. It is a plain flag rather than a timed pause
-     * because it is not a user decision; the app clears it at every launch so a
-     * crash mid-gallery cannot leave the filter off indefinitely.
-     */
+    /** Held off while the gallery or camera is open. A flag, not a timed pause:
+         *  the app clears it at every launch. */
     @PluginMethod
     public void setSuspended(PluginCall call) {
         prefs().edit().putBoolean("suspended", Boolean.TRUE.equals(call.getBoolean("suspended"))).apply();
@@ -118,10 +101,7 @@ public class NightLightPlugin extends Plugin {
         status(call);
     }
 
-    /**
-     * Sends the user to the "Display over other apps" screen. There is no
-     * runtime dialog for this permission; a settings screen is the only door.
-     */
+    /** The "Display over other apps" screen. There is no runtime dialog. */
     @PluginMethod
     public void requestOverlayPermission(PluginCall call) {
         try {
@@ -135,15 +115,11 @@ public class NightLightPlugin extends Plugin {
         }
     }
 
-    /**
-     * The whole day, sampled, using the service's own maths. `minutes` apart,
-     * default every quarter of an hour.
-     */
+    /** The day sampled with the service's own maths, `minutes` apart. */
     @PluginMethod
     public void curve(PluginCall call) {
         Curve.Config c = Curve.Config.from(prefs());
-        // Anything the caller passes overrides the stored config, so the
-        // settings screen can plot a change before committing to it.
+        // Caller values override the stored config, so a change can be plotted first.
         if (call.hasOption("curve")) c.curve = call.getString("curve", c.curve);
         if (call.hasOption("wakeMin")) c.wakeMin = clampMin(call.getInt("wakeMin", c.wakeMin));
         if (call.hasOption("sleepMin")) c.sleepMin = clampMin(call.getInt("sleepMin", c.sleepMin));

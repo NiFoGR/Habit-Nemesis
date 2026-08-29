@@ -1,34 +1,20 @@
-// The five minutes themselves.
+// The five minutes.
 //
-// Three things pace you, and they fail independently on purpose:
+// Three pacers, failing independently on purpose:
+//   Sound is written onto the AudioContext timeline in advance, so it is
+//   immune to timer throttling with the screen black.
+//   Vibration marks the turn of a phase and nothing else.
+//   The screen is least important: near-black, a dim orb, tap to black it out.
 //
-//   Sound is scheduled on the AudioContext timeline in advance, as one
-//   oscillator whose pitch and volume are automated across the whole session.
-//   That makes it sample-accurate and completely immune to timer throttling,
-//   which matters because this runs with the screen black and the phone face
-//   up on your chest. Two nodes for five minutes, so it costs nothing.
-//
-//   Vibration marks the turn of each phase and nothing else. A continuous buzz
-//   through a breath is the opposite of the thing this is for, and it empties
-//   the battery arguing with you.
-//
-//   The screen is the least important of the three and is drawn accordingly:
-//   near-black, a dim orb that expands and contracts, and a tap anywhere to
-//   put even that out. It is a light source pointed at your face at bedtime,
-//   so the default is as little of it as will still be useful.
-//
-// The visual timer resolves every tick against the wall clock rather than
-// counting intervals, the same as pocket.js, so a throttled tab redraws on the
-// phase you are actually on.
+// The visual timer resolves against the wall clock, like pocket.js.
 
 import * as store from '../store.js';
 import * as breathe from './program.js';
 import { fmtClock, fmtDuration, escapeHtml } from '../ui.js';
 import { icon } from '../icons.js';
 
-// Gentle and distinguishable through a shirt: one soft pulse to breathe in,
-// two to breathe out, three light taps to hold. Nothing long enough to be a
-// jolt, because a jolt is an arousal.
+// Through a shirt: one pulse in, two out, three taps to hold. Nothing long
+// enough to be a jolt, because a jolt is an arousal.
 const BUZZ = {
   in: [0, 150],
   out: [0, 70, 90, 70],
@@ -37,22 +23,21 @@ const BUZZ = {
   done: [0, 200, 160, 200],
 };
 
-// A fifth, low enough to feel rather than hear. The breath rides the interval
-// up and back down, so you can follow it with your eyes shut and no counting.
+// A fifth, low enough to feel. The breath rides the interval up and back.
 const LO_HZ = 98;
 const HI_HZ = 146.8;
 const FLOOR = 0.0006; // exponential ramps cannot reach zero
 const SOFT = 0.012;
 const FULL = 0.07;
 
-/** Where each phase is taking the pitch, the volume and the orb. */
+/** Where each phase takes the pitch, the volume and the orb. */
 function targetFor(step) {
   switch (step.kind) {
     case 'settle':
       return { hz: LO_HZ, gain: SOFT, scale: 0.52 };
     case 'in':
-      // The stacked second inhale of a physiological sigh goes to the top; the
-      // first one stops short of it, so the sip on top has somewhere to go.
+      // The second inhale of a sigh goes to the top; the first stops short so the
+      // sip on top has somewhere to go.
       return step.sigh && !step.stack
         ? { hz: LO_HZ + (HI_HZ - LO_HZ) * 0.6, gain: FULL * 0.7, scale: 0.84 }
         : { hz: HI_HZ, gain: FULL, scale: 1 };
@@ -87,7 +72,7 @@ export function startBreathe(mount, onDone) {
     try {
       navigator.vibrate?.(pattern);
     } catch {
-      /* refused without a gesture on some browsers; nothing to surface */
+      /* no gesture yet */
     }
   }
 
@@ -133,10 +118,7 @@ export function startBreathe(mount, onDone) {
 
   const $ = (id) => mount.querySelector('#' + id);
 
-  /* ---------------- sound ----------------
-     The whole session is written onto the audio timeline in one pass, before
-     the first breath. Nothing here is driven by a timer afterwards, which is
-     the point: setInterval is throttled on a sleeping screen, and this is not. */
+  /* ----------------------- sound ----------------------- */
 
   function scheduleAudio() {
     if (!useSound) return;
@@ -171,7 +153,7 @@ export function startBreathe(mount, onDone) {
       osc.start(t0);
       osc.stop(end + 0.6);
     } catch {
-      /* audio is a nicety here, never a requirement: the buzz still paces you */
+      /* the buzz still paces you */
       ctx = null;
     }
   }
@@ -206,8 +188,7 @@ export function startBreathe(mount, onDone) {
 
     if (idx !== lastIndex) {
       lastIndex = idx;
-      // A stacked sigh is one continuous inhale in two pushes, so it does not
-      // get a second buzz: that would read as a new instruction.
+      // A stacked sigh is one inhale in two pushes, so no second buzz.
       if (!step.stack) buzz(BUZZ[step.kind] || BUZZ.settle);
       const t = targetFor(step);
       const orb = $('orb');
@@ -232,7 +213,7 @@ export function startBreathe(mount, onDone) {
     try {
       wakeLock = await navigator.wakeLock?.request('screen');
     } catch {
-      /* no wake lock: it still runs for as long as the screen stays on */
+      /* runs while the screen stays on */
     }
     timer = setInterval(tick, 100);
     tick();
@@ -247,9 +228,7 @@ export function startBreathe(mount, onDone) {
     document.body.classList.remove('in-session', 'blacked');
   }
 
-  /** Nothing is scored, so finishing only has to decide whether enough
-   *  happened to be worth writing down. A minute is the line: below it you put
-   *  the phone down, above it you breathed. */
+  /** A minute is the line: below it you put the phone down, above it you breathed. */
   function finish(quit) {
     if (!running) return;
     running = false;
@@ -264,10 +243,8 @@ export function startBreathe(mount, onDone) {
   $('start').addEventListener('click', start);
   $('stop').addEventListener('click', () => finish(true));
   $('face').addEventListener('click', () => {
-    // Blacking the screen out is the point of the gesture, so it is the whole
-    // face rather than a control you would have to find in the dark. It goes on
-    // the body because the screen element does not paint the whole viewport,
-    // and a black card on a very dark grey background is not black.
+    // The whole face, not a control you would have to find in the dark. On body:
+    // the screen element does not paint the whole viewport.
     document.body.classList.toggle('blacked');
   });
   $('close').addEventListener('click', () => {
@@ -278,8 +255,7 @@ export function startBreathe(mount, onDone) {
     }
   });
 
-  // Coming back to a throttled tab resyncs immediately rather than waiting for
-  // the next interval, so the orb matches the breath you should be on.
+  // Resync on foreground, so the orb matches the breath you should be on.
   const onVis = () => running && tick();
   document.addEventListener('visibilitychange', onVis);
 
@@ -292,8 +268,7 @@ export function startBreathe(mount, onDone) {
   };
 }
 
-/** The close. Deliberately almost nothing: it is dark, you are lying down, and
- *  the next thing that should happen is sleep, not a scoreboard. */
+/** The close. Almost nothing: the next thing should be sleep. */
 function renderDone(mount, { ms, logged }, onExit) {
   const st = breathe.streak();
   mount.innerHTML = `

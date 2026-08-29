@@ -1,9 +1,4 @@
-// The two-year ladder, laid out so it is obvious the plan does not run out.
-//
-// A level is a week. Twelve of them was three months of progression and then
-// nothing; this screen exists partly to show the 104 weeks and six phases that
-// replaced them, and partly because "what am I working towards" is the question
-// a progression system has to answer or it is just a counter.
+// The 104 weeks and six phases, laid out so the plan visibly does not run out.
 
 import * as store from '../store.js';
 import * as program from './program.js';
@@ -19,9 +14,8 @@ const PHASE_ICON = {
   mastery: 'medal',
 };
 
-/** Every fourth week is a deload, and phases happen to end on one. Summarising
- *  a phase with its deload week makes the numbers read as if the plan gets
- *  *easier* over it, so the range is drawn between the working weeks. */
+/** Ranges are drawn between working weeks: including the deload makes a phase
+ *  read as if it gets easier. */
 function hardWeeks(from, to) {
   const weeks = [];
   for (let n = from; n <= to; n++) {
@@ -31,8 +25,7 @@ function hardWeeks(from, to) {
   return weeks.length ? weeks : [program.levelDef(from), program.levelDef(to)];
 }
 
-/** Weeks per level in practice: promotion needs both the qualifying sessions
- *  and the minimum days served, so real pace is the slower of the two. */
+/** Real pace is the slower of the qualifying sessions and the days served. */
 function pace(state) {
   const hist = state.program.history;
   if (hist.length < 2) return null;
@@ -65,7 +58,7 @@ export function renderRoadmap(mount) {
       <div class="today">
         <div class="today-left">
           <h2>Week ${level} of ${program.TOTAL_WEEKS}</h2>
-          <p class="muted small">${escapeHtml(def.name)} · ${pct}% through${perLevel ? ` · ~${perLevel.toFixed(0)}d per week-level so far` : ''}</p>
+          <p class="muted small">${escapeHtml(def.name)}${perLevel ? ` · ${perLevel.toFixed(0)} days a level so far` : ''}</p>
         </div>
       </div>
 
@@ -73,7 +66,6 @@ export function renderRoadmap(mount) {
 
       <section class="card">
         <div class="h-row">${icon('target', 16)}<h2>Right now</h2></div>
-        <div class="kv"><span>Position</span><b>${escapeHtml(def.position)}</b></div>
         <div class="kv"><span>Quick flicks</span><b>${def.flicks.reps} × 1s</b></div>
         <div class="kv"><span>Holds</span><b>${def.holds.reps} × ${(def.holds.holdMs / 1000).toFixed(0)}s</b></div>
         ${def.ramps ? `<div class="kv"><span>Ramps</span><b>${def.ramps.reps} × ${(def.ramps.holdMs / 1000).toFixed(0)}s</b></div>` : ''}
@@ -113,7 +105,7 @@ export function renderRoadmap(mount) {
 
       <section class="card">
         <div class="h-row">${icon('trend', 16)}<h2>What gets harder</h2></div>
-        <p class="small muted">Five things grow at once, so the plan never has to lean on any one of them: hold length (3s → 20s), holds per session (8 → 20), flicks (10 → 30), ramps from week 13, and rapid pulse sets from week 49. Position climbs lying → seated → standing → mid-activity. Every fourth week is a deload.</p>
+        <p class="small muted">Five things grow at once, so the plan never leans on any one of them. Two are not on the chips above: ramps from week 13, rapid pulse sets from week 49.</p>
         <div class="kv"><span>Your best hold</span><b>${fmtMs(state.prs.maxHoldMs)}</b></div>
         <div class="kv"><span>The last working week asks for</span><b>${(peak.holds.holdMs / 1000).toFixed(0)}s × ${peak.holds.reps}</b></div>
       </section>

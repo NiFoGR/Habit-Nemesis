@@ -1,19 +1,12 @@
-// The optional app-wide PIN gate.
-//
-// Owns whether the app is currently unlocked, so nothing else has to track it.
-// `lockActive()` is the only question the router asks; `markUnlocked()` and
-// `relock()` are how the rest of the app moves that state.
+// App-wide PIN gate. Owns whether the app is unlocked.
 
 import * as store from './store.js';
 import * as vault from './pe/vault.js';
 import { haptic } from './ui.js';
 import { icon, logoMark } from './icons.js';
 
-/* ---------------- the gate ----------------
-   Reuses the gallery PIN rather than inventing a second one: two PINs for one
-   app is how people end up writing them down. Unlocking here also unlocks the
-   vault, which is the behaviour you want. The alternative is being asked for
-   the same PIN twice in a row on the way to the gallery. */
+/* ---------------- the gate ---------------- */
+// Reuses the gallery PIN, and unlocking here unlocks the vault too.
 
 let unlocked = false;
 
@@ -57,14 +50,12 @@ export function renderLock(mount, onUnlocked) {
   pin.focus();
 }
 
-
-/** Turning the lock on from settings must not lock you out of the screen you
- *  just enabled it on, so that counts as already unlocked. */
+/** Enabling the lock must not lock you out of the screen you did it on. */
 export function markUnlocked() {
   unlocked = true;
 }
 
-/** Backgrounding re-arms the gate. Called by the shell, never from a screen. */
+/** Re-arm. Called by the shell only. */
 export function relock() {
   unlocked = false;
 }

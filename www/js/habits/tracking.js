@@ -1,12 +1,6 @@
-// One habit, in full: the score, the history, the calendar, every streak it
-// has ever had, and which days of the week it actually happens on.
-//
-// The calendar is the only chart in the app you can write to. Editing the past
-// is not an escape hatch here, it is the point: a tracker you cannot correct
-// stops being a record of what happened and becomes a record of what you
-// remembered to press, and the second one is worth nothing. Everything else on
-// this screen recomputes from the entries, so a corrected Tuesday moves the
-// score, the streaks and the bars with it.
+// One habit in full: score, history, calendar, every streak, and which days of
+// the week it happens on. The calendar is the one chart you can write to, and
+// everything else recomputes from it.
 
 import * as store from '../store.js';
 import * as habits from './program.js';
@@ -22,9 +16,7 @@ const SCORE_PERIODS = {
   year: { label: 'Year', buckets: 10 },
 };
 
-// Which period each chart is showing. Module state rather than a setting: it
-// is a way of looking at the screen you are on, not a preference to carry
-// between habits, and a stored one would be one more thing to sanitise.
+// Module state, not a setting: a way of looking at this screen, not a preference.
 let scorePeriod = 'month';
 let historyPeriod = 'week';
 let editing = false;
@@ -44,9 +36,7 @@ function bucketKey(key, period, firstDay) {
   return String(y);
 }
 
-/** The score at the end of each bucket. The end and not the mean: the score is
- *  already an average with a memory, and averaging it again would flatten the
- *  one thing the chart is for. */
+/** End of bucket, not mean: the score is already an average with a memory. */
 function scoreSeries(sum, period) {
   const firstDay = habits.settings().firstDay;
   const { buckets } = SCORE_PERIODS[period];
@@ -64,10 +54,7 @@ function periodSelect(id, value, options) {
 
 /* ---------------- the screen ---------------- */
 
-/** One habit's own screen. Only a habit you made: the five the app asks of you
- *  have far richer screens of their own inside their sections, and a second,
- *  thinner view of the same record is the exact thing this redesign removed
- *  everywhere else. Their row's name goes to the section instead. */
+/** Habits you made only. The five have richer screens inside their sections. */
 export function renderHabitDetail(mount, id) {
   const habit = habits.byId(id);
   if (!habit) {
@@ -91,11 +78,9 @@ export function renderHabitDetail(mount, id) {
     const scores = scoreSeries(sum, scorePeriod);
     const bars = habits.history(sum, historyPeriod, 14);
     const cal = habits.calendar(sum, 17);
-    const freq = habits.weekdayByMonth(sum, 8);
     const month = Math.round((sum.score - habits.scoreAgo(sum, 30)) * 100);
-    const year = Math.round((sum.score - habits.scoreAgo(sum, 365)) * 100);
-    // The tile is the delta, so it is coloured rather than carrying a second
-    // copy of itself underneath in green.
+    const year = sum.days.length > 365 ? Math.round((sum.score - habits.scoreAgo(sum, 365)) * 100) : null;
+    // The tile is the delta, so it is coloured rather than repeated underneath.
     const deltaClass = (v) => (v > 0 ? 'good-text' : v < 0 ? 'warn-inline' : '');
 
     mount.innerHTML = `
@@ -107,7 +92,8 @@ export function renderHabitDetail(mount, id) {
         </header>
 
         <div class="habit-hero">
-          <h2 style="color:${colour}">${escapeHtml(habit.question || habit.name)}</h2>
+          ${habit.question && habit.question !== habit.name
+            ? `<h2 style="color:${colour}">${escapeHtml(habit.question)}</h2>` : ''}
           <p class="muted small">
             ${icon('calendar', 14)} ${escapeHtml(habits.freqLabel(habit.freq))}
             · ${icon('bell', 14)} ${habit.remindAt ? escapeHtml(habit.remindAt) : 'no reminder'}
@@ -116,12 +102,12 @@ export function renderHabitDetail(mount, id) {
 
         <section class="card">
           <div class="h-row">${icon('chart', 16)}<h2>Overview</h2></div>
-          <div class="stat-grid three">
-            <div class="stat"><b style="color:${colour}">${Math.round(sum.score * 100)}%</b><span>score</span></div>
+          <div class="stat-grid ${year === null ? 'four' : 'three'}">
+            <div class="stat"><b>${Math.round(sum.score * 100)}%</b><span>score</span></div>
             <div class="stat"><b class="${deltaClass(month)}">${month > 0 ? '+' : ''}${month}%</b><span>month</span></div>
-            <div class="stat"><b class="${deltaClass(year)}">${year > 0 ? '+' : ''}${year}%</b><span>year</span></div>
+            ${year === null ? '' : `<div class="stat"><b class="${deltaClass(year)}">${year > 0 ? '+' : ''}${year}%</b><span>year</span></div>`}
             <div class="stat"><b>${sum.streak}</b><span>streak</span></div>
-            <div class="stat"><b>${sum.best}</b><span>best</span></div>
+            
             <div class="stat"><b>${fmtTotal(habit, sum)}</b><span>total</span></div>
           </div>
         </section>
@@ -147,20 +133,14 @@ export function renderHabitDetail(mount, id) {
           <div class="hm-key">
             <i class="hc-cell on"></i> done
             <i class="hc-cell carried"></i> covered
-            ${habits.settings().skipDays ? '<i class="hc-cell skip"></i> skipped' : ''}
+            ${cal.cols.some((c) => c.cells.some((d) => d.skipped)) ? '<i class="hc-cell skip"></i> skipped' : ''}
             <i class="hc-cell"></i> not done
           </div>
-          ${editing ? '<p class="fineprint">Tap any day to change it. This is the record, not a scoreboard: correcting it is the right thing to do.</p>' : ''}
         </section>
 
         <section class="card">
           <div class="h-row">${icon('flame', 16)}<h2>Best streaks</h2></div>
           ${streaksHtml(sum, colour)}
-        </section>
-
-        <section class="card">
-          <div class="h-row">${icon('repeat', 16)}<h2>Frequency</h2></div>
-          ${freq.max ? freqHtml(freq, colour) : '<div class="chart-empty">Which days of the week this happens on, once it has happened</div>'}
         </section>
 
         ${habit.notes
@@ -197,7 +177,10 @@ function bucketLabel(key) {
   if (!key) return '';
   if (/^\d{4}$/.test(key)) return key;
   if (/^\d{4}-Q\d$/.test(key)) return key.replace('-', ' ');
-  if (/^\d{4}-\d{2}$/.test(key)) return `${key.slice(5)}/${key.slice(2, 4)}`;
+  if (/^\d{4}-\d{2}$/.test(key)) {
+    const [y, m] = key.split('-').map(Number);
+    return new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
+  }
   return fmtDate(key).replace(/^\w+,?\s*/, '');
 }
 
@@ -277,8 +260,10 @@ function openPastValue(habit, key, refresh) {
 /* ---------------- streaks and frequency ---------------- */
 
 function streaksHtml(sum, colour) {
-  const list = sum.streaks.slice(0, 10);
-  if (!list.length) return '<p class="muted small">No streak yet. One day is a streak of one.</p>';
+  // Five, and never a run of one: a list of single days is not a best.
+  const long = sum.streaks.filter((s) => s.len > 1);
+  const list = (long.length ? long : sum.streaks).slice(0, 5);
+  if (!list.length) return '<p class="muted small">No streak yet.</p>';
   const max = list[0].len;
   return `<div class="streak-list">${list
     .map((s) => `<div class="streak-row">
@@ -292,16 +277,4 @@ function streaksHtml(sum, colour) {
 function shortDate(key) {
   const [y, m, d] = key.split('-').map(Number);
   return new Date(y, m - 1, d).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: '2-digit' });
-}
-
-function freqHtml(freq, colour) {
-  return `<div class="freq-grid">
-    ${freq.rows
-      .map((r) => `<div class="fq-row">
-        ${r.cells.map((n) => `<i style="--d:${n ? Math.max(4, Math.round((n / freq.max) * 15)) : 0}px;color:${colour}" title="${n}"></i>`).join('')}
-        <span>${r.label}</span>
-      </div>`)
-      .join('')}
-    <div class="fq-row months">${freq.cols.map((c) => `<em>${c.label}</em>`).join('')}<span></span></div>
-  </div>`;
 }

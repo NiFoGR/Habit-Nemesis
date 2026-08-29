@@ -1,13 +1,6 @@
-/* NiFo, phone-first dark UI. One stylesheet, no framework.
-
-   One theme. Not one theme per section: for a while every section swapped the
-   accent on the body, which meant colour answered "where am I" and nothing
-   else could use it. Six accents later the app read as six apps sharing a
-   skeleton. Now there is a single accent, and colour answers the only question
-   worth spending it on: what state is this in - done, due, missed.
-
-   The one exception is a habit's own colour, which you choose, and which is
-   the only colour in the app carrying information the shape does not. */
+/* NiFo. Phone-first dark UI, one stylesheet, no framework.
+   One theme: colour means state (done, due, missed), never section.
+   The one exception is a habit's own colour, which you chose. */
 :root {
   /* ---- ground ---- */
   --bg: #0a0c10;
@@ -28,17 +21,22 @@
   --danger: #f87171;   /* wrong, or gone */
   --calm: #38bdf8;     /* skipped, rested, deliberately not counted */
   --brand: linear-gradient(120deg, #22d3c5, #a78bfa);
+  /* Ink on an accent fill. Never used on the ground. */
+  --on-accent: #04121a;
+  /* Absolutes, not palette: absence and presence. A photo sits on black. */
+  --black: #000;
+  --white: #fff;
 
   /* ---- type ----
-     A scale, not thirty ad-hoc rem values. Every size in the app comes from
-     one of these seven, which is most of what makes a screen look designed
-     rather than accumulated. */
-  /* One size above display, and it exists for exactly two things: the
-     division you are in, and the two scores of the week you are playing. If a
-     third use ever appears, the rule that one thing per screen gets to be loud
-     has already been broken. */
+     Ten sizes, and every size in the app is one of them. A raw rem in a
+     font-size fails `npm run check:ui`, because saying so was not enough. */
+  /* A full-screen numeral and nothing else: a running timer, a count. */
+  --f-mega: 3.4rem;
+  /* The one number a screen is about: a division, a week's two scores. */
   --f-hero: 2.3rem;
   --f-display: 1.75rem;
+  /* A screen's own h1. */
+  --f-sub: 1.5rem;
   --f-title: 1.3rem;
   --f-head: 1.05rem;
   --f-body: 0.95rem;
@@ -49,10 +47,7 @@
   --w-medium: 600;
   --w-bold: 700;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  /* The only second face in the app, and only ever on scripture and prayer.
-     Reading 1,344 chapters in a UI sans is worse, and that is a reading tool
-     rather than a decoration. It appears nowhere else - not on headings, not
-     on buttons, not on the section's own furniture. */
+  /* The only second face, and only on scripture and prayer. */
   --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
 
   /* ---- shape ---- */
@@ -63,17 +58,14 @@
   --gap: 10px;
 
   /* ---- motion ----
-     One duration and one curve, used everywhere. Motion in this app is only
-     ever there to make a change legible - what moved, and where it went - so
-     it is short enough not to be waited on. */
+     One duration, one curve. Motion is only ever there to make a change
+     legible, so it is short enough not to be waited on. */
   --t-fast: 0.12s;
   --t-base: 0.2s;
   --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
 
-  /* Native controls follow this. Without it a checkbox renders as a white
-     platform box on a near-black card, because accent-color only takes effect
-     once the box is checked; the same went for select menus, the time picker
-     and the scrollbars. */
+  /* Native controls follow this. Without it a checkbox is a white platform
+     box on a near-black card: accent-color only lands once it is checked. */
   color-scheme: dark;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
@@ -90,35 +82,29 @@ html, body {
   color: var(--text);
   font: 16px/1.5 var(--sans);
   overscroll-behavior-y: none;
-  /* iOS inflates text in a rotated view unless it is told not to, which is how
-     a grid sized to seven columns comes back as five and a half. */
+  /* iOS inflates text in a rotated view unless told not to, which turns seven
+     columns into five and a half. */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
-/* The background goes on body alone, deliberately.
-   Each section swaps the palette by redefining the tokens on
-   body[data-section=...], so --bg read from html still resolves to the :root
-   value. With a background on html as well, the canvas was painted the default
-   blue-grey while body painted its own darker box on top, and any screen
-   shorter than the viewport showed the difference as a lighter band across the
-   bottom. Leaving html transparent makes the canvas take body's background
-   instead, section colour and all. */
+/* Background on body alone. With one on html too, the canvas painted the
+   default and any short screen showed a lighter band at the bottom. */
 body { background: var(--bg); }
 
 body.in-session { overflow: hidden; }
 
-h1 { font-size: 1.5rem; margin: 0; letter-spacing: -0.02em; }
-h2 { font-size: 1.05rem; margin: 0 0 8px; letter-spacing: -0.01em; }
+h1 { font-size: var(--f-sub); margin: 0; letter-spacing: -0.02em; }
+h2 { font-size: var(--f-head); margin: 0 0 8px; letter-spacing: -0.01em; }
 p { margin: 0 0 10px; }
 p:last-child { margin-bottom: 0; }
 code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-size: 0.85em; }
 
 .muted { color: var(--muted); }
-.small { font-size: 0.86rem; }
+.small { font-size: var(--f-small); }
 .centre { text-align: center; }
-.fineprint { color: var(--muted); font-size: 0.76rem; line-height: 1.45; }
-.eyebrow { color: var(--muted); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.12em; margin: 0 0 4px; }
+.fineprint { color: var(--muted); font-size: var(--f-fine); line-height: 1.45; }
+.eyebrow { color: var(--muted); font-size: var(--f-fine); text-transform: uppercase; letter-spacing: 0.12em; margin: 0 0 4px; }
 
 .screen {
   max-width: 640px;
@@ -128,14 +114,21 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 }
 @keyframes fade { from { opacity: 0; transform: translateY(6px); } }
 
-.screen-head, .hub-head {
-  display: flex;
+/* Three columns with equal outer thirds, so the title sits on the centre of
+   the screen whatever the right-hand slot holds. */
+.screen-head {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 12px;
   margin-bottom: 18px;
 }
-.screen-head h1 { flex: 1; text-align: center; font-size: 1.15rem; }
-.hub-head { justify-content: space-between; align-items: center; }
+.screen-head > :last-child { justify-self: end; }
+.screen-head h1 { text-align: center; font-size: var(--f-head); }
+.hub-head {
+  display: flex; align-items: center; gap: 12px;
+  justify-content: space-between; margin-bottom: 18px;
+}
 
 .icon-btn {
   width: 40px; height: 40px;
@@ -145,7 +138,7 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
   background: var(--surface);
   color: var(--text);
   border-radius: 9px;
-  font-size: 1rem;
+  font-size: var(--f-body);
   cursor: pointer;
 }
 .icon-btn:active { background: var(--surface-2); }
@@ -170,21 +163,23 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
   margin-bottom: 14px;
 }
 .card.danger { border-color: rgba(248, 113, 113, 0.32); }
+a.card.solo-book { display: block; color: inherit; text-decoration: none; }
+a.card.solo-book .prog-bar { margin-bottom: 0; }
 .card.pr { border-color: rgba(251,191,36,0.35); }
-.tag { float: right; font-size: 0.74rem; color: var(--muted); font-weight: 400; }
+.tag { float: right; font-size: var(--f-fine); color: var(--muted); font-weight: 400; }
 
-.outline { margin: 0 0 12px; padding-left: 18px; color: var(--muted); font-size: 0.9rem; }
+.outline { margin: 0 0 12px; padding-left: 18px; color: var(--muted); font-size: var(--f-body); }
 .outline li { margin-bottom: 4px; }
-.cue { font-size: 0.86rem; color: var(--muted); margin-bottom: 8px; }
+.cue { font-size: var(--f-small); color: var(--muted); margin-bottom: 8px; }
 .cue b { color: var(--text); }
 .rules { padding-left: 18px; margin: 0; }
-.rules li { margin-bottom: 12px; color: var(--muted); font-size: 0.92rem; }
+.rules li { margin-bottom: 12px; color: var(--muted); font-size: var(--f-body); }
 .rules b { color: var(--text); }
-.warn-inline { color: var(--warn); font-size: 0.86rem; }
+.warn-inline { color: var(--warn); font-size: var(--f-small); }
 
 .notice {
   border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;
-  font-size: 0.88rem; background: var(--surface-2); border: 1px solid var(--line);
+  font-size: var(--f-small); background: var(--surface-2); border: 1px solid var(--line);
 }
 .notice.warn { border-color: rgba(251, 191, 36, 0.4); color: var(--warn); }
 .notice.good { border-color: rgba(74, 222, 128, 0.32); color: var(--good); }
@@ -201,28 +196,32 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 .today.release { border-color: var(--calm); }
 .today.test { border-color: var(--violet); }
 .today-left { flex: 1; min-width: 0; }
-.today h2 { font-size: 1.3rem; margin-bottom: 6px; }
+.today h2 { font-size: var(--f-title); margin-bottom: 6px; }
 
 /* ---------- buttons ---------- */
 
 .btn {
   display: block; width: 100%;
+  /* An <a class="btn"> and a <button class="btn"> in one row measure the same
+     only if the line height is stated. */
+  line-height: 1.2;
   border: 1px solid var(--line);
   background: var(--surface-2);
   color: var(--text);
   border-radius: 10px;
   padding: 13px 16px;
-  font-size: 0.95rem; font-weight: 600;
+  font-size: var(--f-body); font-weight: 600;
   cursor: pointer;
   margin-top: 8px;
 }
+a.btn { text-decoration: none; }
 .btn:active { transform: scale(0.99); }
 .btn:has(.ico) { display: flex; align-items: center; justify-content: center; gap: 9px; }
-.btn.primary { background: var(--accent); color: #04121a; border: 0; font-weight: 700; }
-.btn.big { padding: 17px; font-size: 1.05rem; }
+.btn.primary { background: var(--accent); color: var(--on-accent); border: 0; font-weight: 700; }
+.btn.big { padding: 17px; font-size: var(--f-head); }
 .btn.ghost { background: none; color: var(--muted); }
-/* Bottom margin as well as top: a card has margin-bottom and no margin-top, so
-   a full-width button directly above one sat flush against it. */
+/* Bottom margin too: a card has margin-bottom and no margin-top, so a
+   full-width button above one sat flush against it. */
 .btn.wide, .btn.big { margin: 14px 0; }
 .btn.danger { background: rgba(248, 113, 113, 0.14); color: var(--danger); border-color: rgba(248, 113, 113, 0.4); }
 .row-btns { display: flex; gap: 8px; }
@@ -233,24 +232,25 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
 .stat-grid.four { grid-template-columns: repeat(2, 1fr); }
 .stat-grid.three { grid-template-columns: repeat(3, 1fr); }
-.stat-grid.three .stat b { font-size: 1.15rem; }
+.stat-grid.three .stat b { font-size: var(--f-head); }
+.stat-grid.four .stat b { font-size: var(--f-head); }
 .stat-grid.three .stat .ico { top: 8px; right: 8px; }
 .stat {
   background: var(--surface); border: 1px solid var(--line);
   border-radius: 10px; padding: 12px 14px;
 }
-.stat b { display: block; font-size: 1.4rem; letter-spacing: -0.02em; }
-.stat span { display: block; color: var(--muted); font-size: 0.76rem; }
-.stat .d { display: block; font-style: normal; font-size: 0.7rem; margin-top: 4px; }
+.stat b { display: block; font-size: var(--f-title); letter-spacing: -0.02em; }
+.stat span { display: block; color: var(--muted); font-size: var(--f-fine); }
+.stat .d { display: block; font-style: normal; font-size: var(--f-fine); margin-top: 4px; }
 .stat .d.up { color: var(--good); }
 .stat .d.down { color: var(--warn); }
 .stat .d.flat { color: var(--muted); }
 
-.kv { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+.kv { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: var(--f-body); }
 .kv:last-child { border-bottom: 0; }
 .kv span { color: var(--muted); }
 .kv b { text-align: right; font-weight: 600; }
-.kv b em { font-style: normal; color: var(--accent); font-weight: 500; font-size: 0.82rem; }
+.kv b em { font-style: normal; color: var(--accent); font-weight: 500; font-size: var(--f-small); }
 .kv.warnrow b { color: var(--warn); }
 
 /* ---------- ring widget ---------- */
@@ -278,18 +278,18 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 .player-progress i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.3s ease; }
 
 .player-phase { text-align: center; margin: 22px 0 6px; }
-.phase-label { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; }
-.phase-sub { color: var(--muted); font-size: 0.84rem; min-height: 1.2em; }
+.phase-label { font-size: var(--f-title); font-weight: 700; letter-spacing: -0.02em; }
+.phase-sub { color: var(--muted); font-size: var(--f-small); min-height: 1.2em; }
 
 .stage { position: relative; flex: 1; display: grid; place-items: center; min-height: 0; }
 .ring { width: min(74vw, 320px); height: min(74vw, 320px); transform: rotate(-90deg); }
 .ring-track { fill: none; stroke: rgba(255,255,255,0.07); stroke-width: 14; }
 .ring-fill { fill: none; stroke: var(--accent); stroke-width: 14; stroke-linecap: round; }
-.ring-target { fill: none; stroke: #fff; stroke-width: 20; opacity: 0; }
+.ring-target { fill: none; stroke: currentColor; stroke-width: 20; opacity: 0; }
 
 .stage-core { position: absolute; text-align: center; pointer-events: none; }
-.core-big { font-size: 3.6rem; font-weight: 700; line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
-.core-small { color: var(--muted); font-size: 0.9rem; margin-top: 6px; text-transform: lowercase; }
+.core-big { font-size: var(--f-mega); font-weight: 700; line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.core-small { color: var(--muted); font-size: var(--f-body); margin-top: 6px; text-transform: lowercase; }
 
 .hold-pad {
   position: absolute; width: min(78vw, 340px); height: min(78vw, 340px);
@@ -309,9 +309,9 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 .stage.pressing .core-big { color: var(--accent); }
 .player.paused .stage { opacity: 0.4; }
 
-.player-cue { text-align: center; color: var(--muted); font-size: 0.88rem; min-height: 3.2em; padding: 0 6px; }
+.player-cue { text-align: center; color: var(--muted); font-size: var(--f-small); min-height: 3.2em; padding: 0 6px; }
 .player-bottom { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.rep-meter { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 0.9rem; }
+.rep-meter { font-variant-numeric: tabular-nums; color: var(--muted); font-size: var(--f-body); }
 .rep-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; max-width: 100%; }
 .rep-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
 .rep-dots i.good { background: var(--good); }
@@ -321,23 +321,23 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 
 /* ---------- rating gate ---------- */
 
-/* Rendered while the session's no-scroll body class is still applied, so it
-   scrolls internally on short screens. */
+/* Rendered while the session's no-scroll class is on, so it scrolls
+   internally on short screens. */
 .rating-gate {
   min-height: 100dvh; max-height: 100dvh; overflow-y: auto;
   display: flex; flex-direction: column; justify-content: center;
   max-width: 640px; margin: 0 auto; padding: 24px var(--pad);
 }
-.rating-gate h2 { font-size: 1.6rem; }
+.rating-gate h2 { font-size: var(--f-sub); }
 .rating-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 18px 0 14px; }
 .rating-grid button {
   background: var(--surface); border: 1px solid var(--line); color: var(--text);
   border-radius: 10px; padding: 18px 12px; text-align: left; cursor: pointer;
 }
 .rating-grid button:active { border-color: var(--accent); }
-.rating-grid b { display: block; font-size: 1.05rem; }
-.rating-grid span { color: var(--muted); font-size: 0.78rem; }
-.check { display: flex; align-items: center; gap: 10px; padding: 12px 0; font-size: 0.92rem; }
+.rating-grid b { display: block; font-size: var(--f-head); }
+.rating-grid span { color: var(--muted); font-size: var(--f-fine); }
+.check { display: flex; align-items: center; gap: 10px; padding: 12px 0; font-size: var(--f-body); }
 .check input { width: 20px; height: 20px; accent-color: var(--warn); }
 
 /* ---------- report ---------- */
@@ -345,32 +345,28 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 .report { max-width: 640px; margin: 0 auto; padding: calc(var(--safe-t) + 20px) var(--pad) calc(var(--safe-b) + 40px);  }
 .report-hero { text-align: center; margin-bottom: 20px; }
 .report-hero .ringwrap { margin: 0 auto 14px; }
-.report-hero h1 { font-size: 1.5rem; margin-bottom: 4px; }
+.report-hero h1 { font-size: var(--f-sub); margin-bottom: 4px; }
 
 .levelup-banner {
   display: inline-block; margin-top: 12px; padding: 7px 14px; border-radius: 8px;
-  background: var(--brand); color: #04121a;
-  font-weight: 700; letter-spacing: 0.04em; font-size: 0.8rem;
+  background: var(--brand); color: var(--on-accent);
+  font-weight: 700; letter-spacing: 0.04em; font-size: var(--f-small);
 }
-.hero-delta { font-size: 0.82rem; margin-top: 6px; }
-.hero-delta.up { color: var(--good); }
-.hero-delta.down { color: var(--warn); }
-.hero-delta.flat { color: var(--muted); }
 .nextup { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; }
-.report .card p { color: var(--muted); font-size: 0.92rem; }
+.report .card p { color: var(--muted); font-size: var(--f-body); }
 .report .card p b { color: var(--text); }
 
 .motivation {
   border-left: 2px solid var(--accent);
   padding: 4px 14px;
-  font-size: 0.95rem; line-height: 1.5; margin: 16px 0 6px; color: var(--muted);
+  font-size: var(--f-body); line-height: 1.5; margin: 16px 0 6px; color: var(--muted);
 }
 
 .prog-line { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
 .prog-bar { flex: 1; height: 8px; background: var(--line); border-radius: 8px; overflow: hidden; }
 .prog-bar i { display: block; height: 100%; background: var(--accent); }
-.prog-line span { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
-.pr-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+.prog-line span { font-size: var(--f-small); color: var(--muted); white-space: nowrap; }
+.pr-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: var(--f-body); }
 .pr-row b { display: flex; align-items: center; gap: 7px; }
 .pr-row .ico { color: var(--warn); }
 .pr-row:last-child { border-bottom: 0; }
@@ -383,7 +379,7 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 .repbars i.ok { background: var(--accent); }
 .repbars i.low { background: var(--warn); }
 .repbars i.miss { background: var(--danger); opacity: 0.5; }
-.legend { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; color: var(--muted); font-size: 0.72rem; }
+.legend { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; color: var(--muted); font-size: var(--f-fine); }
 .legend i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
 .legend i.good { background: var(--good); } .legend i.ok { background: var(--accent); }
 .legend i.low { background: var(--warn); } .legend i.miss { background: var(--danger); opacity: 0.5; }
@@ -394,48 +390,45 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 .pfi-hero h2 { margin-bottom: 4px; }
 
 .chart { width: 100%; height: 110px; overflow: visible; }
-.chart .ct { fill: var(--muted); font-size: 9px; }
-.chart-empty { color: var(--muted); font-size: 0.84rem; padding: 18px 0; text-align: center; }
+.chart .ct { fill: var(--muted); font-size: var(--f-micro); }
+.chart-empty { color: var(--muted); font-size: var(--f-small); padding: 18px 0; text-align: center; }
 
 .heatmap { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 6px; }
 .hm-col { display: flex; flex-direction: column; gap: 4px; }
 .heatmap i, .hm-key i { width: 13px; height: 13px; border-radius: 3px; display: block; }
 .heatmap i.none { background: var(--surface-2); }
 .heatmap i.future { background: transparent; border: 1px dashed var(--line); }
-/* Today, with nothing on it yet: without this the cell is invisible rather
-   than empty and the grid looks like it ends yesterday.
-   Called "now" and not "today" because .today is already the hub's Today
-   card - a block with its own padding and layout. A 13px heatmap cell that
-   also carried class="today" inherited all of it and rendered 34px square,
-   shouldering its column out of the grid. */
+/* Today with nothing on it yet, or the grid looks like it ends yesterday.
+   Called "now": .today is the hub card, and a 13px cell inheriting its
+   padding rendered 34px square. */
 .heatmap i.now { background: transparent; border: 1px dashed var(--line); }
-/* Mixed from --accent rather than written as a literal teal, so a section
-   only has to set its accent and the ramp follows. Each themed section used
-   to restate all four steps in its own colour. */
+/* Mixed from --accent, so a section sets one colour and the ramp follows. */
 .heatmap i.l1 { background: color-mix(in srgb, var(--accent) 22%, var(--surface-2)); }
 .heatmap i.l2 { background: color-mix(in srgb, var(--accent) 46%, var(--surface-2)); }
 .heatmap i.l3 { background: color-mix(in srgb, var(--accent) 72%, var(--surface-2)); }
 .heatmap i.l4 { background: var(--accent); }
 .heatmap i.rest { background: var(--calm); opacity: 0.75; }
-.hm-key { display: flex; align-items: center; gap: 5px; margin-top: 8px; color: var(--muted); font-size: 0.72rem; }
+.hm-key { display: flex; align-items: center; gap: 5px; margin-top: 8px; color: var(--muted); font-size: var(--f-fine); }
 .hm-key i.none { background: var(--surface-2); }
+/* A swatch that is not a rung on the scale sits after a gap. */
+.hm-sep { width: 1px; height: 12px; background: var(--line); margin: 0 4px; }
 .hm-key i.l1 { background: color-mix(in srgb, var(--accent) 22%, var(--surface-2)); }
 .hm-key i.l2 { background: color-mix(in srgb, var(--accent) 46%, var(--surface-2)); }
 .hm-key i.l3 { background: color-mix(in srgb, var(--accent) 72%, var(--surface-2)); }
 .hm-key i.l4 { background: var(--accent); } .hm-key i.rest { background: var(--calm); opacity: 0.75; }
 
 .timeline { list-style: none; margin: 0; padding: 0; }
-.timeline li { display: flex; align-items: baseline; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 0.88rem; }
+.timeline li { display: flex; align-items: baseline; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: var(--f-small); }
 .timeline li:last-child { border-bottom: 0; }
 .timeline span { flex: 1; color: var(--muted); }
-.timeline i { font-style: normal; color: var(--muted); font-size: 0.76rem; }
+.timeline i { font-style: normal; color: var(--muted); font-size: var(--f-fine); }
 
 .log-row { border-bottom: 1px solid var(--line); }
-.log-row:last-child { border-bottom: 0; }
-.log-row summary { display: flex; align-items: center; gap: 10px; padding: 11px 0; cursor: pointer; list-style: none; font-size: 0.88rem; }
+.log-list > .log-row:last-child { border-bottom: 0; }
+.log-row summary { display: flex; align-items: center; gap: 10px; padding: 11px 0; cursor: pointer; list-style: none; font-size: var(--f-small); }
 .log-row summary::-webkit-details-marker { display: none; }
 .log-date { flex: 0 0 92px; color: var(--muted); }
-.log-label { flex: 1; }
+.log-label { flex: 1; display: flex; align-items: center; gap: 6px; }
 .log-score { font-weight: 700; font-variant-numeric: tabular-nums; }
 .log-score.rest { color: var(--calm); }
 .log-body { padding: 4px 0 14px; }
@@ -445,11 +438,11 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 .setting { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .setting:last-child { border-bottom: 0; }
 .setting span { flex: 1; }
-.setting b { display: block; font-size: 0.94rem; font-weight: 600; }
-.setting i { display: block; font-style: normal; color: var(--muted); font-size: 0.78rem; margin-top: 2px; }
+.setting b { display: block; font-size: var(--f-body); font-weight: 600; }
+.setting i { display: block; font-style: normal; color: var(--muted); font-size: var(--f-fine); margin-top: 2px; }
 .setting select, .setting input[type="time"], .set-row select {
   background: var(--surface-2); color: var(--text); border: 1px solid var(--line);
-  border-radius: 10px; padding: 9px 10px; font-size: 0.9rem; min-width: 96px;
+  border-radius: 10px; padding: 9px 10px; font-size: var(--f-body); min-width: 96px;
 }
 .setting.toggle input { width: 24px; height: 24px; accent-color: var(--accent); }
 
@@ -458,19 +451,19 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 #toast {
   position: fixed; left: 50%; bottom: calc(var(--safe-b) + 24px); transform: translate(-50%, 20px);
   background: var(--surface-2); border: 1px solid var(--line); color: var(--text);
-  padding: 11px 18px; border-radius: 999px; font-size: 0.88rem;
+  padding: 11px 18px; border-radius: 999px; font-size: var(--f-small);
   opacity: 0; pointer-events: none; transition: all 0.24s ease; z-index: 50;
 }
 #toast.show { opacity: 1; transform: translate(-50%, 0); }
 
 /* ================= PE ================= */
 
-.section-title { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 4px 0 10px; }
+.section-title { font-size: var(--f-fine); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 4px 0 10px; }
 
-.pe-today { }
-
-.notice.action { display: block; text-decoration: none; color: inherit; border-color: var(--accent); }
-.notice.action { display: flex; align-items: center; gap: 8px; }
+.notice.action {
+  display: flex; align-items: center; gap: 8px;
+  text-decoration: none; color: inherit; border-color: var(--accent);
+}
 .notice.action .ico { color: var(--accent); flex: 0 0 auto; }
 .warn-stack { display: grid; gap: 8px; margin-bottom: 14px; }
 
@@ -480,53 +473,53 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
   background: var(--surface); border: 1px solid var(--line); color: var(--muted);
   border-radius: 10px; padding: 12px 6px; cursor: pointer; display: grid; gap: 4px; justify-items: center;
 }
-.type-chip b { font-size: 1.25rem; color: var(--c); line-height: 1; }
-.type-chip span { font-size: 0.76rem; }
+.type-chip b { font-size: var(--f-title); color: var(--c); line-height: 1; }
+.type-chip span { font-size: var(--f-fine); }
 .type-chip.on { border-color: var(--c); color: var(--text); background: color-mix(in srgb, var(--c) 12%, var(--surface)); }
 
 .start-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
 .start-card {
-  display: grid; gap: 2px; text-decoration: none; color: var(--text);
+  text-decoration: none; color: var(--text);
   background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--c);
   border-radius: 10px; padding: 14px;
 }
 
-.start-card span { font-size: 0.95rem; font-weight: 600; }
-.start-card i { font-style: normal; font-size: 0.72rem; color: var(--muted); }
+.start-card span { font-size: var(--f-body); font-weight: 600; }
+.start-card i { font-style: normal; font-size: var(--f-fine); color: var(--muted); }
 
 .tile-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(78px, 1fr)); gap: 10px; margin: 14px 0; }
 .tile {
   display: grid; justify-items: center; gap: 2px; text-decoration: none; color: var(--text);
   background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 6px;
 }
-.tile b { font-size: 1.25rem; line-height: 1; }
-.tile span { font-size: 0.82rem; font-weight: 600; }
-.tile i { font-style: normal; font-size: 0.68rem; color: var(--muted); }
+.tile b { font-size: var(--f-title); line-height: 1; }
+.tile span { font-size: var(--f-small); font-weight: 600; }
+.tile i { font-style: normal; font-size: var(--f-micro); color: var(--muted); }
 
 /* sliders + fields */
-.slider-row { display: flex; justify-content: space-between; align-items: baseline; margin: 14px 0 4px; font-size: 0.9rem; }
+.slider-row { display: flex; justify-content: space-between; align-items: baseline; margin: 14px 0 4px; font-size: var(--f-body); }
 .slider-row span { color: var(--muted); }
-.slider-row b { font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.slider-row b { font-size: var(--f-head); font-variant-numeric: tabular-nums; }
 input[type="range"] {
   width: 100%; margin: 0 0 4px; accent-color: var(--accent); height: 28px; background: transparent;
 }
-.band { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+.band { font-size: var(--f-fine); color: var(--muted); margin-top: 2px; }
 .band b { color: var(--accent); }
 .band.danger b { color: var(--danger); }
 
 .field { margin-bottom: 16px; }
-.field label { display: block; font-size: 0.88rem; margin-bottom: 6px; }
+.field label { display: block; font-size: var(--f-small); margin-bottom: 6px; }
 .field label b { font-weight: 700; }
 .field label em { font-style: normal; color: var(--muted); }
 .measure-row { display: flex; align-items: center; gap: 8px; }
 .measure-row input {
   flex: 1; background: var(--surface-2); border: 1px solid var(--line); color: var(--text);
-  border-radius: 9px; padding: 12px 14px; font-size: 1.15rem; font-variant-numeric: tabular-nums;
+  border-radius: 9px; padding: 12px 14px; font-size: var(--f-head); font-variant-numeric: tabular-nums;
 }
-.measure-row span { color: var(--muted); font-size: 0.9rem; }
+.measure-row span { color: var(--muted); font-size: var(--f-body); }
 .notes {
   width: 100%; background: var(--surface-2); border: 1px solid var(--line); color: var(--text);
-  border-radius: 9px; padding: 10px 12px; font: inherit; font-size: 0.9rem; resize: vertical; margin-top: 8px;
+  border-radius: 9px; padding: 10px 12px; font: inherit; font-size: var(--f-body); resize: vertical; margin-top: 8px;
 }
 .note-text { font-weight: 400; text-align: right; }
 
@@ -544,16 +537,16 @@ input[type="range"] {
 .kegel-bar { height: 6px; background: var(--line); border-radius: 6px; overflow: hidden; }
 .kegel-bar i { display: block; height: 100%; width: 0; background: var(--accent); }
 .kegel-bar i.rest { background: var(--muted); }
-.kegel-text { display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.86rem; }
+.kegel-text { display: flex; justify-content: space-between; margin-top: 8px; font-size: var(--f-small); }
 .kegel-text span { color: var(--muted); }
 
 /* reports */
 .hero-icon { display: flex; justify-content: center; color: var(--muted); margin-bottom: 10px; }
 .bpfsl-compare { display: grid; grid-template-columns: 1fr auto 1fr auto; align-items: center; gap: 10px; margin: 10px 0; }
-.bpfsl-compare span { display: block; color: var(--muted); font-size: 0.74rem; }
-.bpfsl-compare b { font-size: 1.2rem; }
+.bpfsl-compare span { display: block; color: var(--muted); font-size: var(--f-fine); }
+.bpfsl-compare b { font-size: var(--f-head); }
 .bpfsl-compare .arrow { color: var(--muted); }
-.bpfsl-compare .delta { font-weight: 700; font-size: 1.05rem; }
+.bpfsl-compare .delta { font-weight: 700; font-size: var(--f-head); }
 .bpfsl-compare .delta.good { color: var(--good); }
 .bpfsl-compare .delta.low { color: var(--warn); }
 .bpfsl-compare .delta.high { color: var(--violet); }
@@ -561,11 +554,11 @@ input[type="range"] {
 
 /* stats */
 .segmented { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 4px; margin-bottom: 14px; }
-/* Every option one line, whatever it is called: one two-word label used to
-   make the whole control twice as tall as its neighbours. */
+/* Every option on one line: one two-word label made the whole control twice
+   as tall as its neighbours. */
 .segmented button { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .segmented button {
-  flex: 1; background: none; border: 0; color: var(--muted); font: inherit; font-size: 0.82rem;
+  flex: 1; background: none; border: 0; color: var(--muted); font: inherit; font-size: var(--f-small);
   padding: 8px 4px; border-radius: 9px; cursor: pointer;
 }
 .segmented button.on { background: var(--surface-2); color: var(--text); font-weight: 600; }
@@ -578,25 +571,24 @@ input[type="range"] {
 .bar { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; min-width: 6px; }
 .bar-stack { width: 100%; display: flex; flex-direction: column-reverse; border-radius: 4px 4px 0 0; overflow: hidden; background: var(--surface-2); }
 .bar-stack i { display: block; width: 100%; background: var(--bar, var(--accent)); }
-.bar span { font-size: 0.6rem; color: var(--muted); margin-top: 4px; white-space: nowrap; }
+.bar span { font-size: var(--f-micro); color: var(--muted); margin-top: 4px; white-space: nowrap; }
 
 .paired { display: flex; align-items: flex-end; gap: 8px; height: 120px; margin: 10px 0; }
 .pair { flex: 1; display: flex; align-items: flex-end; gap: 2px; height: 100%; }
 .pair i { flex: 1; border-radius: 3px 3px 0 0; }
 .pair .before, .legend i.before-key { background: var(--calm); }
-.pair .after, .legend i.after-key { background: var(--danger); }
+.pair .after, .legend i.after-key { background: var(--good); }
 
-.projection { border-color: rgba(34,211,197,0.3); }
 .proj-rows { display: grid; gap: 6px; margin-bottom: 12px; }
 .proj-row { display: grid; grid-template-columns: 42px 1fr auto; align-items: baseline; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
-.proj-row span { color: var(--muted); font-size: 0.84rem; }
-.proj-row b { font-size: 1.1rem; }
-.proj-row i { font-style: normal; color: var(--muted); font-size: 0.78rem; }
-.conf { display: flex; align-items: center; gap: 10px; font-size: 0.78rem; color: var(--muted); margin-bottom: 10px; }
+.proj-row span { color: var(--muted); font-size: var(--f-small); }
+.proj-row b { font-size: var(--f-head); }
+.proj-row i { font-style: normal; color: var(--muted); font-size: var(--f-fine); }
+.conf { display: flex; align-items: center; gap: 10px; font-size: var(--f-fine); color: var(--muted); margin-bottom: 10px; }
 .conf-bar { flex: 1; height: 6px; background: var(--line); border-radius: 6px; overflow: hidden; }
 .conf-bar i { display: block; height: 100%; background: var(--accent); }
 
-.insight { border-left: 3px solid var(--line); padding: 8px 12px; margin-bottom: 8px; font-size: 0.88rem; color: var(--muted); border-radius: 0 8px 8px 0; }
+.insight { border-left: 3px solid var(--line); padding: 8px 12px; margin-bottom: 8px; font-size: var(--f-small); color: var(--muted); border-radius: 0 8px 8px 0; }
 .insight.good { border-color: var(--good); }
 .insight.warn { border-color: var(--warn); }
 .insight.info { border-color: var(--calm); }
@@ -607,22 +599,22 @@ input[type="range"] {
 .pin-screen { display: flex; flex-direction: column; min-height: 100dvh; }
 .pin-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
 .pin-lock { color: var(--accent); }
-.pin-body h2 { font-size: 1.3rem; }
+.pin-body h2 { font-size: var(--f-title); }
 .pin-body p { max-width: 34ch; }
 .pin-dots { display: flex; gap: 12px; margin: 14px 0 2px; }
 .pin-dots i { width: 13px; height: 13px; border-radius: 50%; border: 2px solid var(--line); }
 .pin-dots i.on { background: var(--accent); border-color: var(--accent); }
 .pin-dots.shake { animation: shake 0.35s; }
 @keyframes shake { 25% { transform: translateX(-7px); } 75% { transform: translateX(7px); } }
-.pin-msg { min-height: 1.3em; font-size: 0.84rem; color: var(--muted); }
+.pin-msg { min-height: 1.3em; font-size: var(--f-small); color: var(--muted); }
 .pin-msg.err { color: var(--danger); }
 .keypad { display: grid; grid-template-columns: repeat(3, 74px); gap: 12px; margin-top: 6px; }
 .keypad button {
   height: 66px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface);
-  color: var(--text); font-size: 1.4rem; cursor: pointer;
+  color: var(--text); font-size: var(--f-title); cursor: pointer;
 }
 .keypad button:active { background: var(--surface-2); }
-.keypad .ghost-key { border-color: transparent; background: none; font-size: 0.8rem; color: var(--muted); }
+.keypad .ghost-key { border-color: transparent; background: none; font-size: var(--f-small); color: var(--muted); }
 
 .gal-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
 .gal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
@@ -632,9 +624,9 @@ input[type="range"] {
 }
 .gal-item img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; display: block; background: var(--surface-2); }
 .gal-meta { padding: 8px 10px; }
-.gal-meta b { display: block; font-size: 0.86rem; }
-.gal-meta span { display: block; font-size: 0.72rem; color: var(--muted); }
-.gal-check { display: none; position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; }
+.gal-meta b { display: block; font-size: var(--f-small); }
+.gal-meta span { display: block; font-size: var(--f-fine); color: var(--muted); }
+.gal-check { display: none; position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--white); }
 .gal-grid.comparing .gal-check { display: block; }
 .gal-item.picked { outline: 2px solid var(--accent); }
 .gal-item.picked .gal-check { background: var(--accent); border-color: var(--accent); }
@@ -643,7 +635,7 @@ input[type="range"] {
 .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
 .compare-grid figure { margin: 0; }
 .compare-grid img { width: 100%; border-radius: 9px; display: block; }
-.compare-grid figcaption { padding-top: 8px; font-size: 0.8rem; }
+.compare-grid figcaption { padding-top: 8px; font-size: var(--f-small); }
 .compare-grid figcaption span { display: block; color: var(--muted); }
 .stat.wide { grid-column: 1 / -1; }
 
@@ -659,7 +651,7 @@ input[type="range"] {
 .logo-mark { display: block; }
 
 .hub-head .brand-row { display: flex; align-items: center; gap: 10px; }
-.hub-head h1 { font-size: 1.35rem; }
+.hub-head h1 { font-size: var(--f-title); }
 
 /* section headings with an icon */
 .h-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
@@ -673,12 +665,12 @@ input[type="range"] {
 /* sparkline strip under a headline number */
 .spark { display: block; width: 100%; height: 34px; }
 .spark-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 14px; }
-.spark-card .cap { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.76rem; color: var(--muted); margin-bottom: 4px; }
-.spark-card .cap b { color: var(--text); font-size: 0.9rem; }
+.spark-card .cap { display: flex; justify-content: space-between; align-items: baseline; font-size: var(--f-fine); color: var(--muted); margin-bottom: 4px; }
+.spark-card .cap b { color: var(--text); font-size: var(--f-body); }
 
 /* donut used for weekly volume split */
 .donut-row { display: flex; align-items: center; gap: 16px; }
-.donut-key { display: grid; gap: 6px; font-size: 0.8rem; }
+.donut-key { display: grid; gap: 6px; font-size: var(--f-small); }
 .donut-key div { display: flex; align-items: center; gap: 8px; color: var(--muted); }
 .donut-key i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
 .donut-key b { color: var(--text); font-variant-numeric: tabular-nums; }
@@ -697,27 +689,19 @@ input[type="range"] {
 /* ---------- simplified nav bits ---------- */
 
 .linkbtn { text-align: center; text-decoration: none; display: block; }
-/* Except on an icon button, where `display: block` was quietly overriding the
-   grid that centres the glyph - so the settings gear sat nine pixels above the
-   plus sign beside it, on the home screen, for as long as both have existed. */
+/* Except on an icon button, where display: block overrode the grid that
+   centres the glyph: the gear sat nine pixels above the plus beside it. */
 .icon-btn.linkbtn { display: grid; place-items: center; }
 
-/* The section link rows. This was a four-column grid, on the reasoning that a
-   wrapping row leaves the last link alone underneath and it reads as a
-   different kind of link. Both halves of that turned out to be wrong once
-   there were five links: a fixed four columns put the fifth on its own row
-   AND left-aligned it, and a four-column grid narrow enough for five labels
-   broke "The books" across two lines.
-
-   A centred wrapping row fixes both. Whatever does not fit drops to the next
-   line in the middle, which reads as one group at four links or at six, and
-   no label ever breaks mid-phrase. */
+/* Two columns, so four links read as a block rather than three and an orphan.
+   An odd last one takes the full width. */
 .linkrow {
-  display: flex; flex-wrap: wrap; justify-content: center;
+  display: grid; grid-template-columns: repeat(2, 1fr);
   gap: 10px 18px; margin: 22px 0 8px;
 }
-.linkrow a { justify-content: center; text-align: center; white-space: nowrap; }
-.linkrow a { color: var(--muted); text-decoration: none; font-size: 0.86rem; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
+.linkrow a:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.linkrow a { justify-content: center; text-align: center; }
+.linkrow a { color: var(--muted); text-decoration: none; font-size: var(--f-small); border-bottom: 1px solid var(--line); padding-bottom: 2px; }
 .linkrow a:active { color: var(--text); }
 
 .week-strip { display: flex; gap: 6px; margin: 18px 0; }
@@ -729,19 +713,18 @@ input[type="range"] {
 .eq-row { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
 .eq-row button {
   padding: 12px 0; border: 1px solid var(--line); background: var(--surface-2);
-  color: var(--text); border-radius: 7px; font-size: 0.82rem; cursor: pointer;
+  color: var(--text); border-radius: 7px; font-size: var(--f-small); cursor: pointer;
 }
-.eq-row button:active { background: var(--accent); color: #04121a; }
+.eq-row button:active { background: var(--accent); color: var(--on-accent); }
 
 /* ================= responsive ================= */
 
-/* Phones stay single-column; everything above that gets more columns rather
-   than a wider column, so line length stays readable. */
+/* Phones stay single-column. Wider screens get more columns, not a wider
+   column, so line length stays readable. */
 @media (min-width: 520px) {
   .stat-grid { grid-template-columns: repeat(4, 1fr); }
   .stat-grid.four { grid-template-columns: repeat(4, 1fr); }
-  /* Three stays three at every width: it is used where the six tiles are two
-     rows of three and read as one block, which four columns would break up. */
+  /* Three stays three: six tiles are two rows of three and read as one block. */
   .stat-grid.three { grid-template-columns: repeat(3, 1fr); }
   .rating-grid { grid-template-columns: repeat(4, 1fr); }
 }
@@ -767,10 +750,10 @@ input[type="range"] {
   .player-phase { margin: 8px 0 2px; }
   .ring { width: min(34vh, 220px); height: min(34vh, 220px); }
   .hold-pad { width: min(38vh, 240px); height: min(38vh, 240px); }
-  .core-big { font-size: 2.2rem; }
-  .player-cue { min-height: 0; font-size: 0.8rem; }
+  .core-big { font-size: var(--f-hero); }
+  .player-cue { min-height: 0; font-size: var(--f-small); }
   .keypad { grid-template-columns: repeat(3, 60px); gap: 8px; }
-  .keypad button { height: 52px; font-size: 1.1rem; }
+  .keypad button { height: 52px; font-size: var(--f-head); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -785,7 +768,7 @@ input[type="range"] {
 .lock-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100dvh; gap: 12px; }
 .lock-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
 .pin-input {
-  width: 190px; text-align: center; font-size: 1.6rem; letter-spacing: 0.4em;
+  width: 190px; text-align: center; font-size: var(--f-sub); letter-spacing: 0.4em;
   background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
   color: var(--text); padding: 14px 10px;
 }
@@ -798,14 +781,14 @@ input[type="range"] {
 .step-bar i.on { background: var(--accent); }
 .step-bar i.done { background: color-mix(in srgb, var(--accent) 45%, var(--line)); }
 
-.icon-btn.text-btn { width: auto; padding: 0 12px; font-size: 0.84rem; color: var(--muted); }
+.icon-btn.text-btn { width: auto; padding: 0 12px; font-size: var(--f-small); color: var(--muted); }
 
-.tut-body p { color: var(--muted); font-size: 0.94rem; }
+.tut-body p { color: var(--muted); font-size: var(--f-body); }
 .tut-body p b, .tut-body p i { color: var(--text); }
 .tut-body ol.rules, .tut-body ul.rules { margin: 12px 0; }
 
 .diagram { display: block; width: 100%; max-width: 260px; height: auto; margin: 14px auto; }
-.dg-lab { fill: var(--muted); font-size: 9px; }
+.dg-lab { fill: var(--muted); font-size: var(--f-micro); }
 
 .tut-practice { margin-bottom: 16px; }
 .tut-pad-wrap { position: relative; width: 160px; height: 160px; margin: 0 auto 10px; display: grid; place-items: center; }
@@ -817,8 +800,8 @@ input[type="range"] {
   width: 124px; height: 124px; border-radius: 50%; border: 0; background: var(--surface-2);
   color: var(--text); display: grid; place-items: center; gap: 2px; cursor: pointer; touch-action: none;
 }
-.tut-pad b { font-size: 1.5rem; font-variant-numeric: tabular-nums; line-height: 1; }
-.tut-pad span { color: var(--muted); font-size: 0.74rem; }
+.tut-pad b { font-size: var(--f-sub); font-variant-numeric: tabular-nums; line-height: 1; }
+.tut-pad span { color: var(--muted); font-size: var(--f-fine); }
 .tut-pad.on { background: color-mix(in srgb, var(--accent) 20%, var(--surface-2)); }
 .tut-pad.done { background: color-mix(in srgb, var(--good) 18%, var(--surface-2)); }
 .tut-pad.done .ico { color: var(--good); }
@@ -834,29 +817,30 @@ input[type="range"] {
 .phase.on { border-color: var(--accent); }
 .phase-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
 .phase-head > div { flex: 1; min-width: 0; }
-.phase-head b { display: block; font-size: 0.98rem; }
-.phase-head i { font-style: normal; color: var(--muted); font-size: 0.76rem; }
+.phase-head b { display: block; font-size: var(--f-body); }
+.phase-head i { font-style: normal; color: var(--muted); font-size: var(--f-fine); }
+/* The border is the one mark on the phase you are in. Accent on the icon as
+   well would mean current here and done on the card above. */
 .phase-ico { display: flex; color: var(--muted); }
-.phase.on .phase-ico, .phase.done .phase-ico { color: var(--accent); }
-.phase-tag { font-size: 0.7rem; color: var(--muted); display: flex; align-items: center; }
+.phase-tag { font-size: var(--f-fine); color: var(--muted); display: flex; align-items: center; }
 .phase-tag.on { color: var(--accent); font-weight: 700; }
 .phase p { margin: 0 0 8px; }
 .phase-nums { display: flex; flex-wrap: wrap; gap: 6px; }
-.phase-nums span { font-size: 0.7rem; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 3px 9px; }
+.phase-nums span { font-size: var(--f-fine); color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 3px 9px; }
 
 .week-list { max-height: 340px; overflow-y: auto; }
-.week-row { display: flex; align-items: baseline; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 0.84rem; opacity: 0.55; }
+.week-row { display: flex; align-items: baseline; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: var(--f-small); opacity: 0.55; }
 .week-row:last-child { border-bottom: 0; }
 .week-row.done { opacity: 0.8; }
-.week-row.on { opacity: 1; background: color-mix(in srgb, var(--accent) 10%, transparent); border-radius: 6px; padding-left: 6px; }
+.week-row.on { margin-left: -6px; opacity: 1; background: color-mix(in srgb, var(--accent) 10%, transparent); border-radius: 6px; padding-left: 6px; }
 .week-row .wk { flex: 0 0 26px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .week-row b { flex: 0 0 auto; font-weight: 600; }
-.week-row i { flex: 1; text-align: right; font-style: normal; color: var(--muted); font-size: 0.74rem; }
+.week-row i { flex: 1; text-align: right; font-style: normal; color: var(--muted); font-size: var(--f-fine); }
 
 /* ---------- pocket mode ---------- */
 
 .buzz-key { display: grid; gap: 10px; margin: 12px 0; }
-.buzz-key > div { display: flex; align-items: center; gap: 12px; font-size: 0.84rem; color: var(--muted); }
+.buzz-key > div { display: flex; align-items: center; gap: 12px; font-size: var(--f-small); color: var(--muted); }
 .buzz-key b { color: var(--text); }
 .bz { flex: 0 0 40px; height: 8px; border-radius: 4px; background: var(--accent); }
 .bz.short { width: 12px; flex: 0 0 12px; }
@@ -864,34 +848,33 @@ input[type="range"] {
 .bz.triple { background: repeating-linear-gradient(90deg, var(--accent) 0 8px, transparent 8px 14px); }
 
 .pocket-face {
-  background: #05080b; border: 1px solid var(--line); border-radius: 14px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 14px;
   min-height: 46vh; display: grid; place-content: center; text-align: center; gap: 8px; padding: 24px 18px; margin-bottom: 14px;
 }
-.pocket-face b { font-size: 1.7rem; letter-spacing: -0.02em; }
-.pocket-face span { color: var(--muted); font-size: 0.86rem; max-width: 30ch; }
+.pocket-face b { font-size: var(--f-display); letter-spacing: -0.02em; }
+.pocket-face span { color: var(--muted); font-size: var(--f-small); max-width: 30ch; }
 .pocket-face[data-kind="rest"] b { color: var(--muted); }
 .pocket-face[data-kind="breath"] b, .pocket-face[data-kind="reverse"] b { color: var(--calm); }
 .pocket-face[data-kind="title"] b { color: var(--violet); }
-.pocket-clock { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 0.9rem; margin-top: 10px; }
+.pocket-clock { font-variant-numeric: tabular-nums; color: var(--muted); font-size: var(--f-body); margin-top: 10px; }
 .pocket-bar { height: 4px; background: var(--line); border-radius: 4px; overflow: hidden; width: 180px; margin: 0 auto; }
 .pocket-bar i { display: block; height: 100%; width: 0; background: var(--accent); }
 
 /* ---------- weekly review ---------- */
 
-.cmp-row { display: grid; grid-template-columns: 1fr auto auto; align-items: baseline; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+.cmp-row { display: grid; grid-template-columns: 1fr auto auto; align-items: baseline; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: var(--f-body); }
 .cmp-row:last-of-type { border-bottom: 0; }
 .cmp-row > span { color: var(--muted); }
 .cmp-row b { font-weight: 600; font-variant-numeric: tabular-nums; }
-.dl { font-style: normal; font-size: 0.76rem; min-width: 62px; text-align: right; }
+.dl { font-style: normal; font-size: var(--f-fine); min-width: 62px; text-align: right; }
 .dl.up { color: var(--good); }
 .dl.down { color: var(--warn); }
-.dl.flat { color: var(--muted); }
 
 /* ---------- measurement check-in ---------- */
 
 .step-bar i.now { background: var(--accent); }
 
-.step-title { font-size: 1.35rem; text-align: center; margin: 4px 0 10px; letter-spacing: -0.02em; }
+.step-title { font-size: var(--f-title); text-align: center; margin: 4px 0 10px; letter-spacing: -0.02em; }
 
 .diag-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 14px; }
 .diag { display: block; width: 100%; height: auto; }
@@ -901,19 +884,18 @@ input[type="range"] {
 .d-tape { fill: none; stroke: var(--accent); stroke-width: 3; }
 .d-dim { stroke: var(--accent); stroke-width: 1.5; fill: none; }
 .d-pull { stroke: var(--violet); stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-.d-lab { fill: var(--muted); font-size: 9px; }
+.d-lab { fill: var(--muted); font-size: var(--f-micro); }
 
-/* One number, one screen: the input is the whole screen's job, so it is sized
-   like it. */
+/* One number, one screen: the input is the whole job, so it is sized like it. */
 .measure-row.big-input { justify-content: center; gap: 6px; margin-bottom: 4px; }
 .measure-row.big-input input {
-  width: 62%; max-width: 220px; font-size: 2.4rem; font-weight: 700; text-align: center;
+  width: 62%; max-width: 220px; font-size: var(--f-hero); font-weight: 700; text-align: center;
   letter-spacing: -0.03em; padding: 16px 10px; border-radius: 12px; font-variant-numeric: tabular-nums;
 }
 .measure-row.big-input input:focus { outline: none; border-color: var(--accent); }
-.measure-row.big-input span { font-size: 1rem; }
+.measure-row.big-input span { font-size: var(--f-body); }
 
-.err-line { min-height: 1.3em; font-size: 0.8rem; text-align: center; margin: 8px 0 4px; }
+.err-line { min-height: 1.3em; font-size: var(--f-small); text-align: center; margin: 8px 0 4px; }
 .err-line.bad { color: var(--danger); }
 .err-line.warn { color: var(--warn); }
 
@@ -924,13 +906,13 @@ input[type="range"] {
 .photo-preview img { width: 100%; border-radius: 12px; display: block; background: var(--surface-2); }
 .photo-preview.small-pv img { max-width: 180px; margin: 0 auto; }
 
-.of-goal { color: var(--muted); font-size: 0.9rem; font-weight: 400; }
+.of-goal { color: var(--muted); font-size: var(--f-body); font-weight: 400; }
 
 /* ---------- camera + alignment ---------- */
 
 .cam-screen { display: flex; flex-direction: column; min-height: 100dvh; }
 .cam-stage, .align-stage {
-  position: relative; width: 100%; aspect-ratio: 3 / 4; background: #000;
+  position: relative; width: 100%; aspect-ratio: 3 / 4; background: var(--black);
   border-radius: 12px; overflow: hidden; margin-bottom: 10px;
 }
 .cam-stage video, .align-stage img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -941,30 +923,20 @@ input[type="range"] {
 .cam-guides i { position: absolute; background: rgba(255,255,255,0.22); }
 .cam-guides i:first-child { left: 0; right: 0; top: 50%; height: 1px; }
 .cam-guides i:last-child { top: 0; bottom: 0; left: 50%; width: 1px; }
-.cam-fallback { display: grid; place-items: center; height: 100%; color: var(--muted); font-size: 0.86rem; padding: 20px; text-align: center; }
+.cam-fallback { display: grid; place-items: center; height: 100%; color: var(--muted); font-size: var(--f-small); padding: 20px; text-align: center; }
 
 /* ================= per-section themes =================
-   One skeleton, three rooms. Spacing, radius, type scale and motion are shared
-   so the app stays one app; the accent, the surface tint and, for prayer, the
-   typeface are what change. Tokens are swapped on the body by the router, so
-   every existing component picks the section up without knowing about it. */
+   One skeleton. Spacing, radius, type and motion are shared; the accent, the
+   surface tint and, for prayer, the typeface are what change. */
 
 /* ---- section accents ----
-   One base palette, four accents.
-
-   Every section used to redefine the whole surface ramp as well as the accent,
-   which gave five different backgrounds across 27 screens and made the hub -
-   the screen you return to constantly - the lightest thing in the app. Moving
-   between sections read as moving between apps.
-
-   Now only the accent changes. The greys are the ones defined at :root and are
-   never overridden, so a card is the same card everywhere and the hub belongs
-   to the same app as the pages it opens. */
+   One base palette, four accents. The greys are never overridden, so a card is
+   the same card everywhere. Redefining the whole ramp per section made five
+   backgrounds across 27 screens and read as five apps. */
 
 
-/* Prayer is deliberately the darkest and the quietest: near-black ground, warm
-   gold instead of a cool accent, and a serif face. It should not look like the
-   training screens, because it is not one. */
+/* Prayer runs darkest and quietest: near-black, warm gold, a serif face. It
+   should not look like a training screen. */
 
 
 /* ---------- the prayer rule, inside the Bible section ---------- */
@@ -989,8 +961,8 @@ input[type="range"] {
 .rc-ico { display: flex; color: var(--accent); }
 .prayer-card.kept .rc-ico { color: var(--good); }
 .rc-text { flex: 1; display: grid; gap: 3px; }
-.rc-text b { font-size: 1.05rem; font-weight: 600; }
-.rc-text i { font-style: normal; font-size: 0.8rem; color: var(--muted); }
+.rc-text b { font-size: var(--f-head); font-weight: 600; }
+.rc-text i { font-style: normal; font-size: var(--f-small); color: var(--muted); }
 .rc-go { color: var(--muted); display: flex; }
 
 .btn.ext { display: flex; align-items: center; justify-content: center; gap: 9px; }
@@ -998,11 +970,8 @@ input[type="range"] {
 
 /* ---------- prayer ---------- */
 
-/* Fixed to the viewport rather than `min-height: 100dvh`, for the same reason
-   `.player` is: a flex column only hands its middle child a scrollbar when the
-   column's own height is definite. With min-height the column grew to fit the
-   prayer instead, `.pr-body` never scrolled, and the Next button sat below the
-   fold on a screen that `body.in-session` had already stopped scrolling. The
+/* Fixed to the viewport, not min-height: 100dvh. A flex column only gives its
+   middle child a scrollbar when its own height is definite; with min-height the
    long prayers were unfinishable. */
 .pray-run {
   position: fixed; inset: 0;
@@ -1014,26 +983,25 @@ input[type="range"] {
 .pr-bar i.on { background: var(--accent); }
 .pr-bar i.done { background: color-mix(in srgb, var(--accent) 40%, var(--line)); }
 
-/* min-height:0 is what actually lets this shrink below its content; overflow
-   alone is not enough in every engine. overscroll-behavior keeps a flick at
-   the end of a prayer from dragging the page behind it. */
+/* min-height: 0 is what lets this shrink below its content. overscroll keeps a
+   flick at the end of a prayer from dragging the page behind it. */
 .pr-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 20px; }
-.pr-title { font-size: 1.15rem; color: var(--accent); margin-bottom: 14px; font-weight: 600; }
-.pr-own { font-style: normal; font-size: 0.7rem; color: var(--muted); font-weight: 400; }
+.pr-title { font-size: var(--f-head); color: var(--accent); margin-bottom: 14px; font-weight: 600; }
+.pr-own { font-style: normal; font-size: var(--f-fine); color: var(--muted); font-weight: 400; }
 .pr-repeat {
-  display: inline-block; font-size: 0.75rem; color: var(--muted);
+  display: inline-block; font-size: var(--f-fine); color: var(--muted);
   border: 1px solid var(--line); border-radius: 20px; padding: 2px 10px; margin-bottom: 12px;
 }
-.pr-text p { font-size: 1.12rem; line-height: 1.75; margin: 0 0 10px; }
+.pr-text p { font-size: var(--f-head); line-height: 1.75; margin: 0 0 10px; }
 .pr-text.el p { color: var(--text); }
 .pr-text.en p { color: var(--muted); }
 .pr-text.en { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
-.pray-run.big .pr-text p { font-size: 1.34rem; line-height: 1.8; }
-.pr-note { font-size: 0.8rem; color: var(--muted); font-style: italic; margin-top: 16px; }
+.pray-run.big .pr-text p { font-size: var(--f-title); line-height: 1.8; }
+.pr-note { font-size: var(--f-small); color: var(--muted); font-style: italic; margin-top: 16px; }
 
 .pr-silence { display: grid; place-items: center; gap: 8px; padding: 60px 0; text-align: center; }
-.pr-silence b { font-size: 2.6rem; font-variant-numeric: tabular-nums; font-weight: 400; }
-.pr-silence span { color: var(--muted); font-size: 0.85rem; }
+.pr-silence b { font-size: var(--f-hero); font-variant-numeric: tabular-nums; font-weight: 400; }
+.pr-silence span { color: var(--muted); font-size: var(--f-small); }
 
 .pr-nav { display: flex; gap: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
 .pr-nav .btn { flex: 1; margin-top: 0; }
@@ -1045,7 +1013,7 @@ input[type="range"] {
   padding: calc(var(--safe-t) + 24px) var(--pad) calc(var(--safe-b) + 24px);
 }
 .pray-done .done-mark { color: var(--good); margin-bottom: 8px; }
-.pray-done h1 { font-size: 1.6rem; }
+.pray-done h1 { font-size: var(--f-sub); }
 .pray-done .stat-grid { width: 100%; margin: 22px 0; }
 .pray-done .btn { width: 100%; max-width: 300px; }
 
@@ -1062,26 +1030,24 @@ input[type="range"] {
 .own-row b { display: flex; gap: 6px; }
 .mini {
   background: none; border: 1px solid var(--line); color: var(--muted);
-  border-radius: 7px; padding: 4px 10px; font-size: 0.76rem; cursor: pointer; font-family: inherit;
+  border-radius: 7px; padding: 4px 10px; font-size: var(--f-fine); cursor: pointer; font-family: inherit;
 }
 .mini:active { background: var(--surface-2); }
 .mini.danger { color: var(--danger); border-color: rgba(248, 113, 113, 0.35); }
 
 .text-input {
   width: 100%; background: var(--surface); border: 1px solid var(--line);
-  border-radius: 9px; color: var(--text); padding: 12px; font-size: 0.95rem; font-family: inherit;
+  border-radius: 9px; color: var(--text); padding: 12px; font-size: var(--f-body); font-family: inherit;
 }
 .text-input:focus { outline: none; border-color: var(--accent); }
-.field label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 6px; }
+.field label { display: block; font-size: var(--f-small); color: var(--muted); margin-bottom: 6px; }
 
-/* The live-slot button sits between the prayer list and the stats card, so it
-   needs air on both sides rather than only above. */
+/* Sits between the prayer list and the stats card, so it needs air both sides. */
 .pr-nav .btn[disabled] { opacity: 0.35; }
 
 /* ---------- settings ---------- */
 
-/* The section jump list. Settings used to be one long page mixing app-wide
-   options with per-feature ones; this is the signpost for the split. */
+/* The section jump list: the signpost for app-wide against per-feature. */
 .set-nav { display: grid; gap: 8px; margin-bottom: 22px; }
 .set-nav a {
   display: flex; align-items: center; gap: 13px; text-decoration: none; color: inherit;
@@ -1090,24 +1056,22 @@ input[type="range"] {
 .set-nav a:active { background: var(--surface-2); }
 .set-nav .ico { color: var(--accent); }
 .set-nav span { display: grid; gap: 2px; }
-.set-nav b { font-size: 0.95rem; font-weight: 600; }
-.set-nav i { font-style: normal; font-size: 0.76rem; color: var(--muted); }
 
-/* A control is capped so it cannot grow into the label beside it. Without
-   this, one long <option> is enough to squeeze a setting's text into a
-   two-words-per-line column, which is what a night-light temperature list
-   did. */
-.setting select, .setting input[type="time"], .set-row select { min-width: 108px; max-width: 50%; }
+/* Capped, or one long <option> squeezes the label into a two-word column. */
+/* One width for every control in a settings list: a ragged right edge is what
+   a column of selects sized to their own text looks like. */
+.setting select, .setting input[type="time"], .set-row select { flex: 0 0 auto; min-width: 47%; max-width: 62%; }
 .setting input[type="range"] { flex: 0 1 46%; min-width: 120px; accent-color: var(--accent); }
 .card .h-row + .setting { border-top: 0; }
 .card.danger .h-row .ico { color: var(--danger); }
 
-/* Real switches for settings toggles. A default checkbox renders as a white
-   box on every Android WebView, which is the one control on these screens that
-   looked unfinished against a dark surface. Kept as a real checkbox underneath
-   so it stays keyboard and screen-reader correct. */
+/* Real switches. A default checkbox is a white box on every Android WebView.
+   A real checkbox underneath keeps it keyboard and screen-reader correct. */
+/* A value beside its own label, so a slider is not the one control with none. */
+.setting b em { font-style: normal; color: var(--muted); font-weight: var(--w-normal); }
+
 .setting.toggle input[type="checkbox"],
-.set-row input[type="checkbox"] {
+.set-row input[type="checkbox"] { margin: 0;
   appearance: none; -webkit-appearance: none;
   position: relative; flex: 0 0 auto;
   width: 46px; height: 27px; border-radius: 27px;
@@ -1136,26 +1100,22 @@ input[type="range"] {
 /* ==========================================================================
    Bible
    ==========================================================================
-   No longer a room of its own. The section used to redefine the accent, the
-   good colour and the heading weights, which is how four sections turned into
-   four apps. One thing survives, and it is a reading tool rather than a
-   decoration: the serif, on scripture and prayer text only. */
+   Not a room of its own any more. One thing survives, and it is a reading tool
+   rather than a decoration: the serif, on scripture and prayer text only. */
 
-/* Never on .screen: putting it there put Georgia on every button, pill and
-   settings row in the section, which was half of why it read as a different
-   app. Only the words you actually sit and read. */
+/* Never on .screen: that put Georgia on every button and settings row in the
+   section. Only the words you sit and read. */
 .verses,
 .vnote,
 .prayer-text {
   font-family: var(--serif);
 }
 
-/* A count on a card heading belongs at the far end of the row, not next to
-   the title, so the eye can run down a column of them. */
+/* A count belongs at the far end of the row, so the eye can run down them. */
 .screen.bible .h-row .pill { margin-left: auto; }
 
-.screen.bible .tiny { font-size: 0.74rem; }
-.pill.tiny { font-size: 0.64rem; padding: 1px 6px; }
+.screen.bible .tiny { font-size: var(--f-fine); }
+.pill.tiny { font-size: var(--f-micro); padding: 1px 6px; }
 
 
 
@@ -1174,8 +1134,7 @@ input[type="range"] {
 .read-item:active { border-color: var(--accent); }
 .read-item.done { opacity: 0.6; }
 .read-item.done .ri-text b { text-decoration: line-through; }
-/* The tick box is a real target rather than a decoration: the whole row is
-   the button, but the box is what tells you the row is one. */
+/* The whole row is the button; the box is what says so. */
 .ri-box {
   flex: 0 0 auto; width: 22px; height: 22px; margin-top: 1px;
   border: 1.5px solid var(--line); border-radius: 6px;
@@ -1184,30 +1143,28 @@ input[type="range"] {
 .read-item.done .ri-box { border-color: var(--accent); }
 .ri-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .ri-text b { font-weight: 600; }
-.ri-text i { font-style: normal; color: var(--muted); font-size: 0.82rem; line-height: 1.45; }
+.ri-text i { font-style: normal; color: var(--muted); font-size: var(--f-small); line-height: 1.45; }
 
 /* Book names inside a citation link through to that book's context. */
 .reflink { color: var(--accent); text-decoration: none; border-bottom: 1px dotted currentColor; }
 
 /* ---------- bible: the reader ---------- */
 
-/* Scripture is set to be read, not scanned: a measured line length, generous
-   leading, and verse numbers small enough to stay out of the way but present
-   enough to find a reference by. */
+/* Set to be read, not scanned: measured line length, generous leading, verse
+   numbers small but findable. */
 .reader .verses { margin: 4px 0 22px; }
 .verse {
-  margin: 0 0 10px; line-height: 1.7; font-size: 1.02rem;
+  margin: 0 0 10px; line-height: 1.7; font-size: var(--f-body);
   text-align: left; hyphens: auto;
 }
 .verse b {
   display: inline-block; min-width: 1.35em;
-  font-size: 0.68rem; font-weight: 700; vertical-align: 0.35em;
+  font-size: var(--f-micro); font-weight: 700; vertical-align: 0.35em;
   color: var(--accent); font-family: system-ui, sans-serif;
 }
-.screen.large .verse { font-size: 1.18rem; line-height: 1.8; }
-/* A verse the import could not recover says so. Silently skipping one would
-   leave a hole you could not see, which is worse. */
-.verse.gap i { font-style: italic; color: var(--muted); font-size: 0.86rem; }
+.screen.large .verse { font-size: var(--f-head); line-height: 1.8; }
+/* An unrecovered verse says so. A hole you cannot see is worse. */
+.verse.gap i { font-style: italic; color: var(--muted); font-size: var(--f-small); }
 
 .chapter-nav {
   display: flex; gap: 10px; align-items: center; justify-content: space-between;
@@ -1230,25 +1187,22 @@ input[type="range"] {
 .book-row.done .br-name b { color: var(--accent); }
 .br-name { display: flex; align-items: baseline; gap: 7px; flex-wrap: wrap; min-width: 0; flex: 1; }
 .br-name b { font-weight: 500; }
-.br-name i { font-style: normal; color: var(--muted); font-size: 0.76rem; }
+.br-name i { font-style: normal; color: var(--muted); font-size: var(--f-fine); }
 .br-prog { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
-.br-bar { display: block; width: 54px; height: 5px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
-.br-bar i { display: block; height: 100%; background: var(--accent); }
-.br-prog em { font-style: normal; color: var(--muted); font-size: 0.72rem; min-width: 42px; text-align: right; }
+.br-prog em { font-style: normal; color: var(--muted); font-size: var(--f-fine); min-width: 42px; text-align: right; }
 
 /* ---------- bible: the chapter grid ---------- */
 
-/* Sized so a thumb hits the right number while the other hand is holding an
-   actual Bible open, which is the whole situation this screen exists for. */
+/* Sized for a thumb while the other hand holds an actual Bible open. */
 .ch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; }
 .ch {
   aspect-ratio: 1; min-height: 44px; text-decoration: none;
   display: flex; align-items: center; justify-content: center;
   background: var(--surface-2); border: 1px solid var(--line);
   border-radius: 8px; color: var(--muted);
-  font: inherit; font-size: 0.9rem; cursor: pointer;
+  font: inherit; font-size: var(--f-body); cursor: pointer;
 }
-.ch.on { background: var(--accent); border-color: var(--accent); color: #14100a; font-weight: 700; }
+.ch.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 700; }
 .ch:active { border-color: var(--accent); }
 
 /* ---------- bible: one book's context ---------- */
@@ -1259,50 +1213,44 @@ input[type="range"] {
 .ctx-row:first-child { padding-top: 0; }
 .ctx-row:last-child { border-bottom: 0; padding-bottom: 0; }
 .ctx-row h3 {
-  margin: 0 0 5px; font-size: 0.72rem; font-weight: 600;
+  margin: 0 0 5px; font-size: var(--f-fine); font-weight: 600;
   letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
 }
 .ctx-row p { margin: 0; line-height: 1.62; }
-.screen.large .ctx-row p, .screen.large .outline li { font-size: 1.1rem; line-height: 1.7; }
+.screen.large .ctx-row p, .screen.large .outline li { font-size: var(--f-head); line-height: 1.7; }
 
 .outline { margin: 0; padding-left: 1.15rem; color: var(--text); }
 .outline li { padding: 4px 0; line-height: 1.5; }
-.outline li::marker { color: var(--muted); font-size: 0.82rem; }
+.outline li::marker { color: var(--muted); font-size: var(--f-small); }
 
 /* ---------- bible: tracking ---------- */
 
-/* The section bars answer the question a whole-Bible reader actually has,
-   which is not "what percentage" but "which parts have I never opened". */
+/* The real question is not "what percentage" but "which parts have I never
+   opened". */
 .sec-prog { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
-.sp-name { flex: 0 0 96px; font-size: 0.84rem; }
+.sp-name { flex: 0 0 96px; font-size: var(--f-small); }
 .sp-bar { flex: 1; height: 7px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
 .sp-bar i { display: block; height: 100%; background: var(--accent); }
-.sec-prog em { font-style: normal; color: var(--muted); font-size: 0.74rem; flex: 0 0 auto; min-width: 52px; text-align: right; }
+.sec-prog em { font-style: normal; color: var(--muted); font-size: var(--f-fine); flex: 0 0 auto; min-width: 52px; text-align: right; }
 
 .chip-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip-wrap .pill { text-decoration: none; }
 
 .log-list { display: flex; flex-direction: column; }
-.log-row { display: flex; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+/* Scoped: kegels declares .log-row as a details/summary row of its own. */
+.log-list > .log-row { display: flex; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); }
 .log-row:last-child { border-bottom: 0; }
-.lr-day { flex: 0 0 82px; display: flex; flex-direction: column; }
-.lr-day b { font-size: 0.86rem; font-weight: 600; }
-.lr-day i { font-style: normal; color: var(--muted); font-size: 0.7rem; }
+.lr-day { flex: 0 0 104px; display: flex; flex-direction: column; }
+.lr-day b { font-size: var(--f-small); font-weight: 600; }
+.lr-day i { font-style: normal; color: var(--muted); font-size: var(--f-fine); }
 .lr-what { display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-start; }
 .lr-what .pill { text-decoration: none; }
 
 /* ---------- the wind-down ---------- */
 
-/* Indigo on near-black. The section is used lying down in an unlit room, so it
-   runs darker than the other three and its accent is the dimmest of the four:
-   every value here is a light source pointed at your face at bedtime. */
+/* Indigo on near-black. Used lying down in an unlit room, so it runs darker
+   than the other three: every value is a light pointed at your face. */
 
-.br-mark {
-  width: 58px; height: 58px; border-radius: 50%;
-  display: grid; place-items: center;
-  border: 1px solid var(--line); color: var(--muted);
-}
-.br-mark.on { border-color: var(--accent); color: var(--accent); }
 
 /* ---------- the wind-down: the session ---------- */
 
@@ -1319,10 +1267,8 @@ input[type="range"] {
   user-select: none;
 }
 
-/* The orb is scaled, never resized: a transform does not reflow, so the phase
-   animation cannot cost a layout every frame on a five-minute loop. Its box
-   stays at full size and the scale happens inside it, which also stops the
-   labels beneath from shuffling up and down with the breath. */
+/* Scaled, never resized: a transform does not reflow, so a five-minute loop
+   costs no layout. The box stays full size, so the labels do not shuffle. */
 .br-orb {
   width: 46vw; height: 46vw;
   max-width: 250px; max-height: 250px;
@@ -1338,16 +1284,15 @@ input[type="range"] {
 .br-face[data-kind="hold"] .br-orb { border-color: rgba(138, 164, 232, 0.5); }
 .br-face[data-kind="settle"] .br-orb { opacity: 0.6; }
 
-.br-face b { font-size: 1.3rem; font-weight: 500; color: #ccd5ee; }
-.br-face span { color: var(--muted); font-size: 0.84rem; max-width: 28ch; min-height: 1.2em; }
-.br-clock { font-variant-numeric: tabular-nums; color: var(--muted); opacity: 0.45; font-size: 0.78rem; }
+.br-face b { font-size: var(--f-title); font-weight: 500; color: var(--text); }
+.br-face span { color: var(--muted); font-size: var(--f-small); max-width: 28ch; min-height: 1.2em; }
+.br-clock { font-variant-numeric: tabular-nums; color: var(--muted); opacity: 0.45; font-size: var(--f-fine); }
 
 .breathe-run #stop { width: 100%; }
 
-/* Tapping the face puts the screen out. Everything fades rather than vanishing,
-   because a hard cut is itself a small startle. The face keeps its pointer
-   events so the same tap brings it back. */
-body.blacked { background: #000; }
+/* Tapping the face puts the screen out. Everything fades: a hard cut is itself
+   a small startle. The face keeps its pointer events, so the tap brings it back. */
+body.blacked { background: var(--black); }
 body.blacked .breathe-run header,
 body.blacked .br-face b,
 body.blacked .br-face span,
@@ -1373,11 +1318,9 @@ body.blacked .br-orb { opacity: 0.09; }
 
 /* ---------- night light ---------- */
 
-/* The browser's filter. In the APK this element is never used: there the
-   filter is a system overlay drawn by a service, over every app rather than
-   just this one. Here it can do the better thing, because CSS can multiply
-   where an Android window can only wash — multiply is what a colour
-   temperature actually is, and it leaves black alone. */
+/* The browser's filter. Never used in the APK, where a service draws over every
+   app. CSS can multiply where an Android window can only wash, and multiply is
+   what a colour temperature actually is: it leaves black alone. */
 #nightlight {
   position: fixed;
   inset: 0;
@@ -1400,7 +1343,7 @@ body.blacked .br-orb { opacity: 0.09; }
   display: flex;
   justify-content: space-between;
   color: var(--muted);
-  font-size: 0.7rem;
+  font-size: var(--f-fine);
   margin-top: 5px;
   font-variant-numeric: tabular-nums;
 }
@@ -1408,9 +1351,8 @@ body.blacked .br-orb { opacity: 0.09; }
 .nl-strip + .nl-axis { margin-bottom: 4px; }
 
 /* ---- study notes ----
-   The commentary is the point of a study Bible, but it must not turn the
-   reading column into a conversation. So a noted verse only marks its number,
-   and the note opens beneath that verse when the number is tapped. */
+   The commentary must not turn the reading column into a conversation, so a
+   noted verse marks its number and the note opens beneath it when tapped. */
 .verse.noted b.vnum {
   cursor: pointer;
   border-bottom: 1px dotted currentColor;
@@ -1429,7 +1371,7 @@ body.blacked .br-orb { opacity: 0.09; }
   border-left: 2px solid var(--accent);
   background: var(--surface-2);
   border-radius: 0 var(--radius) var(--radius) 0;
-  font-size: 0.9rem;
+  font-size: var(--f-body);
   line-height: 1.62;
   color: var(--muted);
 }
@@ -1444,31 +1386,26 @@ body.blacked .br-orb { opacity: 0.09; }
 /* ==========================================================================
    Habits
    ==========================================================================
-   The sixth room, and the only one whose contents the app does not know in
-   advance. So it has two levels of colour rather than one: the section accent,
-   which says where you are, and a colour per habit, which is how you find a
-   row without reading it. Everything below is built so the second never fights
-   the first - the habit colour appears on names, rings, cells and calendars,
-   and never on a control. */
+   The only room whose contents the app does not know in advance, so it has two
+   levels of colour: the accent, and a colour per habit. The habit colour goes
+   on names, rings, cells and calendars, and never on a control. */
 
 
 /* ---------- the home screen ----------
-   The grid is the app's front door, so it gets an app header rather than a
-   back arrow, and the day's ring above it counts every row on screen. */
+   The front door, so it gets an app header rather than a back arrow, and the
+   ring counts every row on screen. */
 
 .head-actions { display: flex; gap: 8px; flex: 0 0 auto; }
 .hub-head .brand-row h1 { font-size: var(--f-title); letter-spacing: -0.02em; }
 .home-today { margin-bottom: 14px; }
-/* The longest run still going. The one number on this screen that is there to
-   make you open the app rather than to tell you what to do. */
+/* The one number here that exists to make you open the app. */
 .run-line { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: var(--f-fine); color: var(--muted); }
 .run-line .ico { color: var(--warn); }
 .run-line b { color: var(--text); font-weight: var(--w-medium); }
 .screen.home .btn.ghost.wide { margin-top: 18px; }
 
-/* The line under a row's name. On one of the five it is that section saying
-   what is still outstanding, which is the whole of what the old Today list
-   did, in the row that now replaces it. */
+/* The line under the name. On one of the five it is that section saying what
+   is still outstanding. */
 .hg-label { display: grid; gap: 1px; min-width: 0; }
 .hg-label b,
 .hg-label i {
@@ -1478,9 +1415,8 @@ body.blacked .br-orb { opacity: 0.09; }
 .hg-label b { font-weight: var(--w-medium); font-size: var(--f-body); }
 .hg-label i { font-style: normal; font-size: var(--f-fine); color: var(--muted); }
 
-/* Today, on one of the five, is that section's start button: tapping it opens
-   the session rather than marking anything. So it is drawn as something to
-   press, not as a day you failed to tick. */
+/* Today on one of the five is that section's start button, so it is drawn as
+   something to press, not a day you failed to tick. */
 .hg-cell.go { opacity: 1; }
 .hg-cell.go .ico { opacity: 0.9; }
 
@@ -1491,7 +1427,7 @@ body.blacked .br-orb { opacity: 0.09; }
 .chipbtn {
   display: inline-flex; align-items: center; gap: 7px;
   background: var(--surface); border: 1px solid var(--line); color: var(--muted);
-  border-radius: 999px; padding: 7px 13px; font-size: 0.8rem; cursor: pointer;
+  border-radius: 999px; padding: 7px 13px; font-size: var(--f-small); cursor: pointer;
 }
 .chipbtn:active { background: var(--surface-2); }
 .chipbtn.on { color: var(--accent); border-color: var(--accent); }
@@ -1499,10 +1435,8 @@ body.blacked .br-orb { opacity: 0.09; }
 .h-row .chipbtn { margin-left: auto; }
 
 /* ---------- the grid ----------
-   Rows are habits and columns are days, which means the widths have to survive
-   both a long habit name and seven columns on a 360px phone. The cells are
-   given a maximum rather than a fixed width and the name takes what is left,
-   so nothing scrolls sideways and nothing is clipped. */
+   The widths have to survive a long name and seven columns on a 360px phone,
+   so cells take a maximum and the name takes what is left. */
 
 .hgrid { display: grid; gap: 6px; margin-bottom: 18px; }
 
@@ -1515,32 +1449,28 @@ body.blacked .br-orb { opacity: 0.09; }
 
 .hg-head { padding: 0 10px; color: var(--muted); }
 .hg-head i { font-style: normal; text-align: center; line-height: 1.1; }
-.hg-head i b { display: block; font-size: 0.58rem; letter-spacing: 0.06em; font-weight: 600; }
-.hg-head i em { font-style: normal; font-size: 0.76rem; }
+.hg-head i b { display: block; font-size: var(--f-micro); letter-spacing: 0.06em; font-weight: 600; }
+.hg-head i em { font-style: normal; font-size: var(--f-fine); }
 .hg-head i.now { color: var(--text); }
 
 .hg-row {
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 6px 10px; min-height: 48px;
+  padding: 6px 10px; min-height: 68px;
 }
-/* One of the five. A first-class row: today starts the thing, and only the
-   days behind it are a reading of that section's own record rather than
-   something you can edit here. Of two editable copies of one morning, the one
-   you can reach from the grid is always the one that ends up wrong. */
+/* One of the five. Today starts the thing; the days behind it are a reading of
+   that section's record, not a second editable copy. */
 .hg-row.linked .hg-cell:not(.go) { pointer-events: none; }
 .hg-row.dragging { opacity: 0.6; border-color: var(--accent); }
 
-/* The name has to survive four day columns on a 360px phone, so it takes
-   whatever the cells leave and gives up the rest to an ellipsis. Five columns
-   is a setting rather than the default for exactly this reason: at five,
-   "Calisthenics" becomes "Calisth...". */
+/* The name takes what the cells leave and ellipsises the rest. Five columns is
+   a setting for this reason: at five, "Calisthenics" becomes "Calisth...". */
 .hg-name {
   display: flex; align-items: center; gap: 8px; min-width: 0;
-  text-decoration: none; color: inherit; font-size: 0.9rem; font-weight: 600;
+  text-decoration: none; color: inherit; font-size: var(--f-body); font-weight: 600;
   padding: 6px 0;
 }
 .hg-name > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.hg-row { font-size: 0.9rem; }
+.hg-row { font-size: var(--f-body); }
 .hg-ring, .hg-link-ico { width: 20px; height: 20px; flex: 0 0 20px; display: block; }
 .hg-link-ico { display: grid; place-items: center; }
 
@@ -1553,9 +1483,8 @@ body.blacked .br-orb { opacity: 0.09; }
 .hg-cell.on { opacity: 1; }
 .hg-cell.no { opacity: 1; color: var(--danger); }
 .hg-cell.skip { opacity: 0.8; color: var(--calm); }
-/* A day inside a "three times a week" window that you did not do today. It is
-   not a tick, because you did not do it; it is not nothing either, because the
-   habit is being kept. A ring, not a fill. */
+/* Carried: inside the window but not done today. Not a tick and not nothing,
+   so a ring rather than a fill. */
 .hg-cell.carried { opacity: 1; }
 .hg-cell.carried::after {
   content: ''; width: 13px; height: 13px; border-radius: 50%;
@@ -1566,15 +1495,11 @@ body.blacked .br-orb { opacity: 0.09; }
 .hg-cell:active { background: var(--surface-2); }
 
 /* ---------- a day, turning on ----------
-   The one interaction in the app you perform dozens of times a week, and it
-   used to be a whole-page repaint with nothing to look at. Three things, all
-   on the compositor, all under a third of a second, and none of them on the
-   way back down: turning a day OFF gets the press and silence, because a
-   tracker that celebrates a miss is a tracker that has started lying to you.
-
-   `position: relative` is for the flash and for the sparks, both of which
-   anchor to the cell. `.carried` already owns ::after, so the flash is
-   ::before. */
+   The interaction performed dozens of times a week. Three things, all on the
+   compositor, none of them on the way back down: turning a day off gets the
+   press and silence.
+   position: relative anchors the flash and the sparks. .carried owns ::after,
+   so the flash is ::before. */
 .hg-cell { position: relative; }
 .hg-cell.just-on { animation: cell-pop 0.3s var(--ease); z-index: 1; }
 .hg-cell.just-on::before {
@@ -1582,8 +1507,8 @@ body.blacked .br-orb { opacity: 0.09; }
   background: currentColor; opacity: 0.3; pointer-events: none;
   animation: cell-flash 0.42s var(--ease) forwards;
 }
-/* The tick draws itself rather than appearing. 24 is a little over the path's
-   own length, which is what keeps the sweep from finishing early. */
+/* The tick draws itself. 24 is a little over the path length, which keeps the
+   sweep from finishing early. */
 .hg-cell.just-on .ico path {
   stroke-dasharray: 24; animation: tick-draw 0.26s var(--ease) forwards;
 }
@@ -1591,13 +1516,11 @@ body.blacked .br-orb { opacity: 0.09; }
 @keyframes cell-flash { to { opacity: 0; transform: scale(1.55); } }
 @keyframes tick-draw { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
 
-/* Both rings sweep to their new length instead of jumping to it, which is only
-   possible because the elements survive the tap now. */
+/* Both rings sweep, which is only possible because the elements survive the tap. */
 .hg-ring-fill, .gh-ring-fill { transition: stroke-dashoffset 0.45s var(--ease), stroke 0.3s var(--ease); }
-.hg-q { font-size: 0.95rem; font-weight: 700; }
+.hg-q { font-size: var(--f-body); font-weight: 700; }
 
-/* A measurement, with no unit stamped on it: the row says what is being
-   counted, so the cell only has to carry the number. */
+/* No unit on the cell: the row says what is being counted. */
 .hg-cell.num {
   opacity: 1; overflow: hidden;
   font-size: var(--f-small); font-weight: var(--w-medium);
@@ -1611,7 +1534,7 @@ body.blacked .br-orb { opacity: 0.09; }
 .hg-group-btn {
   display: flex; align-items: center; gap: 7px;
   background: none; border: 0; padding: 0; cursor: pointer;
-  color: var(--muted); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--muted); font-size: var(--f-fine); text-transform: uppercase; letter-spacing: 0.1em;
 }
 .hg-group-btn b { font-weight: 600; }
 .hg-group .ico { color: var(--muted); }
@@ -1628,16 +1551,14 @@ body.blacked .br-orb { opacity: 0.09; }
 .hg-move { display: flex; align-items: center; gap: 6px; margin-left: auto; }
 .hg-group-pick {
   background: var(--surface-2); color: var(--text); border: 1px solid var(--line);
-  border-radius: 8px; padding: 6px 6px; font-size: 0.74rem; max-width: 108px;
+  border-radius: 8px; padding: 6px 6px; font-size: var(--f-fine); max-width: 108px;
 }
 .icon-btn.small { width: 32px; height: 32px; flex: 0 0 32px; border-radius: 8px; }
 .icon-btn.small .ico { width: 15px; height: 15px; }
 .icon-btn.small.danger { color: var(--danger); border-color: rgba(248, 113, 113, 0.35); }
 
 /* ---------- the sheet ----------
-   Bottom-anchored on a phone, because that is where your thumb is, and centred
-   from tablet width up, where a strip across the bottom of a wide screen looks
-   like a mistake. */
+   Bottom-anchored on a phone, where your thumb is; centred from tablet width up. */
 
 .sheet-scrim {
   position: fixed; inset: 0; z-index: 60;
@@ -1651,7 +1572,7 @@ body.blacked .br-orb { opacity: 0.09; }
   border-radius: 16px 16px 0 0;
   padding: 20px var(--pad) calc(var(--safe-b) + 20px);
 }
-.sheet h2 { font-size: 1.15rem; margin-bottom: 6px; }
+.sheet h2 { font-size: var(--f-head); margin-bottom: 6px; }
 .sheet .btn-row { margin-top: 16px; }
 .sheet .btn.wide { margin: 16px 0 0; }
 @media (min-width: 620px) {
@@ -1668,8 +1589,8 @@ body.blacked .br-orb { opacity: 0.09; }
   padding: 16px;
 }
 .type-card:active { border-color: var(--accent); }
-.type-card b { display: block; font-size: 1.1rem; margin-bottom: 4px; }
-.type-card span { color: var(--muted); font-size: 0.84rem; }
+.type-card b { display: block; font-size: var(--f-head); margin-bottom: 4px; }
+.type-card span { color: var(--muted); font-size: var(--f-small); }
 
 .swatch {
   width: 34px; height: 34px; border-radius: 9px; border: 2px solid transparent; cursor: pointer;
@@ -1681,42 +1602,42 @@ body.blacked .br-orb { opacity: 0.09; }
 
 .freq-row {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 0.92rem;
+  padding: 11px 0; border-bottom: 1px solid var(--line); font-size: var(--f-body);
 }
 .freq-row input[type="radio"] { width: 20px; height: 20px; accent-color: var(--accent); flex: 0 0 auto; }
 .freq-num {
   width: 62px; background: var(--surface-2); color: var(--text);
-  border: 1px solid var(--line); border-radius: 8px; padding: 8px; font-size: 0.95rem;
+  border: 1px solid var(--line); border-radius: 8px; padding: 8px; font-size: var(--f-body);
   text-align: center;
 }
 
 .day-chips { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 14px 0 4px; }
 .day-chip {
   padding: 11px 0; border-radius: 9px; border: 1px solid var(--line);
-  background: var(--surface-2); color: var(--muted); font-size: 0.82rem; cursor: pointer;
+  background: var(--surface-2); color: var(--muted); font-size: var(--f-small); cursor: pointer;
 }
 .day-chip.on { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); color: var(--accent); border-color: var(--accent); }
 
 .pickrow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 14px 0; }
 .pick {
   padding: 13px 0; border-radius: 9px; border: 1px solid var(--line);
-  background: var(--surface-2); color: var(--text); font-size: 0.95rem; cursor: pointer;
+  background: var(--surface-2); color: var(--text); font-size: var(--f-body); cursor: pointer;
 }
 .pick.on { border-color: var(--accent); color: var(--accent); }
 
-/* The habit form's own fields. Everywhere else in the app a text input sits
-   inside a .measure-row, which stretches it; these stand on their own. */
+/* These stand on their own, where every other input sits in a .measure-row. */
 .screen.habits .field input[type="text"],
 .screen.habits .field input[type="number"] {
   width: 100%; background: var(--surface-2); color: var(--text);
   border: 1px solid var(--line); border-radius: 10px; padding: 12px;
-  font-size: 0.95rem; font-family: inherit;
+  font-size: var(--f-body); font-family: inherit;
 }
 .screen.habits .field label { margin-bottom: 8px; }
 .screen.habits .notes { width: 100%; }
-.screen.habits .setting input[type="number"] {
+.screen.habits .setting input[type="number"],
+.screen.habits .setting input[type="text"] {
   background: var(--surface-2); color: var(--text); border: 1px solid var(--line);
-  border-radius: 10px; padding: 9px 10px; font-size: 0.9rem; width: 108px; text-align: right;
+  border-radius: 10px; padding: 9px 10px; font-size: var(--f-body); width: 108px; text-align: right;
 }
 
 /* A settings-style row that opens something rather than setting it. */
@@ -1725,17 +1646,17 @@ body.blacked .br-orb { opacity: 0.09; }
   padding: 12px 0; border: 0; border-bottom: 1px solid var(--line);
   background: none; color: inherit; text-align: left; cursor: pointer;
 }
-.rowbtn:last-of-type { border-bottom: 0; }
+.rowbtn:last-child { border-bottom: 0; }
 .rowbtn span { flex: 1; }
-.rowbtn b { display: block; font-size: 0.94rem; font-weight: 600; }
-.rowbtn i { display: block; font-style: normal; color: var(--muted); font-size: 0.78rem; margin-top: 2px; }
+.rowbtn b { display: block; font-size: var(--f-body); font-weight: 600; }
+.rowbtn i { display: block; font-style: normal; color: var(--muted); font-size: var(--f-fine); margin-top: 2px; }
 .rowbtn .ico { color: var(--muted); }
 
 .grp-list { display: grid; gap: 8px; margin: 12px 0; }
 .grp-row { display: flex; align-items: center; gap: 6px; }
 .grp-row input {
   flex: 1; min-width: 0; background: var(--surface-2); color: var(--text);
-  border: 1px solid var(--line); border-radius: 9px; padding: 10px; font-size: 0.9rem;
+  border: 1px solid var(--line); border-radius: 9px; padding: 10px; font-size: var(--f-body);
 }
 
 .arch-list { display: grid; gap: 8px; }
@@ -1744,98 +1665,94 @@ body.blacked .br-orb { opacity: 0.09; }
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px;
 }
 .arch-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
-.arch-text b { font-size: 0.94rem; }
-.arch-text i { font-style: normal; color: var(--muted); font-size: 0.76rem; }
-.arch-row .small-btn { padding: 9px 14px; font-size: 0.82rem; }
+.arch-text b { font-size: var(--f-body); }
+.arch-text i { font-style: normal; color: var(--muted); font-size: var(--f-fine); }
+.arch-row .small-btn { padding: 9px 14px; font-size: var(--f-small); }
 
 /* ---------- one habit's own screen ---------- */
 
 .habit-hero { margin-bottom: 16px; }
-.habit-hero h2 { font-size: 1.25rem; margin-bottom: 6px; }
+.habit-hero h2 { font-size: var(--f-title); margin-bottom: 6px; }
 .habit-hero p { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 .habit-hero .ico { width: 14px; height: 14px; }
 
-.screen-head .btn.small-btn { padding: 10px 15px; font-size: 0.86rem; margin-top: 0; }
+.btn.small-btn { width: auto; padding: 10px 15px; font-size: var(--f-small); margin-top: 0; }
 
+/* A native select, because five options want the platform picker on a phone,
+   but dressed as one of the app's pills rather than left as a platform control:
+   the arrow is ours, drawn in the accent, and the chrome one is turned off. */
 .chart-period {
-  margin-left: auto; background: var(--surface-2); color: var(--text);
-  border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font-size: 0.78rem;
+  margin-left: auto;
+  appearance: none;
+  background: var(--surface-2) no-repeat right 9px center / 9px 6px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--accent) 50%),
+    linear-gradient(135deg, var(--accent) 50%, transparent 50%);
+  background-position: right 13px center, right 9px center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  padding: 7px 26px 7px 12px;
+  font-size: var(--f-fine);
+  font-weight: var(--w-medium);
+  font-family: inherit;
 }
+.chart-period:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-/* The calendar. Weeks as columns and weekdays as rows, the same shape as every
-   other heatmap in the app, with the dates written in and the habit's own
-   colour rather than the section accent.
-
-   Seventeen weeks, all of them, sized to whatever width there is. This used to
-   be fixed 26px cells in a horizontally scrolling box, opened scrolled hard to
-   the right. Two things were wrong with that and both were visible: the
-   container is never a whole number of columns wide, so wherever it came to
-   rest a column was sliced down the middle at one edge - a calendar that looks
-   broken rather than scrollable - and half the record sat off screen behind a
-   gesture nothing advertised. Letting the columns divide the width instead
-   means every cell is whole, the whole history is there at a glance, and there
-   is no scroll position to restore. */
+/* The calendar. Weeks as columns, weekdays as rows, in the habit's own colour.
+   Seventeen weeks, sized to the width available. Fixed cells in a scrolling box
+   sliced a column in half at whichever edge it came to rest, and hid half the
+   record behind a gesture nothing advertised. */
 .hcal { display: flex; gap: 6px; }
 .hcal-body { display: flex; gap: 2px; flex: 1; min-width: 0; }
 .hcal-col { display: flex; flex-direction: column; gap: 2px; flex: 1 1 0; min-width: 0; }
 .hcal-mon {
-  height: 15px; font-size: 0.66rem; color: var(--muted); white-space: nowrap;
+  height: 15px; font-size: var(--f-micro); color: var(--muted); white-space: nowrap;
   overflow: visible; display: block;
 }
 .hc-cell {
-  /* Proportional, so a cell is the same rounded square at 11px on a small
-     phone as at 18px on a large one. A fixed radius turns into a circle once
-     the cell is small enough, which is a different shape, not a smaller one. */
+  /* Proportional: a fixed radius turns into a circle once the cell is small. */
   width: 100%; aspect-ratio: 1; border-radius: 22%; border: 0;
-  /* A step above the card, not a whisper above it. At --surface-2 the empty
-     cells were six values off the card behind them, so a calendar with a
-     week's data on it read as a black hole with a few coloured squares in it
-     rather than as a grid you have not filled in yet. The grid has to be
-     visible for the gaps in it to mean anything. */
+  /* A step above the card, not a whisper: at --surface-2 the empty cells read as
+   a black hole with squares in it. The grid has to be visible for the gaps to
+   mean anything. */
   background: var(--line); color: var(--muted);
-  /* Seventeen weeks across a phone leaves about 15px a cell, so the date has
-     to be small enough to sit inside one with air around it rather than fill
-     it corner to corner. Two digits at this size take a bit over half the
-     width, which is what the app this is measured against does. */
-  font-size: 0.5rem; font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+  /* About 15px a cell, so the date sits inside one with air around it. */
+  font-size: var(--f-micro); font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
   display: grid; place-items: center; padding: 0; cursor: default;
 }
 .hcal .hc-cell { cursor: pointer; }
-.hc-cell.on { background: var(--hc, var(--accent)); color: #0a0c10; font-weight: 600; }
+.hc-cell.on { background: var(--hc, var(--accent)); color: var(--bg); font-weight: 600; }
 .hc-cell.carried { background: color-mix(in srgb, var(--hc, var(--accent)) 38%, var(--line)); color: var(--text); }
 .hc-cell.skip { background: var(--line); color: var(--calm); box-shadow: inset 0 0 0 1px var(--calm); }
 .hc-cell.lapse { color: var(--danger); box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.4); }
-/* Inset rather than an outline: an outline sits outside the box and was the
-   one thing on this grid that could still overlap its neighbour. */
+/* Inset: an outline sits outside the box and overlapped its neighbour. */
 .hc-cell.now { box-shadow: inset 0 0 0 1.5px var(--text); }
 .hc-cell.on.now { box-shadow: inset 0 0 0 1.5px var(--bg); }
 .hc-cell.future { visibility: hidden; }
-/* The labels read the rows; they must never set them. Left at the inherited
-   1.5 line-height each one wanted about 15px, which is taller than a row gets
-   on a narrow phone - so the side column grew past the grid beside it and the
-   two fell out of step, Mon against the first row and Sun a whole row below
-   the last. line-height 1 and a floor of zero put the height back under the
-   calendar's control. */
+/* The labels read the rows and must never set them. At the inherited
+   line-height the side column outgrew the grid and Mon fell a row out of step. */
 .hcal-side { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
 .hcal-side i {
   flex: 1 1 0; min-height: 0; display: flex; align-items: center;
-  font-style: normal; font-size: 0.58rem; line-height: 1; color: var(--muted);
+  font-style: normal; font-size: var(--f-micro); line-height: 1; color: var(--muted);
 }
 .hm-key .hc-cell { width: 13px; height: 13px; aspect-ratio: auto; border-radius: 3px; }
 
 .streak-list { display: grid; gap: 7px; }
-.streak-row { display: flex; align-items: center; gap: 9px; font-size: 0.72rem; color: var(--muted); }
+.streak-row { display: flex; align-items: center; gap: 9px; font-size: var(--f-fine); color: var(--muted); }
 .streak-row > span:first-child, .streak-row > span:last-child { flex: 0 0 68px; }
 .streak-row > span:last-child { text-align: right; }
 .streak-bar { flex: 1; background: var(--surface-2); border-radius: 6px; overflow: hidden; }
 .streak-bar i {
   display: flex; align-items: center; justify-content: center;
   height: 22px; min-width: 22px; border-radius: 6px;
-  font-style: normal; font-size: 0.74rem; font-weight: 700; color: #0a0c10;
+  font-style: normal; font-size: var(--f-fine); font-weight: 700; color: var(--bg);
 }
 
-/* Weekday against month. The dot's diameter carries the count, which is the
-   one encoding that reads at this size: seven rows of bars would be a wall. */
+/* Weekday against month. Diameter carries the count: seven rows of bars would
+   be a wall. */
 .freq-grid { display: grid; gap: 4px; }
 .fq-row { display: flex; align-items: center; gap: 4px; }
 .fq-row i { flex: 1; height: 17px; position: relative; }
@@ -1844,20 +1761,15 @@ body.blacked .br-orb { opacity: 0.09; }
   width: var(--d); height: var(--d); margin: calc(var(--d) / -2) 0 0 calc(var(--d) / -2);
   border-radius: 50%; background: currentColor;
 }
-.fq-row > span { flex: 0 0 30px; font-size: 0.66rem; color: var(--muted); text-align: right; }
-.fq-row.months em { flex: 1; font-style: normal; font-size: 0.6rem; color: var(--muted); text-align: center; }
+.fq-row > span { flex: 0 0 30px; font-size: var(--f-micro); color: var(--muted); text-align: right; }
+.fq-row.months em { flex: 1; font-style: normal; font-size: var(--f-micro); color: var(--muted); text-align: center; }
 
 /* ==========================================================================
    Motion
    ==========================================================================
-   One duration, one curve, and only on properties that are cheap to animate.
-   Motion here is never decoration: it exists so a change is legible - what
-   moved, and where it went. Anything longer than --t-base is something you
-   end up waiting for, which is the opposite of smooth.
-
-   The reduced-motion query at the top of the file collapses every duration to
-   nothing, so this whole block turns itself off rather than being overridden
-   rule by rule. */
+   One duration, one curve, only on cheap properties. Anything longer than
+   --t-base is something you wait for. The reduced-motion query at the top
+   collapses every duration, so this block turns itself off. */
 
 .btn, .chipbtn, .icon-btn, .hg-cell, .hg-row, .task, .pill, .swatch,
 .day-chip, .pick, .type-card, .rowbtn, .set-nav a, .arch-row, .hc-cell {
@@ -1868,27 +1780,19 @@ body.blacked .br-orb { opacity: 0.09; }
               transform var(--t-fast) var(--ease);
 }
 
-/* Press feedback, on everything you can press, at one depth. Before this some
-   controls scaled, some changed background and most did nothing, so the app
-   felt inert in some places and springy in others. */
+/* Press feedback everywhere, at one depth. */
 .btn:active, .chipbtn:active, .icon-btn:active,
 .type-card:active, .pick:active, .day-chip:active { transform: scale(0.97); }
 .hg-cell:active, .hc-cell:active { transform: scale(0.88); }
 .hg-row:active { transform: scale(0.995); }
 
-/* A screen arriving. Short, and only on the container, so it costs one
-   composited layer rather than one per row.
-   On *arriving*, which is the whole point and was not what it did: the rule
-   used to sit on `.screen` itself, so every in-screen redraw - every cell you
-   ticked on the grid - replayed the whole page fading in from four pixels
-   down. The router adds this class after a route renders and nothing else
-   does, so a screen updating part of itself now stays still. */
+/* A screen arriving. On the container only, so it costs one layer.
+   On arriving: this used to sit on .screen, so every cell you ticked replayed
+   the whole page fading in. The router adds this class after a route renders. */
 .screen.enter { animation: screen-in var(--t-base) var(--ease); }
 @keyframes screen-in { from { opacity: 0; transform: translateY(4px); } }
 
-/* The grid changing width when you change the day count: the rows stay put
-   and the columns grow, which is the one transition in the app worth having,
-   because it is the same rows either way. */
+/* Changing the day count: the rows stay put and the columns grow. */
 .hgrid { transition: none; }
 .hg-row, .hg-head { transition: grid-template-columns var(--t-base) var(--ease); }
 
@@ -1898,16 +1802,12 @@ body.blacked .br-orb { opacity: 0.09; }
 /* ==========================================================================
    The Arena
    ==========================================================================
-   No new palette. The one accent is you, --danger is the opponent, --good is
-   a win and --muted is everything that has not happened yet. Seven divisions
-   with seven colours would have been the section-palette mistake again, one
-   version later, so the ladder says how high you are by how much of it is lit.
-
-   Every count here is driven by the data. `.ar-ladder` lays out with `1fr`
-   per segment rather than a seven-column grid, `.ar-form` wraps, and the
-   bracket stacks: the one rule this stylesheet has learnt the hard way is that
-   a layout which knows how many of something there are breaks silently the
-   first time that number changes. */
+   No new palette: the accent is you, --danger the opponent, --good a win,
+   --muted what has not happened. The ladder says how high you are by how much
+   of it is lit.
+   Every count is driven by the data: 1fr per segment, .ar-form wraps, the
+   bracket stacks. A layout that knows how many of something there are breaks
+   silently the first time that number changes. */
 
 /* ---------- the season line, on the home screen ---------- */
 
@@ -1936,28 +1836,21 @@ body.blacked .br-orb { opacity: 0.09; }
 .season-line.new .sl-text b { color: var(--accent); }
 
 /* ---------- the rank, as the head of the page ----------
-   Not a card. It was one, with a chip, a name, a blurb, a ladder, a bar with a
-   floating label, two threshold captions and a three-clause sentence - eight
-   things, all at the same volume, which is what "there's too much going on"
-   meant. What is left is the crest, the name, the ladder and the bar, and the
-   sentence has been reduced to one coloured word.
-
-   The glow behind it grows with the rung. It is the same accent throughout;
-   what changes is how much of it there is, which is the only way to make a
-   ladder feel like a climb without handing each rung its own colour. */
+   Not a card. The crest, the name, the ladder and the bar, and the sentence
+   reduced to one coloured word.
+   The glow grows with the rung: same accent, more of it. */
 
 .ar-hero {
   position: relative; text-align: center;
-  padding: 8px 4px 20px; margin-bottom: 20px;
+  padding: 8px 4px 14px; margin-bottom: 16px;
 }
 .ar-hero::before {
   content: ''; position: absolute; left: 50%; top: -30px; transform: translateX(-50%);
   width: 260px; height: 190px; pointer-events: none; z-index: -1;
   background: radial-gradient(50% 50% at 50% 50%, rgba(34, 211, 197, calc(0.03 + var(--lift, 0) * 0.035)), transparent 70%);
 }
-.ar-hero.rung-0 { --lift: 0; } .ar-hero.rung-1 { --lift: 1; } .ar-hero.rung-2 { --lift: 2; }
-.ar-hero.rung-3 { --lift: 3; } .ar-hero.rung-4 { --lift: 4; } .ar-hero.rung-5 { --lift: 5; }
-.ar-hero.rung-6 { --lift: 6; }
+/* --lift is set inline from the rung, so a division added to the ladder needs
+   no rule here. */
 /* No glow at all before there is anything to glow about. */
 .ar-hero.unranked { --lift: 0; }
 .ar-hero.unranked::before { display: none; }
@@ -1966,32 +1859,27 @@ body.blacked .br-orb { opacity: 0.09; }
 
 .ar-crest { display: block; margin-bottom: 2px; }
 .crest { display: block; object-fit: contain; -webkit-user-select: none; user-select: none; }
+/* Same rules as a crest: artwork, drawn at the size it is asked for. */
+.cup-img { display: block; object-fit: contain; -webkit-user-select: none; user-select: none; }
+.cup-img.cup-none { opacity: 0.35; }
 .ar-crest .crest { margin: 0 auto; }
 .ar-rank {
   font-size: var(--f-hero); line-height: 1.05; letter-spacing: -0.035em;
   margin: 0 0 4px;
 }
-/* The one line in the app allowed to be rude. Small, muted, and never wrapped
-   into a paragraph: the moment it needs two lines it has stopped being a
-   caption on a picture and become an explanation, which is what this hero had
-   too much of before. */
-.ar-blurb {
-  margin: 0 0 14px; font-size: var(--f-micro); color: var(--muted);
-  letter-spacing: 0.01em;
-}
-.ar-hero.rung-6 .ar-rank {
+/* The top rung only, whichever rung that is. */
+.ar-hero.top .ar-rank {
   background: var(--brand); -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 
 /* One segment per division, however many there are. */
-.ar-ladder { display: flex; gap: 4px; margin: 0 0 14px; }
+.ar-ladder { display: flex; gap: 4px; margin: 14px 0; }
 .ar-ladder i { flex: 1 1 0; height: 5px; border-radius: 3px; background: var(--line); }
 .ar-ladder i.on { background: var(--accent); opacity: 0.42; }
 .ar-ladder i.here { opacity: 1; box-shadow: 0 0 10px rgba(34, 211, 197, 0.5); }
 
-/* The month, inside its own division: floor on the left, promotion on the
-   right. A nought-to-a-hundred bar put every threshold within a few pixels of
-   the last and made a whole month's work invisible. */
+/* The month inside its division: floor left, promotion right. A 0-100 bar put
+   every threshold within a few pixels of the last. */
 .ar-bar {
   position: relative; height: 8px; border-radius: 5px;
   background: var(--surface-2); border: 1px solid var(--line);
@@ -2002,28 +1890,31 @@ body.blacked .br-orb { opacity: 0.09; }
 .ar-bar-fill { height: 100%; border-radius: 5px; background: var(--accent); transition: width 0.6s var(--ease); }
 .ar-bar.down .ar-bar-fill { background: var(--warn); }
 .ar-bar.up .ar-bar-fill { background: var(--good); }
-/* Clamped away from both ends: at 0% and at 100% half the readout hung off
-   the side of the card. */
+/* Clamped: at 0% and 100% half the readout hung off the card. */
 .ar-bar-now {
   position: absolute; top: -19px; transform: translateX(-50%);
   font-size: var(--f-micro); color: var(--text); font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 .ar-bar-ends { display: flex; justify-content: space-between; gap: 10px; font-size: var(--f-micro); color: var(--faint); }
+
+/* Before the first week closes there is no bar to draw, so the days left are
+   the number the screen is about. */
+.ar-count { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 18px 0 0; }
+.ar-count b { font-size: var(--f-hero); font-weight: var(--w-bold); letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.ar-count i { font-style: normal; font-size: var(--f-small); color: var(--muted); }
 .ar-ladder { margin-bottom: 6px; }
-.ar-monthline { margin: 12px 0 0; font-size: var(--f-small); }
-.ar-monthline b { font-variant-numeric: tabular-nums; }
-.ar-monthline span { font-size: var(--f-fine); }
-.ar-monthline em { font-style: normal; font-weight: 600; }
-.ar-monthline em.up { color: var(--good); }
-.ar-monthline em.safe { color: var(--accent); }
-.ar-monthline em.down { color: var(--warn); }
+/* The one line on the hero allowed a colour: what the rest of the month has
+   to average. The bar above already says the same thing in its fill, so the
+   month line under it stays uncoloured. */
+.ar-need { margin: 10px 0 0; font-size: var(--f-small); color: var(--muted); }
+
+.ar-monthline { margin: 4px 0 0; font-size: var(--f-fine); color: var(--muted); }
+.ar-monthline b { color: var(--text); font-variant-numeric: tabular-nums; }
 
 /* ---------- the week ---------- */
 
-/* The match is the one elevated surface on the screen. Everything else here is
-   flat on the ground, which is what makes this read as the thing that is
-   happening rather than as the third card down. */
+/* The one elevated surface here, so it reads as the thing that is happening. */
 .card.ar-week {
   border-color: rgba(34, 211, 197, 0.22);
   box-shadow: 0 14px 40px -20px rgba(34, 211, 197, 0.5);
@@ -2045,51 +1936,38 @@ body.blacked .br-orb { opacity: 0.09; }
 .ar-side b { display: block; font-size: var(--f-hero); letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
 .ar-side span { display: block; margin-top: 5px; font-size: var(--f-fine); color: var(--muted);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ar-side.me b { color: var(--accent); }
+.ar-side.me b { color: var(--text); }
 .ar-side.them b { color: var(--muted); }
 .ar-side.them:active { background: var(--surface); transform: scale(0.98); }
 .ar-vs { display: grid; place-items: center; color: var(--faint); flex: 0 0 30px; }
-.ar-week.ahead .ar-side.me b { color: var(--good); }
-/* Not enough due yet to be a fixture. Neither side is winning, so neither
-   side is coloured. */
+/* Not a fixture yet. Neither side is winning, so neither is coloured. */
 .ar-week.void .ar-side b, .ar-week.void .ar-verdict b { color: var(--muted); }
-.ar-week.behind .ar-side.them b { color: var(--danger); }
 
-.ar-race { margin: 12px 0 8px; }
-.ar-race-bar { display: flex; height: 8px; border-radius: 5px; overflow: hidden; background: var(--surface-2); }
-.ar-race-bar i { display: block; transition: width 0.6s var(--ease); }
-.ar-race-bar i.me { background: var(--accent); }
-.ar-race-bar i.them { background: var(--line); }
-.ar-week.ahead .ar-race-bar i.me { background: var(--good); }
-.ar-week.behind .ar-race-bar i.them { background: var(--danger); opacity: 0.55; }
-
-.ar-verdict { display: flex; justify-content: space-between; gap: 10px; margin: 0 0 2px; font-size: var(--f-small); }
+.ar-verdict { display: flex; justify-content: space-between; gap: 10px; margin: 12px 0 0; font-size: var(--f-small); }
 .ar-verdict i { font-style: normal; color: var(--muted); font-size: var(--f-fine); }
 .ar-week.ahead .ar-verdict b { color: var(--good); }
 .ar-week.behind .ar-verdict b { color: var(--warn); }
-.ar-oppline { margin-bottom: 0; }
 
-/* Row by row. The same rows as the grid and in the same order, because the eye
-   has to be able to map one onto the other; what is new is the fraction. */
-.ar-rows { margin-top: 14px; border-top: 1px solid var(--line-soft); padding-top: 10px; }
+/* The same rows as the grid, in the same order, so the eye can map one onto
+   the other. What is new is the fraction. */
+.ar-rows { margin-top: 14px; }
 .ar-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: var(--f-small); }
 .ar-row-name { flex: 1 1 40%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ar-row-bar { flex: 1 1 40%; height: 6px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
 .ar-row-bar i { display: block; height: 100%; border-radius: 4px; background: var(--accent); transition: width var(--t-base) var(--ease); }
-.ar-row b { flex: 0 0 auto; font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 600; font-size: var(--f-fine); }
+/* Fixed, so a 10/12 row does not shorten its bar against a 5/6 one. */
+.ar-row b { flex: 0 0 46px; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 600; font-size: var(--f-fine); }
 
 /* ---------- form + the nemesis ---------- */
 
-/* Eight results on one line, whatever the width: fixed-width chips wrapped to
-   a second row on a 360px phone and the last two looked like an afterthought. */
+/* Eight on one line at any width: fixed-width chips wrapped on a 360px phone. */
 .ar-form { display: flex; gap: 5px; margin-bottom: 12px; }
 .ar-chip {
   flex: 1 1 0; min-width: 0; padding: 7px 0; text-align: center;
   border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2);
   color: var(--muted); cursor: pointer;
 }
-.ar-chip b { display: block; font-size: var(--f-small); }
-.ar-chip i { display: block; font-style: normal; font-size: var(--f-micro); color: var(--faint); font-variant-numeric: tabular-nums; }
+.ar-chip b { display: block; font-size: var(--f-small); font-variant-numeric: tabular-nums; }
 .ar-chip.won { border-color: rgba(74, 222, 128, 0.42); color: var(--good); }
 .ar-chip.lost { border-color: rgba(248, 113, 113, 0.36); color: var(--danger); }
 .ar-chip:active { transform: scale(0.95); }
@@ -2102,14 +1980,13 @@ body.blacked .br-orb { opacity: 0.09; }
 }
 .ar-nemesis:active { transform: scale(0.99); }
 .ar-nico { display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 30px;
-  border-radius: 8px; background: var(--surface); color: var(--warn); }
-.ar-nico.good { color: var(--good); }
-.ar-nico.bad { color: var(--danger); }
+  border-radius: 8px; background: var(--surface); color: var(--muted); }
 .ar-nname { flex: 1; min-width: 0; }
 .ar-nname b { display: block; font-size: var(--f-small); }
 .ar-nname i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ar-nscore { font-size: var(--f-head); color: var(--accent); font-variant-numeric: tabular-nums; }
+/* The icon on the left carries good or bad. The number stays a number. */
+.ar-nscore { font-size: var(--f-head); color: var(--text); font-variant-numeric: tabular-nums; }
 
 /* ---------- the arc ---------- */
 
@@ -2119,11 +1996,8 @@ body.blacked .br-orb { opacity: 0.09; }
 .ar-tr .ar-pos { flex: 0 0 20px; color: var(--faint); font-variant-numeric: tabular-nums; }
 .ar-tr .ar-tn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
 .ar-tr b { font-variant-numeric: tabular-nums; }
-/* Qualification, said in colour rather than in a sentence.
-   The three that go through are green and lit; the ones that do not are dimmed
-   out of the way. There used to be a dashed line labelled "qualification" and a
-   paragraph underneath explaining that the top three went through - which is
-   two ways of saying what the eye can be told in one. */
+/* Qualification in colour, not in a sentence: the three going through are lit,
+   the rest are dimmed. */
 .ar-tr { border-radius: 9px; transition: background var(--t-base) var(--ease), box-shadow var(--t-base) var(--ease); }
 .ar-tr.q {
   background: rgba(74, 222, 128, 0.08);
@@ -2138,8 +2012,7 @@ body.blacked .br-orb { opacity: 0.09; }
 .ar-tr[data-week] { cursor: pointer; }
 .ar-tr[data-week]:active { transform: scale(0.995); }
 
-/* The three rounds stack. A three-column bracket at 360px gave each round
-   forty pixels and a name that wrapped to four lines. */
+/* The rounds stack: three columns at 360px gave each round forty pixels. */
 .ar-bracket { display: grid; gap: 8px; }
 .ar-round {
   padding: 11px 12px; border-radius: 10px;
@@ -2163,37 +2036,34 @@ body.blacked .br-orb { opacity: 0.09; }
 
 .ar-next { margin-bottom: 4px; }
 .ar-nextrow { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
-.ar-nextrow .ar-row-bar { flex: 0 0 64px; }
 .ar-nextrow .ar-nname i { font-size: var(--f-micro); }
 
-/* Three across on a normal phone, two on a narrow one, without either
-   number appearing anywhere: auto-fill works it out from the width it is
-   given. */
+/* Three across, two on a narrow phone, with neither number written down. */
 .ft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(98px, 1fr)); gap: 8px; }
 .ft {
   position: relative; padding: 12px 9px 10px; text-align: center; cursor: pointer;
   background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
   color: var(--muted); font: inherit;
+  /* A button centres its content, so tiles of different name lengths put their
+     icons at different heights. A column pins the icon, the name and the bar. */
+  display: grid; grid-template-rows: auto 1fr auto; align-content: start;
 }
 .ft b { display: block; font-size: var(--f-micro); font-weight: 600; line-height: 1.25; margin-top: 6px; }
-/* No `margin: 0 auto` here. It centred the icon on a tile and then, in the
-   flex rows that reuse it, quietly ate all the free space and shoved the text
-   to the right edge - visibly only when the text was short enough to leave
-   any. The tile asks for the centring itself. */
+/* No margin: 0 auto: in the flex rows that reuse this it ate the free space and
+   shoved the text to the right edge. The tile asks for the centring itself. */
 .ft-ico { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 34px;
   border-radius: 10px; background: var(--surface); color: var(--faint); }
 .ft .ft-ico { margin: 0 auto; }
 .rs-feat > span:last-child { flex: 1; min-width: 0; }
-.ft-ico.on, .ft.on .ft-ico { color: #04121a; background: var(--accent); }
+.ft-ico.on, .ft.on .ft-ico { color: var(--on-accent); background: var(--accent); }
 .ft.on { border-color: rgba(34, 211, 197, 0.4); color: var(--text); }
 .ft:active { transform: scale(0.97); }
-.ft-tick { position: absolute; top: 7px; right: 7px; color: var(--accent); font-style: normal; display: grid; }
 .ft-locked { display: block; font-style: normal; font-size: var(--f-micro); color: var(--faint); margin-top: 5px; }
 .ft-bar { display: block; height: 3px; border-radius: 2px; background: var(--surface); margin-top: 7px; overflow: hidden; }
 .ft-bar i { display: block; height: 100%; background: var(--accent); opacity: 0.6; }
 .ft-big { display: grid; place-items: center; width: 60px; height: 60px; margin: 4px auto 12px;
   border-radius: 18px; background: var(--surface-2); color: var(--faint); }
-.ft-big.on { background: var(--accent); color: #04121a; }
+.ft-big.on { background: var(--accent); color: var(--on-accent); }
 .ft-when { color: var(--accent); font-size: var(--f-small); }
 .ar-sub { font-size: var(--f-small); color: var(--muted); margin: 16px 0 0; font-weight: 600; }
 .ar-sheet-score { text-align: center; margin: 14px 0 4px; }
@@ -2203,9 +2073,8 @@ body.blacked .br-orb { opacity: 0.09; }
 .ar-sheet-score.lost b { color: var(--danger); }
 
 /* ---------- the result screen ----------
-   No header and no back arrow of its own: it is one moment with one way out,
-   and the extra top padding is what a screen with no header needs so the first
-   thing on it is not hard against the status bar. */
+   No header and no back arrow: one moment, one way out. The extra top padding
+   is what a headerless screen needs to clear the status bar. */
 
 .screen.result { padding-top: calc(var(--safe-t) + 30px); }
 .rs-hero { position: relative; text-align: center; padding: 26px 12px 22px; margin-bottom: 14px;
@@ -2213,7 +2082,17 @@ body.blacked .br-orb { opacity: 0.09; }
 .rs-hero.won { border-color: rgba(74, 222, 128, 0.42); }
 .rs-hero.lost { border-color: rgba(248, 113, 113, 0.3); }
 /* The moment before. One line, one button, and nothing that gives it away. */
-.rs-hero.pending { padding: 40px 18px 30px; }
+/* Short enough to leave half the viewport empty, so it sits in the middle.
+   Taller than the viewport and it scrolls as usual. */
+.screen.result {
+  display: flex; flex-direction: column; justify-content: center;
+  min-height: calc(100dvh - var(--safe-t) - var(--safe-b));
+}
+/* The two ways out, side by side: stacked they read as a menu. */
+.rs-exits { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
+.rs-exits:has(> :only-child) { grid-template-columns: 1fr; }
+.rs-exits .btn { width: 100%; }
+.rs-hero.pending { padding: 40px 18px 30px; margin-bottom: 0; }
 .rs-hero.pending .rs-word { margin-bottom: 8px; }
 .rs-hero.pending .btn { margin-top: 22px; }
 .rs-word { font-size: var(--f-display); letter-spacing: -0.03em; margin: 0 0 16px; }
@@ -2221,20 +2100,25 @@ body.blacked .br-orb { opacity: 0.09; }
 .rs-hero.lost .rs-word { color: var(--danger); }
 .rs-score { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 12px; }
 .rs-score span { display: block; min-width: 0; }
-.rs-score b { display: block; font-size: 2rem; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.rs-score b { display: block; font-size: var(--f-hero); letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
 .rs-score i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); margin-top: 5px; }
 .rs-score .me b { color: var(--accent); }
+.rs-hero.won .rs-score .me b { color: var(--good); }
+.rs-hero.lost .rs-score .me b { color: var(--danger); }
 .rs-score .them b { color: var(--muted); }
 .rs-score .vs { color: var(--faint); }
 
 .rs-detail .kv:last-child { border-bottom: 0; }
+/* "Cost you" is the second row. Accent on it says the same as accent on the
+   row above, which is the one that went well. */
+.rs-detail .kv:last-child b em { color: var(--muted); }
 .rs-arc { display: flex; align-items: center; gap: 14px; }
 .rs-arc b { display: block; font-size: var(--f-head); }
 .rs-arc i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); }
 .rs-cup { display: grid; place-items: center; width: 48px; height: 48px; flex: 0 0 48px;
   border-radius: 14px; background: var(--surface-2); color: var(--faint); }
 .rs-arc.won { border-color: rgba(251, 191, 36, 0.42); }
-.rs-arc.won .rs-cup { background: var(--warn); color: #1a1200; }
+.rs-arc.won .rs-cup { background: var(--warn); color: var(--on-accent); }
 
 .rs-move h2 { font-size: var(--f-title); margin-bottom: 10px; }
 .rs-move.up h2, .rs-move.placed h2 { color: var(--good); }
@@ -2263,17 +2147,15 @@ body.blacked .br-orb { opacity: 0.09; }
 }
 .feat-pop.in { transform: translate(-50%, 0); opacity: 1; }
 .fp-ico { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px;
-  border-radius: var(--radius-pill); background: var(--accent); color: #04121a; }
+  border-radius: var(--radius-pill); background: var(--accent); color: var(--on-accent); }
 .fp-text { min-width: 0; }
 .fp-text i { display: block; font-style: normal; font-size: var(--f-micro); color: var(--accent);
   text-transform: uppercase; letter-spacing: 0.1em; }
 .fp-text b { display: block; font-size: var(--f-small); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ---------- sparks ----------
-   A dozen dots that animate out on the compositor and delete themselves. No
-   canvas and no library: this is the whole of the app's celebration, it costs
-   one paint, and `prefers-reduced-motion` is honoured in celebrate() by never
-   creating them at all. */
+   A dozen dots on the compositor that delete themselves. No canvas, no library.
+   celebrate() honours reduced motion by never creating them. */
 
 .sparks { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
 .sparks i {
@@ -2289,26 +2171,29 @@ body.blacked .br-orb { opacity: 0.09; }
 /* ---------- the year ---------- */
 
 .yr-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 14px; }
-.yr-nav b { font-size: var(--f-title); letter-spacing: -0.02em; min-width: 76px; text-align: center; }
 .yr-nav .icon-btn:disabled { opacity: 0.3; }
 .icon-btn.flip .ico { transform: rotate(180deg); }
 
-/* Nought to a hundred, always: a chart that scales to its own tallest bar
-   turns a flat year into a dramatic one. The dotted line is the division bar. */
-.yr-chart { position: relative; display: flex; align-items: flex-end; gap: 4px; height: 120px; margin-bottom: 10px; }
+/* Always 0 to 100: a chart that scales to its tallest bar turns a flat year
+   into a dramatic one. The dotted line is the division bar. */
+/* The month letters sit in their own row, so a bar's percentage is of the
+   track above them and the division line is measured from the same floor. */
+.yr-chart { --yr-label: 20px;
+  position: relative; display: flex; align-items: flex-end; gap: 4px; height: 120px; margin-bottom: 10px; }
 .yr-chart::after {
-  content: ''; position: absolute; left: 0; right: 0; bottom: calc(var(--bar-line) * 0.86);
+  content: ''; position: absolute; left: 0; right: 0;
+  bottom: calc(var(--yr-label) + (100% - var(--yr-label)) * var(--bar-line));
   border-top: 1px dashed var(--line); pointer-events: none;
 }
-.yr-col { flex: 1 1 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
-  height: 100%; gap: 4px; }
-.yr-fill { display: block; width: 100%; border-radius: 4px 4px 2px 2px; background: var(--line); min-height: 2px; }
+.yr-col { flex: 1 1 0; display: grid; grid-template-rows: 1fr var(--yr-label); justify-items: center;
+  height: 100%; }
+.yr-fill { display: block; width: 100%; align-self: end; border-radius: 4px 4px 2px 2px; background: var(--line); min-height: 2px; }
 .yr-col.held .yr-fill { background: var(--accent); opacity: 0.55; }
 .yr-col.up .yr-fill { background: var(--good); }
 .yr-col.down .yr-fill { background: var(--warn); }
 .yr-col.live .yr-fill { background: var(--accent); }
 .yr-col.none .yr-fill { background: var(--line-soft); }
-.yr-col i { font-style: normal; font-size: var(--f-micro); color: var(--faint); }
+.yr-col i { font-style: normal; font-size: var(--f-micro); color: var(--faint); line-height: var(--yr-label); }
 
 .yr-track { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
 .yr-step { display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px;
@@ -2318,8 +2203,7 @@ body.blacked .br-orb { opacity: 0.09; }
 .yr-step.down { border-color: rgba(248, 113, 113, 0.36); color: var(--danger); }
 
 .yr-arcs { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
-/* Name over label, not beside it. Side by side, "Spring Arc" and "Group
-   stage" shared 140px and both ellipsised down to "S..." and "Gro...". */
+/* Name over label: side by side they shared 140px and both ellipsised. */
 .yr-arc { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 2px 10px;
   padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--line);
   border-radius: 10px; color: var(--muted); }
@@ -2330,32 +2214,23 @@ body.blacked .br-orb { opacity: 0.09; }
 .yr-arc.final { border-color: rgba(251, 191, 36, 0.2); }
 
 /* ---------- narrow phones ----------
-   At 340px the two scores and the divider stop fitting on one line beside a
-   long opponent name, and the feat tiles want to be two across rather than a
-   third of a tile short of three. */
+   At 340px the two scores stop fitting beside a long opponent name. */
 @media (max-width: 359px) {
   .ar-side b { font-size: var(--f-title); }
   .ar-vs { flex: 0 0 20px; }
   .sl-text i { font-size: var(--f-micro); }
-  .yr-nav b { min-width: 60px; }
 }
 
 /* ==========================================================================
    The bottom bar
    ==========================================================================
-   Three rooms, and the grid sits proud in the middle because it is the thing
-   you opened the app to do. The brand gradient appears here and on the logo
-   mark, and nowhere else in the app: it is the one element allowed to look
-   like a button in a game.
+   Three rooms, the grid proud in the middle. The brand gradient is here and on
+   the logo mark and nowhere else.
+   Three equal columns rather than a flex row, so the raised centre stays
+   centred whatever the labels say. */
 
-   Laid out with three equal columns rather than a flex row, so the raised
-   centre stays centred whatever the labels say - and so a fourth room, if one
-   ever earns its place, is a change to one number. */
-
-/* The `hidden` attribute only maps to `display: none` through the UA
-   stylesheet, so any author `display` at all beats it. Without this line the
-   bar sat on top of the Bible reader and every session player, which is
-   exactly the screen it must not be on. */
+/* `hidden` only maps to display: none through the UA stylesheet, so any author
+   display beats it. Without this the bar sat on the reader and the players. */
 .tabbar[hidden] { display: none; }
 
 .tabbar {
@@ -2365,9 +2240,8 @@ body.blacked .br-orb { opacity: 0.09; }
   border-top: 1px solid var(--line-soft);
   background: var(--bg-2);
 }
-/* Translucent where the platform can blur behind it, so the grid scrolls under
-   the bar instead of stopping dead at a solid strip. Solid everywhere else,
-   because a see-through bar over unblurred text is worse than an opaque one. */
+/* Translucent where the platform can blur, so the grid scrolls under it. Solid
+   elsewhere: see-through over unblurred text is worse than opaque. */
 @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
   .tabbar {
     background: color-mix(in srgb, var(--bg-2) 78%, transparent);
@@ -2391,13 +2265,12 @@ body.blacked .br-orb { opacity: 0.09; }
 .tab.on .tab-ico { background: rgba(34, 211, 197, 0.13); }
 .tab:active .tab-ico { transform: scale(0.9); }
 
-/* The one you came for. Raised out of the bar, on the brand ramp, with the
-   only real shadow in the app - which is what makes it read as a button rather
-   than as a third link. */
+/* The one you came for. Raised, on the brand ramp, with the only real shadow
+   in the app. */
 .tab.main { margin-top: -24px; }
 .tab.main .tab-ico {
   width: 58px; height: 58px; border-radius: 20px;
-  background: var(--brand); color: #04121a;
+  background: var(--brand); color: var(--on-accent);
   box-shadow: 0 10px 26px rgba(34, 211, 197, 0.3), 0 2px 0 rgba(255, 255, 255, 0.12) inset;
 }
 .tab.main.on { color: var(--text); }
@@ -2411,15 +2284,11 @@ body.blacked .br-orb { opacity: 0.09; }
 }
 .tab.main .tab-dot { top: 6px; right: 10px; background: var(--bg); }
 
-/* Room for the bar. Only when it is there, so a pushed screen still ends where
-   the screen ends. */
+/* Room for the bar, only where it is there. */
 body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 
 /* ---------- the grid's header ----------
-   The today card is gone. It was a bordered box holding a number, a date and a
-   ring, sitting above a grid that is itself a bordered box holding rows that
-   are bordered boxes. The same three facts are the header now, with no border
-   around them, which is one less box and the same information. */
+   The today card is gone: the same three facts with no border around them. */
 
 .grid-head {
   display: flex; align-items: center; gap: 12px;
@@ -2434,14 +2303,14 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 /* ==========================================================================
    The Cabinet
    ==========================================================================
-   The room where nothing changes. Everything in here is finished, which is
-   what lets it be still: no live bars, no countdowns except the one that is
-   the point, and the cups given the room to be objects rather than list rows. */
+   Everything here is finished, which is what lets it be still: no live bars, no
+   countdowns except the one that is the point. */
 
 .cab-cups { display: grid; gap: 10px; margin-bottom: 14px; }
 .cab-cups:not(.empty) { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 
 .cup, .cup-empty {
+  align-content: start;
   display: grid; justify-items: center; gap: 2px; text-align: center;
   padding: 20px 14px 16px;
   border-radius: var(--radius); border: 1px solid rgba(251, 191, 36, 0.34);
@@ -2462,18 +2331,17 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .cup-empty b { color: var(--text); font-size: var(--f-small); }
 
 /* ---------- the vault ----------
-   A review you can open early is not a review, it is a dashboard. So the year
-   is a number counting down and a lock, and that is the whole screen until it
-   is not. */
+   A review you can open early is a dashboard, so the year is a number counting
+   down and a lock. */
 
 .vault {
   display: grid; justify-items: center; text-align: center;
   padding: 34px 18px 26px; border-radius: var(--radius);
   border: 1px dashed var(--line); background: var(--surface);
 }
-.vault.small { padding: 20px 14px 16px; border-style: solid; background: var(--surface-2); margin-bottom: 12px; }
+.vault.small { padding: 20px 14px 16px; border-style: solid; background: var(--surface); margin-bottom: 12px; }
 .vault-lock { display: grid; place-items: center; color: var(--faint); margin-bottom: 8px; }
-.vault-count { font-size: 3.2rem; line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.vault-count { font-size: var(--f-mega); line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
 .vault.small .vault-count { font-size: var(--f-display); }
 .vault-unit { font-size: var(--f-fine); color: var(--muted); text-transform: uppercase; letter-spacing: 0.14em; margin-top: 4px; }
 .vault-label { margin: 12px 0 4px; font-size: var(--f-small); color: var(--muted); }
@@ -2490,8 +2358,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .yr-span { text-align: center; color: var(--muted); font-size: var(--f-fine); margin: -8px 0 16px; }
 
 /* ---------- what you said ----------
-   The only free text in the Arena, and it is quoted rather than presented as
-   data, because that is what it is: something you said, read back to you. */
+   Quoted rather than presented as data: it is something you said. */
 
 .said {
   display: flex; gap: 11px; width: 100%; text-align: left;
@@ -2506,8 +2373,8 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .said-body i { display: block; font-style: normal; font-size: var(--f-micro); color: var(--muted); margin-top: 3px; }
 
 
-/* No cup on. One line and a date, and it is a link because the date is the
-   only thing you can do anything with. */
+/* No cup on. One line and a date, and a link, because the date is the only
+   thing you can act on. */
 .arc-wait {
   display: flex; align-items: center; gap: 11px;
   padding: 13px 14px; margin-bottom: 14px;
@@ -2526,8 +2393,8 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .ar-won i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); }
 .ar-won .cup-art { flex: 0 0 54px; margin: 0; }
 
-/* The one free-text field in the Arena. Deliberately unlike a settings input:
-   this is something you are saying, not something you are configuring. */
+/* Deliberately unlike a settings input: you are saying something, not
+   configuring one. */
 .note-ask input {
   width: 100%; margin: 12px 0 4px; padding: 13px 14px;
   background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
@@ -2540,28 +2407,30 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 /* ==========================================================================
    The moments
    ==========================================================================
-   Three times a year a cup stops being a screen and becomes an event. These
-   are the only screens in the app with no header, no bar and one way out, and
-   that is the point: there is nothing else to do here.
+   The only screens with no header, no bar and one way out.
+   The group is dealt rather than listed: the rows arrive on a stagger driven
+   by --i, so it reads as a draw. */
 
-   The group is dealt rather than listed - the rows arrive one after another on
-   a stagger driven by --i, so it reads as a draw instead of as a table that
-   was already there. */
-
-.screen.moment { padding-top: calc(var(--safe-t) + 34px); text-align: left; }
+/* Every ceremony fills the viewport and puts its way out on the floor, so
+   opening night and a promotion are the same screen twice. */
+.screen.moment {
+  padding-top: calc(var(--safe-t) + 34px); text-align: left;
+  display: flex; flex-direction: column;
+  min-height: calc(100dvh - var(--safe-t) - var(--safe-b));
+}
+.screen.moment:not(.rank-moment) #go { margin-top: auto; }
 
 .mo-head {
   position: relative; text-align: center;
   padding: 22px 14px 26px; margin-bottom: 18px;
 }
-.mo-title { font-size: 2.4rem; line-height: 1.05; letter-spacing: -0.04em; margin: 6px 0 10px; }
+.mo-title { font-size: var(--f-hero); line-height: 1.05; letter-spacing: -0.04em; margin: 6px 0 10px; }
 .mo-sub { color: var(--muted); font-size: var(--f-small); margin: 0; }
 .mo-head.won .mo-title { color: var(--good); }
 .mo-head.lost .mo-title { color: var(--danger); }
 .mo-head.cup .mo-title { color: var(--warn); }
 .mo-cup { display: grid; place-items: center; color: var(--warn); margin-bottom: 10px; }
-/* The cup draws itself. Four times a year at the very most, after the best
-   week you have had, so it is allowed to take a second over it. */
+/* The cup draws itself. Four times a year at most, so it may take a second. */
 .mo-cup .ico path { stroke-dasharray: 240; animation: cup-draw 1.1s var(--ease) forwards; }
 @keyframes cup-draw { from { stroke-dashoffset: 240; } to { stroke-dashoffset: 0; } }
 
@@ -2578,8 +2447,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .mo-who { flex: 1; min-width: 0; font-size: var(--f-small); color: var(--muted);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mo-card b { font-variant-numeric: tabular-nums; font-size: var(--f-small); }
-/* Same rule as the group table, because it is the same table: the three that
-   go through are lit, the rest are not, and nothing has to say so. */
+/* Same rule as the group table: the three going through are lit. */
 .mo-card.q {
   border-color: rgba(74, 222, 128, 0.32);
   background: rgba(74, 222, 128, 0.08);
@@ -2593,23 +2461,18 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .mo-card.you.nq { opacity: 0.9; border-color: rgba(248, 113, 113, 0.4); background: rgba(248, 113, 113, 0.07); }
 .mo-card.you.nq .mo-seed, .mo-card.you.nq b { color: var(--danger); }
 
-/* A moment that is not animating is still a moment; reduced motion already
-   kills the stagger globally, which would leave the dealt rows at opacity 0. */
+/* Reduced motion kills the stagger globally, which would leave the dealt rows
+   at opacity 0. */
 @media (prefers-reduced-motion: reduce) {
   .mo-card { opacity: 1; }
 }
 
 /* ---------- the introduction ----------
-   One idea per page and mostly a picture, so the page is a column with the art
-   given the room and the words given a width they cannot exceed. The art box
-   has a floor under its height rather than taking what it is given, because
-   five pages whose headings sit at five different heights read as five
-   unrelated screens rather than as one thing being turned over. */
+   One idea per page, mostly a picture. The art box has a floor under its height
+   so five pages do not put their headings at five different heights. */
 
-/* The one screen in the app that owns the whole window: there is no bottom bar
-   on it and nothing below it to scroll to, so a Next button floating in the
-   middle of a half-empty page is just a page that has not been laid out. Full
-   height, the words centred in what is left, the button on the floor. */
+/* Owns the whole window: no bottom bar and nothing to scroll to. Full height,
+   words centred in what is left, button on the floor. */
 .screen.intro { min-height: 100dvh; display: flex; flex-direction: column; }
 .intro .screen-head { justify-content: space-between; margin-bottom: 12px; }
 .intro-body {
@@ -2622,14 +2485,14 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
   width: 100%; min-height: 190px; margin-bottom: 22px;
 }
 .intro-title { font-size: var(--f-hero); line-height: 1.05; letter-spacing: -0.035em; margin: 0 0 10px; }
-.intro-line { max-width: 30ch; color: var(--muted); font-size: 0.95rem; margin: 0; }
+.intro-line { max-width: 30ch; color: var(--muted); font-size: var(--f-body); margin: 0; }
 
 .intro-logo { filter: drop-shadow(0 0 26px rgba(34, 211, 197, 0.28)); }
 .intro-crest { filter: drop-shadow(0 6px 22px rgba(0, 0, 0, 0.5)); }
 .intro-icon { color: var(--accent); filter: drop-shadow(0 0 26px rgba(34, 211, 197, 0.3)); }
 
-/* The bar at the bottom, drawn at rest so the page can point at it. Not the
-   real .tabbar: that one is fixed to the viewport and there is only ever one. */
+/* Drawn at rest so the page can point at it. Not .tabbar: that one is fixed to
+   the viewport and there is only ever one. */
 .intro-rooms { display: flex; gap: 18px; align-items: flex-end; }
 .intro-rooms i {
   display: grid; justify-items: center; gap: 6px;
@@ -2638,9 +2501,11 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .intro-rooms i b { font-size: var(--f-micro); font-weight: 600; letter-spacing: 0.04em; }
 .intro-rooms i.on { color: var(--accent); }
 
-/* Built from the grid's own classes, so what you are told to tap looks like
-   the thing you then tap. Only the sizing is overridden. */
+/* Built from the grid's own classes, so what you are told to tap looks like the
+   thing you then tap. */
 .intro-grid { width: 100%; margin: 0; pointer-events: none; }
+/* One live cell in a dead picture: the page is about tapping it. */
+.intro-grid .intro-tap { pointer-events: auto; }
 .intro-grid .hg-cell { min-height: 34px; }
 .intro-grid .hg-row { min-height: 44px; }
 /* Today's cell on the top row: the one the sentence is about. */
@@ -2659,41 +2524,32 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 }
 
 /* ---------- the quiet row at the foot of Settings ----------
-   Two things that are not settings: a screen you can replay, and a door. Both
-   are deliberately the smallest text on the page. The door is not hidden - it
-   says what it is - it just does not ask to be found. */
+   A screen you can replay, and a door. The smallest text on the page: the door
+   says what it is, it just does not ask to be found. */
 .set-tail {
   display: flex; justify-content: center; gap: 22px;
   margin-top: 22px; padding-top: 4px;
 }
 .tail-btn {
   background: none; border: 0; padding: 6px 2px;
-  color: var(--faint); font: inherit; font-size: 0.74rem;
+  color: var(--faint); font: inherit; font-size: var(--f-fine);
   text-decoration: none; cursor: pointer;
 }
 .tail-btn:active { color: var(--muted); }
 
 /* ---------- settings ----------
-   The old shape was seven bordered cards, each a heading over rows of bold
-   label, two lines of grey explanation, and a control. Three thousand pixels
-   of identical boxes in which the explanations outweighed the settings, and
-   indistinguishable from the settings screen of every other app ever written.
-
-   What is here instead: one loud true thing at the top, then the settings as
-   a dense index - name on the left, what it is set to on the right, and no
-   explanation unless the behaviour is genuinely surprising. A settings screen
-   should read like a list of what the app is set to, which is the question you
-   actually came to answer. */
+   A dense index: name on the left, what it is set to on the right, and no
+   explanation unless the behaviour is genuinely surprising. */
 
 .settings .set-hero {
   padding: 4px 2px 22px; margin-bottom: 6px;
 }
 .set-hero b {
-  display: block; font-size: var(--f-hero); line-height: 1;
+  display: block; font-size: var(--f-title); line-height: 1;
   letter-spacing: -0.035em; margin-bottom: 8px;
   background: var(--brand); -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.set-hero span { color: var(--muted); font-size: 0.86rem; }
+.set-hero span { color: var(--muted); font-size: var(--f-small); }
 
 .set-group {
   font-size: var(--f-micro); text-transform: uppercase; letter-spacing: 0.12em;
@@ -2701,8 +2557,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
   margin: 22px 0 8px; padding: 0 2px;
 }
 
-/* Hairlines between rows, not a border around a box: the group already says
-   where the group starts and a card around it says it a second time. */
+/* Hairlines, not a border around a box: the group already says where it starts. */
 .set-rows { display: grid; }
 .set-row {
   display: flex; align-items: center; gap: 14px;
@@ -2710,33 +2565,420 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
   border-bottom: 1px solid var(--line-soft);
 }
 .set-rows .set-row:last-child { border-bottom: 0; }
-.set-label { flex: 1; min-width: 0; font-size: 0.92rem; }
+.set-label { flex: 1; min-width: 0; font-size: var(--f-body); }
 /* The exception, not the rule: only where the behaviour would surprise you. */
 .set-label i {
-  display: block; font-style: normal; font-size: 0.74rem;
+  display: block; font-style: normal; font-size: var(--f-fine);
   color: var(--muted); line-height: 1.35; margin-top: 2px;
 }
 .set-row select { flex: 0 0 auto; }
 .set-row input[type="checkbox"] { flex: 0 0 auto; }
-.set-link {
-  flex: 0 0 auto; color: var(--accent); text-decoration: none;
-  font-size: 0.86rem; padding: 6px 0;
-}
-
-/* The jump list, as four links rather than four cards with subtitles. */
+/* The jump list, as links rather than cards with subtitles. */
 .settings .set-nav { display: grid; gap: 0; }
 .settings .set-nav a {
   display: flex; align-items: center; gap: 10px;
   min-height: 46px; padding: 9px 2px;
+  background: none; border: 0; border-radius: 0;
   border-bottom: 1px solid var(--line-soft);
-  color: var(--text); text-decoration: none; font-size: 0.92rem;
+  color: var(--text); text-decoration: none; font-size: var(--f-body);
 }
 .settings .set-nav a:last-child { border-bottom: 0; }
 .settings .set-nav a > span { flex: 1; }
 .settings .set-nav a::after {
-  content: '›'; color: var(--faint); font-size: 1.1rem; line-height: 1;
+  content: '›'; color: var(--faint); font-size: var(--f-head); line-height: 1;
 }
 
 .set-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
 .settings .btn.danger.wide { margin-top: 22px; }
 .settings .fineprint { margin-top: 8px; }
+
+/* ---------- the Nemesis, with a face ----------
+   He is the best week you have ever had, so the picture is you. The frame is
+   the same at every size: a ring in the accent, a dark ground under it for the
+   weeks before there is a photo. */
+.nem-face {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 0 3px rgb(34 211 197 / 0.12);
+}
+.nem-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.nem-face.empty { color: var(--faint); border-color: var(--line); box-shadow: none; }
+
+.nem-ask {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  margin: 12px 0;
+}
+.nem-ask > div { flex: 1; min-width: 0; }
+.nem-ask b { display: block; font-size: var(--f-body); }
+
+.nem-head { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.nem-head h2 { margin: 0; }
+.nem-head p { margin: 2px 0 0; }
+
+/* The one number that says whether you are beating him right now. */
+.nem-gap { font-size: var(--f-small); font-weight: var(--w-medium); margin: 10px 0 0; }
+.nem-gap.ahead { color: var(--good); }
+.nem-gap.behind { color: var(--danger); }
+
+/* On the fixture card he sits above his score, so the pair reads as one side. */
+.ar-side.them .nem-face { margin: 0 auto 6px; }
+
+/* ---------- the month settles ----------
+   The whole ladder, every rung named with what it costs, and the badge moving
+   between two of them. Three beats driven by data-beat on the screen, so the
+   timing lives in one place and reduced motion collapses it to the last one. */
+.screen.rank-moment {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - var(--safe-t) - var(--safe-b));
+  padding-top: calc(var(--safe-t) + 26px);
+}
+.rk-eyebrow { text-align: center; margin-bottom: 10px; }
+
+.rk-word {
+  font-size: var(--f-hero);
+  margin: 0;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+}
+.rank-moment[data-beat='2'] .rk-word { opacity: 1; transform: none; }
+.rank-moment.up .rk-word { color: var(--good); }
+.rank-moment.down .rk-word { color: var(--text); }
+
+.rk-line {
+  text-align: center;
+  color: var(--muted);
+  font-size: var(--f-small);
+  margin: 8px 0 0;
+  opacity: 0;
+  transition: opacity 0.4s var(--ease) 0.1s;
+}
+.rank-moment[data-beat='2'] .rk-line { opacity: 1; }
+
+/* The ladder. Top rung first, so the eye lands where you are rather than at the
+   bottom of the list. */
+.rk-ladder {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+  /* Takes the height left between the verdict and the button, and spreads the
+     rungs through it, so the ladder is the screen rather than a list at the top
+     of one. */
+  flex: 1;
+  align-content: space-evenly;
+}
+.rk-rung {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  grid-template-areas: 'mark name need' 'mark bar bar';
+  align-items: center;
+  column-gap: 10px;
+  padding: 4px 0;
+  opacity: 0.42;
+  transition: opacity 0.35s var(--ease);
+  transition-delay: calc(var(--i) * 45ms);
+}
+.rank-moment[data-beat='1'] .rk-rung,
+.rank-moment[data-beat='2'] .rk-rung { opacity: 1; }
+.rk-rung.above { opacity: 0.42; }
+.rank-moment[data-beat='2'] .rk-rung.above { opacity: 0.55; }
+
+.rk-mark { grid-area: mark; display: grid; place-items: center; min-height: 24px; opacity: 0.55; }
+.rk-rung.here .rk-mark { opacity: 1; }
+.rk-mark img { display: block; }
+.rk-name { grid-area: name; font-size: var(--f-small); color: var(--muted); }
+.rk-need { grid-area: need; font-size: var(--f-fine); color: var(--faint); font-variant-numeric: tabular-nums; }
+.rk-bar { grid-area: bar; height: 4px; border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; margin-top: 5px; }
+/* Each rung's bar is as long as that rung costs, so the ladder climbs across as
+   well as up. Uniform bars made five of the seven rows decoration. */
+.rk-bar i { display: block; height: 100%; width: 0; background: var(--line); border-radius: inherit; transition: width 0.5s var(--ease); }
+.rank-moment[data-beat='2'] .rk-rung .rk-bar i { width: var(--w); }
+
+/* Where you are: named in full, lit, and carrying the score that got you here. */
+.rk-rung.here .rk-name { color: var(--text); font-size: var(--f-head); font-weight: var(--w-bold); }
+.rk-rung.here .rk-need { color: var(--good); font-weight: var(--w-bold); }
+/* Red is the division you lost, not the one you are on. */
+.rank-moment.down .rk-rung.here .rk-need { color: var(--text); }
+.rank-moment.up .rk-rung.here .rk-bar i { background: var(--good); box-shadow: 0 0 10px rgb(74 222 128 / 0.45); }
+.rank-moment.down .rk-rung.here .rk-bar i { background: var(--accent); }
+.rk-rung.here { position: relative; }
+
+/* The rung you lost. Dashed and marked with what it wants, because it is where
+   you are going back to rather than something that was taken off you. */
+.rk-rung.lost .rk-name { color: var(--danger); }
+.rk-rung.lost .rk-need { color: var(--danger); }
+.rk-rung.lost .rk-bar { background: transparent; border-top: 1px dashed color-mix(in oklab, var(--danger) 55%, transparent); height: 0; margin-top: 7px; }
+.rank-moment[data-beat='2'] .rk-rung.lost .rk-bar i { width: 0; }
+
+.rank-moment #go { margin-top: 18px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rk-word, .rk-line, .rk-rung, .rk-bar i { transition: none; }
+}
+
+/* ---------- the first five ----------
+   Shown only on an empty grid. Each row wears the colour it will have, so
+   tapping one is a preview rather than a promise. */
+.starters { margin-top: 18px; }
+.starters h2 { font-size: var(--f-head); margin: 0 0 2px; }
+.starters p { margin: 0 0 12px; }
+.starter-list { display: grid; gap: 8px; }
+.starter {
+  display: grid;
+  grid-template-columns: 12px 1fr auto 22px;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--text);
+  text-align: left;
+  font-size: var(--f-body);
+}
+.starter:active { transform: scale(0.985); }
+.starter-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--sc);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--sc) 22%, transparent);
+}
+.starter-name { font-weight: var(--w-medium); color: var(--sc); }
+.starter-meta { font-size: var(--f-fine); color: var(--muted); }
+.starter-add { color: var(--faint); display: grid; place-items: center; }
+
+/* ---------- restore points ----------
+   Under the backup buttons, because it is the same question: what happens to
+   the record when something goes wrong. */
+.restore { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+.restore h4 { margin: 0 0 4px; font-size: var(--f-small); color: var(--text); }
+.restore .fineprint { margin: 0 0 8px; }
+.restore .set-actions { margin-bottom: 8px; }
+/* One restore point is a full width button, not half a row of nothing. */
+.restore .set-actions:has(> :only-child) { grid-template-columns: 1fr; }
+
+/* ---------- the week in review ----------
+   Five beats, one tap apart, each one filling the screen. Every beat is one
+   number and the shape behind it, so nothing here is read, only glanced at. */
+.screen.rv {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - var(--safe-t) - var(--safe-b));
+  padding-top: calc(var(--safe-t) + 22px);
+}
+.rv-dots { display: flex; gap: 5px; justify-content: center; margin-bottom: 4px; }
+.rv-dots i { width: 22px; height: 3px; border-radius: var(--radius-pill); background: var(--line); }
+.rv-dots i.on { background: var(--accent); }
+
+.rv-body { flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+.rv-body > * { animation: rv-in 0.34s var(--ease) both; }
+.rv-body > :nth-child(2) { animation-delay: 60ms; }
+.rv-body > :nth-child(3) { animation-delay: 120ms; }
+.rv-body > :nth-child(4) { animation-delay: 180ms; }
+.rv-body > :nth-child(5) { animation-delay: 240ms; }
+@keyframes rv-in { from { opacity: 0; transform: translateY(10px); } }
+
+.rv-title { font-size: var(--f-display); line-height: 1.1; letter-spacing: -0.03em; margin: 0 0 8px; }
+.rv-title.up { color: var(--good); }
+.rv-title.down { color: var(--warn); }
+.rv-sub { color: var(--muted); font-size: var(--f-small); margin: 0; }
+.rv-note { color: var(--faint); font-size: var(--f-fine); margin: 10px 0 0; }
+.rv .up { color: var(--good); }
+.rv .down { color: var(--warn); }
+
+.rv-big {
+  display: block;
+  font-size: var(--f-hero);
+  font-weight: var(--w-bold);
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  margin: 2px 0 4px;
+}
+
+/* The score against your average, so the number is read against something. */
+.rv-gauge { position: relative; height: 8px; border-radius: var(--radius-pill); background: var(--surface-2); margin: 18px 40px 0; }
+.rv-gauge i { display: block; height: 100%; width: var(--w); background: var(--accent); border-radius: inherit; animation: rv-fill 0.9s var(--ease) both; }
+.rv-gauge u { position: absolute; top: -4px; bottom: -4px; left: var(--avg); width: 2px; background: var(--text); opacity: 0.5; }
+
+/* Seven columns, counts not percentages: a four-a-week habit missing on a
+   Tuesday is not a miss, so a per-day score would lie about the day. */
+.rv-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: end; height: 132px; margin: 18px 0 16px; }
+.rv-day { display: grid; grid-template-rows: 1fr auto auto; height: 100%; gap: 5px; }
+.rv-bar {
+  height: var(--h);
+  align-self: end;
+  min-height: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  transform-origin: bottom;
+  animation: rv-grow 0.4s var(--ease) both;
+  animation-delay: calc(var(--i) * 45ms);
+}
+.rv-day.top .rv-bar { background: var(--accent); }
+.rv-day.none .rv-bar { background: var(--line-soft); }
+.rv-day.future { opacity: 0.35; }
+.rv-day em { font-size: var(--f-micro); color: var(--muted); font-style: normal; height: 10px; }
+.rv-day u { position: relative; font-size: var(--f-micro); color: var(--faint); text-decoration: none; }
+.rv-day.top em { color: var(--accent); font-weight: var(--w-bold); }
+/* A dot under today: the day is not over, which is why its bar is short.
+   Called "now": .today is the hub card and a column wearing it took a border. */
+.rv-day.now u::after { content: ''; position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); width: 3px; height: 3px; border-radius: 50%; background: var(--accent); }
+@keyframes rv-grow { from { transform: scaleY(0); } }
+
+/* Every row, best first, each bar in the colour you gave it. */
+.rv-rows { list-style: none; margin: 14px 0 4px; padding: 0; display: grid; gap: 7px; }
+.rv-rows li { display: grid; grid-template-columns: 1fr 84px auto; align-items: center; gap: 10px; text-align: left; }
+.rv-rname { font-size: var(--f-small); color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rv-rbar { height: 5px; border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; }
+.rv-rbar i {
+  display: block;
+  height: 100%;
+  width: var(--w);
+  background: var(--c);
+  border-radius: inherit;
+  animation: rv-fill 0.45s var(--ease) both;
+  animation-delay: calc(var(--i) * 35ms);
+}
+.rv-rows b { font-size: var(--f-fine); color: var(--muted); font-variant-numeric: tabular-nums; }
+@keyframes rv-fill { from { width: 0; } }
+
+.rv-kv { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line-soft); text-align: left; }
+.rv-kv span { color: var(--muted); font-size: var(--f-fine); }
+.rv-kv b { font-size: var(--f-small); }
+
+/* The stake. Two numbers on one line, because the gap is the point. */
+.rv-vs { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; justify-items: center; gap: 16px; margin: 8px 0 12px; }
+.rv-vs span { display: grid; gap: 2px; }
+.rv-vs b { font-size: var(--f-display); font-variant-numeric: tabular-nums; }
+.rv-vs i { font-size: var(--f-fine); color: var(--muted); font-style: normal; }
+.rv-versus { color: var(--faint); }
+.rv-stake { font-size: var(--f-head); font-weight: var(--w-medium); margin: 0; }
+.rv-stake.up { color: var(--good); }
+.rv-stake.down { color: var(--muted); }
+
+.rv-feats { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 16px; }
+.rv-feat {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: var(--radius-pill);
+  background: var(--surface); border: 1px solid var(--line);
+  font-size: var(--f-fine); color: var(--warn);
+}
+.rv-feat.more { color: var(--muted); text-decoration: none; }
+
+.screen.rv .btn.primary { margin-top: 20px; }
+
+/* The way in, on the grid. */
+.rv-cta {
+  display: flex; align-items: center; gap: 11px;
+  margin-top: 12px; padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid color-mix(in oklab, var(--accent) 35%, var(--line));
+  color: var(--text);
+}
+.rv-cta:active { transform: scale(0.99); }
+.rv-cta, .rv-cta b, .rv-cta i { text-decoration: none; }
+.rv-cta-ico { color: var(--accent); display: grid; place-items: center; }
+.rv-cta-text { display: grid; gap: 1px; }
+.rv-cta-text b { font-size: var(--f-small); }
+.rv-cta-text i { font-size: var(--f-fine); color: var(--muted); font-style: normal; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rv-body > *, .rv-bar, .rv-rbar i, .rv-gauge i { animation: none; }
+}
+
+/* ---------- the week, as a card ----------
+   Drawn on a canvas at 1080x1350 and previewed here before it goes anywhere. */
+.sh-card {
+  display: block; width: 100%; aspect-ratio: 4 / 5;
+  border-radius: var(--radius); border: 1px solid var(--line);
+  margin: 0 0 12px; background: var(--bg-2);
+}
+
+/* ---------- the introduction, page by page ----------
+   Two of the seven are done rather than read. Everything else is one picture
+   and one line, and the picture is built from the screen it is about. */
+
+/* A tall page leads with its heading: seven rungs above the title push it off
+   the bottom of a phone. */
+.intro-body.tall { padding-top: 4px; }
+.intro-body.tall .intro-art { min-height: 0; margin: 16px 0 0; }
+
+/* What a row can be. */
+.intro-kinds { display: grid; gap: 9px; width: 100%; }
+.intro-kind {
+  display: grid; grid-template-columns: 12px 1fr auto; align-items: center; gap: 11px;
+  padding: 13px 14px; border-radius: var(--radius);
+  background: var(--surface); border: 1px solid var(--line);
+  text-align: left;
+}
+.intro-dot {
+  width: 10px; height: 10px; border-radius: 50%; background: var(--kc);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--kc) 22%, transparent);
+}
+.intro-kind b { color: var(--kc); font-weight: var(--w-medium); font-size: var(--f-body); }
+.intro-kind em { font-style: normal; font-size: var(--f-fine); color: var(--muted); }
+
+/* The fixture, cut to the two numbers and the gap between them. */
+.intro-fix {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 14px;
+  width: 100%; padding: 20px 18px; border-radius: var(--radius);
+  background: var(--surface); border: 1px solid var(--line);
+}
+.intro-fix-side { display: grid; gap: 2px; }
+.intro-fix-side b { font-size: var(--f-display); font-variant-numeric: tabular-nums; }
+.intro-fix-side i { font-size: var(--f-fine); color: var(--muted); font-style: normal; }
+.intro-fix-vs { color: var(--faint); }
+.intro-race { grid-column: 1 / -1; height: 6px; border-radius: var(--radius-pill); background: var(--danger); overflow: hidden; }
+.intro-race u { display: block; height: 100%; background: var(--accent); text-decoration: none; }
+
+/* Every rung and what it costs. Tapping one says what it means. */
+.intro-ladder { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; gap: 2px; }
+.intro-rung {
+  display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 10px;
+  width: 100%; padding: 7px 8px; border: 0; border-radius: var(--radius-sm);
+  background: none; color: var(--text); text-align: left; font: inherit;
+}
+.intro-rung.on { background: var(--surface); }
+.intro-rung-crest { display: grid; place-items: center; opacity: 0.8; }
+.intro-rung.on .intro-rung-crest { opacity: 1; }
+.intro-rung-name { font-size: var(--f-small); color: var(--muted); }
+.intro-rung.on .intro-rung-name { color: var(--text); font-weight: var(--w-medium); }
+.intro-rung-need { font-size: var(--f-fine); color: var(--faint); font-variant-numeric: tabular-nums; }
+.intro-rung.on .intro-rung-need { color: var(--accent); }
+
+/* Cups and feats. */
+.intro-cabinet { display: grid; gap: 16px; justify-items: center; }
+.intro-cups { display: flex; gap: 16px; }
+.intro-cup {
+  display: grid; place-items: center; width: 60px; height: 60px;
+  border-radius: 50%; color: var(--cc);
+  background: color-mix(in oklab, var(--cc) 12%, transparent);
+  border: 1px solid color-mix(in oklab, var(--cc) 40%, transparent);
+}
+.intro-feats { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.intro-feat {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: var(--radius-pill);
+  background: var(--surface); border: 1px solid var(--line);
+  font-size: var(--f-fine); color: var(--muted);
+}
+
+/* The last page: the grid you leave on. */
+.intro-starters { width: 100%; margin-top: 18px; }
+.starter.picked { border-color: color-mix(in oklab, var(--sc) 55%, var(--line)); background: color-mix(in oklab, var(--sc) 10%, var(--surface)); }
+.starter.picked .starter-add { color: var(--sc); }

@@ -1,8 +1,5 @@
-// The guided rule.
-//
-// One prayer at a time, Greek and English together by default. No score, no
-// grading, no streak pressure while you are in it. The only thing the app does
-// at the end is record that it was kept.
+// The guided rule. One prayer at a time, no score and no streak pressure while
+// you are in it.
 
 import * as store from '../store.js';
 import * as pray from './program.js';
@@ -111,7 +108,7 @@ export function startRule(mount, slot, onDone) {
       draw();
     });
     mount.querySelector('#close').addEventListener('click', () => {
-      // Leaving early records nothing. It was either kept or it was not.
+      // Leaving early records nothing. It was kept or it was not.
       if (i === 0 || confirm('Leave without finishing? Nothing will be recorded.')) leave(false);
     });
   }
@@ -127,7 +124,7 @@ export function startRule(mount, slot, onDone) {
   return { stop: cleanup };
 }
 
-/** The close of it. Short on purpose. */
+/** The close. Short on purpose. */
 function renderDone(mount, slot, onExit) {
   const def = ruleDef(slot);
   const today = pray.dayState();

@@ -1,142 +1,79 @@
-# Working on NiFo
+# NiFo: standing rules
 
-## The rule that beats the others
+Read before changing anything. These outrank habit and outrank the old code
+still sitting in the tree.
 
-**SIMPLE AND EFFECTIVE.** When there is a choice between a clever answer and a
-plain one that does the same job, take the plain one. No second view of the
-same data, no mode that could have been a setting, no abstraction with one
-caller, no feature added because it would round out a set.
+## Comments
 
-This is not a style note. Every bad screen in this app's history came from
-adding rather than removing: a hub that was a menu of things that did not
-exist, five section palettes that made one app look like five, a Today list
-sitting above a grid that already said the same thing. The fix each time was
-to delete something.
+- A label, not prose. `// Promotion` beats a sentence saying it promotes you.
+- One line. Never a paragraph, never a story, never the reason it was written.
+- Only where it saves a future read: a non-obvious rule, a unit, an order that
+  matters, a trap. If the code already says it, say nothing.
+- Section banners split long files: `/* ---- scoring ---- */`.
+- JSDoc only for a signature that is not obvious from the name. One line.
+- Reasons and history go in the PR body, never in the file.
 
-If a change makes the app easier to describe in one sentence, it is probably
-right. If explaining it needs an "and also", stop.
+## Writing
 
-## The shape of the app
+Applies to comments, UI copy, docs, commits and PRs.
 
-**Three rooms, and the grid is the one you land in.** Every commitment you
-have — the five the app itself asks of you, and every habit you added — is a
-row on it. Above the grid there is nothing but the date and how much of today
-is left: no dashboard, no summary card, no second list.
+- No em dashes. Comma, colon or full stop.
+- Short. Cut any sentence that does not change what the reader does.
+- No hedging, no filler, no restating the heading.
 
-The bar at the bottom holds the other two rooms. **Grid** is now, **Arena** is
-where you stand, **Cabinet** is what you have done. This looks like the menu
-this file used to forbid, and the rule it replaces was written about something
-else: the old hub was a *list of the things the grid already listed*, the same
-data twice, one tap apart. No two of these three rooms show the same number.
+## The app on screen
 
-The bar appears on those three and nowhere else. Everything deeper is a pushed
-screen with a corner arrow — one rule, rather than a list of exceptions, and
-the reader and the session players get the whole height.
+- Labels, not paragraphs. A screen reads in one glance or it is too long.
+  A guide, a tutorial or a safety warning is the exception and may be prose.
+- Prefer a visual cue to a sentence: bar, ring, dot, heatmap, chart, icon.
+  Only when it fits and looks right. A bad chart is worse than a number.
+- Numbers carry units, dates are short, nothing wraps to three lines.
+- One accent, one sans. Colour means state (done, due, missed), never section.
+  Exceptions: a habit's own colour, the serif on scripture, division crests.
 
-Two rules, no exceptions:
+### The scale, and how it stays one
 
-- **The name goes there.** Tapping "Kegels" opens the Kegels section; tapping
-  a habit opens its own screen.
-- **The cell does it.** Tapping today starts the session, or marks the day.
-  Only today acts; the days behind it are a record.
+Every size in the app is one of the ten rungs in `:root`, and every colour is
+one of the tokens. `npm run check:ui` fails on a raw `font-size` or a hex
+outside the palette. This is checked rather than asked for because asking did
+not work: the app reached forty-five hand-written sizes on top of the eight it
+already had, which is what makes one screen look assembled by several people.
 
-**Every opponent in the Arena is a real week out of your own record.** There
-are no invented rivals and no other people, which is the only thing that makes
-beating one mean anything — and the reason you can tap any of them and look at
-the grid they actually played.
+- Pick the rung by the job, not by the pixels: `--f-mega` is a running numeral,
+  `--f-hero` the one number a screen is about, `--f-sub` a screen's h1,
+  `--f-head` a card's h2, `--f-fine` a caption, `--f-micro` an axis label.
+- A new size means a missing rung. Add it to `:root` with a comment saying what
+  it is for, or use the nearest one. Never both a rung and a rem.
 
-That cuts both ways, and it is the reason a new install is **Unranked** rather
-than starting somewhere: with no record there is no opponent, no division and
-no cup. A cup you were not there for is not yours either — the group table
-needs weeks you actually played and a field of past selves to beat, or it says
-so instead of handing you third place in a field of one.
+### One state colour per block
 
-**A cup has a shape, so the screen has one too.** The Arc is a build-up, an
-opening, a table, a knockout and a ceremony, and then a fortnight of nothing.
-Between cups it is one line and a date; while nothing is happening it is not a
-box saying nothing is happening. That is why the four arcs stopped tiling the
-year end to end: while you were always in a cup, a cup was never something you
-entered.
+A block gets at most one coloured line. If a bar already says "below the bar"
+in amber, the sentence under it does not say it again in words: cut the words
+and keep the bar. Everything else in the block is text, muted or faint.
 
-**One thing per screen gets to be loud.** Everything used to be a bordered card
-with a heading and a pill in the corner, so a live cup final looked exactly like
-a settings row — which is what "it looks like a fancier Excel spreadsheet"
-meant, and it was right. Whatever is live now is elevated; everything else
-recedes. This is not licence to decorate: it is licence for hierarchy.
+Before adding a line to a screen, delete one. Two lines that agree are one line
+and a repetition, and the repetition is what makes a screen feel bloated.
 
-**One theme.** One accent, one sans, one set of state colours. Colour answers
-*what state is this in* — done, due, missed — and nothing else. It does not
-answer "which section am I in": that experiment ran for five sections and made
-the app read as five apps. Three exceptions, all deliberate: a habit's own
-colour, which you chose and which carries information the shape does not; the
-serif, which appears only on scripture and prayer text because reading 1,344
-chapters in a UI sans is worse; and the seven division crests, which are
-artwork rather than something the app draws. The crests had a version built out
-of chevrons and laurels in the one accent, on exactly the reasoning above, and
-it was the wrong call: a rank badge is the single thing on screen whose whole
-job is to be a picture of where you stand, and a drawn one cannot carry a
-joke.
+## Structure
 
-**Everything on the device.** No account, no server, no analytics. Saved state
-is never trusted: it comes back through `hydrate()` in `store.js`, which
-coerces every value to the type and range it is supposed to be.
+- One folder per feature under `www/js/`. Shell files at the top level.
+- Same filenames in each: `program.js` domain, `home.js` screens,
+  `session.js` the thing that runs, `tracking.js` the record.
+- A setting lives with the thing it affects. App-wide ones in `settings.js`.
+- Export only what another file imports. Everything else stays local.
+- No dead code. Delete it, git has it.
+- Back is `data-back`, answered by `back.js`. Never a link.
+- New or renamed file: update `SHELL` in `www/sw.js` and bump `CACHE`.
+- Tooling lives in `tools/`, never in `www/`.
 
-**A new install is only the three rooms.** The five that came with this app —
-kegels, PE, the Bible, prayer, the wind-down — are what it is *for*, not what
-it *is*, and the person installing it may be someone they have nothing to say
-to. So they are behind one button at the foot of Settings, and that button
-takes one attempt. It is a door rather than a lock, and worth describing as
-one: the PIN is a constant in `nifo.js` like any other and nothing is
-encrypted. It exists so the app can be handed to a friend. `intro.js` is what
-a new install is shown instead.
+## Data
 
-Two consequences worth holding on to. Whatever is added, ask what a locked
-install sees — the router is an allow-list of the open routes for exactly that
-reason, so a new section has to be let in on purpose rather than leaking by
-default. And `hydrate()` defaults both of these fields the *opposite* way to
-`blank()`: reaching hydrate at all means a saved state exists, so it is an
-install already in use, and an update must not take the five off a phone that
-has been running them for months.
+- localStorage on device. No account, no server, no analytics.
+- Schema additive: `hydrate()` merges saved state over `blank()`.
+- Sanitise on read. A saved file is untrusted input.
 
-## Where things are
+## Before pushing
 
-[`docs/CODEMAP.md`](docs/CODEMAP.md) is the map, and it is kept current. One
-folder per feature, the same filenames in each, a setting lives where the thing
-it affects lives, and Back is not a link.
-
-Every file opens with a comment saying what it is and *why it works the way it
-does*. Match that: the comments in this repo explain decisions, not syntax, and
-several of them exist because the obvious alternative was tried and was worse.
-
-## One failure mode worth naming
-
-A layout rule that encodes **how many** of something there are will break the
-first time that number changes, and it will break silently. The section link
-row was a four-column grid with a comment explaining why a wrapping row was
-wrong; a fifth link then stranded itself for months. `.btn.wide` had a top
-margin only, because when it was written it was always last on the screen.
-
-Prefer the rule that does not need to know the count.
-
-## Before you push
-
-There is no build step and one check, `npm run check:arena`, which asserts the
-Arena's calendar maths in bare node because that is the one corner of the app
-whose answers cannot be read off a screen. Everything else is:
-
-- `node tools/serve.mjs` and drive it in a real browser. Chromium and
-  Playwright are the way this has been checked: walk every route, click every
-  control, run every player, and seed the store with fresh / heavily-used /
-  exactly-one-of-each data, because empty and full both hide the off-by-one.
-- Check the things a screen cannot tell you it got wrong: two screens
-  disagreeing about the same number, a class rendered that the stylesheet never
-  defines, `NaN` or `undefined` reaching the page.
-- Anything the app does at a moment it was not opened by hand — a result on
-  launch, a sound, a buzz — has had no user gesture, and a phone refuses to
-  vibrate or start an `AudioContext` without one. Put it behind a tap.
-- A screen that redraws itself is a screen that cannot animate: nothing that is
-  replaced can move. Marking a cell swaps that one cell and nudges the numbers
-  that changed, which is why the rings sweep instead of jumping and why the
-  page no longer fades back in under your thumb.
-- Adding a file means adding it to `ASSETS` in `www/sw.js` **and** bumping
-  `CACHE`. Forgetting the bump ships code nobody can see.
+- `npm run check` for the calendar maths and the stylesheet's own rules.
+- `npm run dev` and walk the routes you touched. No console errors.
+- Re-read the diff for text that got long and comments that became prose.

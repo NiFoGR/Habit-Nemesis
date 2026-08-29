@@ -1,21 +1,11 @@
 // Feats. Not achievements.
 //
-// The app used to hand out badges from two separate places - fifteen in the
-// kegel program, a handful more in PE - neither of which knew the other
-// existed and neither of which was visible outside its own section. This
-// replaces both, and raises the bar, using one test:
+// One test: could you say it out loud to another person and have it mean
+// something? "Held a contraction for thirty seconds" passes, "opened the app
+// seven days running" does not.
 //
-//   Could you say it out loud to another person and have it mean something?
-//
-// "Held a contraction for thirty seconds" passes. "Opened the app seven days
-// running" does not: the second is a fact about using an app, and only the
-// first is a fact about your life. That rule retires the participation
-// trophies, including the one for finishing your first session.
-//
-// Every feat is a predicate over the record rather than a flag handed out by
-// whichever screen happened to be open when it happened. Only the date each
-// was first seen is stored, so a new one can be announced once - and if that
-// is ever lost, the feats themselves recompute from the data.
+// Each is a predicate over the record, so only the date first seen is stored
+// and the rest recomputes.
 
 import * as store from '../store.js';
 import * as habits from '../habits/program.js';
@@ -39,14 +29,11 @@ const NEW_TESTAMENT = ['mat', 'mrk', 'luk', 'jhn', 'act', 'rom', '1co', '2co', '
 const GOSPELS = ['mat', 'mrk', 'luk', 'jhn'];
 const TORAH = ['gen', 'exo', 'lev', 'num', 'deu'];
 
-const allRead = (ids) => ids.every(bookDone);
 const readOf = (ids) => ids.filter(bookDone).length;
 
 const stretchMs = () => store.get().pe.sessions.filter((s) => s.type === 'stretch').reduce((a, s) => a + s.durationSec * 1000, 0);
 
-/** The most consecutive days at or over the two-hour stretch target. The old
- *  achievement asked only about the last seven days, so it could be earned and
- *  then be untrue by the following Tuesday. */
+/** Longest run at or over the stretch target. */
 function bestStretchRun(target = 2 * 3600000) {
   const days = Object.entries(
     store.get().pe.sessions.reduce((acc, s) => {
@@ -66,13 +53,13 @@ function bestStretchRun(target = 2 * 3600000) {
   return best;
 }
 
-/** Growth on one measurement, first check-in to best, in centimetres. */
+/** Growth on one measurement, first check-in to best, in cm. */
 const grew = (key) => {
   const m = store.get().pe.measurements.filter((x) => x[key]);
   return m.length > 1 ? Math.max(...m.map((x) => x[key])) - m[0][key] : 0;
 };
 
-/** The longest run of consecutive days satisfying a predicate over day keys. */
+/** Longest run of days satisfying a predicate. */
 function longestRun(has, days = 1200) {
   let best = 0;
   let run = 0;
@@ -91,7 +78,7 @@ const ruleKept = (key) => {
   return !!(d && d.morning && d.evening);
 };
 
-/** A day where every row on the grid came good. */
+/** A day where every row came good. */
 function perfectDays() {
   const rows = [...habits.linkedHabits(), ...habits.active()];
   if (!rows.length) return { best: 0, count: 0 };
@@ -127,10 +114,120 @@ const reachedDivision = (id) => {
 };
 const arcsWon = () => Object.values(arenaState().arcs).filter((a) => a.won).length;
 
-/* ---------------- the catalogue ----------------
-   `at` is the number the feat needs and `now` is where you are, so a locked
-   feat can show how far off it is instead of just sitting there greyed out.
-   Anything without them is pass or fail and says so. */
+/* ---------------- the grid, for everyone ---------------- */
+
+const summaries = () => habits.active().map((h) => habits.summary(h)).filter(Boolean);
+
+/** Whole days between two day keys. */
+const between = (a, b) => Math.round((new Date(b) - new Date(a)) / 86400000);
+
+/** The longest streak any one habit has ever had. */
+const bestHabitStreak = () => summaries().reduce((a, s) => Math.max(a, s.best || 0), 0);
+
+/** Days you did the thing, across every habit, archived ones included. */
+function marksTotal() {
+  let n = 0;
+  for (const days of Object.values(store.get().habits.entries)) {
+    for (const v of Object.values(days)) if (typeof v === 'number' && v > 0) n++;
+  }
+  return n;
+}
+
+/** Every day anything was marked on, oldest first. */
+function markedDays() {
+  const set = new Set();
+  for (const days of Object.values(store.get().habits.entries)) {
+    for (const [k, v] of Object.entries(days)) if (typeof v === 'number' && v > 0) set.add(k);
+  }
+  return [...set].sort();
+}
+
+/** Broke a streak this long, then built another one. Two runs, not one long one. */
+const rebuilt = (len = 30) => summaries().some((s) => s.streaks.filter((r) => r.len >= len).length >= 2);
+
+/** Away with nothing marked, then back for `back` days running. */
+function cameBack(gap = 14, back = 7) {
+  const days = markedDays();
+  for (let i = 1; i < days.length; i++) {
+    if (between(days[i - 1], days[i]) <= gap) continue;
+    let run = 1;
+    for (let j = i + 1; j < days.length && run < back; j++) {
+      if (days[j] !== store.addDays(days[j - 1], 1)) break;
+      run++;
+    }
+    if (run >= back) return true;
+  }
+  return false;
+}
+
+/** The biggest lifetime total on any measurable habit, in its own unit. */
+const countedMost = () => summaries().filter((s) => s.habit.kind === 'number').reduce((a, s) => Math.max(a, s.total || 0), 0);
+
+const bestScore = () => summaries().reduce((a, s) => Math.max(a, s.score || 0), 0);
+
+/** Every habit above the bar at once. Three or more, or it is not a board. */
+function boardAbove(bar = 0.75) {
+  const list = summaries();
+  return list.length >= 3 && list.every((s) => s.score >= bar);
+}
+
+/** A group whose every member was satisfied on each of the last `days` days. */
+function groupCleared(days = 7) {
+  const end = store.addDays(habits.today(), -1);
+  return habits.groups().some((g) => {
+    const sums = habits.active().filter((h) => h.group === g.id).map((h) => habits.summary(h));
+    if (sums.length < 2) return false;
+    for (let i = 0; i < days; i++) {
+      const key = store.addDays(end, -i);
+      if (!sums.every((s) => s?.index.get(key)?.satisfied)) return false;
+    }
+    return true;
+  });
+}
+
+/** Days from the day the record starts to today. */
+function daysOnRecord() {
+  const first = arena.anchorDay();
+  return first ? Math.max(0, between(first, habits.today())) : 0;
+}
+
+/* ---------------- the Arena, for everyone ---------------- */
+
+const weekList = () => Object.entries(arenaState().weeks).sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([key, w]) => ({ key, ...w }));
+
+/** Weeks actually played. A 'record' week was scored, never contested. */
+const fixtures = () => weekList().filter((w) => w.result === 'won' || w.result === 'lost');
+const wins = () => fixtures().filter((w) => w.result === 'won').length;
+
+/** Longest run of consecutive fixtures won. */
+function bestWinRun() {
+  let best = 0;
+  let run = 0;
+  for (const w of fixtures()) {
+    run = w.result === 'won' ? run + 1 : 0;
+    if (run > best) best = run;
+  }
+  return best;
+}
+
+const beat = (opp) => fixtures().some((w) => w.result === 'won' && w.opponent === opp);
+
+const monthList = () => Object.entries(arenaState().months).sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([month, m]) => ({ month, ...m }));
+
+/** Longest run of months matching a test, so a partial run still shows progress. */
+function monthRun(ok) {
+  let best = 0;
+  let run = 0;
+  for (const m of monthList()) {
+    run = ok(m) ? run + 1 : 0;
+    if (run > best) best = run;
+  }
+  return best;
+}
+
+const arcList = () => Object.values(arenaState().arcs);
+
+/* ------------------- the catalogue ------------------- */
 
 export const FEATS = [
   /* --- Kegels --- */
@@ -152,10 +249,10 @@ export const FEATS = [
   { id: 'kegel30', section: 'Kegels', icon: 'flame', name: 'A month of kegels',
     blurb: 'Thirty days running without missing a session.',
     now: () => Math.max(store.get().prs.streak, store.streak()), at: 30, unit: ' d' },
-  { id: 'week26', section: 'Kegels', icon: 'route', name: 'Six months of the programme',
+  { id: 'week26', section: 'Kegels', icon: 'route', name: 'Six months in',
     blurb: 'Reached week 26 of the two-year plan.',
     now: () => store.get().program.level, at: 26, unit: ' wk' },
-  { id: 'week52', section: 'Kegels', icon: 'route', name: 'A year of the programme',
+  { id: 'week52', section: 'Kegels', icon: 'route', name: 'A year in',
     blurb: 'Reached week 52 of the two-year plan.',
     now: () => store.get().program.level, at: 52, unit: ' wk' },
   { id: 'week104', section: 'Kegels', icon: 'medal', name: 'The whole programme',
@@ -181,7 +278,7 @@ export const FEATS = [
   { id: 'grew1cm', section: 'PE', icon: 'trend', name: 'A centimetre',
     blurb: 'A full centimetre on your first measurement, measured the same way.',
     now: () => grew('bpel'), at: 1, unit: ' cm' },
-  { id: 'girth5mm', section: 'PE', icon: 'trend', name: 'Half a centimetre of girth',
+  { id: 'girth5mm', section: 'PE', icon: 'trend', name: 'Half a centimetre',
     blurb: 'Half a centimetre of erect girth on your first measurement.',
     now: () => grew('eg'), at: 0.5, unit: ' cm' },
   { id: 'checkins12', section: 'PE', icon: 'ruler', name: 'A year of measuring',
@@ -227,20 +324,117 @@ export const FEATS = [
     now: () => Object.keys(store.get().breathe.days).length, at: 100 },
 
   /* --- The grid --- */
+  { id: 'firstMark', section: 'The grid', icon: 'check', name: 'Day one',
+    blurb: 'The first day you marked. Everything else is built on it.',
+    now: marksTotal, at: 1 },
   { id: 'perfectDay', section: 'The grid', icon: 'check', name: 'A perfect day',
     blurb: 'Every row on the grid, green, on the same day.',
     now: () => perfectDays().count, at: 1 },
   { id: 'perfectWeek', section: 'The grid', icon: 'flame', name: 'A perfect week',
     blurb: 'Seven perfect days back to back. Everything, all week.',
     now: () => perfectDays().best, at: 7, unit: ' d' },
-  { id: 'habitYear', section: 'The grid', icon: 'habits', name: 'A year of one thing',
+  { id: 'perfectMonth', section: 'The grid', icon: 'flame', name: 'A perfect month',
+    blurb: 'Thirty perfect days back to back. Nothing slipped for a month.',
+    now: () => perfectDays().best, at: 30, unit: ' d' },
+  { id: 'streak7', section: 'The grid', icon: 'habits', name: 'A week straight',
+    blurb: 'One habit, seven days unbroken.',
+    now: bestHabitStreak, at: 7, unit: ' d' },
+  { id: 'streak30', section: 'The grid', icon: 'habits', name: 'A month straight',
+    blurb: 'One habit, thirty days unbroken.',
+    now: bestHabitStreak, at: 30, unit: ' d' },
+  { id: 'streak100', section: 'The grid', icon: 'flame', name: 'A hundred days',
+    blurb: 'One habit, a hundred days unbroken.',
+    now: bestHabitStreak, at: 100, unit: ' d' },
+  { id: 'habitYear', section: 'The grid', icon: 'medal', name: 'A year of one thing',
     blurb: 'One habit, kept unbroken for 365 days.',
-    now: () => habits.active().reduce((a, h) => Math.max(a, habits.summary(h)?.best || 0), 0), at: 365, unit: ' d' },
+    now: bestHabitStreak, at: 365, unit: ' d' },
+  { id: 'streak1000', section: 'The grid', icon: 'medal', name: 'A thousand days',
+    blurb: 'One habit, a thousand days unbroken. Almost nobody gets here.',
+    now: bestHabitStreak, at: 1000, unit: ' d' },
+  { id: 'habits5', section: 'The grid', icon: 'habits', name: 'Five at once',
+    blurb: 'Five habits alive on the grid at the same time.',
+    now: () => habits.active().length, at: 5 },
   { id: 'habits10', section: 'The grid', icon: 'habits', name: 'Ten at once',
     blurb: 'Ten habits alive on the grid at the same time.',
     now: () => habits.active().length, at: 10 },
+  { id: 'marks100', section: 'The grid', icon: 'check', name: 'A hundred ticks',
+    blurb: 'A hundred days marked, all told.',
+    now: marksTotal, at: 100 },
+  { id: 'marks1000', section: 'The grid', icon: 'check', name: 'A thousand ticks',
+    blurb: 'A thousand days marked. That is years of small decisions.',
+    now: marksTotal, at: 1000 },
+  { id: 'marks10000', section: 'The grid', icon: 'medal', name: 'Ten thousand ticks',
+    blurb: 'Ten thousand days marked, across everything you keep.',
+    now: marksTotal, at: 10000 },
+  { id: 'counted1k', section: 'The grid', icon: 'target', name: 'A thousand counted',
+    blurb: 'One measurable habit totalling a thousand of whatever it counts.',
+    now: countedMost, at: 1000 },
+  { id: 'counted10k', section: 'The grid', icon: 'target', name: 'Ten thousand counted',
+    blurb: 'Ten thousand of one thing, a day at a time.',
+    now: countedMost, at: 10000 },
+  { id: 'score90', section: 'The grid', icon: 'trend', name: 'Ninety percent',
+    blurb: 'One habit at ninety percent. The score has a thirteen-day memory, so this is recent form.',
+    now: () => bestScore() * 100, at: 90, unit: '%' },
+  { id: 'boardClean', section: 'The grid', icon: 'trend', name: 'The whole board',
+    blurb: 'Every habit above seventy-five percent at the same time.',
+    test: () => boardAbove(0.75) },
+  { id: 'groupClear', section: 'The grid', icon: 'check', name: 'A group cleared',
+    blurb: 'Every habit in one group, satisfied every day for a week.',
+    test: () => groupCleared(7) },
+  { id: 'comeback', section: 'The grid', icon: 'repeat', name: 'Back from the dead',
+    blurb: 'Broke a streak of thirty, then built another one. The second is the hard one.',
+    test: () => rebuilt(30) },
+  { id: 'returned', section: 'The grid', icon: 'repeat', name: 'Came back',
+    blurb: 'Away a fortnight, then seven days running. Nobody saw you stop.',
+    test: () => cameBack(14, 7) },
+  { id: 'year1', section: 'The grid', icon: 'calendar', name: 'A year on the record',
+    blurb: 'A year since the first day you marked.',
+    now: daysOnRecord, at: 365, unit: ' d' },
+  { id: 'year2', section: 'The grid', icon: 'calendar', name: 'Two years',
+    blurb: 'Two years of record. The app is older than most of your excuses.',
+    now: daysOnRecord, at: 730, unit: ' d' },
 
   /* --- The Arena --- */
+  { id: 'firstFixture', section: 'The Arena', icon: 'versus', name: 'Your first week',
+    blurb: 'Played a fixture. The record had enough in it to be scored against.',
+    now: () => fixtures().length, at: 1 },
+  { id: 'firstWin', section: 'The Arena', icon: 'versus', name: 'First blood',
+    blurb: 'Beat a week out of your own history.',
+    now: wins, at: 1 },
+  { id: 'wins10', section: 'The Arena', icon: 'versus', name: 'Ten wins',
+    blurb: 'Ten weeks won.', now: wins, at: 10 },
+  { id: 'wins50', section: 'The Arena', icon: 'medal', name: 'Fifty wins',
+    blurb: 'Fifty weeks won. That is a year of mostly turning up.',
+    now: wins, at: 50 },
+  { id: 'winStreak5', section: 'The Arena', icon: 'flame', name: 'Five in a row',
+    blurb: 'Five straight weeks won, none of them close enough to lose.',
+    now: bestWinRun, at: 5 },
+  { id: 'weeks100', section: 'The Arena', icon: 'calendar', name: 'A hundred weeks',
+    blurb: 'A hundred fixtures played. Two years of showing up to be counted.',
+    now: () => fixtures().length, at: 100 },
+  { id: 'beatWorst', section: 'The Arena', icon: 'flash', name: 'Beat your worst',
+    blurb: 'Out-scored Your Worst Self. The low bar, cleared.',
+    test: () => beat('worst') },
+  { id: 'beatLastMonth', section: 'The Arena', icon: 'flash', name: 'Beat last month',
+    blurb: 'Out-scored the same week of a month ago. Measurably better than you were.',
+    test: () => beat('lastMonth') },
+  { id: 'divProspect', section: 'The Arena', icon: 'ladder', name: 'Prospect',
+    blurb: 'Climbed off the bottom of the ladder.', test: () => reachedDivision('prospect') },
+  { id: 'divContender', section: 'The Arena', icon: 'ladder', name: 'Contender',
+    blurb: 'Reached Contender. A bad week costs you something now.',
+    test: () => reachedDivision('contender') },
+  { id: 'promoted2', section: 'The Arena', icon: 'crown', name: 'Back to back',
+    blurb: 'Promoted in consecutive months.',
+    now: () => monthRun((m) => m.move === 'up'), at: 2 },
+  { id: 'noDrop6', section: 'The Arena', icon: 'shield', name: 'Six months, no step back',
+    blurb: 'Six months settled without a relegation among them.',
+    now: () => monthRun((m) => m.move !== 'down'), at: 6 },
+  { id: 'arcQualified', section: 'The Arena', icon: 'trophy', name: 'Out of the group',
+    blurb: 'Finished the group stage in the top three and made the knockout.',
+    test: () => arcList().some((a) => a.qualified === true) },
+  { id: 'arcFinal', section: 'The Arena', icon: 'trophy', name: 'Reached a final',
+    blurb: 'Played an Arc final. The final is always your own best week.',
+    test: () => arcList().some((a) => a.final === 'won' || a.final === 'lost') },
   { id: 'divMenace', section: 'The Arena', icon: 'trophy', name: 'Menace',
     blurb: 'Climbed to the Menace division.', test: () => reachedDivision('menace') },
   { id: 'divLocked', section: 'The Arena', icon: 'trophy', name: 'Locked In',
@@ -252,14 +446,14 @@ export const FEATS = [
     test: () => Object.values(arenaState().months).some((m) => m.to === 'topg' && m.from === 'topg') },
   { id: 'beatNemesis', section: 'The Arena', icon: 'flash', name: 'Beat the Nemesis',
     blurb: 'Out-scored the best week you had ever had, in a week that counted.',
-    // The Arc final is the Nemesis under another name, so winning it counts.
+    // The Arc final is the Nemesis under another name.
     test: () => Object.values(arenaState().weeks).some((w) => w.result === 'won' && (w.opponent === 'nemesis' || w.opponent === 'final')) },
   { id: 'arcWin', section: 'The Arena', icon: 'trophy', name: 'An Arc',
     blurb: 'Won an Arc. The final is always your own best week.', now: arcsWon, at: 1 },
   { id: 'arcThree', section: 'The Arena', icon: 'trophy', name: 'Three Arcs',
     blurb: 'Three trophies in the cabinet.', now: arcsWon, at: 3 },
   { id: 'arcYear', section: 'The Arena', icon: 'medal', name: 'The clean sweep',
-    blurb: 'All four Arcs of one year. Winter, spring, summer, autumn.',
+    blurb: 'Every cup of one year. Winter, spring, autumn.',
     test: () => {
       const byYear = {};
       for (const [k, a] of Object.entries(arenaState().arcs)) {
@@ -267,13 +461,13 @@ export const FEATS = [
         const y = k.split('-')[0];
         byYear[y] = (byYear[y] || 0) + 1;
       }
-      return Object.values(byYear).some((n) => n >= 4);
+      return Object.values(byYear).some((n) => n >= 3);
     } },
 ];
 
 /* ---------------- earning them ---------------- */
 
-/** Where a feat stands right now, without deciding whether it is earned. */
+/** Where a feat stands, without deciding whether it is earned. */
 export function progressOf(feat) {
   if (feat.test) return { earned: safely(feat.test, false), have: null, need: null, frac: 0 };
   const have = safely(feat.now, 0) || 0;
@@ -290,10 +484,8 @@ function safely(fn, fallback) {
 }
 
 export const earnedAt = (id) => store.get().arena.feats[id] || null;
-export const isEarned = (id) => !!store.get().arena.feats[id];
 
-/** Fold the record forward: anything now true that was not recorded gets a
- *  date, and is handed back so it can be announced once. */
+/** Fold forward: anything newly true gets a date and is handed back to announce. */
 export function check() {
   const fresh = [];
   store.update((st) => {
@@ -307,19 +499,10 @@ export function check() {
   return fresh;
 }
 
-/** The catalogue, grouped for display, in catalogue order inside each section.
- *  Not earned-first: several sections are ladders - twenty seconds, thirty,
- *  sixty - and sorting the earned ones to the top takes the ladder apart. */
-/* ---------------- what this install can earn ----------------
-   Written as the sections everyone has, not the sections the five own, for
-   the same reason the router is an allow-list: a section added later is
-   hidden from a locked install until someone lets it in on purpose, rather
-   than leaking on the day it is written.
+/** Grouped, in catalogue order. Not earned-first: several sections are ladders. */
 
-   The catalogue is filtered rather than the earned list, so the count under
-   the Cabinet is "3 of 12" against what you can actually earn instead of
-   "3 of 40" against a set that includes twenty-eight feats for features you
-   do not have. */
+/* ------------- what this install can earn ------------- */
+
 const OPEN_SECTIONS = ['The grid', 'The Arena'];
 
 const visible = () => (nifoUnlocked() ? FEATS : FEATS.filter((f) => OPEN_SECTIONS.includes(f.section)));
@@ -343,8 +526,7 @@ export function counts() {
   return { earned: all.filter((f) => f.earned).length, total: list.length };
 }
 
-/** The nearest thing to being earned, for the "next up" line. Only ones with a
- *  measurable distance: a pass-or-fail feat has nothing to show. */
+/** Nearest to earned, for the "next up" line. Measurable ones only. */
 export function closest(n = 3) {
   return visible().map((f) => ({ ...f, ...progressOf(f) }))
     .filter((f) => !f.earned && f.need)

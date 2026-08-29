@@ -4,13 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-/**
- * Puts the filter back after a reboot or an app update.
- *
- * <p>Without this the night light stays off until NiFo is next opened, which
- * for a phone that restarted overnight means it is off for exactly the hours it
- * was meant to cover.
- */
+/** Puts the filter back after a reboot or an update. */
 public class BootReceiver extends BroadcastReceiver {
 
     @Override

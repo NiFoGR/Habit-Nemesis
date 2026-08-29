@@ -1,16 +1,14 @@
 // The Arena's maths, checked. `npm run check:arena`.
 //
-// There is no test runner in this repo and this is not one. It is the one
-// corner of the app whose answers cannot be read off a screen: ISO weeks, the
-// month a week belongs to, which arc a month is in and what came before it.
-// Every check here is one that has already been wrong once - the arc before
-// Winter 2026 was Autumn 2025, a week needed seven due cells so a person
-// keeping one habit could never play a fixture, and the division a score
-// earned was off by one rung.
+// Not a test runner. It covers the one corner whose answers cannot be read off
+// a screen: ISO weeks, which month a week is in, which arc, and what came
+// before it. Every check here has been wrong once.
 //
-// It runs in bare node with a few browser globals stubbed, because the domain
-// is deliberately free of the DOM. If that ever stops being true, this file
-// failing to start is the warning.
+// Runs in bare node with a few browser globals stubbed, because the domain has
+// no DOM in it. If that stops being true, this file failing to start is the
+// warning.
+
+import { readFileSync } from 'node:fs';
 
 const store = new Map();
 globalThis.localStorage = {
@@ -26,8 +24,7 @@ globalThis.document = {
   querySelector: () => null,
 };
 globalThis.window = { matchMedia: () => ({ matches: false }) };
-// node defines navigator itself and will not let it be replaced; nothing the
-// domain touches needs more than what is already on it.
+// node owns navigator and will not let it be replaced.
 
 const st = await import('../www/js/store.js');
 const a = await import('../www/js/arena/program.js');
@@ -63,6 +60,17 @@ is('the clocks going forward does not drop a week',
 is('a week belongs to the month holding its Thursday',
   [a.monthOfWeek(a.weekKey('2026-08-31')), a.monthOfWeek(a.weekKey('2026-09-01'))], ['2026-09', '2026-09']);
 
+group('the ladder is one list');
+{
+  // store.js keeps its own copy for the sanitiser, and a rung added to one and
+  // not the other silently drops every saved month naming it.
+  const src = readFileSync(new URL('../www/js/store.js', import.meta.url), 'utf8');
+  const listed = src.match(/const ARENA_DIVISIONS = \[([^\]]*)\]/)[1]
+    .split(',').map((x) => x.trim().replace(/'/g, '')).filter(Boolean);
+  is('the sanitiser knows every division', listed, a.DIVISIONS.map((d) => d.id));
+  is('and in the same order', listed.join('>'), a.DIVISIONS.map((d) => d.id).join('>'));
+}
+
 group('a year of weeks, partitioned');
 {
   const seen = new Map();
@@ -82,8 +90,8 @@ group('a year of weeks, partitioned');
 group('divisions');
 is('the bars climb', a.DIVISIONS.every((d, i) => i === 0 || d.bar > a.DIVISIONS[i - 1].bar), true);
 is('a score earns the division whose bar it clears',
-  [0, 0.24, 0.25, 0.59, 0.6, 0.91, 0.92, 1].map((s) => a.divisionForScore(s).id),
-  ['bottom', 'bottom', 'npc', 'prospect', 'contender', 'locked', 'topg', 'topg']);
+  [0, 0.29, 0.3, 0.59, 0.6, 0.89, 0.9, 0.99, 1].map((s) => a.divisionForScore(s).id),
+  ['bottom', 'bottom', 'npc', 'prospect', 'contender', 'locked', 'topg', 'topg', 'full']);
 
 /* ---------------- arcs ---------------- */
 group('arcs');
@@ -91,25 +99,28 @@ is('months sit in their meteorological season',
   ['2026-01', '2026-03', '2026-05', '2026-06', '2026-08', '2026-09', '2026-11', '2026-12'].map((m) => a.arcKey(a.arcOfMonth(m))),
   ['2025-winter', '2026-spring', '2026-spring', '2026-summer', '2026-summer', '2026-autumn', '2026-autumn', '2026-winter']);
 is('winter runs into the next year under its own December', a.arcOfMonth('2027-01').year, 2026);
-is('each arc knows the one immediately before it',
-  ['winter', 'spring', 'summer', 'autumn'].map((id) => a.arcKey(a.previousArc({ ...a.ARCS.find((x) => x.id === id), year: 2026 }))),
-  ['2026-autumn', '2025-winter', '2026-spring', '2026-summer']);
+is('each cup knows the one immediately before it',
+  ['winter', 'spring', 'autumn'].map((id) => a.arcKey(a.previousArc({ ...a.ARCS.find((x) => x.id === id), year: 2026 }))),
+  ['2026-autumn', '2025-winter', '2026-spring']);
+is('and summer is stepped over, never counted down to',
+  ['winter', 'spring', 'autumn'].map((id) => a.arcKey(a.nextArc({ ...a.ARCS.find((x) => x.id === id), year: 2026 }))),
+  ['2027-spring', '2026-autumn', '2026-winter']);
+is('summer holds no cup', a.CUPS.map((c) => c.id), ['winter', 'spring', 'autumn']);
+is('and every week of it is off-season',
+  a.arcWeeks({ ...a.ARCS.find((x) => x.id === 'summer'), year: 2026 }).every((w) => a.arcStage(w).stage === 'break'), true);
 is('an arc is twelve to fourteen weeks',
   a.ARCS.every((x) => { const n = a.arcWeeks({ ...x, year: 2026 }).length; return n >= 12 && n <= 14; }), true);
-is('the last two weeks of a quarter are the off-season',
-  a.arcWeeks(a.arcOfMonth('2026-07')).slice(-2).map((w) => a.arcStage(w).stage), ['break', 'break']);
+is('the last two weeks of a cup quarter are the off-season',
+  a.arcWeeks(a.arcOfMonth('2026-10')).slice(-2).map((w) => a.arcStage(w).stage), ['break', 'break']);
 is('and the three before those are the knockout, in order',
-  a.arcSeason(a.arcOfMonth('2026-07')).slice(-4).map((w) => a.arcStage(w).stage), ['group', 'qf', 'sf', 'final']);
+  a.arcSeason(a.arcOfMonth('2026-10')).slice(-4).map((w) => a.arcStage(w).stage), ['group', 'qf', 'sf', 'final']);
 is('the group stage is the season less its knockout',
-  a.ARCS.every((x) => {
+  a.CUPS.every((x) => {
     const arc = { ...x, year: 2026 };
     return a.arcGroupWeeks(arc).length === a.arcSeason(arc).length - 3 && a.arcGroupWeeks(arc).length >= 5;
   }), true);
-is('every arc knows the one after it',
-  ['winter', 'spring', 'summer', 'autumn'].map((id) => a.arcKey(a.nextArc({ ...a.ARCS.find((x) => x.id === id), year: 2026 }))),
-  ['2027-spring', '2026-summer', '2026-autumn', '2026-winter']);
-is('and next undoes previous',
-  a.ARCS.every((x) => {
+is('and next undoes previous, for every cup',
+  a.CUPS.every((x) => {
     const arc = { ...x, year: 2026 };
     return a.arcKey(a.previousArc(a.nextArc(arc))) === a.arcKey(arc);
   }), true);
@@ -172,12 +183,8 @@ st.update((s) => { s.habits.entries = {}; });
 is('a week you did nothing in is still a fixture, and lost',
   [a.scoreWeek('2026-W20').void, a.scoreWeek('2026-W20').score], [false, 0]);
 
-/* ---------------- frequencies ----------------
-   The one that was wrong in the shipped version: a habit asking for five days
-   in seven was scored out of seven, and the habits engine's trailing window
-   meant the same five days were worth 100% done Monday to Friday and 71% done
-   Wednesday to Sunday. A fixed week can see the whole of itself, so it counts
-   what the habit asks for and does not care which days. */
+/* -------------------- frequencies -------------------- */
+
 group('a habit that does not ask for every day');
 const week = (num, den, pattern) => {
   st.update((s) => {
@@ -198,13 +205,135 @@ is('every third day owes two in a week', week(1, 3, 'X__X__X'), [2, 2]);
 is('ten in thirty owes two in a week', week(10, 30, 'X_X____'), [2, 2]);
 is('a daily habit still owes every day', week(1, 1, 'XXXXX__'), [5, 7]);
 
-/* ---------------- the sanitiser, against the real catalogue ----------------
-   Every feat id has to survive a round trip through the store, and fourteen of
-   the forty did not: the key rule allowed lower case only, and the catalogue is
-   full of names like beatNemesis and perfectWeek. Every one of those was thrown
-   away on the next launch and had to be earned again - silently, visible only
-   as a count that would not go up. Asserted against the catalogue itself rather
-   than against a copy of the rule, so the two cannot drift. */
+/* ------------------ the week in review ------------------ */
+
+group('the review');
+{
+  const habits = await import('../www/js/habits/program.js');
+  const back = (n) => st.addDays(st.dayKey(), -n);
+  const run = (from, len) => Object.fromEntries(Array.from({ length: len }, (_, i) => [back(from - i), 1]));
+
+  st.update((s) => {
+    s.habits.settings.showLinked = false;
+    s.habits.items = [habit('h_a', 'A'), habit('h_b', 'B')];
+    const d = a.weekDays('2026-W20');
+    s.habits.entries = {
+      h_a: { [d[0]]: 1, [d[1]]: 1, [d[2]]: 0, [d[3]]: 1, [d[4]]: 1, [d[5]]: 1, [d[6]]: 1 },
+      h_b: { [d[0]]: 1, [d[1]]: -1 },
+    };
+  });
+  const shape = a.weekShape('2026-W20');
+  is('a shape is seven days', shape.length, 7);
+  is('counting what was done, not what was owed', shape.map((x) => x.done), [2, 1, 0, 1, 1, 1, 1]);
+  is('a skip is held apart from a miss', shape.map((x) => x.skipped), [0, 1, 0, 0, 0, 0, 0]);
+  is('and a week gone by holds no future', shape.filter((x) => x.future).length, 0);
+
+  const cur = a.currentWeek();
+  is('the review is this week on its last day, the one gone after that',
+    a.reviewWeek(), st.dayKey() === a.weekEnd(cur) ? cur : a.prevWeek(cur));
+  a.markReviewed(a.reviewWeek());
+  is('marking it means it is not offered again', a.reviewDue(), false);
+  a.markReviewed('2020-W01');
+  is('and the mark never moves backwards', st.get().arena.reviewed, a.reviewWeek());
+
+  // A run of eight that ended a fortnight ago, and one still going.
+  st.update((s) => {
+    s.habits.items = [habit('h_old', 'Old'), habit('h_live', 'Live')];
+    s.habits.entries = { h_old: run(20, 8), h_live: run(6, 7) };
+  });
+  is('a streak that ended inside the window is what broke',
+    habits.brokenIn(back(16), back(10)).map((b) => [b.habit.name, b.len]), [['Old', 8]]);
+  is('a live streak has not broken', habits.brokenIn(back(6), back(0)).length, 0);
+}
+
+/* ----- the public feats with real logic -----
+   Streak counts and run lengths are the same shape of arithmetic as the week
+   maths above, and just as unreadable off a screen. Seeded relative to today,
+   so these do not rot next year. */
+
+group('the feats that count runs');
+{
+  const feats = await import('../www/js/arena/feats.js');
+  const byId = (id) => feats.FEATS.find((f) => f.id === id);
+  const back = (n) => st.addDays(st.dayKey(), -n);
+  const run = (from, len) => Object.fromEntries(Array.from({ length: len }, (_, i) => [back(from - i), 1]));
+
+  const withEntries = (entries, items) => st.update((s) => {
+    s.habits.settings.showLinked = false;
+    s.habits.items = items || [habit('h_r', 'Run')];
+    s.habits.entries = entries;
+  });
+
+  // Two runs of 35, ten days apart. One long run is not a comeback.
+  withEntries({ h_r: { ...run(120, 35), ...run(70, 35) } });
+  is('two long streaks is a comeback', byId('comeback').test(), true);
+  withEntries({ h_r: run(100, 100) });
+  is('one long streak is not', byId('comeback').test(), false);
+
+  // Away, then back for a week.
+  withEntries({ h_r: { ...run(60, 5), ...run(20, 8) } });
+  is('a fortnight away then a week back', byId('returned').test(), true);
+  withEntries({ h_r: { ...run(30, 5), ...run(20, 8) } });
+  is('ten days away is not away', byId('returned').test(), false);
+
+  withEntries({ h_r: run(40, 41) });
+  is('the streak feat reads the longest run', byId('streak30').now(), 41);
+  is('and the same run feeds the year one', byId('habitYear').now(), 41);
+  is('ticks are counted across every habit', byId('marks100').now(), 41);
+
+  // Fixtures: only won and lost are played. 'record' and 'void' are not.
+  const wk = (result, opponent) => ({ score: 0.5, due: 10, done: 5, opponent, oppName: '', oppScore: 0.4, result, arc: null });
+  st.update((s) => {
+    s.arena.weeks = {
+      '2026-W01': wk('won', 'worst'), '2026-W02': wk('won', 'nemesis'), '2026-W03': wk('won', 'lastMonth'),
+      '2026-W04': wk('lost', 'nemesis'), '2026-W05': wk('won', 'standard'), '2026-W06': wk('record', ''),
+      '2026-W07': wk('void', ''),
+    };
+    s.arena.months = {
+      '2026-01': { score: 0.5, w: 2, l: 1, from: 'npc', to: 'prospect', move: 'up' },
+      '2026-02': { score: 0.6, w: 3, l: 0, from: 'prospect', to: 'contender', move: 'up' },
+      '2026-03': { score: 0.4, w: 1, l: 2, from: 'contender', to: 'prospect', move: 'down' },
+      '2026-04': { score: 0.5, w: 2, l: 1, from: 'prospect', to: 'prospect', move: 'held' },
+    };
+  });
+  is('a record week is not a fixture', byId('firstFixture').now(), 5);
+  is('wins are counted', byId('wins10').now(), 4);
+  is('the win run stops at a loss', byId('winStreak5').now(), 3);
+  is('beating one rival by name', byId('beatWorst').test(), true);
+  is('and the Nemesis too', byId('beatNemesis').test(), true);
+  is('two promotions running', byId('promoted2').now(), 2);
+  is('a drop breaks the no-drop run', byId('noDrop6').now(), 2);
+}
+
+/* ----- every feat actually runs -----
+   progressOf() wraps each test in a try/catch, so a predicate that throws reads
+   as zero for ever and nothing says so. This is what says so. */
+
+group('every feat runs without throwing');
+{
+  const feats = await import('../www/js/arena/feats.js');
+  const broken = [];
+  const wrong = [];
+  for (const f of feats.FEATS) {
+    try {
+      if (f.test) {
+        if (typeof f.test() !== 'boolean') wrong.push(f.id);
+      } else {
+        const v = f.now();
+        if (!Number.isFinite(v)) wrong.push(f.id);
+        if (!Number.isFinite(f.at)) wrong.push(`${f.id}:at`);
+      }
+    } catch (e) {
+      broken.push(`${f.id} (${e.message})`);
+    }
+  }
+  is('none throws on an empty record', broken, []);
+  is('each returns the shape it promises', wrong, []);
+  is('no id is claimed twice', feats.FEATS.length, new Set(feats.FEATS.map((f) => f.id)).size);
+}
+
+/* ----- the sanitiser, against the real catalogue ----- */
+
 group('every feat survives being saved and read back');
 {
   const feats = await import('../www/js/arena/feats.js');
@@ -216,7 +345,7 @@ group('every feat survives being saved and read back');
   st.reset();
   st.importJson(backup);
   const kept = Object.keys(st.get().arena.feats);
-  is('all forty come back', kept.length, ids.length);
+  is('every one comes back', kept.length, ids.length);
   is('and none was renamed', ids.filter((id) => !kept.includes(id)), []);
 }
 

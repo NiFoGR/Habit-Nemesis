@@ -1,9 +1,6 @@
-// Bible tracking: the heatmap, progress through the canon, prayer, and the log.
-//
-// Same shape as the other three sections, deliberately. A thirteen-week grid
-// answers "am I actually doing this" faster than any number, and the section
-// bars answer the question a whole-Bible reader actually has, which is not
-// "what percentage" but "which parts have I never been into".
+// Bible tracking: heatmap, progress through the canon, prayer, log.
+// The section bars answer the real question, which is which parts you have
+// never been into.
 
 import * as store from '../store.js';
 import * as bible from './program.js';
@@ -15,14 +12,13 @@ import { icon } from '../icons.js';
 export function renderBibleTracking(mount) {
   const hist = bible.history(13);
   const t30 = bible.totals(30);
-  const t7 = bible.totals(7);
   const st = store.get().bible;
   const prog = bible.overallProgress();
 
   const cols = [];
   for (let i = 0; i < hist.length; i += 7) cols.push(hist.slice(i, i + 7));
 
-  // Recent days, newest first, with what was read on each.
+  // Recent days, newest first.
   const log = Object.entries(st.days)
     .sort((a, b) => (a[0] < b[0] ? 1 : -1))
     .slice(0, 30);
@@ -38,7 +34,7 @@ export function renderBibleTracking(mount) {
       <div class="stat-grid">
         <div class="stat"><b>${bible.streak()}</b><span>day streak</span></div>
         <div class="stat"><b>${st.best}</b><span>best streak</span></div>
-        <div class="stat"><b>${t30.items}</b><span>read, 30d</span></div>
+        <div class="stat"><b>${t30.items}</b><span>chapters, 30d</span></div>
         <div class="stat"><b>${Math.round(t30.rate * 100)}%</b><span>days read, 30d</span></div>
       </div>
 
@@ -50,7 +46,6 @@ export function renderBibleTracking(mount) {
         <div class="hm-key">
           <span>less</span><i class="none"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><span>more</span>
         </div>
-        <p class="muted small">${t7.read} of the last 7 days.</p>
       </section>
 
       <section class="card">
@@ -71,9 +66,9 @@ export function renderBibleTracking(mount) {
           <span class="pill ghost">${pray.streak()}d streak</span></div>
         <div class="stat-grid">
           <div class="stat"><b>${pray.totals(30).full}</b><span>full days, 30d</span></div>
-          <div class="stat"><b>${pray.totals(30).morning}</b><span>mornings</span></div>
-          <div class="stat"><b>${pray.totals(30).evening}</b><span>nights</span></div>
-          <div class="stat"><b>${pray.lifetime()}</b><span>prayers kept</span></div>
+          <div class="stat"><b>${pray.totals(30).morning}</b><span>mornings, 30d</span></div>
+          <div class="stat"><b>${pray.totals(30).evening}</b><span>nights, 30d</span></div>
+          <div class="stat"><b>${pray.lifetime()}</b><span>prayers, all time</span></div>
         </div>
         <div class="heatmap">
           ${(() => { const h = pray.history(13); const cols = [];
@@ -99,9 +94,7 @@ export function renderBibleTracking(mount) {
           ? `<div class="log-list">${log.map(([key, d]) => `
               <div class="log-row">
                 <span class="lr-day"><b>${escapeHtml(relDay(key))}</b>${
-                  // relDay falls back to the same string as fmtDate for
-                  // anything older than yesterday, and printing it twice
-                  // looks like a bug.
+                  // relDay repeats fmtDate for anything older than yesterday.
                   relDay(key) === fmtDate(key) ? '' : `<i>${escapeHtml(fmtDate(key))}</i>`
                 }</span>
                 <span class="lr-what">

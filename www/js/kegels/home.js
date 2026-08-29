@@ -1,7 +1,4 @@
-// The Kegels section: its home screen, its how-to, and its settings.
-//
-// Everything reachable from the Kegels tile that is not the session player
-// itself. The player is session.js, the plan is program.js.
+// Kegels: home, how-to, settings. The player is session.js, the plan program.js.
 
 import * as store from '../store.js';
 import * as program from './program.js';
@@ -17,15 +14,11 @@ import { scheduleDaily, cancelAlarm, ALARM_KEGEL_REMINDER } from '../native.js';
 
 export function renderKegels(mount) {
   const state = store.get();
-  // Nobody's first kegel should be guesswork. Straight into the walkthrough on
-  // a genuinely fresh install; after that it is a link, not a gate.
+  // Straight into the walkthrough on a fresh install. After that it is a link.
   if (!state.settings.tutorialDone && state.sessions.length === 0) {
     return renderTutorial(mount, {
-      // The walkthrough renders in place, still at #/kegels, so backing out of
-      // it means backing out of Kegels. Re-rendering the home would only hit
-      // this gate again and redraw step one, which is what made the back arrow
-      // look dead on a fresh install. Finishing or skipping sets tutorialDone,
-      // and that is the difference between the two exits.
+      // Renders in place, still at #/kegels, so backing out leaves Kegels.
+      // Finishing or skipping sets tutorialDone.
       onExit: () => (store.get().settings.tutorialDone ? renderKegels(mount) : leaveTo('#/hub')),
     });
   }
@@ -33,7 +26,7 @@ export function renderKegels(mount) {
   const def = program.levelDef(plan.level);
   const st = store.streak();
 
-  // Last 7 days as dots: done / release / missed.
+  // Last 7 days: done, release, missed.
   const days = [];
   for (let i = 6; i >= 0; i--) {
     const key = store.addDays(store.dayKey(), -i);
@@ -89,7 +82,6 @@ export function renderKegels(mount) {
       </section>` : ''}
 
       <div class="linkrow">
-        <a href="#/track">${icon('chart')} Tracking</a>
         <a href="#/roadmap">${icon('route')} The plan</a>
         <a href="#/review">${icon('calendar')} Your week</a>
         <a href="#/guide">${icon('help')} How to</a>
@@ -105,7 +97,7 @@ export function renderKegels(mount) {
   });
 }
 
-/** In-app nudge past your chosen time. The real alarm is scheduled natively. */
+/** In-app nudge. The real alarm is native. */
 function reminderNotice(state, plan) {
   const t = state.settings.reminder;
   if (!t || plan.complete) return '';
@@ -132,8 +124,8 @@ export function renderGuide(mount) {
       <section class="card">
         <h2>A kegel, in one paragraph</h2>
         <p class="small muted">There is a sheet of muscle slung across the bottom of your pelvis, the <b>pelvic floor</b>. It is what you tighten to stop yourself passing wind. A kegel is squeezing it deliberately: a lift <b>up and in</b>, towards your belly button. Then a full release. That is the whole movement.</p>
-        <p class="small muted">You are doing it right when your <b>belly, buttocks and thighs stay completely still</b> and you are <b>still breathing</b>. If any of those move, ease off to half effort. a smaller contraction of the right muscle beats a hard squeeze of the wrong three.</p>
-        <p class="warn-inline">Don't practise by stopping your urine mid-stream. Useful once as a test, a bad habit as training.</p>
+        <p class="small muted">You are doing it right when your <b>belly, buttocks and thighs stay completely still</b> and you are <b>still breathing</b>. If any of those move, ease off to half effort. A smaller contraction of the right muscle beats a hard squeeze of the wrong three.</p>
+        <p class="small muted">Don't practise by stopping your urine mid-stream. Useful once as a test, a bad habit as training.</p>
       </section>
 
       <section class="card">
@@ -157,12 +149,12 @@ export function renderGuide(mount) {
 
       <section class="card">
         <h2>Timeline</h2>
-        <p class="small muted">First changes around weeks 4–6, most of it between 8 and 12. Nothing in one session is visible. That is what the streak is for. The plan itself runs two years.</p>
+        <p class="small muted">First changes around weeks 4–6, most of it between 8 and 12. Nothing in one session is visible. That is what the streak is for. </p>
       </section>
 
       <section class="card">
         <h2>Back off if</h2>
-        <p class="small muted">Aching in the pelvis or lower back, heaviness, worse urinary symptoms, or pain during or after. Flag it at the end of a session and the program drops your targets automatically. Persistent symptoms → doctor or pelvic health physio. An over-tight floor gets <b>worse</b> with more kegels.</p>
+        <p class="warn-inline">Aching in the pelvis or lower back, heaviness, worse urinary symptoms, or pain during or after. Flag it at the end of a session and the program drops your targets automatically. Persistent symptoms → doctor or pelvic health physio. An over-tight floor gets <b>worse</b> with more kegels.</p>
       </section>
     </div>`;
 }
@@ -177,14 +169,14 @@ export function renderKegelSettings(mount) {
     <div class="screen">
       <header class="screen-head">
         <button class="icon-btn" data-back="kegels" aria-label="Back">${icon('back')}</button>
-        <h1>${escapeHtml(kegelName())}</h1>
+        <h1>${escapeHtml(kegelName())} settings</h1>
         <span class="icon-btn ghost"></span>
       </header>
 
       <section class="card">
         <div class="h-row">${icon('target', 16)}<h2>How you train</h2></div>
         <label class="setting">
-          <span><b>Input mode</b><i>Press-and-hold measures every rep. Hands-free paces you and scores from your rating.</i></span>
+          <span><b>Input mode</b><i>Press-and-hold measures every rep.</i></span>
           <select id="inputMode">
             <option value="hold" ${s.inputMode === 'hold' ? 'selected' : ''}>Press and hold</option>
             <option value="auto" ${s.inputMode === 'auto' ? 'selected' : ''}>Hands-free</option>
@@ -203,16 +195,13 @@ export function renderKegelSettings(mount) {
           </select>
         </label>
         <label class="setting">
-          <span><b>Daily reminder</b><i>An alarm at this time. Leave empty for none.</i></span>
+          <span><b>Daily reminder</b><i>Leave empty for none.</i></span>
           <input type="time" id="reminder" value="${escapeHtml(s.reminder || '')}">
         </label>
       </section>
 
-      <section class="card">
-        <div class="h-row">${icon('help', 16)}<h2>Technique</h2></div>
-        <a class="btn ghost linkbtn" href="#/tutorial">${icon('play', 16)}<span>Replay the walkthrough</span></a>
-        <a class="btn ghost linkbtn" href="#/roadmap">${icon('route', 16)}<span>See all 104 weeks</span></a>
-      </section>
+      <a class="btn ghost wide linkbtn" href="#/tutorial">${icon('play', 16)}<span>Replay the walkthrough</span></a>
+      <a class="btn ghost wide linkbtn" href="#/roadmap">${icon('route', 16)}<span>See all 104 weeks</span></a>
     </div>`;
 
   const bind = (id, key, get = (e) => e.value) =>
@@ -236,4 +225,3 @@ export function renderKegelSettings(mount) {
     toast('Saved');
   });
 }
-

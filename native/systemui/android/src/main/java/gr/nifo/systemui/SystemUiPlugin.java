@@ -15,26 +15,13 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
 /**
- * The navigation bar, hidden.
+ * The navigation bar, hidden, in the mode where a swipe from the edge brings it
+ * back for a few seconds. Two bottom bars is one too many. The status bar is
+ * left alone: it carries the clock and the battery.
  *
- * <p>NiFo has its own bottom bar now, and two bars stacked at the bottom of a
- * phone is one too many: the app's own tabs sit above a black strip of system
- * chrome doing the same job. So the system one goes, in the mode where a swipe
- * from the edge brings it back for a few seconds and then it leaves again.
- *
- * <p>The status bar is deliberately left alone. Hiding it as well would take
- * the clock and the battery with it, which is a real loss for no gain: nothing
- * of NiFo's is trying to occupy that strip.
- *
- * <p>This is a plugin rather than a line in the generated project because
- * {@code android/} is rebuilt from scratch on every build, so an edit to the
- * activity or to a theme would be thrown away. A plugin's manifest and code are
- * merged in by Capacitor instead, which is the same reason the night light is
- * one.
- *
- * <p>Android forgets the request whenever the window loses and regains focus,
- * so it is re-applied on resume here and again from the web layer whenever the
- * page becomes visible. Asking twice costs nothing; asking once does not hold.
+ * <p>A plugin rather than an edit to the generated project, because
+ * {@code android/} is rebuilt on every build. Android forgets the request when
+ * the window loses focus, so it is re-applied on resume and from the web layer.
  */
 @CapacitorPlugin(name = "SystemUi")
 public class SystemUiPlugin extends Plugin {
@@ -73,9 +60,7 @@ public class SystemUiPlugin extends Plugin {
             WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(window, decor);
             if (controller == null) return;
             if (hide) {
-                // Transient rather than permanent: a swipe from the bottom edge
-                // shows the bar for a moment and then it hides itself again, so
-                // the gesture is never taken away, only the strip of screen.
+                // Transient: the gesture is never taken away, only the strip of screen.
                 controller.setSystemBarsBehavior(
                         WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
                 controller.hide(WindowInsetsCompat.Type.navigationBars());

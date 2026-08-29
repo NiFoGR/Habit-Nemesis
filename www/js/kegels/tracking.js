@@ -1,5 +1,5 @@
-// The tracking screen: every day you trained, every rep you logged, and the
-// trend lines that only mean something once there are a few weeks of them.
+// Every day trained, every rep logged, and the trends that need weeks to mean
+// anything.
 
 import * as store from '../store.js';
 import * as program from './program.js';
@@ -25,7 +25,7 @@ function heatmap(state) {
   }
   const counts = state.sessions.reduce((m, s) => m.set(s.date, (m.get(s.date) || 0) + 1), new Map());
 
-  // Grid runs Monday-first, ending on the current week.
+  // Monday-first, ending on the current week.
   const today = new Date();
   const dow = (today.getDay() + 6) % 7;
   const end = store.addDays(store.dayKey(today), 6 - dow);
@@ -50,7 +50,8 @@ function heatmap(state) {
     cells += '</div>';
   }
   return `<div class="heatmap">${cells}</div>
-    <div class="hm-key"><span>less</span><i class="none"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><i class="rest"></i><span>release</span></div>`;
+    <div class="hm-key"><span>less</span><i class="none"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><span>more</span>
+      <span class="hm-sep"></span><i class="rest"></i><span>release</span></div>`;
 }
 
 function sessionRow(s, idx) {
@@ -80,9 +81,7 @@ function sessionRow(s, idx) {
   </details>`;
 }
 
-/** How many of one section's feats are earned. The count lives here rather
- *  than a second copy of the catalogue: the tracking screen says how the
- *  kegel programme is going, and this is one line of that. */
+/** Feats earned in this section. One line of how the programme is going. */
 function sectionCount(section) {
   const sec = feats.bySection().find((s) => s.section === section);
   return sec ? `${sec.earned} of ${sec.items.length}` : '—';
@@ -92,9 +91,8 @@ export function renderTracking(mount) {
   const state = store.get();
   const sessions = state.sessions;
   const trained = sessions.filter((s) => s.type !== 'release');
-  // Cadence-following logged from a pump session has no measured reps behind
-  // it, so it counts for volume and streaks but is kept out of the quality
-  // trends, where a placeholder score would read as a bad session.
+  // Pump-cadence reps are unmeasured: they count for volume and streaks, never
+  // for the quality trends.
   const scored = trained.filter((s) => s.countsForPromotion !== false);
   const totals = store.totals();
   const st = store.streak();
@@ -123,7 +121,7 @@ export function renderTracking(mount) {
         ${ringSvg(Math.min(idx / 1000, 1), String(idx), program.pfiBand(idx), { size: 150 })}
         <div>
           <div class="h-row">${icon('target', 16)}<h2>Pelvic Floor Index</h2></div>
-          <p class="small muted">One number out of 1000, combining your best hold, your weekly volume, your level and how consistently you have shown up over the last two weeks.</p>
+          <p class="small muted">Out of 1000.</p>
         </div>
       </div>
 
@@ -140,19 +138,16 @@ export function renderTracking(mount) {
 
       <section class="card">
         <div class="h-row">${icon('calendar', 16)}<h2>Consistency</h2></div>
-        <p class="small muted">Last 13 weeks. Brighter is a better session; teal marks a programmed release day.</p>
         ${heatmap(state)}
       </section>
 
       <section class="card">
         <div class="h-row">${icon('trend', 16)}<h2>Hold quality over time</h2></div>
-        <p class="small muted">Average hold length per session, in seconds. This is the line that matters most.</p>
         ${avgHolds.length > 1 ? lineChart(avgHolds, { color: 'var(--accent)' }) : '<div class="chart-empty">Two sessions and this starts drawing</div>'}
       </section>
 
       <section class="card">
         <div class="h-row">${icon('medal', 16)}<h2>Personal best hold</h2></div>
-        <p class="small muted">Your ceiling in seconds. It only steps up.</p>
         ${bestHoldSeries.length > 1 ? lineChart(bestHoldSeries, { color: 'var(--good)' }) : '<div class="chart-empty">Not enough sessions yet</div>'}
       </section>
 
@@ -165,7 +160,7 @@ export function renderTracking(mount) {
         <div class="h-row">${icon('target', 16)}<h2>Progress through the plan</h2></div>
         <ol class="timeline">
           ${state.program.history
-            .map((h) => `<li><b>Week ${h.level}</b><span>${escapeHtml(program.levelDef(h.level).name)}</span><i>${new Date(h.at).toLocaleDateString()}</i></li>`)
+            .map((h) => `<li><b>Week ${h.level}</b><span>${escapeHtml(program.levelDef(h.level).name)}</span><i>${new Date(h.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</i></li>`)
             .reverse()
             .join('')}
         </ol>
@@ -173,7 +168,6 @@ export function renderTracking(mount) {
 
       <section class="card">
         <div class="h-row">${icon('medal', 16)}<h2>Feats</h2></div>
-        <p class="muted small">One list for the whole app, held to one test: something you could say out loud to another person and have it mean something.</p>
         <div class="kv"><span>Kegel feats earned</span><b>${sectionCount('Kegels')}</b></div>
         <a class="btn ghost wide" href="#/arena/feats">${icon('medal', 16)}<span>All feats</span></a>
       </section>

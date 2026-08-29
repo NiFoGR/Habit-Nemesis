@@ -1,5 +1,4 @@
-// Technique and safety reference. Kept blunt and specific, vague warnings get
-// ignored, and the failure modes here are avoidable and well documented.
+// Technique and safety. Blunt and specific: vague warnings get ignored.
 
 import * as store from '../store.js';
 import { toast } from '../ui.js';
@@ -36,7 +35,7 @@ export function renderPeGuide(mount) {
 
       <section class="card">
         <h2>Pumping</h2>
-        <p class="small muted">Beginners: 10–20 min total, in ~10 minute sets with a full release between them, 2–3× a week. There is deliberately no intensity to log. A water pump has no gauge, so any number would be invented. What is real is the clock and the breaks.</p>
+        <p class="small muted">Beginners: 10–20 min total, in ~10 minute sets, 2–3× a week.</p>
         <ul class="rules">
           <li><b>Never pump to pain.</b> Firm pressure, not a squeeze.</li>
           <li><b>Release fully between sets</b> and let colour return before the next one.</li>
@@ -77,15 +76,10 @@ export function renderPeGuide(mount) {
         <p class="small muted">Pain lasting days, a new bend or lump, worse erections, persistent numbness, or blood in the urine. Peyronie's and vascular injury are real outcomes of overdoing this, and both are far more treatable early.</p>
       </section>
 
-
     </div>`;
 }
 
-/* ---------------- settings ----------------
-   PE's own options, moved off the global settings page. Units, the check-in day
-   and the gallery lock used to live there alongside kegel training options,
-   while the session defaults below had no UI at all and could only be changed
-   by setting them once in the timer. */
+/* ---------------------- settings ---------------------- */
 
 export function renderPeSettings(mount) {
   const s = store.get().pe.settings;
@@ -95,14 +89,14 @@ export function renderPeSettings(mount) {
     <div class="screen">
       <header class="screen-head">
         <button class="icon-btn" data-back="pe" aria-label="Back">${icon('back')}</button>
-        <h1>${discreet ? 'Length Training' : 'PE'}</h1>
+        <h1>Settings</h1>
         <span class="icon-btn ghost"></span>
       </header>
 
       <section class="card">
         <div class="h-row">${icon('ruler', 16)}<h2>Measuring</h2></div>
         <label class="setting">
-          <span><b>Units</b><i>Every length and girth in the app.</i></span>
+          <span><b>Units</b></span>
           <select id="units">
             <option value="cm" ${s.units === 'cm' ? 'selected' : ''}>cm</option>
             <option value="in" ${s.units === 'in' ? 'selected' : ''}>inches</option>
@@ -118,7 +112,7 @@ export function renderPeSettings(mount) {
 
       <section class="card">
         <div class="h-row">${icon('stretch', 16)}<h2>Session defaults</h2></div>
-        <p class="small muted">What the timer opens with. You can still change either on the day.</p>
+        <p class="small muted">What the timer opens with.</p>
         <label class="setting">
           <span><b>Stretch length</b><i>Target is two hours a day, in as many sessions as suits.</i></span>
           <select id="stretchMin">
@@ -126,7 +120,7 @@ export function renderPeSettings(mount) {
           </select>
         </label>
         <label class="setting">
-          <span><b>Tension</b><i>10 kg is the ceiling. Length comes from time, not load.</i></span>
+          <span><b>Tension</b><i>10 kg is the ceiling.</i></span>
           <select id="tensionKg">
             ${[0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((k) => `<option value="${k}" ${s.tensionKg === k ? 'selected' : ''}>${k} kg</option>`).join('')}
           </select>
@@ -138,15 +132,12 @@ export function renderPeSettings(mount) {
           </select>
         </label>
         <label class="setting toggle">
-          <span><b>Kegels while pumping</b><i>Runs a cadence during pump sessions. Counts for your kegel streak, never for promotion.</i></span>
+          <span><b>Kegels while pumping</b><i>Counts for your kegel streak, never for promotion.</i></span>
           <input type="checkbox" id="kegelDuringPump" ${s.kegelDuringPump ? 'checked' : ''}>
         </label>
       </section>
 
-      <section class="card">
-        <div class="h-row">${icon('shield', 16)}<h2>Reference</h2></div>
-        <a class="btn ghost linkbtn" href="#/pe/guide">${icon('shield', 16)}<span>Doing this safely</span></a>
-      </section>
+      <a class="btn ghost wide linkbtn" href="#/pe/guide">${icon('shield', 16)}<span>Doing this safely</span></a>
     </div>`;
 
   const bind = (id, get = (e) => e.value) =>

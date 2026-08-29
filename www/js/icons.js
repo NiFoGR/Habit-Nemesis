@@ -1,6 +1,4 @@
-// Inline SVG icon set. One visual language: 24px grid, 1.75 stroke, round caps,
-// currentColor. No emoji, they render differently on every device and cannot
-// take the app's colours.
+// Inline SVG icons. 24px grid, 1.75 stroke, round caps, currentColor. No emoji.
 
 const svg = (body, size) =>
   `<svg class="ico" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"
@@ -10,7 +8,7 @@ const svg = (body, size) =>
 const PATHS = {
   back: '<path d="M15 5l-7 7 7 7"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
-  // Sliders rather than a gear: at 20px a gear's teeth turn into a sun.
+  // Sliders, not a gear: at 20px a gear's teeth turn into a sun.
   settings:
     '<path d="M5 6h14M5 12h14M5 18h14"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="18" r="2"/>',
   chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
@@ -40,84 +38,63 @@ const PATHS = {
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.2 2.4c-.6.2-.7.7-.7 1.3M12 16.5v.01"/>',
   repeat: '<path d="M4 10a6 6 0 0 1 6-6h9"/><path d="M16 1l3 3-3 3"/><path d="M20 14a6 6 0 0 1-6 6H5"/><path d="M8 23l-3-3 3-3"/>',
   droplet: '<path d="M12 3s6 6.5 6 10.5A6 6 0 0 1 6 13.5C6 9.5 12 3 12 3z"/>',
-  // The two-year ladder, pocket mode and the app lock.
+  // Ladder, pocket mode, app lock.
   route: '<circle cx="6" cy="5" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M6 7.5v4a4 4 0 0 0 4 4h4a4 4 0 0 1 4 4"/>',
   vibrate: '<rect x="8" y="4" width="8" height="16" rx="2"/><path d="M4 9v6M20 9v6"/>',
   home: '<path d="M4 11l8-7 8 7"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/>',
   key: '<circle cx="8" cy="14" r="4"/><path d="M11 11l9-9M17 5l2 2M14 8l2 2"/>',
   book: '<path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H19v16H5.5A1.5 1.5 0 0 0 4 20.5z"/><path d="M4 17.5A1.5 1.5 0 0 1 5.5 16H19"/>',
-  // Open on a lectern, with the cross on the page, so it reads as scripture
-  // rather than as the closed book the prayer section already uses.
+  // Open on a lectern: scripture, not the closed book prayer uses.
   scripture:
     '<path d="M12 6.5C10.5 5 8 4.3 4 4.3V18c4 0 6.5.7 8 2.2 1.5-1.5 4-2.2 8-2.2V4.3c-4 0-6.5.7-8 2.2z"/><path d="M12 6.5v14"/><path d="M15.5 10h4M17.5 8v4"/>',
-  // Prayer: the two slots, and a link that leaves the app.
+  // Prayer: two slots, and a link that leaves the app.
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/>',
   moon: '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>',
-  // A breath: the centre held, two rings of it moving out. Reads as expansion
-  // rather than as lungs, which at 20px turn into a smudge.
+  // A breath: centre held, rings moving out.
   breath:
     '<circle cx="12" cy="12" r="3.2"/><path d="M8.4 8.6a5.4 5.4 0 0 0 0 6.8M15.6 8.6a5.4 5.4 0 0 1 0 6.8"/><path d="M5.2 5.8a10 10 0 0 0 0 12.4M18.8 5.8a10 10 0 0 1 0 12.4"/>',
-  // Half a sun, filled. Colour temperature has no obvious glyph, and a moon
-  // already means the night prayers, so this says "warmth" instead of "night".
+  // Half a sun: warmth. A moon already means the night prayers.
   warmth:
     '<circle cx="12" cy="12" r="4.6"/><path d="M12 7.4a4.6 4.6 0 0 0 0 9.2z" fill="currentColor" stroke="none"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M18.8 5.2l-1.4 1.4M6.6 17.4l-1.4 1.4"/>',
   external: '<path d="M14 4h6v6"/><path d="M20 4l-8 8"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
-  // Habits. A checklist rather than a calendar or a tick: the section is a
-  // list of things you answer for, and both of the obvious alternatives are
-  // already taken by the reading heatmaps and the done state.
+  // Habits: a checklist. A calendar and a tick are both taken.
   habits: '<path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6.2l1.4 1.4L7.6 4.9"/><path d="M3.5 12.2l1.4 1.4 2.7-2.7"/><path d="M3.5 18.2l1.4 1.4 2.7-2.7"/>',
   pencil: '<path d="M4 20.5h4l10.5-10.5-4-4L4 16.5z"/><path d="M14.5 6l4 4"/>',
   trash: '<path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 12.5h9L17.5 7"/><path d="M10.5 11v5M13.5 11v5"/>',
   archive: '<rect x="3" y="4" width="18" height="5" rx="1.2"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9"/><path d="M10 13h4"/>',
-  // Two dashes and a bar: a skip is a day you stepped over, not one you failed.
+  // Skip: a day stepped over, not one failed.
   skip: '<path d="M5 6l8 6-8 6z"/><path d="M18 6v12"/>',
-  // The list-with-handles used to enter reorder mode.
+  // Reorder mode.
   reorder: '<path d="M9 6h12M9 12h12M9 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>',
-  // The filter mark from the toolbar: three rules, narrowing.
+  // Filter: three rules, narrowing.
   filter: '<path d="M4 6h16M7 12h10M10 18h4"/>',
   arrowUp: '<path d="M12 19V5"/><path d="M6 11l6-6 6 6"/>',
-  // A key with a cross in it. The keypad used the ⌫ character, which is a
-  // glyph rather than an icon: a different shape on every device, and it
-  // cannot take the app's colours.
+  // Backspace. The glyph version renders differently on every device.
   backspace: '<path d="M9 5h11a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H9l-6-7z"/><path d="M12 9.5l5 5M17 9.5l-5 5"/>',
   caretUp: '<path d="M6 14.5l6-6 6 6"/>',
   caretDown: '<path d="M6 9.5l6 6 6-6"/>',
   arrowDown: '<path d="M12 5v14"/><path d="M6 13l6 6 6-6"/>',
 
   /* ---- the Arena ---- */
-  // A cup with handles and a base. The medal above is a disc on a ribbon and
-  // reads as a participation badge at 16px, which is the one thing an Arc
-  // trophy must not look like.
+  // Cup. A medal reads as a participation badge at 16px.
   trophy: '<path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5v1.5A3.5 3.5 0 0 0 8 11M17 6h2.5v1.5A3.5 3.5 0 0 1 16 11"/><path d="M12 14v3M8.5 20h7M9.5 20l.6-3h3.8l.6 3"/>',
-  // Two chevrons meeting: a fixture, not a fight. It sits between your score
-  // and your opponent's and has to read at 14px on a phone.
+  // Fixture, not a fight. Has to read at 14px.
   versus: '<path d="M4 5l5 7-5 7"/><path d="M20 5l-5 7 5 7"/>',
-  // A crown for the division you are in. Three points and a band.
+  // Division crown.
   crown: '<path d="M4 17h16"/><path d="M4 17L3 7l5 4 4-6 4 6 5-4-1 10z"/>',
-  // A ladder: the divisions, seen as the thing you climb.
+  // The divisions, as a thing you climb.
   ladder: '<path d="M7 3v18M17 3v18"/><path d="M7 8h10M7 12h10M7 16h10"/>',
 };
 
-/** icon('back') → inline SVG string. */
+/** icon('back') -> inline SVG string. */
 export function icon(name, size = 20) {
   return svg(PATHS[name] || PATHS.target, size);
 }
 
-/** The NiFo mark: three bars, rising.
- *
- *  The old mark was a broken progress ring with a dot in it, drawn when the app
- *  was one feature and that feature was a contraction you held. The app is now
- *  a grid of things you keep, so the mark is the shape of a habit going up:
- *  three strokes, like the three strokes of the N beside it, each taller than
- *  the last. It survives being 16px in a tab and being cropped to a circle by
- *  a launcher, which the ring and its dot did not.
- *
- *  The gradient is the one place the teal-to-violet ramp still lives. Every
- *  other surface in the app takes the single flat accent.
- */
+/** The mark: three rising bars, like the N beside it. Survives 16px and a
+ *  circle crop. The gradient is the last place the teal-to-violet ramp lives. */
 export function logoMark(size = 26) {
-  // Unique per call: two copies of the same gradient id on one page is invalid
-  // markup, and Safari resolves both to whichever it saw first.
+  // Unique id per call: duplicate gradient ids are invalid and Safari picks the first.
   const id = `nifoG${Math.random().toString(36).slice(2, 7)}`;
   const bar = (x, y) => `<rect x="${x}" y="${y}" width="7.5" height="${34 - y}" rx="3.75" fill="url(#${id})"/>`;
   return `<svg width="${size}" height="${size}" viewBox="0 0 40 40" fill="none" aria-hidden="true" class="logo-mark">

@@ -1,21 +1,20 @@
 // The guided session player.
 //
-// The interesting part is the input model. In "hold" mode you physically press
-// and hold the screen for as long as you hold the contraction, so the app gets
-// a real measurement of every single rep instead of a self-report. That is what
-// makes the quality score, the fatigue curve and the max-hold PR meaningful.
+// In hold mode you press the pad for as long as you hold the contraction, so
+// every rep is measured rather than self-reported. That is what makes the
+// quality score, the fatigue curve and the max-hold PR mean anything.
 
 import * as store from '../store.js';
 import * as program from './program.js';
 import * as feats from '../arena/feats.js';
-import { haptic, beep, fmtMs } from '../ui.js';
+import { haptic, chime, fmtMs } from '../ui.js';
 import { icon } from '../icons.js';
 
 const R = 132;
 const CIRC = 2 * Math.PI * R;
-// How long you get to start a rep before it counts as missed.
+// Grace before a rep counts as missed.
 const AWAIT_GRACE_MS = 6000;
-// Hard stop so a forgotten finger on the screen cannot log a 40s "hold".
+// Hard stop: a forgotten finger must not log a 40s hold.
 const OVERHOLD_LIMIT = 1.7;
 
 export function startSession(mount, opts, onFinish) {
@@ -24,8 +23,8 @@ export function startSession(mount, opts, onFinish) {
   const mode = state.settings.inputMode;
   const isAuto = mode === 'auto';
 
-  // Every work step is pre-registered, so reps you never got to still count
-  // against completion. Quitting early is honest, not free.
+  // Every work step is pre-registered, so reps you never reached still count
+  // against completion.
   const reps = plan.steps
     .filter(program.isWorkStep)
     .map((s) => ({ kind: s.kind, targetMs: s.targetMs, actualMs: 0 }));
@@ -61,7 +60,7 @@ export function startSession(mount, opts, onFinish) {
       <div class="player-cue" id="cue"></div>
 
       <div class="player-bottom">
-        <div class="rep-meter"><span id="repText">-</span></div>
+        <div class="rep-meter"><span id="repText"></span></div>
         <div class="rep-dots" id="dots"></div>
       </div>
     </div>`;
@@ -89,9 +88,8 @@ export function startSession(mount, opts, onFinish) {
 
   navigator.wakeLock?.request('screen').then((w) => (wakeLock = w)).catch(() => {});
 
-  // No local sound/haptics gate. `haptic` and `beep` honour the two settings
-  // themselves now, and reading them off the state captured when the session
-  // started meant changing one mid-session did nothing until the next one.
+  // No local gate: haptic and chime read the switches themselves, so changing one
+  // mid-session takes effect now.
 
   function setRing(pct, cls) {
     const p = Math.max(0, Math.min(pct, 1));
@@ -100,7 +98,7 @@ export function startSession(mount, opts, onFinish) {
   }
 
   function setTargetMark(frac) {
-    // Dashed marker showing where the prescribed target sits on the ring.
+    // Dashed marker: where the target sits on the ring.
     if (frac == null) {
       el.ringTarget.style.opacity = '0';
       return;
@@ -111,8 +109,7 @@ export function startSession(mount, opts, onFinish) {
     el.ringTarget.setAttribute('stroke-dashoffset', String(-at));
   }
 
-  /** Dots stay on screen through the rest intervals too, so you can see how the
-   *  set is going at the moment you most want to know: while recovering. */
+  /** Dots stay up through the rests, when you most want to see the set. */
   function renderDots() {
     if (!block) {
       el.dots.innerHTML = '';
@@ -167,14 +164,14 @@ export function startSession(mount, opts, onFinish) {
         phase = 'timed';
         t0 = performance.now();
         haptic('go');
-        beep(880);
+        chime('go');
       } else {
         phase = 'await';
         t0 = performance.now();
         el.coreBig.textContent = '';
         el.coreSmall.textContent = 'press & hold';
         haptic('go');
-        beep(880);
+        chime('go');
       }
       return;
     }
@@ -217,7 +214,7 @@ export function startSession(mount, opts, onFinish) {
       const p = elapsed / dur;
       const isWork = program.isWorkStep(step);
       const kind = isWork ? 'work' : step.kind === 'rest' ? 'rest' : 'breath';
-      // Breathing steps shrink on the exhale so the ring mirrors the lungs.
+      // Breathing shrinks on the exhale, so the ring mirrors the lungs.
       const exhale = step.kind === 'breath' && /out/i.test(step.label);
       setRing(exhale ? 1 - p : p, kind);
       el.coreBig.textContent = Math.max(0, Math.ceil((dur - elapsed) / 1000));
@@ -251,7 +248,7 @@ export function startSession(mount, opts, onFinish) {
       el.coreSmall.textContent = p >= 1 ? 'strong, ease off when you fade' : `of ${(target / 1000).toFixed(0)}s`;
       if (p >= 1 && p < 1.03) {
         haptic('hit');
-        beep(1320, 80);
+        chime('phase');
       }
       const limit = step.kind === 'max' ? 120000 : target * OVERHOLD_LIMIT;
       if (held >= limit) release();
@@ -261,12 +258,11 @@ export function startSession(mount, opts, onFinish) {
   function press(ev) {
     ev.preventDefault();
     if (phase !== 'await') return;
-    // Capture the pointer so a thumb drifting off the pad mid-contraction does
-    // not end the rep early, only lifting off does.
+    // Capture the pointer: only lifting off ends the rep.
     try {
       el.pad.setPointerCapture(ev.pointerId);
     } catch {
-      /* capture is a nicety; the pad still works without it */
+      /* capture is optional */
     }
     phase = 'active';
     pressStart = performance.now();
@@ -281,7 +277,7 @@ export function startSession(mount, opts, onFinish) {
     el.stage.classList.remove('pressing');
     setTargetMark(null);
     if (held < 250) {
-      // A stray tap is not a rep, go back to waiting.
+      // A stray tap is not a rep.
       phase = 'await';
       t0 = performance.now();
       return;
@@ -306,9 +302,8 @@ export function startSession(mount, opts, onFinish) {
     }
   }
 
-  /** One question before the results. In hands-free mode it is the only signal
-   *  we have about effort, so it drives the score; in hold mode it is context.
-   *  Either way, "it hurt" is treated as a stop sign by the progression engine. */
+  /** One question. In hands-free it drives the score, in hold mode it is context.
+   *  "It hurt" is a stop sign either way. */
   function finish(quit = false) {
     if (finished) return;
     finished = true;
@@ -404,8 +399,7 @@ export function startSession(mount, opts, onFinish) {
     const st = store.streak();
     if (st > s.prs.streak) s.prs.streak = st;
 
-    // The session's own feats, checked here so the report can show them on
-    // the screen that earned them rather than a week later in the Arena.
+    // Checked here so the report shows them on the screen that earned them.
     const badges = feats.check();
     store.save();
 
@@ -451,7 +445,7 @@ export function startSession(mount, opts, onFinish) {
     window.removeEventListener('keyup', onKeyUp);
   }
 
-  // Short countdown so the first rep is not a scramble.
+  // Short countdown, so the first rep is not a scramble.
   el.phaseLabel.textContent = plan.type === 'release' ? 'Release day' : plan.type === 'test' ? 'Max hold test' : `Week ${plan.level} · ${plan.def.name}`;
   el.phaseSub.textContent = plan.def.position;
   el.cue.textContent = isAuto ? 'Follow the ring.' : 'Press and hold while you squeeze.';

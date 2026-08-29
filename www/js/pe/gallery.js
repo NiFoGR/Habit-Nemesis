@@ -1,5 +1,5 @@
-// The private gallery: encrypted progress photos, with a side-by-side compare
-// that pairs each photo with the measurements taken the same day.
+// The encrypted gallery, and a compare view that pairs each photo with the
+// measurements from the same day.
 
 import * as store from '../store.js';
 import * as pe from './program.js';
@@ -86,21 +86,21 @@ async function grid(mount) {
       </section>
     </div>`;
 
-  // Thumbnails are decrypted one at a time so a big gallery does not stall.
+  // One at a time, so a big gallery does not stall.
   for (const it of items) {
     try {
       const blob = await vault.decryptBlob(it.thumb);
       const img = mount.querySelector(`[data-thumb="${it.id}"]`);
       if (img) img.src = track(URL.createObjectURL(blob));
     } catch {
-      /* a photo that will not decrypt is skipped rather than breaking the grid */
+      /* skip a photo that will not decrypt */
     }
   }
 
   mount.querySelector('#lock')?.addEventListener('click', () => {
     vault.lock();
     releaseUrls();
-    // Locking on purpose should not leave the unlocked gallery one Back away.
+    // Locking on purpose must not leave the gallery one Back away.
     replaceWith('#/pe');
   });
 
@@ -154,9 +154,8 @@ async function viewer(mount, id, items) {
     </div>`;
 
   mount.querySelector('#back').addEventListener('click', () => grid(mount));
-  // The decrypted bytes, not the object URL. saveFile's share route needs real
-  // content to build a File from, and a blob: URL means nothing outside this
-  // page; `blob` is already here, so there is nothing to fetch back.
+  // The bytes, not the object URL: share needs real content, and blob: means
+  // nothing outside this page.
   mount.querySelector('#save').addEventListener('click', () => {
     saveFile(`nifo-${store.dayKey(new Date(it.ts))}.jpg`, blob, 'image/jpeg');
   });

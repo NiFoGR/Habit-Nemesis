@@ -1,9 +1,5 @@
-// The wind-down section, and its settings.
-//
-// The record lives on this screen rather than in a tracking.js of its own,
-// which is the one place this feature departs from the shape of the other
-// three. There is only one number worth keeping — whether you did it — so a
-// second screen to hold a single heatmap would be a room with nothing in it.
+// The wind-down section and its settings. The record lives here rather than in
+// a tracking.js: one number does not need a screen of its own.
 
 import * as store from '../store.js';
 import * as breathe from './program.js';
@@ -35,9 +31,8 @@ export function renderBreatheHome(mount) {
           <h2>${today.done ? 'Done tonight' : 'Not yet tonight'}</h2>
           <p class="muted small">${today.done
             ? `${fmtDuration(today.ms / 1000)} at ${new Date(today.at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
-            : `${escapeHtml(plan.pattern.short)} · ${fmtClock(plan.totalMs)}`}${st ? ` · ${st} night${st === 1 ? '' : 's'}` : ''}</p>
+            : `${fmtClock(plan.totalMs)} tonight`}</p>
         </div>
-        <div class="br-mark ${today.done ? 'on' : ''}">${icon(today.done ? 'check' : 'breath', 26)}</div>
       </div>
 
       <a class="btn primary big linkbtn" href="#/breathe/run">${icon('play', 18)}<span>${today.done ? 'Again' : 'Begin'}</span></a>
@@ -48,6 +43,13 @@ export function renderBreatheHome(mount) {
         <p class="small muted" id="patternBlurb">${escapeHtml(plan.pattern.blurb)}</p>
       </section>
 
+      <div class="stat-grid">
+        <div class="stat"><b>${st}</b><span>night streak</span></div>
+        <div class="stat"><b>${store.get().breathe.best}</b><span>best</span></div>
+        <div class="stat"><b>${Math.round(t30.rate * 100)}%</b><span>nights, 30d</span></div>
+        <div class="stat"><b>${fmtHours(life.ms)}</b><span>breathing, all told</span></div>
+      </div>
+
       <section class="card">
         <div class="h-row">${icon('calendar', 16)}<h2>Last 13 weeks</h2></div>
         <div class="heatmap">
@@ -56,28 +58,15 @@ export function renderBreatheHome(mount) {
         <div class="hm-key">
           <span>less</span><i class="none"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><span>more</span>
         </div>
-        <div class="stat-grid">
-          <div class="stat"><b>${st}</b><span>night streak</span></div>
-          <div class="stat"><b>${store.get().breathe.best}</b><span>best</span></div>
-          <div class="stat"><b>${Math.round(t30.rate * 100)}%</b><span>nights, 30d</span></div>
-          <div class="stat"><b>${fmtHours(life.ms)}</b><span>breathing, all told</span></div>
-        </div>
       </section>
 
       <section class="card">
         <div class="h-row">${icon('help', 16)}<h2>Why this works</h2></div>
         <p class="muted small">
-          Breathing out takes the brake off the vagus nerve; breathing in takes
-          it off again. Make the out-breath the longer of the two, at around six
+          Breathing in takes the brake off the vagus nerve; breathing out puts
+          it back on. Make the out-breath the longer of the two, at around six
           breaths a minute, and the balance tips towards the parasympathetic
-          side — heart rate falls on every exhale, and it keeps falling after
-          you stop. Going to sleep from there is not the same as going to sleep
-          from a scroll.
-        </p>
-        <p class="fineprint">
-          The three sighs at the start are not decoration. Two inhales stacked
-          on each other reinflate collapsed alveoli and dump CO2 in one breath,
-          which is the fastest thing you can do on purpose to drop arousal.
+          side. Heart rate falls on every exhale, and keeps falling after you stop.
         </p>
       </section>
     </div>`;
@@ -107,13 +96,7 @@ export function renderBreatheSettings(mount) {
       <section class="card">
         <div class="h-row">${icon('breath', 16)}<h2>The breath</h2></div>
         <label class="setting">
-          <span><b>Pattern</b></span>
-          <select id="pattern">
-            ${breathe.PATTERN_IDS.map((id) => `<option value="${id}" ${s.pattern === id ? 'selected' : ''}>${escapeHtml(breathe.PATTERNS[id].label)} · ${escapeHtml(breathe.PATTERNS[id].short)}</option>`).join('')}
-          </select>
-        </label>
-        <label class="setting">
-          <span><b>Length</b><i>Whole breaths only, so it ends on an out-breath rather than mid-way through one.</i></span>
+          <span><b>Length</b><i>Whole breaths only, so it ends on an out-breath.</i></span>
           <select id="minutes">
             ${[3, 5, 8, 10, 15, 20].filter((m) => m >= breathe.MIN_MINUTES && m <= breathe.MAX_MINUTES)
               .map((m) => `<option value="${m}" ${s.minutes === m ? 'selected' : ''}>${m} min</option>`).join('')}
@@ -125,14 +108,14 @@ export function renderBreatheSettings(mount) {
       <section class="card">
         <div class="h-row">${icon('flash', 16)}<h2>Pacing</h2></div>
         <label class="setting toggle">
-          <span><b>Sound</b><i>A low tone that rises as you breathe in and falls as you breathe out. Works with the screen off.</i></span>
+          <span><b>Sound</b><i>Rises as you breathe in, falls as you breathe out.</i></span>
           <input type="checkbox" id="sound" ${s.sound !== false ? 'checked' : ''}>
         </label>
         <label class="setting toggle">
-          <span><b>Vibration</b><i>One buzz in, two out. Needs the screen on, which is why it stays black rather than off.</i></span>
+          <span><b>Vibration</b><i>One buzz in, two out. Needs the screen on.</i></span>
           <input type="checkbox" id="vibrate" ${s.vibrate !== false ? 'checked' : ''}>
         </label>
-        <p class="fineprint">Turning both off leaves only the orb, which means keeping your eyes open, which rather defeats it.</p>
+        <p class="fineprint">Both off leaves only the orb, and open eyes.</p>
       </section>
 
       <section class="card">
@@ -145,7 +128,7 @@ export function renderBreatheSettings(mount) {
           <span><b>At</b></span>
           <input type="time" id="remindAt" value="${escapeHtml(s.remindAt)}">
         </label>
-        <p class="fineprint">Set this after the night prayers, not before. This is meant to be the last thing.</p>
+        <p class="fineprint">Set this after the night prayers.</p>
       </section>
     </div>`;
 
@@ -160,10 +143,6 @@ export function renderBreatheSettings(mount) {
       `${plan.breaths} breaths after the opening sighs, ${fmtClock(plan.totalMs)} in all.`;
   };
 
-  mount.querySelector('#pattern').addEventListener('change', (e) => {
-    set('pattern', e.target.value);
-    note();
-  });
   mount.querySelector('#minutes').addEventListener('change', (e) => {
     set('minutes', Number(e.target.value));
     note();

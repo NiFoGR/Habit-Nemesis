@@ -1,31 +1,18 @@
-// Progress-photo capture with a ghost of last month's photo overlaid, then an
-// alignment step.
-//
-// The point of a monthly photo series is comparability, and angle/distance
-// drift ruins it faster than any real change appears. So: shoot against a
-// translucent copy of the previous shot, then nudge/zoom the result until it
-// lines up, and store the transform baked into the saved image.
+// Progress photo: shoot against a ghost of last month's, then align.
+// The transform is baked into the saved image, so compare needs no extra state.
 
 import { icon } from '../icons.js';
 import { escapeHtml, toast } from '../ui.js';
 
 const OUT_MAX = 1600;
 
-/**
- * Opens the capture flow.
- * @param {HTMLElement} mount
- * @param {Blob|null} ghostBlob previous photo, or null on the first ever shot
- * @param {(blobs:{full:Blob,thumb:Blob,width:number,height:number})=>void} onDone
- * @param {()=>void} onCancel
- */
+/** `ghostBlob` is the previous photo, or null on the first shot. */
 export function captureWithGhost(mount, ghostBlob, onDone, onCancel) {
   const ghostUrl = ghostBlob ? URL.createObjectURL(ghostBlob) : null;
   let stream = null;
   let opacity = 0.45;
-  // getUserMedia can take seconds to resolve or reject, and by then the user
-  // may already have picked a file and moved on to the align step. Anything
-  // that touches the DOM after an await has to check it is still the screen
-  // that is on the page.
+  // getUserMedia can resolve long after the user has moved on, so anything
+  // touching the DOM after an await checks it is still the screen on the page.
   let generation = 0;
 
   const cleanup = () => {
@@ -101,8 +88,7 @@ export function captureWithGhost(mount, ghostBlob, onDone, onCancel) {
       stream = s;
       vid.srcObject = s;
     } catch {
-      // No camera, or permission refused: the file picker still works. If the
-      // screen has already been replaced there is nothing to say it on.
+      // No camera: the file picker still works.
       if (mine !== generation) return;
       const stage = mount.querySelector('.cam-stage');
       if (stage) stage.innerHTML = '<div class="cam-fallback">Camera unavailable. Choose a file instead.</div>';
@@ -111,8 +97,7 @@ export function captureWithGhost(mount, ghostBlob, onDone, onCancel) {
 
   /* ---------------- alignment ---------------- */
 
-  /** Drag to pan, slider to zoom, against the ghost. The transform is baked
-   *  into the saved file so the gallery and compare view need no extra state. */
+  /** Pan and zoom against the ghost. */
   function align(sourceBlob) {
     generation++; // any in-flight camera callback now belongs to a dead screen
     const srcUrl = URL.createObjectURL(sourceBlob);
@@ -209,8 +194,7 @@ export function captureWithGhost(mount, ghostBlob, onDone, onCancel) {
       });
     }
 
-    /** Renders exactly what the stage shows, so what you aligned is what is
-     *  stored, no transform to reapply later, and the compare view is honest. */
+    /** Renders what the stage shows, so what you aligned is what is stored. */
     async function bake(stageW, stageH) {
       const scale = Math.min(OUT_MAX / stageW, OUT_MAX / stageH, 3);
       const w = Math.round(stageW * scale);
@@ -222,8 +206,7 @@ export function captureWithGhost(mount, ghostBlob, onDone, onCancel) {
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, w, h);
 
-      // The stage renders the image with object-fit: cover, then the transform
-      // on top; this reproduces both in the same order.
+      // object-fit: cover, then the transform, in that order.
       const cover = Math.max(stageW / img.width, stageH / img.height);
       const dw = img.width * cover * zoom * scale;
       const dh = img.height * cover * zoom * scale;

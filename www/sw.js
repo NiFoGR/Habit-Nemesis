@@ -1,9 +1,6 @@
-// Offline-first service worker. The app is fully usable with no connection ,
-// which matters, because you should be able to train anywhere.
-// Bump CACHE to drop everything already stored. Note that the app's own code
-// no longer depends on this being remembered: see the fetch handler, which
-// revalidates code against the network and keeps the cache for offline only.
-const CACHE = 'nifo-v22';
+// Offline-first service worker. Bump CACHE to drop everything stored.
+// Code is revalidated against the network; the cache is the offline answer.
+const CACHE = 'nifo-v39';
 
 const SHELL = [
   './',
@@ -60,7 +57,7 @@ const SHELL = [
   './js/habits/edit.js',
   './js/habits/tracking.js',
 
-  // the arena
+  // arena
   './js/arena/program.js',
   './js/arena/home.js',
   './js/arena/result.js',
@@ -68,7 +65,13 @@ const SHELL = [
   './js/arena/feats.js',
   './js/arena/cabinet.js',
   './js/arena/crest.js',
+  './js/arena/cup.js',
+  './js/artwork.js',
+  './js/arena/face.js',
   './js/arena/moment.js',
+  './js/arena/rank.js',
+  './js/arena/review.js',
+  './js/arena/share.js',
 
   // wind-down
   './js/breathe/program.js',
@@ -76,10 +79,9 @@ const SHELL = [
   './js/breathe/home.js',
   './js/pray/home.js',
 
-  // bible, which the prayer rule is part of
+  // bible, and the prayer rule
   './js/bible/canon.js',
   './js/bible/context.js',
-  './js/bible/parse.js',
   './js/bible/text.js',
   './js/bible/program.js',
   './js/bible/home.js',
@@ -93,28 +95,26 @@ const SHELL = [
   './icons/icon-maskable-512.png',
   './icons/apple-touch-icon.png',
 
-  // The division crests. Artwork rather than something the app draws, so they
-  // are precached with everything else: a crest that arrives late leaves a
-  // hole where the whole point of the screen is.
+  // Crests. Precached: one arriving late leaves a hole where the screen is.
+  './img/rank-full.webp',
+  './img/rank-mentzer.webp',
+  './img/rank-bottom.webp',
+  './img/rank-contender.webp',
+  './img/rank-locked.webp',
+  './img/rank-menace.webp',
+  './img/rank-npc.webp',
+  './img/rank-prospect.webp',
+  './img/rank-topg.webp',
+  './img/cup-autumn.webp',
+  './img/cup-spring.webp',
+  './img/cup-winter.webp',
   './img/rank-unranked.webp',
-  './img/rank-0-bottom.webp',
-  './img/rank-1-npc.webp',
-  './img/rank-2-prospect.webp',
-  './img/rank-3-contender.webp',
-  './img/rank-4-menace.webp',
-  './img/rank-5-locked.webp',
-  './img/rank-6-topg.webp',
 ];
 
-/* The scripture and the study notes: 154 files and several megabytes, and the
-   one part of this app that is not the app. Kept apart from SHELL for two
-   reasons. `addAll` is all-or-nothing, so with these in the same list a single
-   missing note file meant the whole worker failed to install and the app had
-   no offline mode at all - one bad file for the price of 154. And a build made
-   to hand to someone else does not carry them (`npm run pack:web`, and
-   docs/BIBLE.md says why), so on that build every one of these is a 404 by
-   design. Cached one at a time, best effort: what is there is stored, what is
-   not is simply not there. */
+/* Scripture and notes: 154 files, megabytes, and absent from the packed build
+   (npm run pack:web). Kept out of SHELL because addAll is all-or-nothing, so
+   one missing note file would cost the whole offline mode. Cached one at a
+   time, best effort. */
 const SCRIPTURE = [
   './bible/_meta.json',
   './bible/1ch.json',
@@ -277,9 +277,7 @@ self.addEventListener('install', (e) => {
     caches
       .open(CACHE)
       .then(async (c) => {
-        // The app itself must be complete or there is no offline mode worth
-        // having, so this half stays all-or-nothing and a missing file here is
-        // meant to fail loudly.
+        // The app half stays all-or-nothing: a missing file here should fail loudly.
         await c.addAll(SHELL);
         await Promise.allSettled(SCRIPTURE.map((u) => c.add(u)));
       })
@@ -295,9 +293,8 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-/* Scripture and the study notes never change except when the app itself is
-   rebuilt, and they are megabytes, so they are worth serving from the cache
-   without asking. Everything else is the app's own code. */
+/* Scripture and notes change only when the app is rebuilt, and they are
+   megabytes, so they are served from the cache without asking. */
 const IMMUTABLE = /\/bible\/[^/]*\.json$|\/bible\/notes\/[^/]*\.json$/;
 
 function put(request, response) {
@@ -318,18 +315,11 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  /* The app's own markup, code and styles go to the network first.
-     This used to be cache-first for everything, which is a trap in an app
-     shipped inside an APK: the cache is only ever rebuilt when CACHE changes,
-     so a release that edits styles.css but not sw.js is invisible on a phone
-     that already has a copy. That is exactly what happened - two builds in a
-     row shipped a redesigned hub that nobody could see, because the worker
-     kept serving the previous CSS from a cache whose name had not moved.
-     Remembering to bump a constant every release is not a mechanism.
+  /* Network first for the app's own code. Cache-first meant a release that
+     edited styles.css but not sw.js was invisible on a phone that already had a
+     copy: remembering to bump a constant is not a mechanism. In the APK the
+     network is the bundled asset next to this file, so it costs nothing. */
 
-     Going to the network first costs nothing here: on the APK the "network"
-     is the bundled asset next to this file. The cache stays as the offline
-     answer, which is what it was actually for. */
   e.respondWith(
     fetch(e.request)
       .then((res) => { if (mine) put(e.request, res); return res; })

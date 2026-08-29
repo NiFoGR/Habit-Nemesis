@@ -1,12 +1,5 @@
-// The canon: every book, every chapter, and what you have read of it.
-//
-// One screen with two states. With no book chosen it is the shelf, seventy-six
-// books in the order the Orthodox Study Bible prints them, grouped into the
-// eight parts of the story. With a book chosen it is a grid of its chapters,
-// and tapping one opens it in the reader.
-//
-// The grid is for jumping. Reading straight through needs nothing from this
-// screen at all, which is why the reader has its own next and previous.
+// The shelf, and one book as a grid of chapters. For jumping: reading straight
+// through needs only the reader's own next and previous.
 
 import * as store from '../store.js';
 import * as bible from './program.js';
@@ -44,10 +37,14 @@ function renderShelf(mount) {
         const books = BOOKS.filter((x) => x.section === sec.id);
         if (!books.length) return '';
         const sp = bible.sectionProgress(sec.id);
+        // A section that is one book of the same name: the header is the book.
+        const solo = books.length === 1 && books[0].name === sec.name;
+        const head = `<div class="h-row">${icon('book', 16)}<h2>${escapeHtml(sec.name)}</h2>
+            ${solo ? `<span class="pill ghost">${sp.read}/${sp.total}</span>` : ''}</div>
+          <div class="prog-bar"><i style="width:${(sp.frac * 100).toFixed(1)}%"></i></div>`;
+        if (solo) return `<a class="card solo-book" href="#/bible/books?book=${books[0].id}">${head}</a>`;
         return `<section class="card">
-          <div class="h-row">${icon('book', 16)}<h2>${escapeHtml(sec.name)}</h2>
-            <span class="pill ghost">${sp.read}/${sp.total}</span></div>
-          <div class="prog-bar"><i style="width:${(sp.frac * 100).toFixed(1)}%"></i></div>
+          ${head}
           <div class="book-list">
             ${books.map((x) => {
               const p = bible.bookProgress(x.id);
@@ -59,10 +56,7 @@ function renderShelf(mount) {
                     ? `<i>${[x.also ? escapeHtml(x.also) : '', x.deutero ? 'deuterocanonical' : ''].filter(Boolean).join(' · ')}</i>`
                     : ''}
                 </span>
-                <span class="br-prog">
-                  <span class="br-bar"><i style="width:${(p.frac * 100).toFixed(0)}%"></i></span>
-                  <em>${p.read}/${p.total}</em>
-                </span>
+                <span class="br-prog"><em>${p.read}/${p.total}</em></span>
               </a>`;
             }).join('')}
           </div>
@@ -98,8 +92,7 @@ function renderBook(mount, b) {
       </a>
 
       <section class="card">
-        <div class="h-row">${icon('book', 16)}<h2>${psalms ? 'Psalms' : 'Chapters'}</h2>
-          <span class="pill ghost">tap to mark read</span></div>
+        <div class="h-row">${icon('book', 16)}<h2>${psalms ? 'Psalms' : 'Chapters'}</h2></div>
         <div class="ch-grid">
           ${b.chapters.map((verses, i) => {
             const n = i + 1;
@@ -116,8 +109,7 @@ function renderBook(mount, b) {
       </div>
     </div>`;
 
-  // Both of these are destructive enough to be worth a question. Marking a
-  // fifty-chapter book read in one tap is a claim about fifty days of reading.
+  // Worth a question: marking a fifty-chapter book read is a claim about fifty days.
   mount.querySelector('#allRead').addEventListener('click', () => {
     if (!confirm(`Mark all ${b.chapters.length} chapters of ${b.name} as read?`)) return;
     for (let n = 1; n <= b.chapters.length; n++) bible.markChapter(b.id, n);

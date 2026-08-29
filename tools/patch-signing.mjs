@@ -1,14 +1,9 @@
-// Points the generated Android project at the repo's committed signing key.
+// Points the generated Android project at the committed signing key.
 //
-// Relying on ~/.android/debug.keystore does not work: Gradle resolves that
-// through ANDROID_USER_HOME, which CI runners set for themselves, so a file
-// copied to the literal path is simply not found and the Android plugin
-// silently generates a fresh key instead. A fresh key means a new signature,
-// which means Android refuses the update and the only way in is an uninstall
-// that wipes every session, measurement and photo.
-//
-// Declaring the config in the build file removes the guesswork: there is one
-// keystore, its path is explicit, and the build fails loudly if it is missing.
+// ~/.android/debug.keystore does not work: Gradle resolves it through
+// ANDROID_USER_HOME, which CI sets for itself, so the plugin silently generates
+// a fresh key. A fresh key means Android refuses the update, and the only way
+// in is an uninstall that wipes everything.
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
@@ -31,8 +26,7 @@ if (gradle.includes(MARKER)) {
   process.exit(0);
 }
 
-// `android { }` is an extension, so configuring it a second time is additive
-// and does not have to be spliced into the block Capacitor generated.
+// `android { }` is an extension, so a second block is additive.
 gradle += `
 // ${MARKER}: every NiFo build is signed with the same committed key so that
 // updates install over the top instead of forcing a data-losing reinstall.

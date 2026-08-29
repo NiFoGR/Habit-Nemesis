@@ -1,96 +1,169 @@
-// The introduction, shown once on a new install.
+// The introduction. Seven pages on a new install, replayable from Settings.
 //
-// The app has no signup, no tour tooltips and no empty-state coaching, which
-// is right nine times out of ten and wrong for the first sixty seconds: a grid
-// with no rows on it, a bar with three unlabelled rooms and a screen called
-// "the Arena" do not explain themselves to someone who did not build them.
+// Two of them are done rather than read: page 2 makes you mark a cell, page 7
+// builds the grid you leave on. Everything else is one picture and one line.
 //
-// Five pages, one idea each, and every one of them is mostly a picture. Words
-// here are the thing you skim past, so there is one line per page and it is
-// the line you would say out loud handing someone the phone. The grid page
-// shows a real grid built from the app's own classes rather than a drawing of
-// one, so what you are told to tap looks like the thing you then tap.
-//
-// It ends by writing `onboarded`, so the router stops sending you here, and it
-// is reachable from the bottom of Settings for ever afterwards - which is also
-// how anyone tests it without erasing the app.
-//
-// It says nothing about the five, on any install. There was a page for them,
-// shown once the door at the bottom of Settings was open, and it was the wrong
-// idea twice over: an introduction is for explaining the app to whoever is
-// holding it, and the five are not the app - they are one person's use of it.
-// Nobody who needs an introduction needs that page, and the one person it
-// described did not need an introduction at all.
+// It says nothing about the five private sections. Those are behind the door.
 
 import * as store from './store.js';
+import * as habits from './habits/program.js';
+import * as arena from './arena/program.js';
 import { icon, logoMark } from './icons.js';
 import { crest } from './arena/crest.js';
-import { escapeHtml } from './ui.js';
+import { FEATS } from './arena/feats.js';
+import { cup } from './arena/cup.js';
+import { escapeHtml, chime, haptic, celebrate } from './ui.js';
 import { navigate } from './back.js';
 
-/** True until the introduction has been finished or skipped once. */
+/** True until it has been finished or skipped once. */
 export const introDue = () => !store.get().settings.onboarded;
 
-/* ---------------- the pages ---------------- */
+const pct = (v) => `${Math.round(v * 100)}%`;
 
-/** Four days of one habit, drawn with the grid's own classes. The dates are
- *  not real and are never claimed to be: it is a picture of the shape. */
+/* ---------------- the pictures ---------------- */
+
+/** The grid, drawn with the grid's own classes, so what you are told to tap
+ *  looks like the thing you then tap. Dates are not real. */
 function miniGrid() {
-  const cell = (cls, ico) => `<span class="hg-cell ${cls}">${ico ? icon(ico, 16) : ''}</span>`;
+  // A done cell wears the row's colour on the real grid. Muted here read as off.
+  const cell = (cls, ico, colour) => `<span class="hg-cell ${cls}"${cls === 'on' ? ` style="color:${colour}"` : ''}>${ico ? icon(ico, 16) : ''}</span>`;
   const row = (name, colour, cells) => `<div class="hg-row">
     <span class="hg-name"><span class="hg-ring" style="color:${colour}">${icon('check', 18)}</span><span>${escapeHtml(name)}</span></span>
     ${cells}
   </div>`;
-  return `<div class="hgrid intro-grid" style="--cols:4" aria-hidden="true">
-    <div class="hg-head"><span></span><i><b>FRI</b><em>12</em></i><i><b>SAT</b><em>13</em></i><i><b>SUN</b><em>14</em></i><i class="now"><b>MON</b><em>15</em></i></div>
-    ${row('Run', 'var(--accent)', cell('on', 'check') + cell('on', 'check') + cell('no', 'close') + `<span class="hg-cell intro-tap">${icon('check', 16)}</span>`)}
-    ${row('Read', '#a78bfa', cell('on', 'check') + cell('') + cell('on', 'check') + cell(''))}
+  // Today first, like the grid itself: "Oldest first" is off by default.
+  return `<div class="hgrid intro-grid" style="--cols:4">
+    <div class="hg-head"><span></span><i class="now"><b>MON</b><em>15</em></i><i><b>SUN</b><em>14</em></i><i><b>SAT</b><em>13</em></i><i><b>FRI</b><em>12</em></i></div>
+    ${row('Run', 'var(--accent)',
+      `<button class="hg-cell intro-tap" id="tapMe" aria-label="Mark today">${icon('check', 16)}</button>` +
+      cell('no', 'close') + cell('on', 'check', 'var(--accent)') + cell('on', 'check', 'var(--accent)'))}
+    ${row('Read', '#a78bfa', cell('') + cell('on', 'check', '#a78bfa') + cell('no', 'close') + cell('on', 'check', '#a78bfa'))}
   </div>`;
 }
 
-function pages() {
-  const list = [
-    {
-      title: 'NiFo',
-      line: 'Everything you are keeping, on one screen. No account and no server: none of it leaves this phone.',
-      art: `<span class="intro-logo">${logoMark(76)}</span>`,
-    },
-    {
-      title: 'Three rooms',
-      line: 'The bar at the bottom is the whole app. The grid is now, the Arena is where you stand, the Cabinet is what you have done.',
-      art: `<span class="intro-rooms">
-        <i>${icon('trophy', 26)}<b>Cabinet</b></i>
-        <i class="on">${icon('habits', 26)}<b>Grid</b></i>
-        <i>${icon('versus', 26)}<b>Arena</b></i>
-      </span>`,
-    },
-    {
-      title: 'The grid',
-      line: 'One row per thing you are keeping. Tap today to mark it; the days behind it are the record. The + adds your own.',
-      art: miniGrid(),
-    },
-    {
-      title: 'The Arena',
-      line: 'Every week is a match, and your opponent is a week you already had. Nobody else is in here. Win enough and you go up a division.',
-      art: `<span class="intro-crest">${crest(3, 92)}</span>`,
-    },
-    {
-      title: 'The Cabinet',
-      line: 'Cups you have won, feats you have pulled off, and the year once there is a year to look at.',
-      art: `<span class="intro-icon">${icon('trophy', 76)}</span>`,
-    },
+/** One row per kind, and none of them a starter: the last page offers those. */
+function kinds() {
+  const sample = [
+    { name: 'Cold shower', colour: 'mint', meta: 'every day' },
+    { name: 'Steps', colour: 'sky', meta: 'at least 8,000' },
+    { name: 'No phone in bed', colour: 'clay', meta: '6 in 7' },
   ];
-
-  return list;
+  return `<div class="intro-kinds">
+    ${sample.map((h) => `<span class="intro-kind" style="--kc:${habits.hexOf(h.colour)}">
+      <i class="intro-dot"></i>
+      <b>${escapeHtml(h.name)}</b>
+      <em>${escapeHtml(h.meta)}</em>
+    </span>`).join('')}
+  </div>`;
 }
+
+/** The fixture card, cut down to the two numbers and the gap between them. */
+function fixture() {
+  return `<div class="intro-fix">
+    <span class="intro-fix-side"><b>68%</b><i>You</i></span>
+    <span class="intro-fix-vs">${icon('versus', 20)}</span>
+    <span class="intro-fix-side"><b>74%</b><i>Your Nemesis</i></span>
+    <span class="intro-race"><u style="width:48%"></u></span>
+  </div>`;
+}
+
+/** Every rung and what it costs. The one screen that answers "how do I get
+ *  there", so it is the whole ladder rather than the next step. */
+function ladder() {
+  return `<ol class="intro-ladder">
+    ${arena.DIVISIONS.map((d, i) => `<li>
+      <button class="intro-rung" data-rung="${i}">
+        <span class="intro-rung-crest">${crest(i, 30)}</span>
+        <span class="intro-rung-name">${escapeHtml(d.name)}</span>
+        <span class="intro-rung-need">${pct(d.bar)}</span>
+      </button>
+    </li>`).reverse().join('')}
+  </ol>`;
+}
+
+function cabinet() {
+  const shelf = (id, colour) => `<span class="intro-cup" style="--cc:${colour}">${cup(id, 56)}</span>`;
+  return `<div class="intro-cabinet">
+    <div class="intro-cups">${shelf('winter', '#8fd0ff')}${shelf('spring', '#4ade80')}${shelf('autumn', '#fbbf24')}</div>
+    <div class="intro-feats">
+      <span class="intro-feat">${icon('flame', 14)}A month straight</span>
+      <span class="intro-feat">${icon('medal', 14)}Beat the Nemesis</span>
+      <span class="intro-feat">${icon('crown', 14)}Top G</span>
+    </div>
+  </div>`;
+}
+
+function starters(picked) {
+  return `<div class="starter-list intro-starters">
+    ${habits.STARTERS.map((h, i) => `<button class="starter ${picked.has(i) ? 'picked' : ''}" data-pick="${i}" style="--sc:${habits.hexOf(h.colour)}">
+      <span class="starter-dot"></span>
+      <span class="starter-name">${escapeHtml(h.name)}</span>
+      <span class="starter-meta">${escapeHtml(habits.starterMeta(h))}</span>
+      <span class="starter-add">${icon(picked.has(i) ? 'check' : 'plus', 15)}</span>
+    </button>`).join('')}
+  </div>`;
+}
+
+/* ---------------- the pages ---------------- */
+
+const PAGES = [
+  {
+    title: 'NiFo',
+    line: 'Everything you are keeping, on one screen. No account and no server: none of it leaves this phone.',
+    art: () => `<span class="intro-logo">${logoMark(76)}</span>`,
+    next: 'Show me',
+  },
+  {
+    title: 'Mark the day',
+    line: 'One row per thing you keep, one column per day.',
+    done: 'That is the whole of it. The days behind are the record, and they can be edited too.',
+    art: miniGrid,
+    cta: 'Tap the cell',
+    // Nothing here can be got wrong, and nothing can trap you: the button
+    // opens on its own after a few seconds.
+    gate: true,
+  },
+  {
+    title: 'A row is anything',
+    line: 'A yes, a number with a target, or a few days a week. Four in seven wants any four of them.',
+    art: kinds,
+  },
+  {
+    title: 'The week is a match',
+    line: 'Every week you play a week you already had. Your best is your Nemesis.',
+    art: fixture,
+  },
+  {
+    title: 'The ladder',
+    line: 'A month is the average of its weeks. Clear the next number to go up one, drop below yours to go down one.',
+    art: ladder,
+    tall: true,
+  },
+  {
+    title: 'What you keep',
+    line: `Three cups a year, on the seasons. ${FEATS.length} feats, each one worth saying out loud.`,
+    art: cabinet,
+  },
+  {
+    title: 'Start with these',
+    line: 'Tap the ones you want. Everything about them can change later.',
+    art: null,
+    cta: 'Start',
+    tall: true,
+  },
+];
 
 /* ---------------- the screen ---------------- */
 
 export function renderIntro(mount) {
-  const steps = pages();
   let i = 0;
+  let marked = false;
+  const picked = new Set();
+  let opener = null;
 
   const finish = () => {
+    clearTimeout(opener);
+    for (const n of [...picked].sort()) habits.addStarter(n);
     store.update((st) => {
       st.settings.onboarded = true;
     });
@@ -98,41 +171,107 @@ export function renderIntro(mount) {
   };
 
   function draw() {
-    const step = steps[i];
-    const last = i === steps.length - 1;
+    clearTimeout(opener);
+    const page = PAGES[i];
+    const last = i === PAGES.length - 1;
+    const locked = page.gate && !marked;
+    const cta = last
+      ? picked.size
+        ? `Start with ${picked.size}`
+        : 'Start'
+      : locked
+        ? page.cta
+        : page.next || 'Next';
+
+    // A tall page leads with its heading: seven rungs above the title push it
+    // off the bottom of a phone.
+    const art = page.art ? `<div class="intro-art">${page.art()}</div>` : '';
+    const head = `<h1 class="intro-title">${escapeHtml(page.title)}</h1>
+      <p class="intro-line" id="line">${escapeHtml(marked && page.done ? page.done : page.line)}</p>`;
 
     mount.innerHTML = `
       <div class="screen intro">
         <header class="screen-head">
           <button class="icon-btn" data-back id="back" aria-label="Back">${icon('back')}</button>
+          <span></span>
           <button class="icon-btn text-btn" id="skip">Skip</button>
         </header>
 
-        <div class="step-bar">${steps.map((_, n) => `<i class="${n < i ? 'done' : n === i ? 'on' : ''}"></i>`).join('')}</div>
+        <div class="step-bar">${PAGES.map((_, n) => `<i class="${n < i ? 'done' : n === i ? 'on' : ''}"></i>`).join('')}</div>
 
-        <div class="intro-body">
-          <div class="intro-art">${step.art}</div>
-          <h1 class="intro-title">${escapeHtml(step.title)}</h1>
-          <p class="intro-line">${escapeHtml(step.line)}</p>
+        <div class="intro-body ${page.tall ? 'tall' : ''}">
+          ${page.tall ? head + art : art + head}
+          ${last ? starters(picked) : ''}
         </div>
 
-        <button class="btn primary big" id="next">${last ? 'Start' : 'Next'}</button>
+        <button class="btn primary big" id="next" ${locked ? 'disabled' : ''}>${escapeHtml(cta)}</button>
       </div>`;
 
+    if (locked) opener = setTimeout(open, 4000);
+    wire(page, last);
+  }
+
+  /** The gate opening, whether it was tapped or waited out. */
+  function open() {
+    const btn = mount.querySelector('#next');
+    if (!btn) return;
+    btn.disabled = false;
+    btn.textContent = 'Next';
+  }
+
+  function wire(page, last) {
     mount.querySelector('#next').addEventListener('click', () => {
+      haptic('press');
       if (last) return finish();
       i++;
+      marked = false;
       draw();
     });
-    // Back steps a page rather than leaving, which is what the arrow means on
-    // every other paged screen in the app. From the first page there is
-    // nowhere behind it, so it means the same as Skip.
+    // Back steps a page. On the first it means Skip.
     mount.querySelector('#back').addEventListener('click', () => {
       if (i === 0) return finish();
       i--;
+      marked = false;
       draw();
     });
     mount.querySelector('#skip').addEventListener('click', finish);
+
+    mount.querySelector('#tapMe')?.addEventListener('click', (e) => {
+      if (marked) return;
+      marked = true;
+      clearTimeout(opener);
+      const cell = e.currentTarget;
+      cell.classList.remove('intro-tap');
+      cell.classList.add('on');
+      cell.style.color = 'var(--accent)';
+      chime('mark');
+      haptic('hit');
+      celebrate(cell, { count: 8, spread: 60 });
+      mount.querySelector('#line').textContent = page.done;
+      open();
+    });
+
+    mount.querySelectorAll('[data-rung]').forEach((b) =>
+      b.addEventListener('click', () => {
+        haptic('tick');
+        chime('tick');
+        // Tapping the lit one again puts the page's own line back.
+        const off = b.classList.contains('on');
+        mount.querySelectorAll('[data-rung]').forEach((o) => o.classList.toggle('on', !off && o === b));
+        mount.querySelector('#line').textContent = off ? page.line : arena.DIVISIONS[Number(b.dataset.rung)].blurb;
+      })
+    );
+
+    mount.querySelectorAll('[data-pick]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const n = Number(b.dataset.pick);
+        if (picked.has(n)) picked.delete(n);
+        else picked.add(n);
+        haptic(picked.has(n) ? 'hit' : 'tick');
+        chime(picked.has(n) ? 'mark' : 'unmark');
+        draw();
+      })
+    );
   }
 
   draw();
