@@ -248,36 +248,45 @@ the whole point of a ladder.
 
 ### The prompt
 
-One prompt, used eight times. **Attach the rank emblem itself** and replace
-`RANK` with its name. The point is that the banner is that emblem's world
-rather than that emblem sitting on a backdrop, so the generator needs to see it.
+Flat cartoon vector, not a render. A card competes in somebody's feed next to
+a crypto app's profit banner, so it is loud, saturated and obviously drawn.
+The first version of this prompt asked for photoreal lighting and film grain
+on a near-black ground, and produced exactly that: a beautiful dead city
+nobody would post.
+
+**Attach the rank emblem** and replace `RANK` with its name.
 
 > Attached is the **RANK** rank emblem from my app. Build a vertical
-> 1080 x 1350 poster background that is this emblem's world, not this emblem on
-> a background.
+> 1080 x 1350 celebration banner in that emblem's world.
 >
-> Take its palette, its materials and its subject, and expand them outward until
-> they fill the frame: the metal of its frame becomes the architecture, its
-> accent colour becomes the light, its subject becomes the weather. The emblem
-> itself must NOT appear anywhere in the image. No badge, no shield, no crest,
-> no banner ribbon, no text, no letters, no logo, no face.
+> Style: flat cartoon vector illustration. Bold saturated colour, thick clean
+> outlines, chunky simple shapes, playful. Like the banner a crypto or fitness
+> app shows when you hit a milestone. Sticker art, not a render. NO photoreal
+> lighting, no film grain, no haze, no ruins, no realistic architecture, no
+> cinematic darkness.
 >
-> Composition: the centre third stays quiet and dark so white type can sit over
-> it, and the detail lives at the top and bottom edges. Near-black ground, hex
-> 0a0c10, because it sits on a dark app.
+> Take the emblem's colour and its idea and build a scene from them: bold
+> gradient sky, big geometric shapes, sunburst rays, floating confetti, glossy
+> orbs, motion streaks. The emblem itself must NOT appear: no badge, no shield,
+> no crest, no ribbon, no text, no letters, no logo, no face.
 >
-> Fine film grain, soft volumetric haze, no harsh highlights, no lens flare.
-> Flat, graphic, premium sports app. Photoreal lighting, illustrated forms.
+> Composition: a wide empty middle where big white type will sit, and all the
+> energy pushed to the top and bottom edges. Rich but not muddy, so white type
+> stays readable over it.
 
 Save each result as `share-<division>.webp`: `share-bottom`, `share-npc`,
 `share-prospect`, `share-contender`, `share-menace`, `share-locked`,
 `share-topg`. A ninth, `share-banner`, is the fallback for a week played
-unranked; for that one say "a wide field of thin vertical light lines on near
-black, brightening slightly towards the centre, like a stadium seen from a long
-way off" instead of attaching an emblem.
+unranked; for that one drop the attachment and say "teal and violet, confetti
+and sunburst rays over a bold gradient".
 
-If a result comes back with a badge shape in it anyway, add: "no emblem, no
-insignia, no framed shape of any kind, only environment."
+If a result comes back dark or photographic, add: "flat vector, cel shaded,
+bright, cartoon, no photorealism, no 3D render."
+
+**With no artwork at all** the card draws its own version of this: a diagonal
+gradient in the week's state colour, a sunburst behind the crest, two soft
+orbs and a confetti frame that never lands on the type. A banner replaces the
+sunburst and orbs, not the layout.
 
 ---
 

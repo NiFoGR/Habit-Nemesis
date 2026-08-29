@@ -47,6 +47,15 @@ function fade(hex, a) {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
 }
 
+/** Blend two hexes. Canvas has no colour-mix. */
+function mix(a, b, t) {
+  const hex = (h) => { const n = parseInt(h.replace('#', ''), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  const [ar, ag, ab] = hex(a);
+  const [br, bg, bb] = hex(b);
+  const c = (x, y) => Math.round(x + (y - x) * t);
+  return `rgb(${c(ar, br)}, ${c(ag, bg)}, ${c(ab, bb)})`;
+}
+
 function loadImage(src) {
   return new Promise((done) => {
     if (!src) return done(null);
@@ -86,52 +95,124 @@ function grain(ctx) {
   ctx.fillRect(0, 0, W, H);
 }
 
-function background(ctx, p, rung, banner) {
-  ctx.fillStyle = p.bg;
+/** Deterministic noise, seeded by the week key: the same week always draws the
+ *  same confetti, so a card redrawn is the card you saw. */
+function seeded(key) {
+  let h = 2166136261;
+  for (let i = 0; i < key.length; i++) h = Math.imul(h ^ key.charCodeAt(i), 16777619);
+  return () => {
+    h = Math.imul(h ^ (h >>> 15), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    return ((h ^= h >>> 16) >>> 0) / 4294967296;
+  };
+}
+
+/** Rays from behind the crest. The one thing that makes a flat card feel like
+ *  something happened. */
+function sunburst(ctx, cx, cy, colour) {
+  const rays = 20;
+  ctx.save();
+  ctx.translate(cx, cy);
+  for (let i = 0; i < rays; i++) {
+    const a = (i / rays) * Math.PI * 2;
+    const w = (Math.PI * 2) / rays / 2.4;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, 1500, a - w, a + w);
+    ctx.closePath();
+    ctx.fillStyle = fade(colour, i % 2 ? 0.055 : 0.02);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/** Chunky confetti in a frame around the type, never over it. Squares, bars
+ *  and rings, never a photoreal anything. */
+function confetti(ctx, rand, colours) {
+  // Everything the card says lives in this box, and nothing lands on it.
+  const clear = { x0: 96, x1: W - 96, y0: H * 0.11, y1: H * 0.97 };
+  for (let i = 0; i < 54; i++) {
+    let x = 0;
+    let y = 0;
+    for (let tries = 0; tries < 24; tries++) {
+      x = rand() * W;
+      y = rand() * H;
+      if (x < clear.x0 || x > clear.x1 || y < clear.y0 || y > clear.y1) break;
+      x = -999;
+    }
+    if (x < 0) continue;
+    const size = 10 + rand() * 26;
+    const colour = colours[Math.floor(rand() * colours.length)];
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rand() * Math.PI);
+    ctx.globalAlpha = 0.25 + rand() * 0.5;
+    ctx.fillStyle = colour;
+    ctx.strokeStyle = colour;
+    ctx.lineWidth = 5;
+    const kind = rand();
+    if (kind < 0.45) {
+      ctx.beginPath();
+      ctx.roundRect(-size / 2, -size / 4, size, size / 2, size / 4);
+      ctx.fill();
+    } else if (kind < 0.75) {
+      ctx.beginPath();
+      ctx.roundRect(-size / 2, -size / 2, size, size, size / 3);
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+}
+
+/** Loud on purpose. A card competes in somebody's feed, where the app's own
+ *  dark restraint reads as nothing at all. */
+function background(ctx, p, rung, banner, state, key) {
+  const rand = seeded(key);
+
+  // A bold diagonal, the state colour into the ground.
+  const base = ctx.createLinearGradient(0, 0, W, H);
+  base.addColorStop(0, mix(state, p.bg, 0.5));
+  base.addColorStop(0.5, mix(p.violet, p.bg, 0.82));
+  base.addColorStop(1, p.bg);
+  ctx.fillStyle = base;
   ctx.fillRect(0, 0, W, H);
 
   if (banner) {
-    drawCover(ctx, banner, 0.55);
-    const veil = ctx.createLinearGradient(0, 0, 0, H);
-    veil.addColorStop(0, fade(p.bg, 0.55));
-    veil.addColorStop(0.5, fade(p.bg, 0.8));
-    veil.addColorStop(1, fade(p.bg, 0.97));
-    ctx.fillStyle = veil;
-    ctx.fillRect(0, 0, W, H);
+    drawCover(ctx, banner, 0.75);
   } else {
-    // The glow climbs with the rung: Top G is lit, Bottom G is nearly dark.
-    const lift = 0.06 + rung * 0.028;
-    const glow = ctx.createRadialGradient(W / 2, 470, 0, W / 2, 470, 760);
-    glow.addColorStop(0, fade(p.accent, lift));
-    glow.addColorStop(1, fade(p.accent, 0));
-    ctx.fillStyle = glow;
-    ctx.fillRect(0, 0, W, H);
-
-    const low = ctx.createRadialGradient(W, H, 0, W, H, 900);
-    low.addColorStop(0, fade(p.violet, 0.09));
-    low.addColorStop(1, fade(p.violet, 0));
-    ctx.fillStyle = low;
-    ctx.fillRect(0, 0, W, H);
+    sunburst(ctx, W / 2, 400, state);
+    // Two soft orbs for depth, opposite corners.
+    for (const [x, y, r, c] of [[120, 180, 620, state], [W - 80, H - 220, 700, p.violet]]) {
+      const orb = ctx.createRadialGradient(x, y, 0, x, y, r);
+      orb.addColorStop(0, fade(c, 0.3));
+      orb.addColorStop(1, fade(c, 0));
+      ctx.fillStyle = orb;
+      ctx.fillRect(0, 0, W, H);
+    }
   }
 
-  // Seven hairlines: the week is behind everything on the card.
-  ctx.strokeStyle = fade(p.text, 0.045);
-  ctx.lineWidth = 1;
-  for (let i = 1; i < 7; i++) {
-    const x = Math.round((W / 7) * i) + 0.5;
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, H);
-    ctx.stroke();
-  }
-
-  const edge = ctx.createRadialGradient(W / 2, H / 2, H * 0.34, W / 2, H / 2, H * 0.78);
-  edge.addColorStop(0, fade(p.bg, 0));
-  edge.addColorStop(1, fade(p.bg, 0.65));
-  ctx.fillStyle = edge;
+  // The middle stays quiet: the score sits there and has to win.
+  const veil = ctx.createLinearGradient(0, 0, 0, H);
+  veil.addColorStop(0, fade(p.bg, banner ? 0.5 : 0.25));
+  veil.addColorStop(0.46, fade(p.bg, banner ? 0.78 : 0.62));
+  veil.addColorStop(1, fade(p.bg, banner ? 0.92 : 0.55));
+  ctx.fillStyle = veil;
   ctx.fillRect(0, 0, W, H);
 
+  confetti(ctx, rand, [state, p.violet, p.accent, p.text]);
   grain(ctx);
+
+  // A hairline inset, so the card reads as an object rather than a screenshot.
+  ctx.beginPath();
+  ctx.roundRect(26, 26, W - 52, H - 52, 40);
+  ctx.strokeStyle = fade(p.text, 0.14);
+  ctx.lineWidth = 3;
+  ctx.stroke();
 }
 
 /* ---------------- type ---------------- */
@@ -211,9 +292,8 @@ async function render(key) {
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext('2d');
-  background(ctx, p, f.rung, banner);
-
   const state = f.result === 'won' ? p.good : f.result === 'lost' ? p.danger : p.accent;
+  background(ctx, p, f.rung, banner, state, f.key);
 
   // Header.
   text(ctx, 'NIFO', 72, 100, { size: 30, weight: 700, colour: p.text, align: 'left', spacing: 8 });
