@@ -66,7 +66,6 @@ export function renderRoadmap(mount) {
 
       <section class="card">
         <div class="h-row">${icon('target', 16)}<h2>Right now</h2></div>
-        <div class="kv"><span>Position</span><b>${escapeHtml(def.position)}</b></div>
         <div class="kv"><span>Quick flicks</span><b>${def.flicks.reps} × 1s</b></div>
         <div class="kv"><span>Holds</span><b>${def.holds.reps} × ${(def.holds.holdMs / 1000).toFixed(0)}s</b></div>
         ${def.ramps ? `<div class="kv"><span>Ramps</span><b>${def.ramps.reps} × ${(def.ramps.holdMs / 1000).toFixed(0)}s</b></div>` : ''}

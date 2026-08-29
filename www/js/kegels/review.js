@@ -38,9 +38,9 @@ function summarise(sessions, { from, to }) {
 }
 
 const delta = (now, then, fmt = (v) => String(v), { good = 'up' } = {}) => {
-  if (then == null || now == null) return '';
+  if (then == null || now == null) return '<i class="dl"></i>';
   const d = now - then;
-  if (Math.abs(d) < 1e-9) return '';
+  if (Math.abs(d) < 1e-9) return '<i class="dl"></i>';
   const better = good === 'up' ? d > 0 : d < 0;
   return `<i class="dl ${better ? 'up' : 'down'}">${d > 0 ? '+' : '−'}${escapeHtml(fmt(Math.abs(d)))}</i>`;
 };

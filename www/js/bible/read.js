@@ -56,10 +56,7 @@ function renderShelf(mount) {
                     ? `<i>${[x.also ? escapeHtml(x.also) : '', x.deutero ? 'deuterocanonical' : ''].filter(Boolean).join(' · ')}</i>`
                     : ''}
                 </span>
-                <span class="br-prog">
-                  <span class="br-bar"><i style="width:${(p.frac * 100).toFixed(0)}%"></i></span>
-                  <em>${p.read}/${p.total}</em>
-                </span>
+                <span class="br-prog"><em>${p.read}/${p.total}</em></span>
               </a>`;
             }).join('')}
           </div>

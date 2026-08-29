@@ -38,7 +38,7 @@ export function renderPeHome(mount) {
           <h2>${fmtHours(todayStretch)} <span class="of-goal">of 2h</span></h2>
           <p class="muted small">${pe.peStreak() ? `${pe.peStreak()} day streak` : 'No streak yet'}</p>
         </div>
-        ${ringSvg(Math.min(todayStretch / goal, 1), `${Math.round((todayStretch / goal) * 100)}%`, 'today', { size: 96 })}
+        ${ringSvg(Math.min(todayStretch / goal, 1), '', 'today', { size: 96 })}
       </div>
 
       ${latest ? `<div class="spark-card">
@@ -49,7 +49,7 @@ export function renderPeHome(mount) {
       ${due.due ? `<a class="notice action" href="#/pe/measure">${icon('ruler', 16)} Monthly check-in due.</a>` : ''}
       ${dec.due ? `<div class="notice warn">${dec.consecutive} days without a rest day. Take a few off.</div>` : ''}
 
-      ${lastStretch ? `<a class="btn primary big linkbtn" href="#/pe/timer?type=stretch&repeat=1">${icon('repeat', 18)}<span>Repeat ${Math.max(1, Math.round((lastStretch.plannedSec || lastStretch.durationSec) / 60))} min @ ${lastStretch.tensionKg ?? s.settings.tensionKg} kg</span></a>` : ''}
+      ${lastStretch ? `<a class="btn primary big linkbtn" href="#/pe/timer?type=stretch&repeat=1">${icon('repeat', 18)}<span>Repeat ${Math.max(1, Math.round((lastStretch.plannedSec || lastStretch.durationSec) / 60))} min · ${lastStretch.tensionKg ?? s.settings.tensionKg} kg</span></a>` : ''}
 
       <div class="start-grid">
         <a class="start-card" href="#/pe/timer?type=stretch" style="--c:var(--accent)">${icon('stretch')}<span class="sc-text"><span>Stretch</span><i>${s.settings.stretchMin} min · ${s.settings.tensionKg} kg</i></span></a>

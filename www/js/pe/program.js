@@ -231,9 +231,14 @@ export function projection(horizonMonths = [3, 6, 12]) {
   const girthRate = girthFit ? girthFit.slope * w + prior.girth * (1 - w) : prior.girth;
   const spread = 0.45 + 0.4 * (1 - w); // wider band when we are mostly guessing
 
+  // The rate is what today buys. priorRates already front-loads, decaying
+  // towards a 35% floor over about seven months, so a year at today's rate
+  // would project a number the card's own fineprint calls impossible.
+  const months = (m) => 0.35 * m + 0.65 * 7 * (1 - Math.exp(-m / 7));
+
   const points = horizonMonths.map((m) => {
-    const dl = lengthRate * m;
-    const dg = girthRate * m;
+    const dl = lengthRate * months(m);
+    const dg = girthRate * months(m);
     return {
       months: m,
       bpel: latest.bpel ? latest.bpel + dl : null,
@@ -370,7 +375,7 @@ export function insights() {
     const pctOfGoal = Math.round((daily / goalMin) * 100);
     if (daily < 30) out.push({ level: 'warn', text: `${daily.toFixed(0)} min/day on average, ${pctOfGoal}% of your two-hour target. Below about 30 min/day there is little to measure.` });
     else if (daily < goalMin * 0.8) out.push({ level: 'info', text: `${daily.toFixed(0)} min/day on average, ${pctOfGoal}% of your two-hour target.` });
-    else out.push({ level: 'good', text: `${daily.toFixed(0)} min/day on average, at or near your two-hour target. That is the top of the dose range anyone has studied.` });
+    else out.push({ level: 'good', text: `${daily.toFixed(0)} min/day on average, at or near your two-hour target.` });
   }
 
   const withBpfsl = sessions.filter((s) => s.bpfslBefore && s.bpfslAfter);
@@ -378,7 +383,7 @@ export function insights() {
     const avg = withBpfsl.reduce((a, s) => a + (s.bpfslAfter - s.bpfslBefore) / s.bpfslBefore, 0) / withBpfsl.length * 100;
     out.push({
       level: avg >= 3 ? 'good' : 'warn',
-      text: `Your sessions move BPFSL by ${avg.toFixed(1)}% on average. ${avg >= 3 ? 'That is a real response to the load.' : 'Under about 3% usually means not warm enough, not long enough, or too little tension.'}`,
+      text: `Your sessions move BPFSL by ${avg.toFixed(1)}% on average.${avg >= 3 ? '' : ' Under about 3% usually means not warm enough, not long enough, or too little tension.'}`,
     });
   }
 

@@ -460,10 +460,10 @@ a.btn { text-decoration: none; }
 
 .section-title { font-size: var(--f-fine); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 4px 0 10px; }
 
-.pe-today { }
-
-.notice.action { display: block; text-decoration: none; color: inherit; border-color: var(--accent); }
-.notice.action { display: flex; align-items: center; gap: 8px; }
+.notice.action {
+  display: flex; align-items: center; gap: 8px;
+  text-decoration: none; color: inherit; border-color: var(--accent);
+}
 .notice.action .ico { color: var(--accent); flex: 0 0 auto; }
 .warn-stack { display: grid; gap: 8px; margin-bottom: 14px; }
 
@@ -479,7 +479,7 @@ a.btn { text-decoration: none; }
 
 .start-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
 .start-card {
-  display: grid; gap: 2px; text-decoration: none; color: var(--text);
+  text-decoration: none; color: var(--text);
   background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--c);
   border-radius: 10px; padding: 14px;
 }
@@ -819,8 +819,9 @@ input[type="range"] {
 .phase-head > div { flex: 1; min-width: 0; }
 .phase-head b { display: block; font-size: var(--f-body); }
 .phase-head i { font-style: normal; color: var(--muted); font-size: var(--f-fine); }
+/* The border is the one mark on the phase you are in. Accent on the icon as
+   well would mean current here and done on the card above. */
 .phase-ico { display: flex; color: var(--muted); }
-.phase.on .phase-ico, .phase.done .phase-ico { color: var(--accent); }
 .phase-tag { font-size: var(--f-fine); color: var(--muted); display: flex; align-items: center; }
 .phase-tag.on { color: var(--accent); font-weight: 700; }
 .phase p { margin: 0 0 8px; }
@@ -1188,8 +1189,6 @@ input[type="range"] {
 .br-name b { font-weight: 500; }
 .br-name i { font-style: normal; color: var(--muted); font-size: var(--f-fine); }
 .br-prog { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
-.br-bar { display: block; width: 54px; height: 5px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
-.br-bar i { display: block; height: 100%; background: var(--accent); }
 .br-prog em { font-style: normal; color: var(--muted); font-size: var(--f-fine); min-width: 42px; text-align: right; }
 
 /* ---------- bible: the chapter grid ---------- */
@@ -1241,7 +1240,7 @@ input[type="range"] {
 /* Scoped: kegels declares .log-row as a details/summary row of its own. */
 .log-list > .log-row { display: flex; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); }
 .log-row:last-child { border-bottom: 0; }
-.lr-day { flex: 0 0 82px; display: flex; flex-direction: column; }
+.lr-day { flex: 0 0 104px; display: flex; flex-direction: column; }
 .lr-day b { font-size: var(--f-small); font-weight: 600; }
 .lr-day i { font-style: normal; color: var(--muted); font-size: var(--f-fine); }
 .lr-what { display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-start; }
@@ -1252,12 +1251,6 @@ input[type="range"] {
 /* Indigo on near-black. Used lying down in an unlit room, so it runs darker
    than the other three: every value is a light pointed at your face. */
 
-.br-mark {
-  width: 58px; height: 58px; border-radius: 50%;
-  display: grid; place-items: center;
-  border: 1px solid var(--line); color: var(--muted);
-}
-.br-mark.on { border-color: var(--accent); color: var(--accent); }
 
 /* ---------- the wind-down: the session ---------- */
 

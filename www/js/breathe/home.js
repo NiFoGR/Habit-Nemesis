@@ -33,7 +33,6 @@ export function renderBreatheHome(mount) {
             ? `${fmtDuration(today.ms / 1000)} at ${new Date(today.at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
             : `${fmtClock(plan.totalMs)} tonight`}</p>
         </div>
-        <div class="br-mark ${today.done ? 'on' : ''}">${icon(today.done ? 'check' : 'breath', 26)}</div>
       </div>
 
       <a class="btn primary big linkbtn" href="#/breathe/run">${icon('play', 18)}<span>${today.done ? 'Again' : 'Begin'}</span></a>
@@ -68,11 +67,6 @@ export function renderBreatheHome(mount) {
           it back on. Make the out-breath the longer of the two, at around six
           breaths a minute, and the balance tips towards the parasympathetic
           side. Heart rate falls on every exhale, and keeps falling after you stop.
-        </p>
-        <p class="fineprint">
-          The three sighs at the start are not decoration. Two inhales stacked
-          on each other reinflate collapsed alveoli and dump CO2 in one breath,
-          which is the fastest thing you can do on purpose to drop arousal.
         </p>
       </section>
     </div>`;
@@ -134,7 +128,7 @@ export function renderBreatheSettings(mount) {
           <span><b>At</b></span>
           <input type="time" id="remindAt" value="${escapeHtml(s.remindAt)}">
         </label>
-        <p class="fineprint">Set this after the night prayers, not before. This is meant to be the last thing.</p>
+        <p class="fineprint">Set this after the night prayers.</p>
       </section>
     </div>`;
 

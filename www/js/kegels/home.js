@@ -125,7 +125,7 @@ export function renderGuide(mount) {
         <h2>A kegel, in one paragraph</h2>
         <p class="small muted">There is a sheet of muscle slung across the bottom of your pelvis, the <b>pelvic floor</b>. It is what you tighten to stop yourself passing wind. A kegel is squeezing it deliberately: a lift <b>up and in</b>, towards your belly button. Then a full release. That is the whole movement.</p>
         <p class="small muted">You are doing it right when your <b>belly, buttocks and thighs stay completely still</b> and you are <b>still breathing</b>. If any of those move, ease off to half effort. A smaller contraction of the right muscle beats a hard squeeze of the wrong three.</p>
-        <p class="warn-inline">Don't practise by stopping your urine mid-stream. Useful once as a test, a bad habit as training.</p>
+        <p class="small muted">Don't practise by stopping your urine mid-stream. Useful once as a test, a bad habit as training.</p>
       </section>
 
       <section class="card">
@@ -154,7 +154,7 @@ export function renderGuide(mount) {
 
       <section class="card">
         <h2>Back off if</h2>
-        <p class="small muted">Aching in the pelvis or lower back, heaviness, worse urinary symptoms, or pain during or after. Flag it at the end of a session and the program drops your targets automatically. Persistent symptoms → doctor or pelvic health physio. An over-tight floor gets <b>worse</b> with more kegels.</p>
+        <p class="warn-inline">Aching in the pelvis or lower back, heaviness, worse urinary symptoms, or pain during or after. Flag it at the end of a session and the program drops your targets automatically. Persistent symptoms → doctor or pelvic health physio. An over-tight floor gets <b>worse</b> with more kegels.</p>
       </section>
     </div>`;
 }

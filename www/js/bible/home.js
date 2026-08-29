@@ -57,13 +57,12 @@ export function renderBibleHome(mount) {
       </a>
 
       <section class="card">
-        <div class="h-row">${icon('sun', 16)}<h2>Prayer</h2>
-          <span class="pill ${today.complete ? 'done' : 'ghost'}">${today.kept}/2 today</span></div>
+        <div class="h-row">${icon('sun', 16)}<h2>Prayer</h2></div>
         <div class="prayer-list">
           ${prayerCard('morning')}
           ${prayerCard('evening')}
         </div>
-        <p class="muted small">${prayStreak ? `${prayStreak} day prayer streak` : 'Both are required. A day counts when both are kept.'}</p>
+        ${prayStreak ? `<p class="muted small">${prayStreak} day prayer streak</p>` : ''}
       </section>
 
       <a class="btn ghost linkbtn ext" href="${GOARCH}" target="_blank" rel="noopener noreferrer">

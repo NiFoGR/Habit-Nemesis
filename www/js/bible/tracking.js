@@ -34,7 +34,7 @@ export function renderBibleTracking(mount) {
       <div class="stat-grid">
         <div class="stat"><b>${bible.streak()}</b><span>day streak</span></div>
         <div class="stat"><b>${st.best}</b><span>best streak</span></div>
-        <div class="stat"><b>${t30.items}</b><span>read, 30d</span></div>
+        <div class="stat"><b>${t30.items}</b><span>chapters, 30d</span></div>
         <div class="stat"><b>${Math.round(t30.rate * 100)}%</b><span>days read, 30d</span></div>
       </div>
 
@@ -66,9 +66,9 @@ export function renderBibleTracking(mount) {
           <span class="pill ghost">${pray.streak()}d streak</span></div>
         <div class="stat-grid">
           <div class="stat"><b>${pray.totals(30).full}</b><span>full days, 30d</span></div>
-          <div class="stat"><b>${pray.totals(30).morning}</b><span>mornings</span></div>
-          <div class="stat"><b>${pray.totals(30).evening}</b><span>nights</span></div>
-          <div class="stat"><b>${pray.lifetime()}</b><span>prayers kept</span></div>
+          <div class="stat"><b>${pray.totals(30).morning}</b><span>mornings, 30d</span></div>
+          <div class="stat"><b>${pray.totals(30).evening}</b><span>nights, 30d</span></div>
+          <div class="stat"><b>${pray.lifetime()}</b><span>prayers, all time</span></div>
         </div>
         <div class="heatmap">
           ${(() => { const h = pray.history(13); const cols = [];

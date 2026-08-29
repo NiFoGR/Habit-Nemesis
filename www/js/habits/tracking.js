@@ -133,7 +133,7 @@ export function renderHabitDetail(mount, id) {
           <div class="hm-key">
             <i class="hc-cell on"></i> done
             <i class="hc-cell carried"></i> covered
-            ${habits.settings().skipDays ? '<i class="hc-cell skip"></i> skipped' : ''}
+            ${cal.cols.some((c) => c.cells.some((d) => d.skipped)) ? '<i class="hc-cell skip"></i> skipped' : ''}
             <i class="hc-cell"></i> not done
           </div>
         </section>
