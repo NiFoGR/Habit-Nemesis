@@ -65,6 +65,7 @@ const SHELL = [
   './js/arena/feats.js',
   './js/arena/cabinet.js',
   './js/arena/crest.js',
+  './js/artwork.js',
   './js/arena/face.js',
   './js/arena/moment.js',
   './js/arena/rank.js',

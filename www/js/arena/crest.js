@@ -1,8 +1,12 @@
 // The seven crests. Artwork, one file per rung in www/img/, square,
 // transparent, 256px, so one file serves the 92px hero and a 28px badge.
+// The filename comes from the generated manifest, so a badge sent as a PNG and
+// replaced later by a WebP needs no change here.
 //
 //   0 Bottom G   1 NPC   2 Prospect   3 Contender
 //   4 Menace     5 Locked In         6 Top G
+
+import { artSrc } from '../artwork.js';
 
 const ART = [
   'rank-0-bottom',
@@ -20,7 +24,7 @@ export const UNRANKED = -1;
 const UNRANKED_ART = 'rank-unranked';
 
 export const crestSrc = (i) =>
-  `./img/${i === UNRANKED ? UNRANKED_ART : ART[Math.max(0, Math.min(i, ART.length - 1))]}.webp`;
+  artSrc(i === UNRANKED ? UNRANKED_ART : ART[Math.max(0, Math.min(i, ART.length - 1))]);
 
 /** `i` is the rung, 0 to 6, or UNRANKED. Decorative: the name is always beside it. */
 export function crest(i, size = 64) {
