@@ -240,12 +240,34 @@ initBack({
   ephemeral: (hash) => EPHEMERAL.some((r) => hash.startsWith(r)),
 });
 
+/* ---------------- the day turning ----------------
+   Every screen is dated, so midnight is a change to all of them. Left open
+   across it, the grid used to show yesterday until the next navigation. */
+
+let onDay = habitsProgram.today();
+
+function dayTurned() {
+  const now = habitsProgram.today();
+  if (now === onDay) return false;
+  // Not over a running session or an open sheet: redrawing would take the
+  // screen out from under it. The next minute asks again.
+  if (activeSession || document.querySelector('.sheet-scrim')) return false;
+  onDay = now;
+  store.snapshot();
+  collect();
+  route();
+  return true;
+}
+
+setInterval(dayTurned, 60000);
+
 // Background locks the vault.
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     // Catches a week that ended while backgrounded.
     collect();
     native.hideNavBar();
+    if (dayTurned()) return;
     if (lockActive()) route();
     else if (location.hash.startsWith('#/hub') && (hasResults() || hasRank() || hasMoment())) route();
     return;
