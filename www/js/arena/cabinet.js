@@ -36,7 +36,6 @@ export function renderCabinet(mount) {
       <header class="grid-head">
         <div class="gh-text">
           <h1>Cabinet</h1>
-          <p>What you have done</p>
         </div>
         <div class="head-actions">
           <a class="icon-btn linkbtn" href="#/settings" aria-label="Settings">${icon('settings')}</a>
@@ -75,14 +74,13 @@ export function renderCabinet(mount) {
                 </div>`)
                 .join('')}
             </div>`
-          : '<p class="muted small">Every feat is earned. There is nothing left on the list.</p>'}
+          : '<p class="muted small">Every feat is earned.</p>'}
         <a class="btn ghost wide" href="#/cabinet/feats">${icon('medal', 16)}<span>All feats</span></a>
       </section>
 
       <section class="card">
         <div class="ar-week-head">
           <h2>The Year</h2>
-          <span class="pill ghost">${open.length ? `${open.length} sealed` : 'none yet'}</span>
         </div>
         <div class="vault small">
           <span class="vault-lock">${icon('lock', 20)}</span>

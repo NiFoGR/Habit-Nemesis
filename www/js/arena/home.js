@@ -409,7 +409,6 @@ export function renderFeats(mount) {
       <div class="today">
         <div class="today-left">
           <h2>${c.earned} of ${c.total}</h2>
-          <p class="muted small">Not achievements. Each one is something you could say out loud.</p>
         </div>
       </div>
 
@@ -418,7 +417,7 @@ export function renderFeats(mount) {
           (s) => `<section class="card">
             <div class="ar-week-head">
               <h2>${escapeHtml(s.section)}</h2>
-              <span class="pill ghost">${s.earned}/${s.items.length}</span>
+              <span class="pill ghost">${s.earned} of ${s.items.length}</span>
             </div>
             <div class="ft-grid">
               ${s.items.map(featTile).join('')}

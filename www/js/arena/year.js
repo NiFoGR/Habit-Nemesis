@@ -55,7 +55,7 @@ export function renderYear(mount, want) {
 
       ${scored.length
         ? `<div class="stat-grid three">
-            <div class="stat"><b>${pct(mean)}</b><span>the year</span></div>
+            <div class="stat"><b>${pct(mean)}</b><span>mean</span></div>
             <div class="stat"><b>${won}–${lost}</b><span>won–lost</span></div>
             <div class="stat"><b>${cells.toLocaleString()}</b><span>cells kept</span></div>
           </div>
@@ -169,9 +169,6 @@ function ladderTrack(year) {
   const months = store.get().arena.months;
   const seen = arena.monthsOfYear(year).map((m) => (months[m] ? { m, ...months[m] } : null)).filter(Boolean);
   if (!seen.length) return '<p class="muted small">No month of this year closed.</p>';
-  const first = arena.divisionOf(seen[0].from);
-  const last = arena.divisionOf(seen[seen.length - 1].to);
-  const high = seen.reduce((a, m) => Math.max(a, arena.divisionIndex(m.to)), 0);
   return `<div class="yr-track">
     ${seen
       .map((m) => `<span class="yr-step ${m.move}" title="${escapeHtml(`${m.m}: ${m.move}`)}">
@@ -179,10 +176,7 @@ function ladderTrack(year) {
         <i>${escapeHtml(arena.divisionOf(m.to).name)}</i>
       </span>`)
       .join('')}
-  </div>
-  <div class="kv"><span>Started</span><b>${escapeHtml(first.name)}</b></div>
-  <div class="kv"><span>Highest</span><b>${escapeHtml(arena.DIVISIONS[high].name)}</b></div>
-  <div class="kv"><span>Finished</span><b>${escapeHtml(last.name)}</b></div>`;
+  </div>`;
 }
 
 function lastDivisionOf(year) {
@@ -241,7 +235,7 @@ function rowsOfYear(weeks) {
       tally.set(r.id, t);
     }
   }
-  const rows = [...tally.values()].filter((r) => r.due >= 20).sort((a, b) => b.done / b.due - a.done / a.due);
+  const rows = [...tally.values()].filter((r) => r.due >= 20 && r.done).sort((a, b) => b.done / b.due - a.done / a.due);
   if (!rows.length) return '';
   return `<section class="card">
     <h2>The rows</h2>

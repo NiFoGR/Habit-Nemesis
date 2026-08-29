@@ -1970,7 +1970,7 @@ body.blacked .br-orb { opacity: 0.09; }
 
 /* The same rows as the grid, in the same order, so the eye can map one onto
    the other. What is new is the fraction. */
-.ar-rows { margin-top: 14px; border-top: 1px solid var(--line-soft); padding-top: 10px; }
+.ar-rows { margin-top: 14px; }
 .ar-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: var(--f-small); }
 .ar-row-name { flex: 1 1 40%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ar-row-bar { flex: 1 1 40%; height: 6px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
@@ -2000,7 +2000,7 @@ body.blacked .br-orb { opacity: 0.09; }
 }
 .ar-nemesis:active { transform: scale(0.99); }
 .ar-nico { display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 30px;
-  border-radius: 8px; background: var(--surface); color: var(--warn); }
+  border-radius: 8px; background: var(--surface); color: var(--muted); }
 .ar-nico.good { color: var(--good); }
 .ar-nico.bad { color: var(--danger); }
 .ar-nname { flex: 1; min-width: 0; }
@@ -2066,6 +2066,9 @@ body.blacked .br-orb { opacity: 0.09; }
   position: relative; padding: 12px 9px 10px; text-align: center; cursor: pointer;
   background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
   color: var(--muted); font: inherit;
+  /* A button centres its content, so tiles of different name lengths put their
+     icons at different heights. A column pins the icon, the name and the bar. */
+  display: grid; grid-template-rows: auto 1fr auto; align-content: start;
 }
 .ft b { display: block; font-size: var(--f-micro); font-weight: 600; line-height: 1.25; margin-top: 6px; }
 /* No margin: 0 auto: in the flex rows that reuse this it ate the free space and
