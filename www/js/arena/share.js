@@ -7,6 +7,9 @@
 // The background is generated: gradient, glow, the week's own seven columns
 // and a little grain. Drop share-<division>.webp or share-banner.webp into
 // art/ and it is used instead. See docs/ART.md.
+//
+// No face, ever. The Nemesis photo is on the device for you, not for whoever
+// you send this to, and a card is the one thing here that leaves the phone.
 
 import * as store from '../store.js';
 import * as arena from './program.js';

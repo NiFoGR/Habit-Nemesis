@@ -246,34 +246,38 @@ Eight files at most, and one is enough to start. The division set is the version
 worth having: the card looks different at Top G to how it looks at NPC, which is
 the whole point of a ladder.
 
-### The prompts
+### The prompt
 
-One base prompt, one line swapped per file. Paste the base, replace `SUBJECT`,
-and ask for 1080 x 1350.
+One prompt, used eight times. **Attach the rank emblem itself** and replace
+`RANK` with its name. The point is that the banner is that emblem's world
+rather than that emblem sitting on a backdrop, so the generator needs to see it.
 
-> A vertical 4:5 poster background for a dark mobile app, 1080 x 1350. Near
-> black ground, hex 0a0c10. Abstract: no text, no letters, no numbers, no
-> people, no logos, no watermark. SUBJECT. Keep the middle third quiet and dark
-> so white type can sit over it; put the detail at the top and bottom edges.
-> Palette: near black and greyscale, with teal hex 22d3c5 and violet hex a78bfa
-> used sparingly as light only. Fine film grain, soft volumetric haze, no harsh
-> highlights, no lens flare. Flat, graphic, premium sports app. Photoreal
-> lighting, illustrated forms.
+> Attached is the **RANK** rank emblem from my app. Build a vertical
+> 1080 x 1350 poster background that is this emblem's world, not this emblem on
+> a background.
+>
+> Take its palette, its materials and its subject, and expand them outward until
+> they fill the frame: the metal of its frame becomes the architecture, its
+> accent colour becomes the light, its subject becomes the weather. The emblem
+> itself must NOT appear anywhere in the image. No badge, no shield, no crest,
+> no banner ribbon, no text, no letters, no logo, no face.
+>
+> Composition: the centre third stays quiet and dark so white type can sit over
+> it, and the detail lives at the top and bottom edges. Near-black ground, hex
+> 0a0c10, because it sits on a dark app.
+>
+> Fine film grain, soft volumetric haze, no harsh highlights, no lens flare.
+> Flat, graphic, premium sports app. Photoreal lighting, illustrated forms.
 
-| File | SUBJECT |
-|---|---|
-| `share-banner` | a wide field of thin vertical light lines on near black, brightening slightly towards the centre, like a stadium seen from a long way off |
-| `share-bottom` | a bare concrete floor under one weak overhead bulb, dust hanging in the beam, nothing else in the frame |
-| `share-npc` | an endless grid of identical faint panels receding into fog, one panel very slightly brighter than the rest |
-| `share-prospect` | the first shaft of teal light breaking across a dark rough wall, a few embers rising through it |
-| `share-contender` | two low teal spotlights crossing over an empty ring floor, rope shadows thrown long across the ground |
-| `share-menace` | a dark storm front lit from behind by teal lightning, low horizon, heavy air |
-| `share-locked` | a long dark corridor of thin vertical teal lines converging on one bright point far away |
-| `share-topg` | a black polished surface under a violet to teal gradient horizon, one restrained rim of gold light along the top edge |
+Save each result as `share-<division>.webp`: `share-bottom`, `share-npc`,
+`share-prospect`, `share-contender`, `share-menace`, `share-locked`,
+`share-topg`. A ninth, `share-banner`, is the fallback for a week played
+unranked; for that one say "a wide field of thin vertical light lines on near
+black, brightening slightly towards the centre, like a stadium seen from a long
+way off" instead of attaching an emblem.
 
-If a generator refuses the hex codes, say "deep cyan" for the teal and "soft
-purple" for the violet. Ask for the same seed across the eight so the set holds
-together.
+If a result comes back with a badge shape in it anyway, add: "no emblem, no
+insignia, no framed shape of any kind, only environment."
 
 ---
 
