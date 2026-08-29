@@ -184,7 +184,7 @@ export function renderStats(mount) {
 
       <section class="card">
         <div class="h-row">${icon('chart', 16)}<h2>Training volume</h2></div>
-        <div class="legend">${Object.entries(vol).map(([t, v]) => `<i style="background:${pe.typeDef(t).colour}"></i> ${escapeHtml(pe.typeDef(t).label)} ${fmtHours(v)}`).join(' ')}</div>
+        <div class="legend">${Object.keys(vol).map((t) => `<i style="background:${pe.typeDef(t).colour}"></i> ${escapeHtml(pe.typeDef(t).label)}`).join(' ')}</div>
         ${volumeBars(inPeriod, period)}
       </section>
 
@@ -220,7 +220,6 @@ export function renderStats(mount) {
       <section class="card">
         <div class="h-row">${icon('pump', 16)}<h2>Pumping</h2></div>
         <div class="kv"><span>Sessions</span><b>${pumps.length}</b></div>
-        <div class="kv"><span>Total time</span><b>${fmtHours(vol.pump || 0)}</b></div>
         <div class="kv"><span>Kegel cycles logged</span><b>${inPeriod.reduce((a, x) => a + (x.kegelCycles || 0), 0)}</b></div>
       </section>
 

@@ -335,8 +335,10 @@ export function renderArena(mount) {
   wire(mount);
 }
 
-/** The Nemesis gets a line of his own: he is always somewhere on the fixture list. */
+/** A line of his own, except on the weeks he is the fixture: the card above
+ *  already carries the same face, the same week and the same score. */
 function nemesisLine() {
+  if (arena.fixtureFor(arena.currentWeek()).id === 'nemesis') return '';
   const n = arena.nemesisWeek();
   if (!n) return '';
   return `<button class="ar-nemesis" data-week="${n.key}">

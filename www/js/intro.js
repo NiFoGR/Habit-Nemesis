@@ -10,6 +10,7 @@ import * as habits from './habits/program.js';
 import * as arena from './arena/program.js';
 import { icon, logoMark } from './icons.js';
 import { crest } from './arena/crest.js';
+import { FEATS } from './arena/feats.js';
 import { cup } from './arena/cup.js';
 import { escapeHtml, chime, haptic, celebrate } from './ui.js';
 import { navigate } from './back.js';
@@ -24,25 +25,28 @@ const pct = (v) => `${Math.round(v * 100)}%`;
 /** The grid, drawn with the grid's own classes, so what you are told to tap
  *  looks like the thing you then tap. Dates are not real. */
 function miniGrid() {
-  const cell = (cls, ico) => `<span class="hg-cell ${cls}">${ico ? icon(ico, 16) : ''}</span>`;
+  // A done cell wears the row's colour on the real grid. Muted here read as off.
+  const cell = (cls, ico, colour) => `<span class="hg-cell ${cls}"${cls === 'on' ? ` style="color:${colour}"` : ''}>${ico ? icon(ico, 16) : ''}</span>`;
   const row = (name, colour, cells) => `<div class="hg-row">
     <span class="hg-name"><span class="hg-ring" style="color:${colour}">${icon('check', 18)}</span><span>${escapeHtml(name)}</span></span>
     ${cells}
   </div>`;
+  // Today first, like the grid itself: "Oldest first" is off by default.
   return `<div class="hgrid intro-grid" style="--cols:4">
-    <div class="hg-head"><span></span><i><b>FRI</b><em>12</em></i><i><b>SAT</b><em>13</em></i><i><b>SUN</b><em>14</em></i><i class="now"><b>MON</b><em>15</em></i></div>
-    ${row('Run', 'var(--accent)', cell('on', 'check') + cell('on', 'check') + cell('no', 'close') +
-      `<button class="hg-cell intro-tap" id="tapMe" aria-label="Mark today">${icon('check', 16)}</button>`)}
-    ${row('Read', '#a78bfa', cell('on', 'check') + cell('no', 'close') + cell('on', 'check') + cell(''))}
+    <div class="hg-head"><span></span><i class="now"><b>MON</b><em>15</em></i><i><b>SUN</b><em>14</em></i><i><b>SAT</b><em>13</em></i><i><b>FRI</b><em>12</em></i></div>
+    ${row('Run', 'var(--accent)',
+      `<button class="hg-cell intro-tap" id="tapMe" aria-label="Mark today">${icon('check', 16)}</button>` +
+      cell('no', 'close') + cell('on', 'check', 'var(--accent)') + cell('on', 'check', 'var(--accent)'))}
+    ${row('Read', '#a78bfa', cell('') + cell('on', 'check', '#a78bfa') + cell('no', 'close') + cell('on', 'check', '#a78bfa'))}
   </div>`;
 }
 
-/** Three rows, three kinds. The line under each name is the app's own. */
+/** One row per kind, and none of them a starter: the last page offers those. */
 function kinds() {
   const sample = [
-    { name: 'Gym', colour: 'orange', meta: '4 in 7' },
-    { name: 'Water', colour: 'sky', meta: 'L · at least 3' },
-    { name: 'No sugar', colour: 'rose', meta: '6 in 7' },
+    { name: 'Cold shower', colour: 'mint', meta: 'every day' },
+    { name: 'Steps', colour: 'sky', meta: 'at least 8,000' },
+    { name: 'No phone in bed', colour: 'clay', meta: '6 in 7' },
   ];
   return `<div class="intro-kinds">
     ${sample.map((h) => `<span class="intro-kind" style="--kc:${habits.hexOf(h.colour)}">
@@ -111,7 +115,7 @@ const PAGES = [
   },
   {
     title: 'Mark the day',
-    line: 'One row per thing you keep, one column per day. Tap the lit cell.',
+    line: 'One row per thing you keep, one column per day.',
     done: 'That is the whole of it. The days behind are the record, and they can be edited too.',
     art: miniGrid,
     cta: 'Tap the cell',
@@ -126,7 +130,7 @@ const PAGES = [
   },
   {
     title: 'The week is a match',
-    line: 'Every week you play a week you already had. Your best is your Nemesis. There is nobody else in here.',
+    line: 'Every week you play a week you already had. Your best is your Nemesis.',
     art: fixture,
   },
   {
@@ -137,7 +141,7 @@ const PAGES = [
   },
   {
     title: 'What you keep',
-    line: 'Three cups a year, on the seasons. Forty-five feats, each one worth saying out loud.',
+    line: `Three cups a year, on the seasons. ${FEATS.length} feats, each one worth saying out loud.`,
     art: cabinet,
   },
   {
@@ -239,6 +243,7 @@ export function renderIntro(mount) {
       const cell = e.currentTarget;
       cell.classList.remove('intro-tap');
       cell.classList.add('on');
+      cell.style.color = 'var(--accent)';
       chime('mark');
       haptic('hit');
       celebrate(cell, { count: 8, spread: 60 });

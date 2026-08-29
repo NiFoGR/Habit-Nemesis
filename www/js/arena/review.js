@@ -189,8 +189,10 @@ function empty(mount) {
       <p class="eyebrow">The week in review</p>
       <h1 class="rv-title">Not yet</h1>
       <p class="rv-sub">Come back Sunday.</p>
-      <button class="btn primary big" data-back>Back to the grid</button>
+      <button class="btn primary big" id="out" data-back>Back to the grid</button>
     </div>`;
+
+  mount.querySelector('#out').addEventListener('click', () => navigate('#/hub'));
 }
 
 function draw(mount, w) {

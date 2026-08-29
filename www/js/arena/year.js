@@ -145,7 +145,9 @@ function monthChart(year) {
   const months = store.get().arena.months;
   const bar = arena.divisionOf(lastDivisionOf(year)).bar;
   const cols = arena.monthsOfYear(year);
-  return `<div class="yr-chart" style="--bar-line:${(bar * 100).toFixed(1)}%">
+  // Unitless: the stylesheet multiplies it by the track, which is the chart
+  // less the row of month letters.
+  return `<div class="yr-chart" style="--bar-line:${bar.toFixed(3)}">
     ${cols
       .map((key) => {
         const rec = months[key];

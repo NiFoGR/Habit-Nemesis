@@ -2,7 +2,7 @@
 
 import * as store from '../store.js';
 import * as pray from './program.js';
-import { escapeHtml, toast } from '../ui.js';
+import { escapeHtml, haptic, toast } from '../ui.js';
 import { icon } from '../icons.js';
 
 export function renderMyPrayers(mount) {

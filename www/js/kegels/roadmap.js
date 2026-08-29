@@ -106,7 +106,7 @@ export function renderRoadmap(mount) {
 
       <section class="card">
         <div class="h-row">${icon('trend', 16)}<h2>What gets harder</h2></div>
-        <p class="small muted">Five things grow at once, so the plan never has to lean on any one of them: hold length (3s → 20s), holds per session (8 → 20), flicks (10 → 30), ramps from week 13, and rapid pulse sets from week 49. Position climbs lying → seated → standing → mid-activity. Every fourth week is a deload.</p>
+        <p class="small muted">Five things grow at once, so the plan never leans on any one of them. Two are not on the chips above: ramps from week 13, rapid pulse sets from week 49.</p>
         <div class="kv"><span>Your best hold</span><b>${fmtMs(state.prs.maxHoldMs)}</b></div>
         <div class="kv"><span>The last working week asks for</span><b>${(peak.holds.holdMs / 1000).toFixed(0)}s × ${peak.holds.reps}</b></div>
       </section>

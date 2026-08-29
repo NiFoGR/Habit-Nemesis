@@ -67,13 +67,17 @@ export function renderRank(mount) {
   // sit where the eye lands.
   const rungs = arena.DIVISIONS.map((d, i) => {
     const here = i === rung;
+    // Your score replaces the threshold only where it is above it. On a
+    // relegation it is below, and a low number wedged into a descending
+    // column reads as that division's bar.
+    const mine = here && m.score >= d.bar;
     const lost = !placed && !up && i > rung && i <= fromRung;
     const above = i > rung && !lost;
     return `<li class="rk-rung ${here ? 'here' : ''} ${lost ? 'lost' : ''} ${above ? 'above' : ''}" style="--i:${arena.DIVISIONS.length - 1 - i}">
       <span class="rk-mark">${crest(i, here ? 40 : 28)}</span>
       <span class="rk-name">${escapeHtml(d.name)}</span>
-      <span class="rk-need">${here ? pct(m.score) : pct(d.bar)}</span>
-      <span class="rk-bar"><i style="--w:${((here ? m.score : d.bar) * 100).toFixed(0)}%"></i></span>
+      <span class="rk-need">${mine ? pct(m.score) : pct(d.bar)}</span>
+      <span class="rk-bar"><i style="--w:${((mine ? m.score : d.bar) * 100).toFixed(0)}%"></i></span>
     </li>`;
   }).reverse().join('');
 

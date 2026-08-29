@@ -11,16 +11,17 @@ import { markUnlocked } from './lock.js';
 import { nifoOffered, nifoUnlocked, tryNifoPin } from './nifo.js';
 import { isNative } from './native.js';
 
+const navLink = (href, ico, name) => `<a href="${href}">${icon(ico, 16)}<span>${escapeHtml(name)}</span></a>`;
+
 /** One row per section with its own settings screen. Prayer's live on the
- *  Bible row: prayer lives in the Bible section. */
+ *  Bible row: prayer lives in the Bible section. Night light is not one of the
+ *  five and sits outside, or a locked install cannot reach it at all. */
 function settingsNav() {
-  const link = (href, ico, name) => `<a href="${href}">${icon(ico, 16)}<span>${escapeHtml(name)}</span></a>`;
   return `<div class="set-nav">
-    ${link('#/kegels/settings', 'target', kegelName())}
-    ${link('#/pe/settings', 'trend', peName())}
-    ${link('#/bible/settings', 'scripture', 'Bible and prayer')}
-    ${link('#/breathe/settings', 'breath', 'Wind-down')}
-    ${link('#/settings/night', 'moon', 'Night light')}
+    ${navLink('#/kegels/settings', 'target', kegelName())}
+    ${navLink('#/pe/settings', 'trend', peName())}
+    ${navLink('#/bible/settings', 'scripture', 'Bible and prayer')}
+    ${navLink('#/breathe/settings', 'breath', 'Wind-down')}
   </div>`;
 }
 
@@ -55,6 +56,9 @@ export function renderSettings(mount) {
       </section>
 
       ${nifoUnlocked() ? `<h3 class="set-group">Sections</h3>${settingsNav()}` : ''}
+
+      <h3 class="set-group">The screen</h3>
+      <div class="set-nav">${navLink('#/settings/night', 'moon', 'Night light')}</div>
 
       ${group('The grid', [
         row('Week starts', select('firstDay', WEEKDAYS_LONG.map((d, i) => [i, d]), hs.firstDay)),

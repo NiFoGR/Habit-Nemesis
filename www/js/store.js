@@ -127,7 +127,7 @@ function blank() {
         shortPress: true, // a single tap marks, instead of press-and-hold
         skipDays: false, // toggle again for a skip: keeps the score and the streak
         unknownMarks: false, // draw days with no data differently from lapses
-        reverseDays: false, // the grid runs oldest to newest
+        reverseDays: false, // off: today first. On: oldest first
         columns: 4, // day columns on the grid
         showLinked: true, // the other five features, read-only, at the top
       },

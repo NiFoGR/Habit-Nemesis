@@ -1055,8 +1055,6 @@ input[type="range"] {
 .set-nav a:active { background: var(--surface-2); }
 .set-nav .ico { color: var(--accent); }
 .set-nav span { display: grid; gap: 2px; }
-.set-nav b { font-size: var(--f-body); font-weight: 600; }
-.set-nav i { font-style: normal; font-size: var(--f-fine); color: var(--muted); }
 
 /* Capped, or one long <option> squeezes the label into a two-word column. */
 /* One width for every control in a settings list: a ragged right edge is what
@@ -1965,7 +1963,8 @@ body.blacked .br-orb { opacity: 0.09; }
 .ar-row-name { flex: 1 1 40%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ar-row-bar { flex: 1 1 40%; height: 6px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
 .ar-row-bar i { display: block; height: 100%; border-radius: 4px; background: var(--accent); transition: width var(--t-base) var(--ease); }
-.ar-row b { flex: 0 0 auto; font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 600; font-size: var(--f-fine); }
+/* Fixed, so a 10/12 row does not shorten its bar against a 5/6 one. */
+.ar-row b { flex: 0 0 46px; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 600; font-size: var(--f-fine); }
 
 /* ---------- form + the nemesis ---------- */
 
@@ -1996,7 +1995,8 @@ body.blacked .br-orb { opacity: 0.09; }
 .ar-nname b { display: block; font-size: var(--f-small); }
 .ar-nname i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ar-nscore { font-size: var(--f-head); color: var(--accent); font-variant-numeric: tabular-nums; }
+/* The icon on the left carries good or bad. The number stays a number. */
+.ar-nscore { font-size: var(--f-head); color: var(--text); font-variant-numeric: tabular-nums; }
 
 /* ---------- the arc ---------- */
 
@@ -2185,20 +2185,24 @@ body.blacked .br-orb { opacity: 0.09; }
 
 /* Always 0 to 100: a chart that scales to its tallest bar turns a flat year
    into a dramatic one. The dotted line is the division bar. */
-.yr-chart { position: relative; display: flex; align-items: flex-end; gap: 4px; height: 120px; margin-bottom: 10px; }
+/* The month letters sit in their own row, so a bar's percentage is of the
+   track above them and the division line is measured from the same floor. */
+.yr-chart { --yr-label: 20px;
+  position: relative; display: flex; align-items: flex-end; gap: 4px; height: 120px; margin-bottom: 10px; }
 .yr-chart::after {
-  content: ''; position: absolute; left: 0; right: 0; bottom: calc(var(--bar-line) * 0.86);
+  content: ''; position: absolute; left: 0; right: 0;
+  bottom: calc(var(--yr-label) + (100% - var(--yr-label)) * var(--bar-line));
   border-top: 1px dashed var(--line); pointer-events: none;
 }
-.yr-col { flex: 1 1 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
-  height: 100%; gap: 4px; }
-.yr-fill { display: block; width: 100%; border-radius: 4px 4px 2px 2px; background: var(--line); min-height: 2px; }
+.yr-col { flex: 1 1 0; display: grid; grid-template-rows: 1fr var(--yr-label); justify-items: center;
+  height: 100%; }
+.yr-fill { display: block; width: 100%; align-self: end; border-radius: 4px 4px 2px 2px; background: var(--line); min-height: 2px; }
 .yr-col.held .yr-fill { background: var(--accent); opacity: 0.55; }
 .yr-col.up .yr-fill { background: var(--good); }
 .yr-col.down .yr-fill { background: var(--warn); }
 .yr-col.live .yr-fill { background: var(--accent); }
 .yr-col.none .yr-fill { background: var(--line-soft); }
-.yr-col i { font-style: normal; font-size: var(--f-micro); color: var(--faint); }
+.yr-col i { font-style: normal; font-size: var(--f-micro); color: var(--faint); line-height: var(--yr-label); }
 
 .yr-track { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
 .yr-step { display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px;
@@ -2571,19 +2575,15 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 }
 .set-row select { flex: 0 0 auto; }
 .set-row input[type="checkbox"] { flex: 0 0 auto; }
-.set-link {
-  flex: 0 0 auto; color: var(--accent); text-decoration: none;
-  font-size: var(--f-small); padding: 6px 0;
-}
-
-/* The jump list, as four links rather than four cards with subtitles. */
+/* The jump list, as links rather than cards with subtitles. */
 .settings .set-nav { display: grid; gap: 0; }
 .settings .set-nav a {
   display: flex; align-items: center; gap: 10px;
   min-height: 46px; padding: 9px 2px;
+  background: none; border: 0; border-radius: 0;
   border-bottom: 1px solid var(--line-soft);
   color: var(--text); text-decoration: none; font-size: var(--f-body);
- background: none; border-radius: 0; }
+}
 .settings .set-nav a:last-child { border-bottom: 0; }
 .settings .set-nav a > span { flex: 1; }
 .settings .set-nav a::after {

@@ -40,7 +40,7 @@ function renderShelf(mount) {
         // A section that is one book of the same name: the header is the book.
         const solo = books.length === 1 && books[0].name === sec.name;
         const head = `<div class="h-row">${icon('book', 16)}<h2>${escapeHtml(sec.name)}</h2>
-            <span class="pill ghost">${sp.read}/${sp.total}</span></div>
+            ${solo ? `<span class="pill ghost">${sp.read}/${sp.total}</span>` : ''}</div>
           <div class="prog-bar"><i style="width:${(sp.frac * 100).toFixed(1)}%"></i></div>`;
         if (solo) return `<a class="card solo-book" href="#/bible/books?book=${books[0].id}">${head}</a>`;
         return `<section class="card">
@@ -95,8 +95,7 @@ function renderBook(mount, b) {
       </a>
 
       <section class="card">
-        <div class="h-row">${icon('book', 16)}<h2>${psalms ? 'Psalms' : 'Chapters'}</h2>
-          <span class="pill ghost">tap to mark read</span></div>
+        <div class="h-row">${icon('book', 16)}<h2>${psalms ? 'Psalms' : 'Chapters'}</h2></div>
         <div class="ch-grid">
           ${b.chapters.map((verses, i) => {
             const n = i + 1;

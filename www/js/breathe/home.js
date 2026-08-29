@@ -64,8 +64,8 @@ export function renderBreatheHome(mount) {
       <section class="card">
         <div class="h-row">${icon('help', 16)}<h2>Why this works</h2></div>
         <p class="muted small">
-          Breathing out takes the brake off the vagus nerve; breathing in takes
-          it off again. Make the out-breath the longer of the two, at around six
+          Breathing in takes the brake off the vagus nerve; breathing out puts
+          it back on. Make the out-breath the longer of the two, at around six
           breaths a minute, and the balance tips towards the parasympathetic
           side. Heart rate falls on every exhale, and keeps falling after you stop.
         </p>
