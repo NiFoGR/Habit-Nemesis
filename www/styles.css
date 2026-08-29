@@ -224,6 +224,7 @@ a.btn { text-decoration: none; }
 .stat-grid.four { grid-template-columns: repeat(2, 1fr); }
 .stat-grid.three { grid-template-columns: repeat(3, 1fr); }
 .stat-grid.three .stat b { font-size: var(--f-head); }
+.stat-grid.four .stat b { font-size: var(--f-head); }
 .stat-grid.three .stat .ico { top: 8px; right: 8px; }
 .stat {
   background: var(--surface); border: 1px solid var(--line);
@@ -1061,7 +1062,7 @@ input[type="range"] {
 /* Real switches. A default checkbox is a white box on every Android WebView.
    A real checkbox underneath keeps it keyboard and screen-reader correct. */
 .setting.toggle input[type="checkbox"],
-.set-row input[type="checkbox"] {
+.set-row input[type="checkbox"] { margin: 0;
   appearance: none; -webkit-appearance: none;
   position: relative; flex: 0 0 auto;
   width: 46px; height: 27px; border-radius: 27px;
@@ -2538,7 +2539,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
   padding: 4px 2px 22px; margin-bottom: 6px;
 }
 .set-hero b {
-  display: block; font-size: var(--f-hero); line-height: 1;
+  display: block; font-size: var(--f-title); line-height: 1;
   letter-spacing: -0.035em; margin-bottom: 8px;
   background: var(--brand); -webkit-background-clip: text; background-clip: text; color: transparent;
 }
@@ -2578,7 +2579,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
   min-height: 46px; padding: 9px 2px;
   border-bottom: 1px solid var(--line-soft);
   color: var(--text); text-decoration: none; font-size: var(--f-body);
-}
+ background: none; border-radius: 0; }
 .settings .set-nav a:last-child { border-bottom: 0; }
 .settings .set-nav a > span { flex: 1; }
 .settings .set-nav a::after {

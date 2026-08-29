@@ -20,13 +20,13 @@ function settingsNav() {
     ${link('#/pe/settings', 'trend', peName())}
     ${link('#/bible/settings', 'scripture', 'Bible and prayer')}
     ${link('#/breathe/settings', 'breath', 'Wind-down')}
+    ${link('#/settings/night', 'moon', 'Night light')}
   </div>`;
 }
 
 export function renderSettings(mount) {
   const s = store.get().settings;
   const pe = store.get().pe.settings;
-  const nl = store.get().nightlight;
   const hs = habits.settings();
 
   // Label left, value right. No explanation under it.
@@ -75,10 +75,6 @@ export function renderSettings(mount) {
         row('Vibration', toggle('haptics', s.haptics)),
         row('Sound', toggle('sound', s.sound)),
         nifoUnlocked() ? row('Discreet mode', toggle('discreet', s.discreet), 'Renames Kegels and PE.') : '',
-      ].join(''))}
-
-      ${group('Night light', [
-        row('The screen through the day', `<a class="set-link linkbtn" href="#/settings/night">${nl.enabled ? `${nl.nightKelvin}K by ${escapeHtml(nl.sleepAt)}` : 'Off'}</a>`),
       ].join(''))}
 
       ${nifoUnlocked() ? group('Privacy', [

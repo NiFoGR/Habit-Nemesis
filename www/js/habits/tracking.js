@@ -102,7 +102,7 @@ export function renderHabitDetail(mount, id) {
 
         <section class="card">
           <div class="h-row">${icon('chart', 16)}<h2>Overview</h2></div>
-          <div class="stat-grid three">
+          <div class="stat-grid ${year === null ? 'four' : 'three'}">
             <div class="stat"><b>${Math.round(sum.score * 100)}%</b><span>score</span></div>
             <div class="stat"><b class="${deltaClass(month)}">${month > 0 ? '+' : ''}${month}%</b><span>month</span></div>
             ${year === null ? '' : `<div class="stat"><b class="${deltaClass(year)}">${year > 0 ? '+' : ''}${year}%</b><span>year</span></div>`}
