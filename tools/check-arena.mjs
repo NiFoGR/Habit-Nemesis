@@ -189,6 +189,92 @@ is('every third day owes two in a week', week(1, 3, 'X__X__X'), [2, 2]);
 is('ten in thirty owes two in a week', week(10, 30, 'X_X____'), [2, 2]);
 is('a daily habit still owes every day', week(1, 1, 'XXXXX__'), [5, 7]);
 
+/* ----- the public feats with real logic -----
+   Streak counts and run lengths are the same shape of arithmetic as the week
+   maths above, and just as unreadable off a screen. Seeded relative to today,
+   so these do not rot next year. */
+
+group('the feats that count runs');
+{
+  const feats = await import('../www/js/arena/feats.js');
+  const byId = (id) => feats.FEATS.find((f) => f.id === id);
+  const back = (n) => st.addDays(st.dayKey(), -n);
+  const run = (from, len) => Object.fromEntries(Array.from({ length: len }, (_, i) => [back(from - i), 1]));
+
+  const withEntries = (entries, items) => st.update((s) => {
+    s.habits.settings.showLinked = false;
+    s.habits.items = items || [habit('h_r', 'Run')];
+    s.habits.entries = entries;
+  });
+
+  // Two runs of 35, ten days apart. One long run is not a comeback.
+  withEntries({ h_r: { ...run(120, 35), ...run(70, 35) } });
+  is('two long streaks is a comeback', byId('comeback').test(), true);
+  withEntries({ h_r: run(100, 100) });
+  is('one long streak is not', byId('comeback').test(), false);
+
+  // Away, then back for a week.
+  withEntries({ h_r: { ...run(60, 5), ...run(20, 8) } });
+  is('a fortnight away then a week back', byId('returned').test(), true);
+  withEntries({ h_r: { ...run(30, 5), ...run(20, 8) } });
+  is('ten days away is not away', byId('returned').test(), false);
+
+  withEntries({ h_r: run(40, 41) });
+  is('the streak feat reads the longest run', byId('streak30').now(), 41);
+  is('and the same run feeds the year one', byId('habitYear').now(), 41);
+  is('ticks are counted across every habit', byId('marks100').now(), 41);
+
+  // Fixtures: only won and lost are played. 'record' and 'void' are not.
+  const wk = (result, opponent) => ({ score: 0.5, due: 10, done: 5, opponent, oppName: '', oppScore: 0.4, result, arc: null });
+  st.update((s) => {
+    s.arena.weeks = {
+      '2026-W01': wk('won', 'worst'), '2026-W02': wk('won', 'nemesis'), '2026-W03': wk('won', 'lastMonth'),
+      '2026-W04': wk('lost', 'nemesis'), '2026-W05': wk('won', 'standard'), '2026-W06': wk('record', ''),
+      '2026-W07': wk('void', ''),
+    };
+    s.arena.months = {
+      '2026-01': { score: 0.5, w: 2, l: 1, from: 'npc', to: 'prospect', move: 'up' },
+      '2026-02': { score: 0.6, w: 3, l: 0, from: 'prospect', to: 'contender', move: 'up' },
+      '2026-03': { score: 0.4, w: 1, l: 2, from: 'contender', to: 'prospect', move: 'down' },
+      '2026-04': { score: 0.5, w: 2, l: 1, from: 'prospect', to: 'prospect', move: 'held' },
+    };
+  });
+  is('a record week is not a fixture', byId('firstFixture').now(), 5);
+  is('wins are counted', byId('wins10').now(), 4);
+  is('the win run stops at a loss', byId('winStreak5').now(), 3);
+  is('beating one rival by name', byId('beatWorst').test(), true);
+  is('and the Nemesis too', byId('beatNemesis').test(), true);
+  is('two promotions running', byId('promoted2').now(), 2);
+  is('a drop breaks the no-drop run', byId('noDrop6').now(), 2);
+}
+
+/* ----- every feat actually runs -----
+   progressOf() wraps each test in a try/catch, so a predicate that throws reads
+   as zero for ever and nothing says so. This is what says so. */
+
+group('every feat runs without throwing');
+{
+  const feats = await import('../www/js/arena/feats.js');
+  const broken = [];
+  const wrong = [];
+  for (const f of feats.FEATS) {
+    try {
+      if (f.test) {
+        if (typeof f.test() !== 'boolean') wrong.push(f.id);
+      } else {
+        const v = f.now();
+        if (!Number.isFinite(v)) wrong.push(f.id);
+        if (!Number.isFinite(f.at)) wrong.push(`${f.id}:at`);
+      }
+    } catch (e) {
+      broken.push(`${f.id} (${e.message})`);
+    }
+  }
+  is('none throws on an empty record', broken, []);
+  is('each returns the shape it promises', wrong, []);
+  is('no id is claimed twice', feats.FEATS.length, new Set(feats.FEATS.map((f) => f.id)).size);
+}
+
 /* ----- the sanitiser, against the real catalogue ----- */
 
 group('every feat survives being saved and read back');
@@ -202,7 +288,7 @@ group('every feat survives being saved and read back');
   st.reset();
   st.importJson(backup);
   const kept = Object.keys(st.get().arena.feats);
-  is('all forty come back', kept.length, ids.length);
+  is('every one comes back', kept.length, ids.length);
   is('and none was renamed', ids.filter((id) => !kept.includes(id)), []);
 }
 
