@@ -28,7 +28,7 @@ const MANIFEST = root + 'www/js/artwork.js';
 // A share banner is not square and is drawn to cover, so it goes through as
 // sent: 1080x1350 is what the card wants and the budget says the rest.
 const FAMILIES = [
-  { match: /^rank-/, size: 256, budget: 60000 },
+  { match: /^rank-/, size: 384, budget: 60000 },
   { match: /^cup-/, size: 384, budget: 70000 },
   { match: /^mark-/, size: 512, budget: 90000 },
   { match: /^feat-/, size: 128, budget: 20000 },
