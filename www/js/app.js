@@ -45,9 +45,8 @@ import { renderSettings } from './settings.js';
 import { lockActive, renderLock, relock } from './lock.js';
 import { nifoUnlocked } from './nifo.js';
 import { renderIntro, introDue } from './intro.js';
-import { initBack, goBack, navigate, replaceWith } from './back.js';
-import { initTabs, syncTabs, TABS } from './tabs.js';
-import { initSwipe, setPager, pagerOf } from './swipe.js';
+import { initBack, navigate, replaceWith } from './back.js';
+import { initTabs, syncTabs } from './tabs.js';
 import * as vault from './pe/vault.js';
 import * as native from './native.js';
 import { haptic } from './ui.js';
@@ -205,9 +204,6 @@ function route() {
 
   syncTabs(path);
 
-  // A paged screen re-claims the gesture as it draws.
-  setPager(null);
-
   const fn = ROUTES[path] || (() => renderHome(app));
   fn(new URLSearchParams(query || ''));
   // Animate arrival, not a partial redraw.
@@ -235,28 +231,6 @@ collect();
 if (!location.hash) history.replaceState(history.state, '', '#/hub');
 
 initTabs({ badges: () => ({ arena: hasResults() }) });
-
-// Swiping: the paged screen if there is one, then along the tab bar on the
-// three roots, then back. Left is onwards, right is the way you came.
-initSwipe((dir) => {
-  const pager = pagerOf();
-  if (pager) {
-    const was = app.innerHTML;
-    (dir === 'left' ? pager.next() : pager.prev());
-    return app.innerHTML !== was;
-  }
-
-  const at = TABS.findIndex((t) => t.hash === location.hash);
-  if (at >= 0) {
-    const to = TABS[at + (dir === 'left' ? 1 : -1)];
-    if (to) navigate(to.hash);
-    return !!to;
-  }
-  // A screen that is running something is left on purpose, not by a stray
-  // finger. Every one of them draws its own way out.
-  if (EPHEMERAL.some((r) => location.hash.startsWith(r))) return false;
-  return dir === 'right' && goBack();
-});
 
 // APK only: hide the system nav bar.
 native.hideNavBar();
