@@ -90,8 +90,8 @@ group('a year of weeks, partitioned');
 group('divisions');
 is('the bars climb', a.DIVISIONS.every((d, i) => i === 0 || d.bar > a.DIVISIONS[i - 1].bar), true);
 is('a score earns the division whose bar it clears',
-  [0, 0.24, 0.25, 0.59, 0.6, 0.91, 0.92, 1].map((s) => a.divisionForScore(s).id),
-  ['bottom', 'mentzer', 'npc', 'prospect', 'contender', 'locked', 'topg', 'topg']);
+  [0, 0.29, 0.3, 0.59, 0.6, 0.89, 0.9, 0.99, 1].map((s) => a.divisionForScore(s).id),
+  ['bottom', 'bottom', 'npc', 'prospect', 'contender', 'locked', 'topg', 'topg', 'full']);
 
 /* ---------------- arcs ---------------- */
 group('arcs');

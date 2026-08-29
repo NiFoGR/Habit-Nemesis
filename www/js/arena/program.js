@@ -12,15 +12,16 @@ import * as native from '../native.js';
 
 /** Low to high. `bar` is the month score that holds you in the division. */
 export const DIVISIONS = [
-  { id: 'bottom', name: 'Bottom G', bar: 0, blurb: 'You have the app. That is the whole of it so far.' },
-  { id: 'mentzer', name: 'Mentzer', bar: 0.12, blurb: 'BiGgEr aNd StRoNgEr ThAn MiKe MeNtZeR' },
-  { id: 'npc', name: 'NPC', bar: 0.25, blurb: 'Doing it. Nobody would notice if you stopped.' },
-  { id: 'full', name: 'Full', bar: 0.36, blurb: 'Not fat. Full.' },
-  { id: 'prospect', name: 'Prospect', bar: 0.45, blurb: 'Something is happening. Not reliably.' },
+  { id: 'bottom', name: 'Bottom G', bar: 0.2, blurb: 'You have the app. That is the whole of it so far.' },
+  { id: 'npc', name: 'NPC', bar: 0.3, blurb: 'Doing it. Nobody would notice if you stopped.' },
+  { id: 'mentzer', name: 'Mentzer', bar: 0.4, blurb: 'BiGgEr aNd StRoNgEr ThAn MiKe MeNtZeR' },
+  { id: 'prospect', name: 'Prospect', bar: 0.5, blurb: 'Something is happening. Not reliably.' },
   { id: 'contender', name: 'Contender', bar: 0.6, blurb: 'You are in it now. A bad week costs you.' },
-  { id: 'menace', name: 'Menace', bar: 0.74, blurb: 'Most weeks go your way and it shows.' },
-  { id: 'locked', name: 'Locked In', bar: 0.84, blurb: 'How about, fucking eat more?' },
-  { id: 'topg', name: 'Top G', bar: 0.92, blurb: 'You do not miss. Two days a month, at most.' },
+  { id: 'menace', name: 'Menace', bar: 0.7, blurb: 'Most weeks go your way and it shows.' },
+  { id: 'locked', name: 'Locked In', bar: 0.8, blurb: 'How about, fucking eat more?' },
+  { id: 'topg', name: 'Top G', bar: 0.9, blurb: 'You do not miss. Two days a month, at most.' },
+  // The only rung that asks for everything. One missed cell in a month loses it.
+  { id: 'full', name: 'Full', bar: 1, blurb: 'Everything, every day. One miss and it is gone.' },
 ];
 
 export const divisionOf = (id) => DIVISIONS.find((d) => d.id === id) || DIVISIONS[1];
@@ -552,6 +553,11 @@ export function arcMoment() {
  *  over every month since the last one seen. */
 export function rankMoment() {
   const st = store.get().arena;
+  // Placement first: it happens on week one, before any month can close.
+  if (st.placedWeek && st.placedWeek > st.seenPlacement) {
+    const w = st.weeks[st.placedWeek];
+    return { move: 'placed', week: st.placedWeek, to: st.division, from: st.division, score: w ? w.score : 0 };
+  }
   const months = Object.keys(st.months).sort();
   const pending = months.filter((m) => m > st.seenMonth && st.months[m].move !== 'held');
   const month = pending[pending.length - 1];
@@ -562,6 +568,10 @@ export function rankMoment() {
  *  announced one does not queue itself later. */
 export function markRankSeen() {
   store.update((sst) => {
+    if (sst.arena.placedWeek > sst.arena.seenPlacement) {
+      sst.arena.seenPlacement = sst.arena.placedWeek;
+      return;
+    }
     const months = Object.keys(sst.arena.months).sort();
     sst.arena.seenMonth = months[months.length - 1] || sst.arena.seenMonth;
   });
@@ -862,9 +872,12 @@ function backfill(st) {
  *  happened, so the app can show it. */
 function closeWeeks(st, events) {
   const stop = currentWeek();
-  let key = nextWeek(firstWeekWithData());
+  // From the earliest ended week with no result, the first one included: on a
+  // new install that week is the placement, and there is nothing before it to
+  // be a record. An install with history had its oldest week stamped 'record'
+  // by backfill already, so this skips it.
+  let key = firstWeekWithData();
   let guard = MAX_BACKFILL_WEEKS;
-  // From the earliest ended week with no result.
   while (key < stop && guard-- > 0) {
     const existing = st.arena.weeks[key];
     if (existing && existing.result) {
@@ -898,6 +911,13 @@ function closeWeeks(st, events) {
       rec[opp.knockout] = won ? 'won' : 'lost';
       if (opp.knockout === 'final' && won) rec.won = true;
       events.push({ kind: 'arc', round: opp.knockout, won, arc, week: key, score: s.score, oppScore: opp.score, oppName: opp.name });
+    }
+    // The first week you actually play sets your division outright. Waiting a
+    // whole month to be told where you stand is a month of playing nothing.
+    if (!st.arena.placed) {
+      st.arena.placed = true;
+      st.arena.placedWeek = key;
+      st.arena.division = divisionForScore(s.score).id;
     }
     events.push({ kind: 'week', week: key, won, score: s.score, opp, rows: s.rows });
     key = nextWeek(key);
@@ -980,19 +1000,17 @@ function closeMonths(st, events) {
     const next = DIVISIONS[i + 1];
     let to = from;
     let move = 'held';
-    if (!st.arena.placed) {
-      // A placement season sets the division outright and cannot relegate.
-      to = divisionForScore(ms.score).id;
-      move = 'placed';
-      st.arena.placed = true;
-    } else if (next && ms.score >= next.bar) {
+    if (next && ms.score >= next.bar) {
       to = next.id;
       move = 'up';
     } else if (ms.score >= DIVISIONS[i].bar) {
       move = 'held';
-    } else {
-      to = (DIVISIONS[i - 1] || DIVISIONS[0]).id;
+    } else if (i > 0) {
+      to = DIVISIONS[i - 1].id;
       move = 'down';
+    } else {
+      // Nothing below the floor, so a month under its bar is not a relegation.
+      move = 'held';
     }
     st.arena.division = to;
     st.arena.months[m] = { score: ms.score, w: ms.w, l: ms.l, from, to, move };

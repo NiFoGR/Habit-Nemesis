@@ -71,7 +71,7 @@ function ladder() {
       <button class="intro-rung" data-rung="${i}">
         <span class="intro-rung-crest">${crest(i, 30)}</span>
         <span class="intro-rung-name">${escapeHtml(d.name)}</span>
-        <span class="intro-rung-need">${i ? pct(d.bar) : 'the floor'}</span>
+        <span class="intro-rung-need">${pct(d.bar)}</span>
       </button>
     </li>`).reverse().join('')}
   </ol>`;
@@ -131,7 +131,7 @@ const PAGES = [
   },
   {
     title: 'The ladder',
-    line: 'A month is the average of its weeks. Clear the number to go up, drop below yours to go down.',
+    line: 'A month is the average of its weeks. Clear the next number to go up one, drop below yours to go down one.',
     art: ladder,
     tall: true,
   },

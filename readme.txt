@@ -209,15 +209,22 @@ they actually played.
   The Standard     your division's bar with a face on it, standing in when the
                    record cannot supply a real week yet
 
-Seven divisions, settled monthly: Bottom G, NPC, Prospect, Contender, Menace,
-Locked In, Top G. A month is the mean of its weeks; clear the next bar and you
-go up, fall below your own and you go down. Your first full month is a
-placement season and cannot relegate you.
+Nine divisions, ten percent apart, settled monthly:
+
+  Bottom G 20   NPC 30   Mentzer 40   Prospect 50   Contender 60
+  Menace 70   Locked In 80   Top G 90   Full 100
+
+A month is the mean of its weeks; clear the next bar and you go up one rung,
+fall below your own and you go down one. One rung a month, whatever the score,
+so the floor to Full is eight months at the very fastest. Full asks for
+everything: one missed cell in a month and it is gone.
 
 A new install is Unranked rather than starting somewhere, because with no
-record there is no opponent, no division and no cup.
+record there is no opponent, no division and no cup. The first week you
+actually play places you outright, at whatever rung that week earns, and the
+Arena counts down to it.
 
-THE ARC - four cups a year, on the seasons. A build-up, an opening, a group
+THE ARC - three cups a year, on the seasons. A build-up, an opening, a group
 stage against five past selves, top three through, a quarter-final against
 your best week of the last Arc, a semi against your best of the year, a final
 against your Nemesis, a ceremony - and then a fortnight of nothing. The arcs

@@ -24,14 +24,21 @@ function ladder(id) {
   </div>`;
 }
 
-/** Unranked: the ladder unlit, and how long until it is not. A bar would imply
- *  a position on it. */
+/** Unranked: the ladder unlit, and a countdown to the week that places you.
+ *  A bar would imply a position on it. */
 function unrankedHero() {
   const left = arena.daysLeftInWeek();
+  const live = arena.scoreWeek(arena.currentWeek());
   return `<div class="ar-ladder none" role="img" aria-label="Unranked">
       ${arena.DIVISIONS.map(() => '<i></i>').join('')}
     </div>
-    <p class="ar-monthline"><span class="muted">your first week ends in ${left} day${left === 1 ? '' : 's'}</span></p>`;
+    <div class="ar-count">
+      <b>${left}</b>
+      <i>day${left === 1 ? '' : 's'} until you are placed</i>
+    </div>
+    <p class="ar-need">${live.void
+      ? 'Mark a few days and this week becomes your placement.'
+      : `On ${pct(live.score)}, this week puts you in ${escapeHtml(arena.divisionForScore(live.score).name)}.`}</p>`;
 }
 
 /** The month inside your division: floor left, next rung right. A 0-100 bar

@@ -259,6 +259,10 @@ Eight files at most, and one is enough to start. The division set is the version
 worth having: the card looks different at Top G to how it looks at NPC, which is
 the whole point of a ladder.
 
+**Still outstanding: `share-full` and `share-mentzer`.** Every other division
+has its banner. The card falls back to its own drawn background for these two,
+so nothing is broken until they arrive.
+
 ### The prompt
 
 Flat cartoon vector, not a render. A card competes in somebody's feed next to

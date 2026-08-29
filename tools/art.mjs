@@ -269,7 +269,10 @@ function writeManifest() {
    listed file that no longer exists is worse than a missing one: cache.addAll
    rejects on the first 404 and the whole install fails. */
 function syncSw() {
-  const have = new Set(readdirSync(OUT).filter((f) => /\.(png|webp)$/i.test(f)));
+  // Share banners are left out on purpose: half a megabyte of artwork nobody
+  // sees until they open a card, and the card draws its own background when
+  // one is missing. Everything else is on screen the moment the app opens.
+  const have = new Set(readdirSync(OUT).filter((f) => /\.(png|webp)$/i.test(f) && !/^share-/.test(f)));
   let sw = readFileSync(SW, 'utf8');
   const listed = [...sw.matchAll(/^\s*'\.\/img\/([^']+)',\n/gm)];
   const stale = listed.filter((m) => !have.has(m[1]));

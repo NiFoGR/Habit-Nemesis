@@ -15,6 +15,11 @@ export const ARTWORK = {
   'rank-prospect': 'rank-prospect.webp',
   'rank-topg': 'rank-topg.webp',
   'rank-unranked': 'rank-unranked.webp',
+  'share-bottom': 'share-bottom.webp',
+  'share-contender': 'share-contender.webp',
+  'share-npc': 'share-npc.webp',
+  'share-prospect': 'share-prospect.webp',
+  'share-unranked': 'share-unranked.webp',
 };
 
 export const artSrc = (name) => (ARTWORK[name] ? `./img/${ARTWORK[name]}` : '');

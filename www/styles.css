@@ -1896,6 +1896,12 @@ body.blacked .br-orb { opacity: 0.09; }
   white-space: nowrap;
 }
 .ar-bar-ends { display: flex; justify-content: space-between; gap: 10px; font-size: var(--f-micro); color: var(--faint); }
+
+/* Before the first week closes there is no bar to draw, so the days left are
+   the number the screen is about. */
+.ar-count { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 18px 0 0; }
+.ar-count b { font-size: var(--f-hero); font-weight: var(--w-bold); letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.ar-count i { font-style: normal; font-size: var(--f-small); color: var(--muted); }
 .ar-ladder { margin-bottom: 6px; }
 /* The one line on the hero allowed a colour: what the rest of the month has
    to average. The bar above already says the same thing in its fill, so the

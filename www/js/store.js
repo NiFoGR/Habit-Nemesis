@@ -18,7 +18,7 @@ const HABIT_TARGET_TYPES = ['atleast', 'atmost'];
 // The ladder, second copy. store.js cannot import arena/program.js, which
 // imports it back, so a rung added there must be added here. check:arena
 // fails if the two drift.
-const ARENA_DIVISIONS = ['bottom', 'mentzer', 'npc', 'full', 'prospect', 'contender', 'menace', 'locked', 'topg'];
+const ARENA_DIVISIONS = ['bottom', 'npc', 'mentzer', 'prospect', 'contender', 'menace', 'locked', 'topg', 'full'];
 
 const KEY = 'nifo.state.v1';
 const SCHEMA = 1;
@@ -154,6 +154,8 @@ function blank() {
       seenWeek: '', // the last closed week whose result screen was shown
       seenMonth: '', // the last month whose promotion or relegation was shown
       reviewed: '', // the last week whose review was opened
+      placedWeek: '', // the first week you played, which set your division
+      seenPlacement: '', // that week, once the placement screen has been shown
       backfilled: false, // the one-time sweep that gives the Arena a history
       // Your face, taken on the week that became your best. { src, week, at }
       face: null,
@@ -569,6 +571,8 @@ function cleanArena(sa, base) {
     seenWeek: /^\d{4}-W\d{2}$/.test(src.seenWeek) ? src.seenWeek : '',
     seenMonth: /^\d{4}-\d{2}$/.test(src.seenMonth) ? src.seenMonth : '',
     reviewed: /^\d{4}-W\d{2}$/.test(src.reviewed) ? src.reviewed : '',
+    placedWeek: /^\d{4}-W\d{2}$/.test(src.placedWeek) ? src.placedWeek : '',
+    seenPlacement: /^\d{4}-W\d{2}$/.test(src.seenPlacement) ? src.seenPlacement : '',
     backfilled: bool(src.backfilled),
   };
 }

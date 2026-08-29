@@ -54,25 +54,29 @@ export function renderRank(mount) {
   if (!m) return replaceWith('#/hub');
   showing = m;
 
-  const up = m.move === 'up' || m.move === 'placed';
+  const placed = m.move === 'placed';
+  const up = m.move === 'up' || placed;
   const from = arena.divisionOf(m.from);
   const to = arena.divisionOf(m.to);
   const rung = arena.divisionIndex(m.to);
   const fromRung = arena.divisionIndex(m.from);
-  const month = new Date(`${m.month}-04T00:00:00`).toLocaleDateString(undefined, { month: 'long' });
-  const nextMonth = new Date(`${store.addDays(`${m.month}-28`, 10)}T00:00:00`)
+  // A placement comes off one week, so it has no month and no win-loss record.
+  const month = placed ? '' : new Date(`${m.month}-04T00:00:00`).toLocaleDateString(undefined, { month: 'long' });
+  const nextMonth = placed ? '' : new Date(`${store.addDays(`${m.month}-28`, 10)}T00:00:00`)
     .toLocaleDateString(undefined, { month: 'long' });
 
-  const word = m.move === 'placed' ? 'Placed' : up ? 'Promoted' : 'Relegated';
-  const line = up
+  const word = placed ? 'Placed' : up ? 'Promoted' : 'Relegated';
+  const line = placed
     ? to.blurb
-    : whatItWanted(m.month, m.score, from.bar) || `${escapeHtml(from.name)} wanted ${pct(from.bar)}.`;
+    : up
+      ? to.blurb
+      : whatItWanted(m.month, m.score, from.bar) || `${escapeHtml(from.name)} wanted ${pct(from.bar)}.`;
 
   // Top rung first: the ladder is read downwards, and the one you are on has to
   // sit where the eye lands.
   const rungs = arena.DIVISIONS.map((d, i) => {
     const here = i === rung;
-    const lost = !up && i > rung && i <= fromRung;
+    const lost = !placed && !up && i > rung && i <= fromRung;
     const above = i > rung && !lost;
     return `<li class="rk-rung ${here ? 'here' : ''} ${lost ? 'lost' : ''} ${above ? 'above' : ''}" style="--i:${arena.DIVISIONS.length - 1 - i}">
       <span class="rk-mark">${here ? crest(i, 40) : ''}</span>
@@ -84,17 +88,19 @@ export function renderRank(mount) {
 
   mount.innerHTML = `
     <div class="screen moment rank-moment ${up ? 'up' : 'down'}" data-beat="0">
-      <p class="eyebrow rk-eyebrow">${escapeHtml(month)} · ${m.w}W-${m.l}L · ${pct(m.score)}</p>
+      <p class="eyebrow rk-eyebrow">${placed
+        ? `${escapeHtml(arena.weekLabel(m.week))} · ${pct(m.score)}`
+        : `${escapeHtml(month)} · ${m.w}W-${m.l}L · ${pct(m.score)}`}</p>
 
       <div class="rk-verdict">
         <h1 class="mo-title rk-word">${word}</h1>
-        <span class="rk-pill">${icon(up ? 'arrowUp' : 'arrowDown', 13)}<span>1 rung</span></span>
+        <span class="rk-pill">${placed ? icon('ladder', 13) : icon(up ? 'arrowUp' : 'arrowDown', 13)}<span>${placed ? 'your rung' : '1 rung'}</span></span>
       </div>
       <p class="rk-line">${escapeHtml(line)}</p>
 
       <ol class="rk-ladder">${rungs}</ol>
 
-      <button class="btn primary big" id="go" data-back>Start ${escapeHtml(nextMonth)}</button>
+      <button class="btn primary big" id="go" data-back>${placed ? 'Into the week' : `Start ${escapeHtml(nextMonth)}`}</button>
     </div>`;
 
   const screen = mount.querySelector('.rank-moment');
