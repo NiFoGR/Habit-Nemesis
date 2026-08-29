@@ -70,7 +70,7 @@ export function renderRank(mount) {
     const lost = !placed && !up && i > rung && i <= fromRung;
     const above = i > rung && !lost;
     return `<li class="rk-rung ${here ? 'here' : ''} ${lost ? 'lost' : ''} ${above ? 'above' : ''}" style="--i:${arena.DIVISIONS.length - 1 - i}">
-      <span class="rk-mark">${crest(i, here ? 34 : 24)}</span>
+      <span class="rk-mark">${crest(i, here ? 40 : 28)}</span>
       <span class="rk-name">${escapeHtml(d.name)}</span>
       <span class="rk-need">${here ? pct(m.score) : pct(d.bar)}</span>
       <span class="rk-bar"><i style="--w:${((here ? m.score : d.bar) * 100).toFixed(0)}%"></i></span>

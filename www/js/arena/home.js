@@ -388,14 +388,8 @@ export function renderFeats(mount) {
       <header class="screen-head">
         <button class="icon-btn" data-back="arena" aria-label="Back">${icon('back')}</button>
         <h1>Feats</h1>
-        <span class="icon-btn ghost"></span>
+        <span class="pill ghost">${c.earned} of ${c.total}</span>
       </header>
-
-      <div class="today">
-        <div class="today-left">
-          <h2>${c.earned} of ${c.total}</h2>
-        </div>
-      </div>
 
       ${sections
         .map(

@@ -157,8 +157,10 @@ function drawFull(mount, res, fresh) {
       ${res && arena.isBestWeek(res.key) ? noteBlock(res.key) : ''}
 
       <button class="btn primary big" id="onward" data-back>${escapeHtml(res ? 'Into the week' : 'Good')}</button>
-      ${res ? `<button class="btn ghost wide" id="shareWeek">${icon('external', 16)}<span>Share this week</span></button>` : ''}
-      <a class="btn ghost wide" href="#/arena">${icon('trophy', 16)}<span>The Arena</span></a>
+      <div class="rs-exits">
+        ${res ? `<button class="btn ghost" id="shareWeek">${icon('external', 16)}<span>Share</span></button>` : ''}
+        <a class="btn ghost linkbtn" href="#/arena">${icon('trophy', 16)}<span>The Arena</span></a>
+      </div>
     </div>`;
 
   const hero = mount.querySelector('#hero');

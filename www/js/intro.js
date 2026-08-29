@@ -189,6 +189,7 @@ export function renderIntro(mount) {
       <div class="screen intro">
         <header class="screen-head">
           <button class="icon-btn" data-back id="back" aria-label="Back">${icon('back')}</button>
+          <span></span>
           <button class="icon-btn text-btn" id="skip">Skip</button>
         </header>
 

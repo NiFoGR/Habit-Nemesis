@@ -114,14 +114,21 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 }
 @keyframes fade { from { opacity: 0; transform: translateY(6px); } }
 
-.screen-head, .hub-head {
-  display: flex;
+/* Three columns with equal outer thirds, so the title sits on the centre of
+   the screen whatever the right-hand slot holds. */
+.screen-head {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 12px;
   margin-bottom: 18px;
 }
-.screen-head h1 { flex: 1; text-align: center; font-size: var(--f-head); }
-.hub-head { justify-content: space-between; align-items: center; }
+.screen-head > :last-child { justify-self: end; }
+.screen-head h1 { text-align: center; font-size: var(--f-head); }
+.hub-head {
+  display: flex; align-items: center; gap: 12px;
+  justify-content: space-between; margin-bottom: 18px;
+}
 
 .icon-btn {
   width: 40px; height: 40px;
@@ -2081,12 +2088,16 @@ body.blacked .br-orb { opacity: 0.09; }
 .rs-hero.won { border-color: rgba(74, 222, 128, 0.42); }
 .rs-hero.lost { border-color: rgba(248, 113, 113, 0.3); }
 /* The moment before. One line, one button, and nothing that gives it away. */
-/* The one card on a screen with nothing else on it, so it sits in the middle
-   rather than at the top of an empty viewport. */
-.screen.result:has(.rs-hero.pending) {
+/* Short enough to leave half the viewport empty, so it sits in the middle.
+   Taller than the viewport and it scrolls as usual. */
+.screen.result {
   display: flex; flex-direction: column; justify-content: center;
   min-height: calc(100dvh - var(--safe-t) - var(--safe-b));
 }
+/* The two ways out, side by side: stacked they read as a menu. */
+.rs-exits { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
+.rs-exits:has(> :only-child) { grid-template-columns: 1fr; }
+.rs-exits .btn { width: 100%; }
 .rs-hero.pending { padding: 40px 18px 30px; margin-bottom: 0; }
 .rs-hero.pending .rs-word { margin-bottom: 8px; }
 .rs-hero.pending .btn { margin-top: 22px; }
@@ -2698,7 +2709,8 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 /* Where you are: named in full, lit, and carrying the score that got you here. */
 .rk-rung.here .rk-name { color: var(--text); font-size: var(--f-head); font-weight: var(--w-bold); }
 .rk-rung.here .rk-need { color: var(--good); font-weight: var(--w-bold); }
-.rank-moment.down .rk-rung.here .rk-need { color: var(--danger); }
+/* Red is the division you lost, not the one you are on. */
+.rank-moment.down .rk-rung.here .rk-need { color: var(--text); }
 .rank-moment.up .rk-rung.here .rk-bar i { background: var(--good); box-shadow: 0 0 10px rgb(74 222 128 / 0.45); }
 .rank-moment.down .rk-rung.here .rk-bar i { background: var(--accent); }
 .rk-rung.here { position: relative; }

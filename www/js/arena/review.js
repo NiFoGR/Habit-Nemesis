@@ -206,7 +206,7 @@ function draw(mount, w) {
         ${cover
           ? `<p class="eyebrow">${escapeHtml(arena.weekLabel(w.key))}</p>
              <h1 class="rv-title">The week in review</h1>
-             <p class="rv-sub">${w.live ? 'Sunday. One day left, and nothing is settled.' : 'It is on the record. Here is what it was made of.'}</p>`
+             <p class="rv-sub">${w.live ? 'One day left, nothing settled.' : 'Closed.'}</p>`
           : beat.build(w)}
       </div>
 

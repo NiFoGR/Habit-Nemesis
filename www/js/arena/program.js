@@ -556,7 +556,9 @@ export function rankMoment() {
   // Placement first: it happens on week one, before any month can close.
   if (st.placedWeek && st.placedWeek > st.seenPlacement) {
     const w = st.weeks[st.placedWeek];
-    return { move: 'placed', week: st.placedWeek, to: st.division, from: st.division, score: w ? w.score : 0 };
+    // The division that week earned, not today's: months since then have moved it.
+    const to = w ? divisionForScore(w.score).id : st.division;
+    return { move: 'placed', week: st.placedWeek, to, from: to, score: w ? w.score : 0 };
   }
   const months = Object.keys(st.months).sort();
   const pending = months.filter((m) => m > st.seenMonth && st.months[m].move !== 'held');
