@@ -16,7 +16,7 @@ export function renderMyPrayers(mount) {
           <span class="icon-btn ghost"></span>
         </header>
 
-        <p class="small muted">The app ships the ancient core only. Add what you say from your own prayer book and it joins your morning or your night in the slot you choose.</p>
+        <p class="small muted">The app ships the ancient core. Add your own to either slot.</p>
 
         ${['morning', 'evening'].map((slot) => {
           const list = mine.filter((p) => p.slot === slot);

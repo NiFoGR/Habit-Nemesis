@@ -102,7 +102,7 @@ export function renderBreatheSettings(mount) {
       <section class="card">
         <div class="h-row">${icon('breath', 16)}<h2>The breath</h2></div>
         <label class="setting">
-          <span><b>Length</b><i>Whole breaths only, so it ends on an out-breath rather than mid-way through one.</i></span>
+          <span><b>Length</b><i>Whole breaths only, so it ends on an out-breath.</i></span>
           <select id="minutes">
             ${[3, 5, 8, 10, 15, 20].filter((m) => m >= breathe.MIN_MINUTES && m <= breathe.MAX_MINUTES)
               .map((m) => `<option value="${m}" ${s.minutes === m ? 'selected' : ''}>${m} min</option>`).join('')}
@@ -114,14 +114,14 @@ export function renderBreatheSettings(mount) {
       <section class="card">
         <div class="h-row">${icon('flash', 16)}<h2>Pacing</h2></div>
         <label class="setting toggle">
-          <span><b>Sound</b><i>A low tone that rises as you breathe in and falls as you breathe out. Works with the screen off.</i></span>
+          <span><b>Sound</b><i>Rises as you breathe in, falls as you breathe out.</i></span>
           <input type="checkbox" id="sound" ${s.sound !== false ? 'checked' : ''}>
         </label>
         <label class="setting toggle">
-          <span><b>Vibration</b><i>One buzz in, two out. Needs the screen on, which is why it stays black rather than off.</i></span>
+          <span><b>Vibration</b><i>One buzz in, two out. Needs the screen on.</i></span>
           <input type="checkbox" id="vibrate" ${s.vibrate !== false ? 'checked' : ''}>
         </label>
-        <p class="fineprint">Turning both off leaves only the orb, which means keeping your eyes open, which rather defeats it.</p>
+        <p class="fineprint">Both off leaves only the orb, and open eyes.</p>
       </section>
 
       <section class="card">

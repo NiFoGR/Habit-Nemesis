@@ -60,7 +60,7 @@ export function startSession(mount, opts, onFinish) {
       <div class="player-cue" id="cue"></div>
 
       <div class="player-bottom">
-        <div class="rep-meter"><span id="repText">-</span></div>
+        <div class="rep-meter"><span id="repText"></span></div>
         <div class="rep-dots" id="dots"></div>
       </div>
     </div>`;

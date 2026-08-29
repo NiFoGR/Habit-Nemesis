@@ -12,7 +12,6 @@ import { icon } from '../icons.js';
 export function renderBibleTracking(mount) {
   const hist = bible.history(13);
   const t30 = bible.totals(30);
-  const t7 = bible.totals(7);
   const st = store.get().bible;
   const prog = bible.overallProgress();
 
@@ -47,7 +46,6 @@ export function renderBibleTracking(mount) {
         <div class="hm-key">
           <span>less</span><i class="none"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><span>more</span>
         </div>
-        <p class="muted small">${t7.read} of the last 7 days.</p>
       </section>
 
       <section class="card">

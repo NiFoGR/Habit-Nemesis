@@ -410,6 +410,8 @@ a.btn { text-decoration: none; }
 .heatmap i.rest { background: var(--calm); opacity: 0.75; }
 .hm-key { display: flex; align-items: center; gap: 5px; margin-top: 8px; color: var(--muted); font-size: var(--f-fine); }
 .hm-key i.none { background: var(--surface-2); }
+/* A swatch that is not a rung on the scale sits after a gap. */
+.hm-sep { width: 1px; height: 12px; background: var(--line); margin: 0 4px; }
 .hm-key i.l1 { background: color-mix(in srgb, var(--accent) 22%, var(--surface-2)); }
 .hm-key i.l2 { background: color-mix(in srgb, var(--accent) 46%, var(--surface-2)); }
 .hm-key i.l3 { background: color-mix(in srgb, var(--accent) 72%, var(--surface-2)); }
@@ -1059,7 +1061,7 @@ input[type="range"] {
 /* Capped, or one long <option> squeezes the label into a two-word column. */
 /* One width for every control in a settings list: a ragged right edge is what
    a column of selects sized to their own text looks like. */
-.setting select, .setting input[type="time"], .set-row select { flex: 0 0 auto; width: 47%; }
+.setting select, .setting input[type="time"], .set-row select { flex: 0 0 auto; min-width: 47%; max-width: 62%; }
 .setting input[type="range"] { flex: 0 1 46%; min-width: 120px; accent-color: var(--accent); }
 .card .h-row + .setting { border-top: 0; }
 .card.danger .h-row .ico { color: var(--danger); }

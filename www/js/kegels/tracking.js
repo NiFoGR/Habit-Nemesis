@@ -50,7 +50,8 @@ function heatmap(state) {
     cells += '</div>';
   }
   return `<div class="heatmap">${cells}</div>
-    <div class="hm-key"><span>less</span><i class="none"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><i class="rest"></i><span>release</span></div>`;
+    <div class="hm-key"><span>less</span><i class="none"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><span>more</span>
+      <span class="hm-sep"></span><i class="rest"></i><span>release</span></div>`;
 }
 
 function sessionRow(s, idx) {
