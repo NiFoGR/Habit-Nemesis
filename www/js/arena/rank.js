@@ -66,11 +66,9 @@ export function renderRank(mount) {
     .toLocaleDateString(undefined, { month: 'long' });
 
   const word = placed ? 'Placed' : up ? 'Promoted' : 'Relegated';
-  const line = placed
-    ? to.blurb
-    : up
-      ? to.blurb
-      : whatItWanted(m.month, m.score, from.bar) || `${escapeHtml(from.name)} wanted ${pct(from.bar)}.`;
+  // Only relegation gets a line: what it cost is a number nobody can work out.
+  // A promotion's blurb is flavour the division below already carries.
+  const line = placed || up ? '' : whatItWanted(m.month, m.score, from.bar);
 
   // Top rung first: the ladder is read downwards, and the one you are on has to
   // sit where the eye lands.
@@ -79,9 +77,9 @@ export function renderRank(mount) {
     const lost = !placed && !up && i > rung && i <= fromRung;
     const above = i > rung && !lost;
     return `<li class="rk-rung ${here ? 'here' : ''} ${lost ? 'lost' : ''} ${above ? 'above' : ''}" style="--i:${arena.DIVISIONS.length - 1 - i}">
-      <span class="rk-mark">${here ? crest(i, 40) : ''}</span>
+      <span class="rk-mark">${crest(i, here ? 34 : 24)}</span>
       <span class="rk-name">${escapeHtml(d.name)}</span>
-      <span class="rk-need">${here ? pct(m.score) : i > rung ? `needs ${pct(d.bar)}` : ''}</span>
+      <span class="rk-need">${here ? pct(m.score) : pct(d.bar)}</span>
       <span class="rk-bar"><i style="--w:${((here ? m.score : d.bar) * 100).toFixed(0)}%"></i></span>
     </li>`;
   }).reverse().join('');
@@ -89,14 +87,11 @@ export function renderRank(mount) {
   mount.innerHTML = `
     <div class="screen moment rank-moment ${up ? 'up' : 'down'}" data-beat="0">
       <p class="eyebrow rk-eyebrow">${placed
-        ? `${escapeHtml(arena.weekLabel(m.week))} · ${pct(m.score)}`
-        : `${escapeHtml(month)} · ${m.w}W-${m.l}L · ${pct(m.score)}`}</p>
+        ? escapeHtml(arena.weekLabel(m.week))
+        : `${escapeHtml(month)} · ${m.w}W-${m.l}L`}</p>
 
-      <div class="rk-verdict">
-        <h1 class="mo-title rk-word">${word}</h1>
-        <span class="rk-pill">${placed ? icon('ladder', 13) : icon(up ? 'arrowUp' : 'arrowDown', 13)}<span>${placed ? 'your rung' : '1 rung'}</span></span>
-      </div>
-      <p class="rk-line">${escapeHtml(line)}</p>
+      <h1 class="mo-title rk-word">${word}</h1>
+      ${line ? `<p class="rk-line">${escapeHtml(line)}</p>` : ''}
 
       <ol class="rk-ladder">${rungs}</ol>
 

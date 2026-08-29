@@ -29,16 +29,13 @@ function ladder(id) {
 function unrankedHero() {
   const left = arena.daysLeftInWeek();
   const live = arena.scoreWeek(arena.currentWeek());
-  return `<div class="ar-ladder none" role="img" aria-label="Unranked">
-      ${arena.DIVISIONS.map(() => '<i></i>').join('')}
-    </div>
-    <div class="ar-count">
+  return `<div class="ar-count">
       <b>${left}</b>
       <i>day${left === 1 ? '' : 's'} until you are placed</i>
     </div>
     <p class="ar-need">${live.void
-      ? 'Mark a few days and this week becomes your placement.'
-      : `On ${pct(live.score)}, this week puts you in ${escapeHtml(arena.divisionForScore(live.score).name)}.`}</p>`;
+      ? 'Nothing marked yet.'
+      : `On ${pct(live.score)} you go in at ${escapeHtml(arena.divisionForScore(live.score).name)}.`}</p>`;
 }
 
 /** The month inside your division: floor left, next rung right. A 0-100 bar
@@ -71,15 +68,19 @@ function fromHere(st) {
   if (!hold) return '';
   const weeks = hold.weeks === 1 ? 'this week' : `each of the ${hold.weeks} weeks left`;
 
-  // Already clear of the floor with nothing left to lose it in.
-  if (hold.need <= 0 && (!up || up.need > 1)) {
-    return `<p class="ar-need safe">${escapeHtml(st.division.name)} is safe whatever happens now.</p>`;
-  }
-  if (up && up.need <= 1 && up.need > 0) {
+  // Promotion first when it is still reachable, then the floor. A need at or
+  // below zero is already banked and is never printed: -94% is not a target.
+  if (up && up.need > 0 && up.need <= 1) {
     return `<p class="ar-need up">${pct(up.need)} ${escapeHtml(weeks)} takes you to ${escapeHtml(st.next.name)}.</p>`;
   }
+  if (up && up.need <= 0) {
+    return `<p class="ar-need up">${escapeHtml(st.next.name)} is already yours.</p>`;
+  }
+  if (hold.need <= 0) {
+    return `<p class="ar-need safe">${escapeHtml(st.division.name)} is safe whatever happens.</p>`;
+  }
   if (hold.need > 1) {
-    return `<p class="ar-need gone">${escapeHtml(st.division.name)} is out of reach this month. Play for next.</p>`;
+    return `<p class="ar-need gone">${escapeHtml(st.division.name)} is out of reach this month.</p>`;
   }
   return `<p class="ar-need">${pct(hold.need)} ${escapeHtml(weeks)} holds ${escapeHtml(st.division.name)}.</p>`;
 }
@@ -335,7 +336,7 @@ export function renderArena(mount) {
         style="--lift:${st.unranked ? 0 : rung}">
         <span class="ar-crest">${crest(rung, 92)}</span>
         <h1 class="ar-rank">${escapeHtml(st.division.name)}</h1>
-        <p class="ar-blurb">${escapeHtml(st.division.blurb)}</p>
+        ${st.unranked ? '' : `<p class="ar-blurb">${escapeHtml(st.division.blurb)}</p>`}
         ${st.unranked
           ? unrankedHero()
           : `${ladder(a.division)}

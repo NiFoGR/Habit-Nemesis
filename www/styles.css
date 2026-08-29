@@ -2638,32 +2638,17 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 }
 .rk-eyebrow { text-align: center; margin-bottom: 10px; }
 
-.rk-verdict {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
+.rk-word {
+  font-size: var(--f-hero);
+  margin: 0;
+  text-align: center;
   opacity: 0;
   transform: translateY(8px);
   transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
 }
-.rank-moment[data-beat='2'] .rk-verdict { opacity: 1; transform: none; }
-.rk-word { font-size: var(--f-hero); margin: 0; }
+.rank-moment[data-beat='2'] .rk-word { opacity: 1; transform: none; }
 .rank-moment.up .rk-word { color: var(--good); }
 .rank-moment.down .rk-word { color: var(--text); }
-
-.rk-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: var(--radius-pill);
-  font-size: var(--f-fine);
-  font-weight: var(--w-bold);
-  border: 1px solid;
-}
-.rank-moment.up .rk-pill { color: var(--good); border-color: color-mix(in oklab, var(--good) 45%, transparent); }
-.rank-moment.down .rk-pill { color: var(--danger); border-color: color-mix(in oklab, var(--danger) 45%, transparent); }
 
 .rk-line {
   text-align: center;
@@ -2705,7 +2690,8 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .rk-rung.above { opacity: 0.42; }
 .rank-moment[data-beat='2'] .rk-rung.above { opacity: 0.55; }
 
-.rk-mark { grid-area: mark; display: grid; place-items: center; min-height: 24px; }
+.rk-mark { grid-area: mark; display: grid; place-items: center; min-height: 24px; opacity: 0.55; }
+.rk-rung.here .rk-mark { opacity: 1; }
 .rk-mark img { display: block; }
 .rk-name { grid-area: name; font-size: var(--f-small); color: var(--muted); }
 .rk-need { grid-area: need; font-size: var(--f-fine); color: var(--faint); font-variant-numeric: tabular-nums; }
@@ -2732,7 +2718,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .rank-moment #go { margin-top: 18px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .rk-verdict, .rk-line, .rk-rung, .rk-bar i { transition: none; }
+  .rk-word, .rk-line, .rk-rung, .rk-bar i { transition: none; }
 }
 
 /* ---------- the first five ----------
