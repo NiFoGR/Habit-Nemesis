@@ -417,11 +417,11 @@ a.btn { text-decoration: none; }
 .timeline i { font-style: normal; color: var(--muted); font-size: var(--f-fine); }
 
 .log-row { border-bottom: 1px solid var(--line); }
-.log-row:last-child { border-bottom: 0; }
+.log-list > .log-row:last-child { border-bottom: 0; }
 .log-row summary { display: flex; align-items: center; gap: 10px; padding: 11px 0; cursor: pointer; list-style: none; font-size: var(--f-small); }
 .log-row summary::-webkit-details-marker { display: none; }
 .log-date { flex: 0 0 92px; color: var(--muted); }
-.log-label { flex: 1; }
+.log-label { flex: 1; display: flex; align-items: center; gap: 6px; }
 .log-score { font-weight: 700; font-variant-numeric: tabular-nums; }
 .log-score.rest { color: var(--calm); }
 .log-body { padding: 4px 0 14px; }
@@ -570,9 +570,8 @@ input[type="range"] {
 .pair { flex: 1; display: flex; align-items: flex-end; gap: 2px; height: 100%; }
 .pair i { flex: 1; border-radius: 3px 3px 0 0; }
 .pair .before, .legend i.before-key { background: var(--calm); }
-.pair .after, .legend i.after-key { background: var(--danger); }
+.pair .after, .legend i.after-key { background: var(--good); }
 
-.projection { border-color: rgba(34,211,197,0.3); }
 .proj-rows { display: grid; gap: 6px; margin-bottom: 12px; }
 .proj-row { display: grid; grid-template-columns: 42px 1fr auto; align-items: baseline; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .proj-row span { color: var(--muted); font-size: var(--f-small); }
@@ -825,7 +824,7 @@ input[type="range"] {
 .week-row { display: flex; align-items: baseline; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: var(--f-small); opacity: 0.55; }
 .week-row:last-child { border-bottom: 0; }
 .week-row.done { opacity: 0.8; }
-.week-row.on { opacity: 1; background: color-mix(in srgb, var(--accent) 10%, transparent); border-radius: 6px; padding-left: 6px; }
+.week-row.on { margin-left: -6px; opacity: 1; background: color-mix(in srgb, var(--accent) 10%, transparent); border-radius: 6px; padding-left: 6px; }
 .week-row .wk { flex: 0 0 26px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .week-row b { flex: 0 0 auto; font-weight: 600; }
 .week-row i { flex: 1; text-align: right; font-style: normal; color: var(--muted); font-size: var(--f-fine); }
@@ -1233,7 +1232,8 @@ input[type="range"] {
 .chip-wrap .pill { text-decoration: none; }
 
 .log-list { display: flex; flex-direction: column; }
-.log-row { display: flex; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+/* Scoped: kegels declares .log-row as a details/summary row of its own. */
+.log-list > .log-row { display: flex; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); }
 .log-row:last-child { border-bottom: 0; }
 .lr-day { flex: 0 0 82px; display: flex; flex-direction: column; }
 .lr-day b { font-size: var(--f-small); font-weight: 600; }

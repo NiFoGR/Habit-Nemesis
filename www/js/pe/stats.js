@@ -257,7 +257,6 @@ export function renderStats(mount) {
 
       <section class="card">
         <div class="h-row">${icon('medal', 16)}<h2>Feats</h2></div>
-        <p class="muted small">One list for the whole app, held to one test: something you could say out loud to another person and have it mean something.</p>
         <div class="kv"><span>PE feats earned</span><b>${peFeats()}</b></div>
         <a class="btn ghost wide" href="#/arena/feats">${icon('medal', 16)}<span>All feats</span></a>
       </section>
@@ -270,7 +269,7 @@ export function renderStats(mount) {
       <section class="card">
         <div class="h-row">${icon('ruler', 16)}<h2>Measurement history</h2></div>
         ${ms.length ? ms.slice().reverse().map((m) => `<div class="kv">
-          <span>${new Date(m.ts).toLocaleDateString()}</span>
+          <span>${relDay(m.date)}</span>
           <b>${pe.fmtLength(m.bpel)} × ${pe.fmtLength(m.eg)}${m.photoId ? ' 🔒' : ''}</b>
         </div>`).join('') : '<p class="muted small">No check-ins yet.</p>'}
       </section>

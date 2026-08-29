@@ -28,7 +28,7 @@ export const TYPES = {
     id: 'pump',
     label: 'Pumping',
     icon: 'pump',
-    colour: 'var(--accent)',
+    colour: 'var(--calm)',
     defaultMin: 15,
     // No intensity field: a Hydromax has no gauge, so any number is invented.
     intensity: null,

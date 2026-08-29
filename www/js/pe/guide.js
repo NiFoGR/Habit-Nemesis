@@ -35,7 +35,7 @@ export function renderPeGuide(mount) {
 
       <section class="card">
         <h2>Pumping</h2>
-        <p class="small muted">Beginners: 10–20 min total, in ~10 minute sets with a full release between them, 2–3× a week. There is deliberately no intensity to log. A water pump has no gauge, so any number would be invented. What is real is the clock and the breaks.</p>
+        <p class="small muted">Beginners: 10–20 min total, in ~10 minute sets, 2–3× a week.</p>
         <ul class="rules">
           <li><b>Never pump to pain.</b> Firm pressure, not a squeeze.</li>
           <li><b>Release fully between sets</b> and let colour return before the next one.</li>
@@ -89,7 +89,7 @@ export function renderPeSettings(mount) {
     <div class="screen">
       <header class="screen-head">
         <button class="icon-btn" data-back="pe" aria-label="Back">${icon('back')}</button>
-        <h1>${discreet ? 'Length Training' : 'PE'}</h1>
+        <h1>Settings</h1>
         <span class="icon-btn ghost"></span>
       </header>
 
@@ -112,7 +112,7 @@ export function renderPeSettings(mount) {
 
       <section class="card">
         <div class="h-row">${icon('stretch', 16)}<h2>Session defaults</h2></div>
-        <p class="small muted">What the timer opens with. You can still change either on the day.</p>
+        <p class="small muted">What the timer opens with.</p>
         <label class="setting">
           <span><b>Stretch length</b><i>Target is two hours a day, in as many sessions as suits.</i></span>
           <select id="stretchMin">
@@ -120,7 +120,7 @@ export function renderPeSettings(mount) {
           </select>
         </label>
         <label class="setting">
-          <span><b>Tension</b><i>10 kg is the ceiling. Length comes from time, not load.</i></span>
+          <span><b>Tension</b><i>10 kg is the ceiling.</i></span>
           <select id="tensionKg">
             ${[0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((k) => `<option value="${k}" ${s.tensionKg === k ? 'selected' : ''}>${k} kg</option>`).join('')}
           </select>

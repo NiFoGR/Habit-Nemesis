@@ -120,7 +120,7 @@ export function renderTracking(mount) {
         ${ringSvg(Math.min(idx / 1000, 1), String(idx), program.pfiBand(idx), { size: 150 })}
         <div>
           <div class="h-row">${icon('target', 16)}<h2>Pelvic Floor Index</h2></div>
-          <p class="small muted">One number out of 1000, combining your best hold, your weekly volume, your level and how consistently you have shown up over the last two weeks.</p>
+          <p class="small muted">Out of 1000.</p>
         </div>
       </div>
 
@@ -137,13 +137,11 @@ export function renderTracking(mount) {
 
       <section class="card">
         <div class="h-row">${icon('calendar', 16)}<h2>Consistency</h2></div>
-        <p class="small muted">Last 13 weeks. Brighter is a better session; teal marks a programmed release day.</p>
         ${heatmap(state)}
       </section>
 
       <section class="card">
         <div class="h-row">${icon('trend', 16)}<h2>Hold quality over time</h2></div>
-        <p class="small muted">Average hold length per session, in seconds. This is the line that matters most.</p>
         ${avgHolds.length > 1 ? lineChart(avgHolds, { color: 'var(--accent)' }) : '<div class="chart-empty">Two sessions and this starts drawing</div>'}
       </section>
 
@@ -170,7 +168,6 @@ export function renderTracking(mount) {
 
       <section class="card">
         <div class="h-row">${icon('medal', 16)}<h2>Feats</h2></div>
-        <p class="muted small">One list for the whole app, held to one test: something you could say out loud to another person and have it mean something.</p>
         <div class="kv"><span>Kegel feats earned</span><b>${sectionCount('Kegels')}</b></div>
         <a class="btn ghost wide" href="#/arena/feats">${icon('medal', 16)}<span>All feats</span></a>
       </section>

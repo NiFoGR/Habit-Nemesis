@@ -125,7 +125,7 @@ export function renderGuide(mount) {
       <section class="card">
         <h2>A kegel, in one paragraph</h2>
         <p class="small muted">There is a sheet of muscle slung across the bottom of your pelvis, the <b>pelvic floor</b>. It is what you tighten to stop yourself passing wind. A kegel is squeezing it deliberately: a lift <b>up and in</b>, towards your belly button. Then a full release. That is the whole movement.</p>
-        <p class="small muted">You are doing it right when your <b>belly, buttocks and thighs stay completely still</b> and you are <b>still breathing</b>. If any of those move, ease off to half effort. a smaller contraction of the right muscle beats a hard squeeze of the wrong three.</p>
+        <p class="small muted">You are doing it right when your <b>belly, buttocks and thighs stay completely still</b> and you are <b>still breathing</b>. If any of those move, ease off to half effort. A smaller contraction of the right muscle beats a hard squeeze of the wrong three.</p>
         <p class="warn-inline">Don't practise by stopping your urine mid-stream. Useful once as a test, a bad habit as training.</p>
       </section>
 
@@ -150,7 +150,7 @@ export function renderGuide(mount) {
 
       <section class="card">
         <h2>Timeline</h2>
-        <p class="small muted">First changes around weeks 4–6, most of it between 8 and 12. Nothing in one session is visible. That is what the streak is for. The plan itself runs two years.</p>
+        <p class="small muted">First changes around weeks 4–6, most of it between 8 and 12. Nothing in one session is visible. That is what the streak is for. </p>
       </section>
 
       <section class="card">
@@ -170,14 +170,14 @@ export function renderKegelSettings(mount) {
     <div class="screen">
       <header class="screen-head">
         <button class="icon-btn" data-back="kegels" aria-label="Back">${icon('back')}</button>
-        <h1>${escapeHtml(kegelName())}</h1>
+        <h1>${escapeHtml(kegelName())} settings</h1>
         <span class="icon-btn ghost"></span>
       </header>
 
       <section class="card">
         <div class="h-row">${icon('target', 16)}<h2>How you train</h2></div>
         <label class="setting">
-          <span><b>Input mode</b><i>Press-and-hold measures every rep. Hands-free paces you and scores from your rating.</i></span>
+          <span><b>Input mode</b><i>Press-and-hold measures every rep.</i></span>
           <select id="inputMode">
             <option value="hold" ${s.inputMode === 'hold' ? 'selected' : ''}>Press and hold</option>
             <option value="auto" ${s.inputMode === 'auto' ? 'selected' : ''}>Hands-free</option>
@@ -196,7 +196,7 @@ export function renderKegelSettings(mount) {
           </select>
         </label>
         <label class="setting">
-          <span><b>Daily reminder</b><i>An alarm at this time. Leave empty for none.</i></span>
+          <span><b>Daily reminder</b><i>Leave empty for none.</i></span>
           <input type="time" id="reminder" value="${escapeHtml(s.reminder || '')}">
         </label>
       </section>

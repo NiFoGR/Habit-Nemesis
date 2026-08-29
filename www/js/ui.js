@@ -351,8 +351,10 @@ export function lineChart(values, { w = 320, h = 110, pad = 10, color = 'var(--a
   const max = Math.max(...values, 1);
   const min = Math.min(...values, 0);
   const span = max - min || 1;
+  const flat = max === min;
   const x = (i) => pad + (i * (w - pad * 2)) / Math.max(values.length - 1, 1);
-  const y = (v) => h - pad - ((v - min) / span) * (h - pad * 2);
+  // Flat sits mid-height, not on the floor: that would read as zero.
+  const y = (v) => (flat ? h / 2 : h - pad - ((v - min) / span) * (h - pad * 2));
   const pts = values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`);
   const area = fill ? `<path d="M${x(0)},${h - pad} L${pts.join(' L')} L${x(values.length - 1)},${h - pad} Z" fill="url(#lg)" opacity="0.35"/>` : '';
   const dots = values.length <= 30 ? values.map((v, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="2.5" fill="${color}"/>`).join('') : '';
