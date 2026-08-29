@@ -1661,10 +1661,27 @@ body.blacked .br-orb { opacity: 0.09; }
 
 .screen-head .btn.small-btn { padding: 10px 15px; font-size: 0.86rem; margin-top: 0; }
 
+/* A native select, because five options want the platform picker on a phone,
+   but dressed as one of the app's pills rather than left as a platform control:
+   the arrow is ours, drawn in the accent, and the chrome one is turned off. */
 .chart-period {
-  margin-left: auto; background: var(--surface-2); color: var(--text);
-  border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font-size: 0.78rem;
+  margin-left: auto;
+  appearance: none;
+  background: var(--surface-2) no-repeat right 9px center / 9px 6px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--accent) 50%),
+    linear-gradient(135deg, var(--accent) 50%, transparent 50%);
+  background-position: right 13px center, right 9px center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  padding: 7px 26px 7px 12px;
+  font-size: var(--f-fine);
+  font-weight: var(--w-medium);
+  font-family: inherit;
 }
+.chart-period:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* The calendar. Weeks as columns, weekdays as rows, in the habit's own colour.
    Seventeen weeks, sized to the width available. Fixed cells in a scrolling box

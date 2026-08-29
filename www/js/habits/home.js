@@ -86,9 +86,14 @@ function cellHtml(habit, key, sum, s) {
   }</button>`;
 }
 
+/** A cell is about 45px wide, so "23.18" reads as noise. One decimal under ten,
+ *  none above it, and k past a thousand. */
 function fmtNumber(v) {
   if (typeof v !== 'number') return '–';
-  return Number.isInteger(v) ? String(v) : String(Math.round(v * 100) / 100);
+  if (Number.isInteger(v)) return v >= 10000 ? `${Math.round(v / 1000)}k` : String(v);
+  if (Math.abs(v) >= 1000) return `${(v / 1000).toFixed(1)}k`;
+  if (Math.abs(v) >= 10) return String(Math.round(v));
+  return String(Math.round(v * 10) / 10);
 }
 
 function headCell(key) {

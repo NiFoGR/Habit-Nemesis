@@ -93,7 +93,8 @@ export function renderHabitDetail(mount, id) {
         </header>
 
         <div class="habit-hero">
-          <h2 style="color:${colour}">${escapeHtml(habit.question || habit.name)}</h2>
+          ${habit.question && habit.question !== habit.name
+            ? `<h2 style="color:${colour}">${escapeHtml(habit.question)}</h2>` : ''}
           <p class="muted small">
             ${icon('calendar', 14)} ${escapeHtml(habits.freqLabel(habit.freq))}
             · ${icon('bell', 14)} ${habit.remindAt ? escapeHtml(habit.remindAt) : 'no reminder'}
