@@ -332,14 +332,11 @@ export function renderArena(mount) {
           ? unrankedHero()
           : `${ladder(a.division)}
         ${st.month.empty
-          ? `<p class="ar-monthline"><span class="muted">${st.placed ? 'nothing scored this month yet' : 'placement month'}</span></p>`
+          ? `<p class="ar-monthline">${st.placed ? 'nothing scored this month yet' : 'placement month'}</p>`
           : `${barTo(st)}
              <p class="ar-monthline">
                <b>${st.month.w}W–${st.month.l}L</b>
-               <span class="muted">· ${arena.weeksLeft()} week${arena.weeksLeft() === 1 ? '' : 's'} left ·</span>
-               <em class="${st.next && st.month.score >= st.next.bar ? 'up' : st.safe ? 'safe' : 'down'}">${
-                 st.next && st.month.score >= st.next.bar ? 'promoting' : st.safe ? 'holding' : 'below the bar'
-               }</em>
+               · ${arena.weeksLeft()} week${arena.weeksLeft() === 1 ? '' : 's'} left
              </p>`}`}
       </section>
 
@@ -411,7 +408,7 @@ export function renderFeats(mount) {
       <div class="today">
         <div class="today-left">
           <h2>${c.earned} of ${c.total}</h2>
-          <p class="muted small">Not achievements. Every one of these is something you could say out loud to another person and have it mean something.</p>
+          <p class="muted small">Not achievements. Each one is something you could say out loud.</p>
         </div>
       </div>
 

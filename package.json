@@ -12,7 +12,9 @@
     "android:apk": "cap sync android && node tools/patch-signing.mjs && node tools/patch-backup.mjs && cd android && ./gradlew assembleDebug",
     "check:arena": "node tools/check-arena.mjs",
     "pack:web": "node tools/pack-web.mjs",
-    "art": "node tools/art.mjs"
+    "art": "node tools/art.mjs",
+    "check:ui": "node tools/check-ui.mjs",
+    "check": "npm run check:arena && npm run check:ui"
   },
   "dependencies": {
     "@capacitor/android": "^7.0.0",

@@ -195,7 +195,7 @@ export const OPPONENTS = {
   nemesis: { id: 'nemesis', name: 'Your Nemesis', blurb: 'The best week you have ever had.' },
   lastMonth: { id: 'lastMonth', name: 'Last Month You', blurb: 'This week, one month ago.' },
   standard: { id: 'standard', name: 'The Standard', blurb: "Your division's bar, with a face on it." },
-  worst: { id: 'worst', name: 'Your Worst Self', blurb: 'Your worst week of the last three months. Do not lose to him.' },
+  worst: { id: 'worst', name: 'Your Worst Self', blurb: 'Your worst week lately. Do not lose to him.' },
 };
 
 /** Best week ever, excluding the one being played. */
