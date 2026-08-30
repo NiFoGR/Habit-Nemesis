@@ -1427,9 +1427,22 @@ body.blacked .br-orb { opacity: 0.09; }
 .hg-cell.go .ico { opacity: 0.9; }
 
 
-/* ---------- the toolbar above the grid ---------- */
+/* ---------- the grid's one control ----------
+   It sits in the day header's empty name slot, so it costs no band of its own.
+   Three chips up here said "Reorder", "4 days" and "Groups" with equal weight,
+   which read as a toolbar bolted above the screen. */
 
-.hg-tools { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.arrange {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: 0; padding: 0;
+  color: var(--faint); font: inherit; font-size: var(--f-fine); cursor: pointer;
+}
+.arrange .ico { width: 14px; height: 14px; }
+.arrange:active { color: var(--text); }
+.arrange.on { color: var(--accent); }
+/* Reorder mode drops the day columns, so the way out needs its own line. */
+.hg-arrange { padding: 0 10px 10px; }
+
 .chipbtn {
   display: inline-flex; align-items: center; gap: 7px;
   background: var(--surface); border: 1px solid var(--line); color: var(--muted);
@@ -1444,7 +1457,7 @@ body.blacked .br-orb { opacity: 0.09; }
    The widths have to survive a long name and seven columns on a 360px phone,
    so cells take a maximum and the name takes what is left. */
 
-.hgrid { display: grid; gap: 6px; margin-bottom: 18px; }
+.hgrid { display: grid; gap: 6px; margin: 18px 0; }
 
 .hg-head, .hg-row {
   display: grid;
@@ -1461,7 +1474,8 @@ body.blacked .br-orb { opacity: 0.09; }
   .hg-head > :nth-child(n+5), .hg-row > :nth-child(n+5) { display: none; }
 }
 
-.hg-head { padding: 0 10px; color: var(--muted); }
+.hg-head { padding: 0 10px; color: var(--muted); align-items: end; }
+.hg-head .hg-name { align-self: center; }
 .hg-head i { font-style: normal; text-align: center; line-height: 1.1; }
 .hg-head i b { display: block; font-size: var(--f-micro); letter-spacing: 0.06em; font-weight: 600; }
 .hg-head i em { font-style: normal; font-size: var(--f-fine); }
@@ -2911,9 +2925,12 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
   margin-top: 12px; padding: 12px 14px;
   border-radius: var(--radius);
   background: var(--surface);
-  border: 1px solid color-mix(in oklab, var(--accent) 35%, var(--line));
+  border: 1px solid var(--line-soft);
   color: var(--text);
 }
+/* The icon carries the accent. An accent border made a one-day-a-week card the
+   loudest thing on a screen whose job is the grid under it. */
+.rv-cta-go { margin-left: auto; color: var(--faint); display: grid; place-items: center; transform: rotate(180deg); }
 .rv-cta:active { transform: scale(0.99); }
 .rv-cta, .rv-cta b, .rv-cta i { text-decoration: none; }
 .rv-cta-ico { color: var(--accent); display: grid; place-items: center; }

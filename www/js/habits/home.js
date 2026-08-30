@@ -193,6 +193,7 @@ function reviewCta() {
       <b>The week in review</b>
       <i>${key === arena.currentWeek() ? 'Sunday. One day left.' : escapeHtml(arena.weekLabel(key))}</i>
     </span>
+    <span class="rv-cta-go">${icon('back', 15)}</span>
   </a>`;
 }
 
@@ -214,7 +215,10 @@ function redraw(mount) {
       .map((g) => `<option value="${escapeHtml(g.id)}" ${g.id === current ? 'selected' : ''}>${escapeHtml(g.name)}</option>`)
       .join('')}`;
 
-  const head = `<div class="hg-head"><span class="hg-name"></span>${days.map(headCell).join('')}</div>`;
+  // The one control the grid needs, in the day header's empty name slot. It
+  // costs no line of its own.
+  const arrange = `<button class="arrange" id="arrangeBtn">${icon('reorder', 14)}<span>Arrange</span></button>`;
+  const head = `<div class="hg-head"><span class="hg-name">${arrange}</span>${days.map(headCell).join('')}</div>`;
 
   const groupSections = sections
     .map(({ group, habits: rows }) => {
@@ -252,14 +256,10 @@ function redraw(mount) {
 
       ${reviewCta()}
 
-      <div class="hg-tools">
-        <button class="chipbtn ${reorderMode ? 'on' : ''}" id="reorderBtn">${icon('reorder', 15)}<span>${reorderMode ? 'Done' : 'Reorder'}</span></button>
-        <button class="chipbtn" id="colsBtn">${icon('calendar', 15)}<span>${s.columns} day${s.columns === 1 ? '' : 's'}</span></button>
-        <button class="chipbtn" id="groupBtn">${icon('filter', 15)}<span>Groups</span></button>
-      </div>
-
       <div class="hgrid ${reorderMode ? 'reordering' : ''}" style="--cols:${reorderMode ? 1 : s.columns}">
-        ${reorderMode || !(linked.length || habits.active().length) ? '' : head}
+        ${reorderMode
+          ? `<div class="hg-arrange"><button class="arrange on" id="arrangeBtn">${icon('check', 14)}<span>Done</span></button></div>`
+          : linked.length || habits.active().length ? head : ''}
         ${linked.length && !reorderMode
           ? `<div class="hg-rows">${linked.map((h) => rowHtml(h, days, s)).join('')}</div>`
           : ''}
@@ -284,41 +284,18 @@ function wireGrid(mount, days) {
   const s = habits.settings();
   const grid = mount.querySelector('.hgrid');
 
-  mount.querySelector('#reorderBtn').addEventListener('click', () => {
-    reorderMode = !reorderMode;
-    redraw(mount);
-  });
-
-  mount.querySelector('#colsBtn').addEventListener('click', () => {
-    const sheet = openSheet(`
-      <h2>Days on screen</h2>
-      <div class="pickrow">${[3, 4, 5, 6, 7]
-        .map((n) => `<button class="pick ${n === s.columns ? 'on' : ''}" data-cols="${n}">${n}</button>`)
-        .join('')}</div>
-      <label class="setting toggle">
-        <span><b>Oldest first</b><i>Days run left to right instead of newest on the left.</i></span>
-        <input type="checkbox" id="rev" ${s.reverseDays ? 'checked' : ''}>
-      </label>
-      <button class="btn wide" data-close>Done</button>`);
-    sheet.el.querySelectorAll('[data-cols]').forEach((b) =>
-      b.addEventListener('click', () => {
-        store.update((st) => {
-          st.habits.settings.columns = Number(b.dataset.cols);
-        });
-        sheet.close();
+  const arrangeBtn = mount.querySelector('#arrangeBtn');
+  // One button, two jobs: in reorder mode it is the way out.
+  if (arrangeBtn) {
+    arrangeBtn.addEventListener('click', () => {
+      if (reorderMode) {
+        reorderMode = false;
         redraw(mount);
-      })
-    );
-    sheet.el.querySelector('#rev').addEventListener('change', (e) => {
-      store.update((st) => {
-        st.habits.settings.reverseDays = e.target.checked;
-      });
-      sheet.close();
-      redraw(mount);
+        return;
+      }
+      openArrangeSheet(mount, s);
     });
-  });
-
-  mount.querySelector('#groupBtn').addEventListener('click', () => openGroupSheet(mount));
+  }
 
   grid.querySelectorAll('[data-toggle]').forEach((b) =>
     b.addEventListener('click', () => {
@@ -582,6 +559,49 @@ function wireReorder(grid, mount) {
 }
 
 /* ---------------- groups ---------------- */
+
+/** Everything about how the grid is laid out, in one place. Three chips above
+ *  the grid said the same thing and cost a band of their own. */
+function openArrangeSheet(mount, s) {
+  const sheet = openSheet(`
+    <h2>Arrange the grid</h2>
+    <p class="muted small">Days on screen</p>
+    <div class="pickrow">${[3, 4, 5, 6, 7]
+      .map((n) => `<button class="pick ${n === s.columns ? 'on' : ''}" data-cols="${n}">${n}</button>`)
+      .join('')}</div>
+    <label class="setting toggle">
+      <span><b>Oldest first</b><i>Days run left to right instead of newest on the left.</i></span>
+      <input type="checkbox" id="rev" ${s.reverseDays ? 'checked' : ''}>
+    </label>
+    <button class="btn ghost wide" id="reorderGo">${icon('reorder', 16)}<span>Reorder habits</span></button>
+    <button class="btn ghost wide" id="groupGo">${icon('filter', 16)}<span>Groups</span></button>`);
+
+  sheet.el.querySelectorAll('[data-cols]').forEach((b) =>
+    b.addEventListener('click', () => {
+      store.update((st) => {
+        st.habits.settings.columns = Number(b.dataset.cols);
+      });
+      sheet.close();
+      redraw(mount);
+    })
+  );
+  sheet.el.querySelector('#rev').addEventListener('change', (e) => {
+    store.update((st) => {
+      st.habits.settings.reverseDays = e.target.checked;
+    });
+    sheet.close();
+    redraw(mount);
+  });
+  sheet.el.querySelector('#reorderGo').addEventListener('click', () => {
+    sheet.close();
+    reorderMode = true;
+    redraw(mount);
+  });
+  sheet.el.querySelector('#groupGo').addEventListener('click', () => {
+    sheet.close();
+    openGroupSheet(mount);
+  });
+}
 
 function openGroupSheet(mount) {
   const draw = () => {

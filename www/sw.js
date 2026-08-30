@@ -1,6 +1,6 @@
 // Offline-first service worker. Bump CACHE to drop everything stored.
 // Code is revalidated against the network; the cache is the offline answer.
-const CACHE = 'nifo-v41';
+const CACHE = 'nifo-v42';
 
 const SHELL = [
   './',
