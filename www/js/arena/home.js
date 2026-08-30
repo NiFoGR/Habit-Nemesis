@@ -343,7 +343,7 @@ function nemesisLine() {
   if (!n) return '';
   return `<button class="ar-nemesis" data-week="${n.key}">
     ${face() ? faceAvatar(36) : `<span class="ar-nico">${icon('flash', 16)}</span>`}
-    <span class="ar-nname"><b>Your Nemesis</b><i>${escapeHtml(arena.weekLabel(n.key))} · your best week</i></span>
+    <span class="ar-nname"><b>Your Nemesis</b><i>${escapeHtml(arena.weekLabel(n.key))}</i></span>
     <b class="ar-nscore">${pct(n.score)}</b>
   </button>`;
 }

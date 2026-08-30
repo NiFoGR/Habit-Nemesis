@@ -137,7 +137,7 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--text);
-  border-radius: 9px;
+  border-radius: 50%;
   font-size: var(--f-body);
   cursor: pointer;
 }
@@ -558,8 +558,11 @@ input[type="range"] {
    as tall as its neighbours. */
 .segmented button { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .segmented button {
-  flex: 1; background: none; border: 0; color: var(--muted); font: inherit; font-size: var(--f-small);
-  padding: 8px 4px; border-radius: 9px; cursor: pointer;
+  /* auto, not 1: equal columns cut "Long exhale" to "Long exh...". Each option
+     takes its own width first, then they share what is left. */
+  flex: 1 1 auto; min-width: 0;
+  background: none; border: 0; color: var(--muted); font: inherit; font-size: var(--f-small);
+  padding: 8px 6px; border-radius: 9px; cursor: pointer;
 }
 .segmented button.on { background: var(--surface-2); color: var(--text); font-weight: 600; }
 
@@ -781,7 +784,7 @@ input[type="range"] {
 .step-bar i.on { background: var(--accent); }
 .step-bar i.done { background: color-mix(in srgb, var(--accent) 45%, var(--line)); }
 
-.icon-btn.text-btn { width: auto; padding: 0 12px; font-size: var(--f-small); color: var(--muted); }
+.icon-btn.text-btn { width: auto; padding: 0 14px; border-radius: var(--radius-pill); font-size: var(--f-small); color: var(--muted); }
 
 .tut-body p { color: var(--muted); font-size: var(--f-body); }
 .tut-body p b, .tut-body p i { color: var(--text); }
@@ -1446,6 +1449,14 @@ body.blacked .br-orb { opacity: 0.09; }
   align-items: center;
   gap: 2px;
 }
+/* On a 320px phone four day columns leave the name 86px, which cut "Cold
+   shower" and every detail line under it. The name is the row: drop a day. */
+@media (max-width: 340px) {
+  .hg-head, .hg-row { grid-template-columns: minmax(0, 1fr) repeat(min(var(--cols, 4), 3), minmax(0, 34px)); }
+  /* By index, not :last-child: at "Days on screen: 3" there is no fourth cell
+     to drop and last-child would take the third. */
+  .hg-head > :nth-child(n+5), .hg-row > :nth-child(n+5) { display: none; }
+}
 
 .hg-head { padding: 0 10px; color: var(--muted); }
 .hg-head i { font-style: normal; text-align: center; line-height: 1.1; }
@@ -1553,7 +1564,7 @@ body.blacked .br-orb { opacity: 0.09; }
   background: var(--surface-2); color: var(--text); border: 1px solid var(--line);
   border-radius: 8px; padding: 6px 6px; font-size: var(--f-fine); max-width: 108px;
 }
-.icon-btn.small { width: 32px; height: 32px; flex: 0 0 32px; border-radius: 8px; }
+.icon-btn.small { width: 32px; height: 32px; flex: 0 0 32px; }
 .icon-btn.small .ico { width: 15px; height: 15px; }
 .icon-btn.small.danger { color: var(--danger); border-color: rgba(248, 113, 113, 0.35); }
 

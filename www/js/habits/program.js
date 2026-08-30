@@ -316,7 +316,7 @@ export const LINKED = [
     action: () => '#/session',
     detail: () => {
       const plan = kegels.planForToday();
-      if (plan.type === 'release') return 'Release day · down-training only';
+      if (plan.type === 'release') return 'Release day';
       const left = Math.max(0, plan.target - plan.doneToday);
       if (plan.complete) return `Week ${plan.level} · done today`;
       return `${left} left · week ${plan.level}`;
