@@ -23,7 +23,7 @@ export function renderDivisions(mount) {
         <span></span>
       </header>
 
-      <p class="muted small centre dv-rule">A month averaging the bar or better moves you up one rung. One move a month, up or down.</p>
+      <p class="muted small centre dv-rule">A month averaging the bar or better moves you up one division. One move a month, up or down.</p>
 
       <ol class="dv-list">
         ${rows.map(({ d, i }) => row(d, i, at, st)).join('')}
@@ -33,7 +33,7 @@ export function renderDivisions(mount) {
 
 function row(d, i, at, st) {
   const state = i === at ? 'here' : i < at ? 'done' : 'locked';
-  // The rail is painted for the rungs behind you, so the colour on screen is
+  // The rail is painted for the divisions behind you, so the colour on screen is
   // exactly the ladder you have climbed.
   const hue = i <= at ? crestHue(i) : 'var(--line)';
   return `<li class="dv-row ${state}" style="--dc:${hue}">
