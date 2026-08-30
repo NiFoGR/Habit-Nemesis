@@ -89,9 +89,15 @@ group('a year of weeks, partitioned');
 /* ---------------- the ladder ---------------- */
 group('divisions');
 is('the bars climb', a.DIVISIONS.every((d, i) => i === 0 || d.bar > a.DIVISIONS[i - 1].bar), true);
+// Probed off DIVISIONS rather than a written-out list, so reordering the ladder
+// cannot leave this check asserting the old one.
 is('a score earns the division whose bar it clears',
-  [0, 0.29, 0.3, 0.59, 0.6, 0.89, 0.9, 0.99, 1].map((s) => a.divisionForScore(s).id),
-  ['bottom', 'bottom', 'npc', 'prospect', 'contender', 'locked', 'topg', 'topg', 'full']);
+  a.DIVISIONS.map((d) => a.divisionForScore(d.bar).id),
+  a.DIVISIONS.map((d) => d.id));
+is('and a hair under it earns the one below',
+  a.DIVISIONS.map((d) => a.divisionForScore(d.bar - 0.01).id),
+  a.DIVISIONS.map((d, i) => (i === 0 ? a.DIVISIONS[0].id : a.DIVISIONS[i - 1].id)));
+is('nothing scored is still the bottom', a.divisionForScore(0).id, a.DIVISIONS[0].id);
 
 /* ---------------- arcs ---------------- */
 group('arcs');
