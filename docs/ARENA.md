@@ -21,26 +21,31 @@ the Arc is a bracket laid over the same weeks.
 
 ## The divisions
 
-| Division | Month score | Crest |
-|---|---|---|
-| Top G | 92% | gold, crowned |
-| Locked In | 84% | red |
-| Menace | 74% | purple |
-| Contender | 60% | gold |
-| Prospect | 45% | silver |
-| NPC | 25% | orange |
-| Bottom G | — | pink, dashed |
+Nine of them, evenly spaced. `DIVISIONS` in `arena/program.js` is the only
+place the order and the bars are written down; everything else derives from it.
 
-The crests are artwork — one file per rung in `www/img/`, drawn by hand and
+| Division | Month score |
+|---|---|
+| Full | 100% |
+| Top G | 90% |
+| Locked In | 80% |
+| Mentzer | 70% |
+| Menace | 60% |
+| Contender | 50% |
+| Prospect | 40% |
+| NPC | 30% |
+| Bottom G | 20% |
+
+The crests are artwork — one file per division in `www/img/`, drawn by hand and
 cropped, rather than something `crest.js` builds. There was a version that
 built them out of chevrons, laurels and a crown in the app's single accent, so
 that rank read as *shape* and the app kept one theme. It looked correct and it
 was wrong: a rank badge is the one thing on screen whose entire job is to be a
-picture of where you are, and a drawn one cannot land a joke. Each rung carries
-a one-line blurb in the same spirit, shown under the name on the Arena's hero
-and nowhere else.
+picture of where you are, and a drawn one cannot land a joke. The crest carries
+its own name on a ribbon, which is why the Arena's hero prints no name beside
+it.
 
-Before any of that there is **Unranked**, which is not a rung and has no bar:
+Before any of that there is **Unranked**, which is not a division and has no bar:
 a grey dashed shield with a question mark, shown until there is a single week
 on the record. The app used to open on NPC, which meant a stranger's first
 screen was a joke about Mike Mentzer aimed at someone who had not yet had the

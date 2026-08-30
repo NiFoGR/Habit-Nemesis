@@ -47,29 +47,32 @@ Eight files. Worn at the top of the profile, in the Arena hero at 92px, and as a
 28px badge beside a name. The ladder is the app's spine, so these carry the most
 weight.
 
-Named by division id, never by rung number: a rung added in the middle of the
-ladder would otherwise renumber every file above it.
+Named by division id, never by position: a division moved or added in the
+middle of the ladder would otherwise renumber every file above it. Mentzer has
+been moved from third to sixth and no file changed, which is the test of it.
 
-| File | Rung | What it says |
+In ladder order. The numbers are positions in `DIVISIONS`, not part of any
+filename, which is the point of keying by id.
+
+| File | Division | What it says |
 |---|---|---|
 | `rank-unranked.webp` | none | No record yet. Nobody knows what you are. Quiet, empty, waiting |
-| `rank-bottom.webp` | 0 Bottom G | You own the app and nothing else. The joke rung |
-| `rank-mentzer.webp` | 1 Mentzer | Delusional confidence. The second joke rung |
-| `rank-npc.webp` | 2 NPC | Going through the motions |
-| `rank-full.webp` | 3 Full | Size without discipline. The third joke rung |
-| `rank-prospect.webp` | 4 Prospect | Something is happening, not reliably. First metal |
-| `rank-contender.webp` | 5 Contender | In it now. A bad week costs you |
-| `rank-menace.webp` | 6 Menace | Most weeks go your way and it shows |
-| `rank-locked.webp` | 7 Locked In | Serious. Relentless |
-| `rank-topg.webp` | 8 Top G | You do not miss. The top of the ladder |
+| `rank-bottom.webp` | 0 Bottom G, 20% | You own the app and nothing else. The joke rung |
+| `rank-npc.webp` | 1 NPC, 30% | Going through the motions |
+| `rank-prospect.webp` | 2 Prospect, 40% | Something is happening, not reliably. First metal |
+| `rank-contender.webp` | 3 Contender, 50% | In it now. A bad week costs you |
+| `rank-menace.webp` | 4 Menace, 60% | Most weeks go your way and it shows |
+| `rank-mentzer.webp` | 5 Mentzer, 70% | Delusional confidence, earned late |
+| `rank-locked.webp` | 6 Locked In, 80% | Serious. Relentless |
+| `rank-topg.webp` | 7 Top G, 90% | You do not miss |
+| `rank-full.webp` | 8 Full, 100% | Size without discipline. The top of the ladder |
 
-Nine rungs, and a month moves you at most one, so the floor to the top is
+Nine divisions, and a month moves you at most one, so the floor to the top is
 eight months at the very fastest.
 
-**Eight files, not nine: the three joke rungs share nothing with the six real
+**Eight files, not nine: the three joke crests share nothing with the six real
 ones.** That is deliberate. Bottom G, Mentzer and Full are photographs in a
-frame and are supposed to look like a bit; from Prospect up the set has one
-silhouette and climbs by metal.
+frame and are supposed to look like a bit; the metal set climbs around them.
 
 The progression has to be readable with the labels covered. Pick one thing that
 climbs and let it climb: metal (dull to bright), rim weight, how much of the rim

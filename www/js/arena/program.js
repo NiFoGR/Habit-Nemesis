@@ -14,10 +14,10 @@ import * as native from '../native.js';
 export const DIVISIONS = [
   { id: 'bottom', name: 'Bottom G', bar: 0.2 },
   { id: 'npc', name: 'NPC', bar: 0.3 },
-  { id: 'mentzer', name: 'Mentzer', bar: 0.4 },
-  { id: 'prospect', name: 'Prospect', bar: 0.5 },
-  { id: 'contender', name: 'Contender', bar: 0.6 },
-  { id: 'menace', name: 'Menace', bar: 0.7 },
+  { id: 'prospect', name: 'Prospect', bar: 0.4 },
+  { id: 'contender', name: 'Contender', bar: 0.5 },
+  { id: 'menace', name: 'Menace', bar: 0.6 },
+  { id: 'mentzer', name: 'Mentzer', bar: 0.7 },
   { id: 'locked', name: 'Locked In', bar: 0.8 },
   { id: 'topg', name: 'Top G', bar: 0.9 },
   // The only rung that asks for everything. One missed cell in a month loses it.

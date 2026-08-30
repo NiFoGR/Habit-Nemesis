@@ -16,6 +16,23 @@ const idOf = (i) => (i === UNRANKED ? 'unranked' : (DIVISIONS[Math.max(0, Math.m
 
 export const crestSrc = (i) => artSrc(`rank-${idOf(i)}`);
 
+/** The colour each crest is actually painted in, for the rail beside it.
+ *  CLAUDE.md keeps colour for state, with a division's crest as one of the
+ *  named exceptions. Taken off the artwork, not invented. */
+const HUE = {
+  bottom: '#f472b6',
+  npc: '#c8a97e',
+  mentzer: '#ef4444',
+  prospect: '#b98b62',
+  contender: '#cbd5e1',
+  menace: '#fbbf24',
+  locked: '#9a8250',
+  topg: '#a855f7',
+  full: '#22d3c5',
+};
+
+export const crestHue = (i) => HUE[idOf(i)] || 'var(--accent)';
+
 /** `i` is the rung, or UNRANKED. Decorative: the name is always beside it. */
 export function crest(i, size = 64) {
   const id = idOf(i);

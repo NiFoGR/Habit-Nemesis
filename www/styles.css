@@ -3,12 +3,15 @@
    The one exception is a habit's own colour, which you chose. */
 :root {
   /* ---- ground ---- */
+  /* Steps you can see. surface against surface-2 used to be 1.08:1, which is
+     why an inset track, a bar's groove and a pressed state all vanished into
+     the card they sat on. The ramp is now 1.16, 1.35, 1.73 against surface. */
   --bg: #0a0c10;
-  --bg-2: #0e1116;
-  --surface: #141821;
-  --surface-2: #1a1f29;
-  --line: #262c38;
-  --line-soft: #1d2330;
+  --bg-2: #101419;
+  --surface: #171d28;
+  --surface-2: #2a3446;
+  --line: #3a4459;
+  --line-soft: #262e3d;
   --text: #e6eaf0;
   --muted: #97a1b0;
   --faint: #6b7686;
@@ -137,7 +140,7 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--text);
-  border-radius: 9px;
+  border-radius: 50%;
   font-size: var(--f-body);
   cursor: pointer;
 }
@@ -558,8 +561,11 @@ input[type="range"] {
    as tall as its neighbours. */
 .segmented button { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .segmented button {
-  flex: 1; background: none; border: 0; color: var(--muted); font: inherit; font-size: var(--f-small);
-  padding: 8px 4px; border-radius: 9px; cursor: pointer;
+  /* auto, not 1: equal columns cut "Long exhale" to "Long exh...". Each option
+     takes its own width first, then they share what is left. */
+  flex: 1 1 auto; min-width: 0;
+  background: none; border: 0; color: var(--muted); font: inherit; font-size: var(--f-small);
+  padding: 8px 6px; border-radius: 9px; cursor: pointer;
 }
 .segmented button.on { background: var(--surface-2); color: var(--text); font-weight: 600; }
 
@@ -781,7 +787,7 @@ input[type="range"] {
 .step-bar i.on { background: var(--accent); }
 .step-bar i.done { background: color-mix(in srgb, var(--accent) 45%, var(--line)); }
 
-.icon-btn.text-btn { width: auto; padding: 0 12px; font-size: var(--f-small); color: var(--muted); }
+.icon-btn.text-btn { width: auto; padding: 0 14px; border-radius: var(--radius-pill); font-size: var(--f-small); color: var(--muted); }
 
 .tut-body p { color: var(--muted); font-size: var(--f-body); }
 .tut-body p b, .tut-body p i { color: var(--text); }
@@ -1421,9 +1427,22 @@ body.blacked .br-orb { opacity: 0.09; }
 .hg-cell.go .ico { opacity: 0.9; }
 
 
-/* ---------- the toolbar above the grid ---------- */
+/* ---------- the grid's one control ----------
+   It sits in the day header's empty name slot, so it costs no band of its own.
+   Three chips up here said "Reorder", "4 days" and "Groups" with equal weight,
+   which read as a toolbar bolted above the screen. */
 
-.hg-tools { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.arrange {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: 0; padding: 0;
+  color: var(--faint); font: inherit; font-size: var(--f-fine); cursor: pointer;
+}
+.arrange .ico { width: 14px; height: 14px; }
+.arrange:active { color: var(--text); }
+.arrange.on { color: var(--accent); }
+/* Reorder mode drops the day columns, so the way out needs its own line. */
+.hg-arrange { padding: 0 10px 10px; }
+
 .chipbtn {
   display: inline-flex; align-items: center; gap: 7px;
   background: var(--surface); border: 1px solid var(--line); color: var(--muted);
@@ -1438,7 +1457,7 @@ body.blacked .br-orb { opacity: 0.09; }
    The widths have to survive a long name and seven columns on a 360px phone,
    so cells take a maximum and the name takes what is left. */
 
-.hgrid { display: grid; gap: 6px; margin-bottom: 18px; }
+.hgrid { display: grid; gap: 6px; margin: 18px 0; }
 
 .hg-head, .hg-row {
   display: grid;
@@ -1446,8 +1465,17 @@ body.blacked .br-orb { opacity: 0.09; }
   align-items: center;
   gap: 2px;
 }
+/* On a 320px phone four day columns leave the name 86px, which cut "Cold
+   shower" and every detail line under it. The name is the row: drop a day. */
+@media (max-width: 340px) {
+  .hg-head, .hg-row { grid-template-columns: minmax(0, 1fr) repeat(min(var(--cols, 4), 3), minmax(0, 34px)); }
+  /* By index, not :last-child: at "Days on screen: 3" there is no fourth cell
+     to drop and last-child would take the third. */
+  .hg-head > :nth-child(n+5), .hg-row > :nth-child(n+5) { display: none; }
+}
 
-.hg-head { padding: 0 10px; color: var(--muted); }
+.hg-head { padding: 0 10px; color: var(--muted); align-items: end; }
+.hg-head .hg-name { align-self: center; }
 .hg-head i { font-style: normal; text-align: center; line-height: 1.1; }
 .hg-head i b { display: block; font-size: var(--f-micro); letter-spacing: 0.06em; font-weight: 600; }
 .hg-head i em { font-style: normal; font-size: var(--f-fine); }
@@ -1553,7 +1581,7 @@ body.blacked .br-orb { opacity: 0.09; }
   background: var(--surface-2); color: var(--text); border: 1px solid var(--line);
   border-radius: 8px; padding: 6px 6px; font-size: var(--f-fine); max-width: 108px;
 }
-.icon-btn.small { width: 32px; height: 32px; flex: 0 0 32px; border-radius: 8px; }
+.icon-btn.small { width: 32px; height: 32px; flex: 0 0 32px; }
 .icon-btn.small .ico { width: 15px; height: 15px; }
 .icon-btn.small.danger { color: var(--danger); border-color: rgba(248, 113, 113, 0.35); }
 
@@ -1872,11 +1900,78 @@ body.blacked .br-orb { opacity: 0.09; }
   background: var(--brand); -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 
-/* One segment per division, however many there are. */
-.ar-ladder { display: flex; gap: 4px; margin: 14px 0; }
+/* One segment per division, however many there are. The pips were already a
+   ladder, so they are the way into the full one and the control costs no line
+   of its own. */
+.ar-ladder {
+  display: grid; gap: 7px; margin: 14px 0;
+  text-decoration: none; color: inherit;
+}
+.ar-ladder-pips { display: flex; gap: 4px; }
 .ar-ladder i { flex: 1 1 0; height: 5px; border-radius: 3px; background: var(--line); }
 .ar-ladder i.on { background: var(--accent); opacity: 0.42; }
 .ar-ladder i.here { opacity: 1; box-shadow: 0 0 10px rgba(34, 211, 197, 0.5); }
+.ar-ladder-go {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  font-size: var(--f-fine); color: var(--faint);
+}
+.ar-ladder-go .ico { transform: rotate(180deg); }
+.ar-ladder:active .ar-ladder-go { color: var(--text); }
+
+/* ---------- every division ----------
+   A rail with the crests standing on it. The rail is painted in each crest's
+   own colour for the rungs behind you and left grey above, so the colour on
+   screen is exactly the ladder you have climbed. */
+
+.dv-rule { margin: 0 0 22px; }
+.dv-list { list-style: none; margin: 0; padding: 0; }
+.dv-row {
+  position: relative;
+  display: grid; grid-template-columns: 58px 1fr auto;
+  align-items: center; gap: 12px;
+  padding: 11px 12px 11px 0;
+  border-radius: var(--radius);
+}
+/* The rail runs the full height of the row so the segments meet with no seam.
+   Behind the crest, which is why it is a pseudo-element and not a box. */
+.dv-row::before {
+  content: ''; position: absolute; z-index: 0;
+  left: 28px; top: 0; bottom: 0; width: 3px; margin-left: -1.5px;
+  background: var(--dc);
+}
+.dv-row:first-child::before { top: 50%; border-radius: 2px 2px 0 0; }
+.dv-row:last-child::before { bottom: 50%; border-radius: 0 0 2px 2px; }
+.dv-row.locked::before { background: var(--line); }
+
+.dv-node { position: relative; z-index: 1; display: grid; place-items: center; }
+/* The rail must not show through the artwork's transparent corners. */
+.dv-node::before {
+  content: ''; position: absolute; width: 44px; height: 44px; border-radius: var(--radius-pill);
+  background: var(--bg);
+}
+.dv-node .crest { position: relative; }
+.dv-row.locked .dv-node .crest { filter: grayscale(0.9); opacity: 0.55; }
+
+.dv-body { min-width: 0; display: grid; gap: 1px; }
+.dv-body b { font-size: var(--f-body); font-weight: var(--w-medium); }
+.dv-body i { font-style: normal; font-size: var(--f-fine); color: var(--faint); }
+.dv-bar { font-size: var(--f-small); color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.dv-row.locked .dv-body b { color: var(--muted); }
+.dv-row.locked .dv-bar { color: var(--faint); }
+.dv-row.done .dv-body b { color: var(--muted); }
+
+/* Where you are. The plate carries the division's own colour, so no ring has
+   to be drawn round the crest to say so. */
+.dv-row.here {
+  background: linear-gradient(90deg, color-mix(in oklab, var(--dc) 34%, var(--surface)), var(--surface) 78%);
+  padding: 13px 12px 13px 0;
+  margin: 4px 0;
+}
+.dv-row.here .dv-body b { font-size: var(--f-title); }
+.dv-row.here .dv-body i { color: var(--text); }
+.dv-row.here .dv-bar { color: var(--text); }
+.dv-row.here .dv-node::before { width: 58px; height: 58px; background: color-mix(in oklab, var(--dc) 22%, var(--bg)); }
 
 /* The month inside its division: floor left, promotion right. A 0-100 bar put
    every threshold within a few pixels of the last. */
@@ -2058,7 +2153,11 @@ body.blacked .br-orb { opacity: 0.09; }
 .ft-ico.on, .ft.on .ft-ico { color: var(--on-accent); background: var(--accent); }
 .ft.on { border-color: rgba(34, 211, 197, 0.4); color: var(--text); }
 .ft:active { transform: scale(0.97); }
-.ft-locked { display: block; font-style: normal; font-size: var(--f-micro); color: var(--faint); margin-top: 5px; }
+/* What the feat costs. Every tile carries it, so a tile you have and a tile you
+   do not are still comparable. */
+.ft-price { display: block; font-style: normal; font-size: var(--f-micro); color: var(--faint); margin-top: 5px; }
+.ft.on .ft-price { color: var(--muted); }
+.ft-cost { margin-top: -4px; }
 .ft-bar { display: block; height: 3px; border-radius: 2px; background: var(--surface); margin-top: 7px; overflow: hidden; }
 .ft-bar i { display: block; height: 100%; background: var(--accent); opacity: 0.6; }
 .ft-big { display: grid; place-items: center; width: 60px; height: 60px; margin: 4px auto 12px;
@@ -2276,13 +2375,23 @@ body.blacked .br-orb { opacity: 0.09; }
 .tab.main.on { color: var(--text); }
 .tab.main.on .tab-ico { background: var(--brand); }
 
-/* Something is waiting in a room you are not standing in. */
-.tab-dot {
+/* Something is waiting in a room you are not standing in. A dot says that
+   much; a number says how much, which is the part you can act on. */
+.tab-badge {
   position: absolute; top: 2px; right: 6px;
-  width: 7px; height: 7px; border-radius: 50%;
+  width: 7px; height: 7px; border-radius: var(--radius-pill);
   background: var(--accent); box-shadow: 0 0 0 2px var(--bg-2);
 }
-.tab.main .tab-dot { top: 6px; right: 10px; background: var(--bg); }
+.tab-badge.count {
+  top: -2px; right: 0;
+  width: auto; min-width: 17px; height: 17px; padding: 0 4px;
+  display: grid; place-items: center;
+  color: var(--on-accent); font-style: normal;
+  font-size: var(--f-micro); font-weight: var(--w-bold);
+  font-variant-numeric: tabular-nums; line-height: 1;
+}
+.tab.main .tab-badge { top: 6px; right: 10px; background: var(--bg); }
+.tab.main .tab-badge.count { top: 0; right: 2px; background: var(--bg); color: var(--text); }
 
 /* Room for the bar, only where it is there. */
 body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
@@ -2306,29 +2415,44 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
    Everything here is finished, which is what lets it be still: no live bars, no
    countdowns except the one that is the point. */
 
-.cab-cups { display: grid; gap: 10px; margin-bottom: 14px; }
-.cab-cups:not(.empty) { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+/* ---------- the shelf ----------
+   Three plinths, one per cup that exists, lit if it has ever been won. Winning
+   the same arc three years running is three trophies of one shape, so the
+   plinth counts rather than the shelf growing without end. */
 
-.cup, .cup-empty {
-  align-content: start;
-  display: grid; justify-items: center; gap: 2px; text-align: center;
-  padding: 20px 14px 16px;
-  border-radius: var(--radius); border: 1px solid rgba(251, 191, 36, 0.34);
-  background: radial-gradient(120% 90% at 50% 0%, rgba(251, 191, 36, 0.11), transparent 70%), var(--surface);
-  color: var(--text); font: inherit; cursor: pointer;
+.cab-shelf { display: flex; justify-content: space-around; align-items: start; padding: 0 4px 14px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+.plinth { display: grid; justify-items: center; gap: 5px; background: none; border: 0; padding: 0; color: inherit; font: inherit; opacity: 0.35; }
+.plinth.won { opacity: 1; }
+.plinth:not(:disabled):active { transform: scale(0.97); }
+.plinth-art { position: relative; display: grid; place-items: center; }
+.plinth-n {
+  position: absolute; right: -2px; bottom: 2px;
+  min-width: 18px; height: 18px; padding: 0 4px;
+  display: grid; place-items: center;
+  border-radius: var(--radius-pill); background: var(--accent); color: var(--on-accent);
+  font-style: normal; font-size: var(--f-micro); font-weight: var(--w-bold);
+  font-variant-numeric: tabular-nums; box-shadow: 0 0 0 2px var(--bg);
 }
-.cup-empty {
-  border-color: var(--line); background: var(--surface);
-  cursor: default; color: var(--muted);
+.plinth i { font-style: normal; font-size: var(--f-micro); color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }
+.plinth u { text-decoration: none; font-size: var(--f-micro); color: var(--faint); font-variant-numeric: tabular-nums; }
+
+/* ---------- feats, by what they cost ----------
+   The band names are the prices, so no heading has to say so. */
+
+.cab-band { margin: 20px 0; }
+.cab-bandhead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cab-bandhead h2 { font-size: var(--f-head); margin: 0; }
+.cab-bar { height: 6px; border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; margin-bottom: 10px; }
+.cab-bar i { display: block; height: 100%; background: var(--accent); }
+.cab-hexes { display: flex; flex-wrap: wrap; gap: 6px; }
+.hex {
+  width: 34px; height: 34px; flex: 0 0 34px;
+  display: grid; place-items: center;
+  border: 0; border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--faint); cursor: pointer;
 }
-.cup-art { display: grid; place-items: center; width: 54px; height: 54px; margin-bottom: 6px;
-  border-radius: 50%; color: var(--warn); background: rgba(251, 191, 36, 0.12); }
-.cup-empty .cup-art { color: var(--faint); background: var(--surface-2); }
-.cup b { font-size: var(--f-small); letter-spacing: -0.01em; }
-.cup i, .cup-empty i { font-style: normal; font-size: var(--f-micro); color: var(--muted); }
-.cup em { display: block; margin-top: 7px; font-style: italic; font-size: var(--f-micro); color: var(--warn); line-height: 1.35; }
-.cup:active { transform: scale(0.98); }
-.cup-empty b { color: var(--text); font-size: var(--f-small); }
+.hex.on { background: var(--accent); color: var(--on-accent); }
+.hex:active { transform: scale(0.94); }
 
 /* ---------- the vault ----------
    A review you can open early is a dashboard, so the year is a number counting
@@ -2887,9 +3011,12 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
   margin-top: 12px; padding: 12px 14px;
   border-radius: var(--radius);
   background: var(--surface);
-  border: 1px solid color-mix(in oklab, var(--accent) 35%, var(--line));
+  border: 1px solid var(--line-soft);
   color: var(--text);
 }
+/* The icon carries the accent. An accent border made a one-day-a-week card the
+   loudest thing on a screen whose job is the grid under it. */
+.rv-cta-go { margin-left: auto; color: var(--faint); display: grid; place-items: center; transform: rotate(180deg); }
 .rv-cta:active { transform: scale(0.99); }
 .rv-cta, .rv-cta b, .rv-cta i { text-decoration: none; }
 .rv-cta-ico { color: var(--accent); display: grid; place-items: center; }

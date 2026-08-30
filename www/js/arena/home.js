@@ -19,9 +19,11 @@ const hex = (h) => (h.colour ? habits.hexOf(h.colour) : 'var(--accent)');
 
 function ladder(id) {
   const at = arena.divisionIndex(id);
-  return `<div class="ar-ladder" role="img" aria-label="Division ${escapeHtml(arena.divisionOf(id).name)}, ${at + 1} of ${arena.DIVISIONS.length}">
-    ${arena.DIVISIONS.map((d, i) => `<i class="${i <= at ? 'on' : ''} ${i === at ? 'here' : ''}" title="${escapeHtml(d.name)}"></i>`).join('')}
-  </div>`;
+  return `<a class="ar-ladder" href="#/arena/divisions"
+    aria-label="Division ${escapeHtml(arena.divisionOf(id).name)}, ${at + 1} of ${arena.DIVISIONS.length}. See every division">
+    <span class="ar-ladder-pips">${arena.DIVISIONS.map((d, i) => `<i class="${i <= at ? 'on' : ''} ${i === at ? 'here' : ''}" title="${escapeHtml(d.name)}"></i>`).join('')}</span>
+    <span class="ar-ladder-go">Divisions ${icon('back', 13)}</span>
+  </a>`;
 }
 
 /** Unranked: the ladder unlit, and a countdown to the week that places you.
@@ -29,7 +31,13 @@ function ladder(id) {
 function unrankedHero() {
   const left = arena.daysLeftInWeek();
   const live = arena.scoreWeek(arena.currentWeek());
-  return `<div class="ar-count">
+  // Unlit, but still the way in: what you are about to be placed into is worth
+  // reading before you are placed.
+  return `<a class="ar-ladder none" href="#/arena/divisions" aria-label="See every division">
+      <span class="ar-ladder-pips">${arena.DIVISIONS.map(() => '<i></i>').join('')}</span>
+      <span class="ar-ladder-go">Divisions ${icon('back', 13)}</span>
+    </a>
+    <div class="ar-count">
       <b>${left}</b>
       <i>day${left === 1 ? '' : 's'} until you are placed</i>
     </div>
@@ -316,8 +324,7 @@ export function renderArena(mount) {
     <div class="screen">
       <section class="ar-hero ${st.unranked ? 'unranked' : ''} ${!st.unranked && !st.next ? 'top' : ''}"
         style="--lift:${st.unranked ? 0 : rung}">
-        <span class="ar-crest">${crest(rung, 92)}</span>
-        <h1 class="ar-rank">${escapeHtml(st.division.name)}</h1>
+        <span class="ar-crest">${crest(rung, 104).replace('alt="" aria-hidden="true"', `alt="${escapeHtml(st.division.name)}"`)}</span>
         ${st.unranked
           ? unrankedHero()
           : `${ladder(a.division)}
@@ -343,7 +350,7 @@ function nemesisLine() {
   if (!n) return '';
   return `<button class="ar-nemesis" data-week="${n.key}">
     ${face() ? faceAvatar(36) : `<span class="ar-nico">${icon('flash', 16)}</span>`}
-    <span class="ar-nname"><b>Your Nemesis</b><i>${escapeHtml(arena.weekLabel(n.key))} · your best week</i></span>
+    <span class="ar-nname"><b>Your Nemesis</b><i>${escapeHtml(arena.weekLabel(n.key))}</i></span>
     <b class="ar-nscore">${pct(n.score)}</b>
   </button>`;
 }
@@ -408,6 +415,11 @@ export function renderFeats(mount) {
         .join('')}
     </div>`;
 
+  wireFeatTiles(mount);
+}
+
+/** Any screen showing feat tiles gets the same sheet. */
+export function wireFeatTiles(mount) {
   mount.querySelectorAll('[data-feat]').forEach((el) =>
     el.addEventListener('click', () => {
       const f = feats.FEATS.find((x) => x.id === el.dataset.feat);
@@ -419,6 +431,7 @@ export function renderFeats(mount) {
         <div class="ft-big ${p.earned ? 'on' : ''}">${icon(f.icon, 30)}</div>
         <h2 class="centre">${escapeHtml(f.name)}</h2>
         <p class="muted small centre">${escapeHtml(f.blurb)}</p>
+        <p class="centre muted small ft-cost">${escapeHtml(feats.priceOf(f.days))} of work, at the fastest it can be done.</p>
         ${p.earned
           ? `<p class="centre ft-when">Earned${at ? ` ${new Date(at).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}` : ''}.</p>`
           : p.need
@@ -434,10 +447,7 @@ function featTile(f) {
   return `<button class="ft ${f.earned ? 'on' : ''}" data-feat="${escapeHtml(f.id)}">
     <span class="ft-ico">${icon(f.icon, 19)}</span>
     <b>${escapeHtml(f.name)}</b>
-    ${f.earned
-      ? ''
-      : f.need
-        ? `<span class="ft-bar"><i style="width:${(f.frac * 100).toFixed(0)}%"></i></span>`
-        : '<i class="ft-locked">·</i>'}
+    ${f.earned || !f.need ? '' : `<span class="ft-bar"><i style="width:${(f.frac * 100).toFixed(0)}%"></i></span>`}
+    <i class="ft-price">${escapeHtml(feats.priceOf(f.days))}</i>
   </button>`;
 }
