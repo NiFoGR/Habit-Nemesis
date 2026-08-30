@@ -230,7 +230,14 @@ collect();
 // replaceState: no blank entry under the grid.
 if (!location.hash) history.replaceState(history.state, '', '#/hub');
 
-initTabs({ badges: () => ({ arena: hasResults() }) });
+// A number where there is one to give. The grid counts what today still owes,
+// which is the only badge you can act on without opening anything.
+initTabs({
+  badges: () => {
+    const due = habitsProgram.dueToday();
+    return { grid: due.total - due.done, arena: hasResults() };
+  },
+});
 
 // APK only: hide the system nav bar.
 native.hideNavBar();

@@ -14,14 +14,15 @@ const ROOTS = TABS.map((t) => t.hash);
 let bar = null;
 let badgesOf = () => ({});
 
-/** Draw once. `badges` is asked per route for tabs with something waiting. */
+/** Draw once. `badges` is asked per route for tabs with something waiting: a
+ *  number to count it, true for a plain dot when there is nothing to count. */
 export function initTabs({ badges = () => ({}) } = {}) {
   badgesOf = badges;
   bar = document.getElementById('tabs');
   if (!bar) return;
   bar.innerHTML = TABS.map(
     (t) => `<a class="tab ${t.main ? 'main' : ''}" data-tab="${t.id}" href="${t.hash}" aria-label="${t.label}">
-      <span class="tab-ico">${icon(t.icon, t.main ? 26 : 21)}<i class="tab-dot" hidden></i></span>
+      <span class="tab-ico">${icon(t.icon, t.main ? 26 : 21)}<i class="tab-badge" hidden></i></span>
       <i class="tab-label">${t.label}</i>
     </a>`
   ).join('');
@@ -46,7 +47,13 @@ export function syncTabs(path) {
   bar.querySelectorAll('[data-tab]').forEach((a, i) => {
     a.classList.toggle('on', i === at);
     a.setAttribute('aria-current', i === at ? 'page' : 'false');
-    const dot = a.querySelector('.tab-dot');
-    if (dot) dot.hidden = !marks[a.dataset.tab] || i === at;
+    const badge = a.querySelector('.tab-badge');
+    if (!badge) return;
+    const mark = marks[a.dataset.tab];
+    // Nothing waiting, or you are already standing in the room.
+    badge.hidden = !mark || i === at;
+    const n = typeof mark === 'number' ? mark : 0;
+    badge.textContent = n > 99 ? '99+' : n ? String(n) : '';
+    badge.classList.toggle('count', n > 0);
   });
 }

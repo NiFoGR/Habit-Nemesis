@@ -3,12 +3,15 @@
    The one exception is a habit's own colour, which you chose. */
 :root {
   /* ---- ground ---- */
+  /* Steps you can see. surface against surface-2 used to be 1.08:1, which is
+     why an inset track, a bar's groove and a pressed state all vanished into
+     the card they sat on. The ramp is now 1.16, 1.35, 1.73 against surface. */
   --bg: #0a0c10;
-  --bg-2: #0e1116;
-  --surface: #141821;
-  --surface-2: #1a1f29;
-  --line: #262c38;
-  --line-soft: #1d2330;
+  --bg-2: #101419;
+  --surface: #171d28;
+  --surface-2: #2a3446;
+  --line: #3a4459;
+  --line-soft: #262e3d;
   --text: #e6eaf0;
   --muted: #97a1b0;
   --faint: #6b7686;
@@ -2287,13 +2290,23 @@ body.blacked .br-orb { opacity: 0.09; }
 .tab.main.on { color: var(--text); }
 .tab.main.on .tab-ico { background: var(--brand); }
 
-/* Something is waiting in a room you are not standing in. */
-.tab-dot {
+/* Something is waiting in a room you are not standing in. A dot says that
+   much; a number says how much, which is the part you can act on. */
+.tab-badge {
   position: absolute; top: 2px; right: 6px;
-  width: 7px; height: 7px; border-radius: 50%;
+  width: 7px; height: 7px; border-radius: var(--radius-pill);
   background: var(--accent); box-shadow: 0 0 0 2px var(--bg-2);
 }
-.tab.main .tab-dot { top: 6px; right: 10px; background: var(--bg); }
+.tab-badge.count {
+  top: -2px; right: 0;
+  width: auto; min-width: 17px; height: 17px; padding: 0 4px;
+  display: grid; place-items: center;
+  color: var(--on-accent); font-style: normal;
+  font-size: var(--f-micro); font-weight: var(--w-bold);
+  font-variant-numeric: tabular-nums; line-height: 1;
+}
+.tab.main .tab-badge { top: 6px; right: 10px; background: var(--bg); }
+.tab.main .tab-badge.count { top: 0; right: 2px; background: var(--bg); color: var(--text); }
 
 /* Room for the bar, only where it is there. */
 body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
