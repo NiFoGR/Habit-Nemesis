@@ -2086,7 +2086,11 @@ body.blacked .br-orb { opacity: 0.09; }
 .ft-ico.on, .ft.on .ft-ico { color: var(--on-accent); background: var(--accent); }
 .ft.on { border-color: rgba(34, 211, 197, 0.4); color: var(--text); }
 .ft:active { transform: scale(0.97); }
-.ft-locked { display: block; font-style: normal; font-size: var(--f-micro); color: var(--faint); margin-top: 5px; }
+/* What the feat costs. Every tile carries it, so a tile you have and a tile you
+   do not are still comparable. */
+.ft-price { display: block; font-style: normal; font-size: var(--f-micro); color: var(--faint); margin-top: 5px; }
+.ft.on .ft-price { color: var(--muted); }
+.ft-cost { margin-top: -4px; }
 .ft-bar { display: block; height: 3px; border-radius: 2px; background: var(--surface); margin-top: 7px; overflow: hidden; }
 .ft-bar i { display: block; height: 100%; background: var(--accent); opacity: 0.6; }
 .ft-big { display: grid; place-items: center; width: 60px; height: 60px; margin: 4px auto 12px;

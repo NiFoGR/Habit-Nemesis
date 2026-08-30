@@ -419,6 +419,7 @@ export function renderFeats(mount) {
         <div class="ft-big ${p.earned ? 'on' : ''}">${icon(f.icon, 30)}</div>
         <h2 class="centre">${escapeHtml(f.name)}</h2>
         <p class="muted small centre">${escapeHtml(f.blurb)}</p>
+        <p class="centre muted small ft-cost">${escapeHtml(feats.priceOf(f.days))} of work, at the fastest it can be done.</p>
         ${p.earned
           ? `<p class="centre ft-when">Earned${at ? ` ${new Date(at).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}` : ''}.</p>`
           : p.need
@@ -434,10 +435,7 @@ function featTile(f) {
   return `<button class="ft ${f.earned ? 'on' : ''}" data-feat="${escapeHtml(f.id)}">
     <span class="ft-ico">${icon(f.icon, 19)}</span>
     <b>${escapeHtml(f.name)}</b>
-    ${f.earned
-      ? ''
-      : f.need
-        ? `<span class="ft-bar"><i style="width:${(f.frac * 100).toFixed(0)}%"></i></span>`
-        : '<i class="ft-locked">·</i>'}
+    ${f.earned || !f.need ? '' : `<span class="ft-bar"><i style="width:${(f.frac * 100).toFixed(0)}%"></i></span>`}
+    <i class="ft-price">${escapeHtml(feats.priceOf(f.days))}</i>
   </button>`;
 }

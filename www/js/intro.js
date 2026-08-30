@@ -10,7 +10,7 @@ import * as habits from './habits/program.js';
 import * as arena from './arena/program.js';
 import { icon, logoMark } from './icons.js';
 import { crest } from './arena/crest.js';
-import { FEATS } from './arena/feats.js';
+import { counts } from './arena/feats.js';
 import { cup } from './arena/cup.js';
 import { escapeHtml, chime, haptic, celebrate } from './ui.js';
 import { navigate } from './back.js';
@@ -141,7 +141,11 @@ const PAGES = [
   },
   {
     title: 'What you keep',
-    line: `Three cups a year, on the seasons. ${FEATS.length} feats, each one worth saying out loud.`,
+    // counts() is what this install can earn, not the catalogue: the five
+    // sections are locked on a fresh phone and their feats are unreachable.
+    // A function, not a string: PAGES is built at import time and the store is
+    // not hydrated yet.
+    line: () => `Three cups a year, on the seasons. ${counts().total} feats, each one worth saying out loud.`,
     art: cabinet,
   },
   {
@@ -154,6 +158,12 @@ const PAGES = [
 ];
 
 /* ---------------- the screen ---------------- */
+
+/** A page's line may be a function when it has to read the record. */
+function lineOf(page, marked) {
+  const v = marked && page.done ? page.done : page.line;
+  return typeof v === 'function' ? v() : v;
+}
 
 export function renderIntro(mount) {
   let i = 0;
@@ -187,7 +197,7 @@ export function renderIntro(mount) {
     // off the bottom of a phone.
     const art = page.art ? `<div class="intro-art">${page.art()}</div>` : '';
     const head = `<h1 class="intro-title">${escapeHtml(page.title)}</h1>
-      <p class="intro-line" id="line">${escapeHtml(marked && page.done ? page.done : page.line)}</p>`;
+      <p class="intro-line" id="line">${escapeHtml(lineOf(page, marked))}</p>`;
 
     mount.innerHTML = `
       <div class="screen intro">
