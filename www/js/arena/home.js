@@ -408,6 +408,11 @@ export function renderFeats(mount) {
         .join('')}
     </div>`;
 
+  wireFeatTiles(mount);
+}
+
+/** Any screen showing feat tiles gets the same sheet. */
+export function wireFeatTiles(mount) {
   mount.querySelectorAll('[data-feat]').forEach((el) =>
     el.addEventListener('click', () => {
       const f = feats.FEATS.find((x) => x.id === el.dataset.feat);

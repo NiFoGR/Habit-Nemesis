@@ -2348,29 +2348,44 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
    Everything here is finished, which is what lets it be still: no live bars, no
    countdowns except the one that is the point. */
 
-.cab-cups { display: grid; gap: 10px; margin-bottom: 14px; }
-.cab-cups:not(.empty) { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+/* ---------- the shelf ----------
+   Three plinths, one per cup that exists, lit if it has ever been won. Winning
+   the same arc three years running is three trophies of one shape, so the
+   plinth counts rather than the shelf growing without end. */
 
-.cup, .cup-empty {
-  align-content: start;
-  display: grid; justify-items: center; gap: 2px; text-align: center;
-  padding: 20px 14px 16px;
-  border-radius: var(--radius); border: 1px solid rgba(251, 191, 36, 0.34);
-  background: radial-gradient(120% 90% at 50% 0%, rgba(251, 191, 36, 0.11), transparent 70%), var(--surface);
-  color: var(--text); font: inherit; cursor: pointer;
+.cab-shelf { display: flex; justify-content: space-around; align-items: end; padding: 0 4px 14px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+.plinth { display: grid; justify-items: center; gap: 5px; background: none; border: 0; padding: 0; color: inherit; font: inherit; opacity: 0.35; }
+.plinth.won { opacity: 1; }
+.plinth:not(:disabled):active { transform: scale(0.97); }
+.plinth-art { position: relative; display: grid; place-items: center; }
+.plinth-n {
+  position: absolute; right: -2px; bottom: 2px;
+  min-width: 18px; height: 18px; padding: 0 4px;
+  display: grid; place-items: center;
+  border-radius: var(--radius-pill); background: var(--accent); color: var(--on-accent);
+  font-style: normal; font-size: var(--f-micro); font-weight: var(--w-bold);
+  font-variant-numeric: tabular-nums; box-shadow: 0 0 0 2px var(--bg);
 }
-.cup-empty {
-  border-color: var(--line); background: var(--surface);
-  cursor: default; color: var(--muted);
+.plinth i { font-style: normal; font-size: var(--f-micro); color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }
+.plinth u { text-decoration: none; font-size: var(--f-micro); color: var(--faint); font-variant-numeric: tabular-nums; }
+
+/* ---------- feats, by what they cost ----------
+   The band names are the prices, so no heading has to say so. */
+
+.cab-band { margin: 20px 0; }
+.cab-bandhead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cab-bandhead h2 { font-size: var(--f-head); margin: 0; }
+.cab-bar { height: 6px; border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; margin-bottom: 10px; }
+.cab-bar i { display: block; height: 100%; background: var(--accent); }
+.cab-hexes { display: flex; flex-wrap: wrap; gap: 6px; }
+.hex {
+  width: 34px; height: 34px; flex: 0 0 34px;
+  display: grid; place-items: center;
+  border: 0; border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--faint); cursor: pointer;
 }
-.cup-art { display: grid; place-items: center; width: 54px; height: 54px; margin-bottom: 6px;
-  border-radius: 50%; color: var(--warn); background: rgba(251, 191, 36, 0.12); }
-.cup-empty .cup-art { color: var(--faint); background: var(--surface-2); }
-.cup b { font-size: var(--f-small); letter-spacing: -0.01em; }
-.cup i, .cup-empty i { font-style: normal; font-size: var(--f-micro); color: var(--muted); }
-.cup em { display: block; margin-top: 7px; font-style: italic; font-size: var(--f-micro); color: var(--warn); line-height: 1.35; }
-.cup:active { transform: scale(0.98); }
-.cup-empty b { color: var(--text); font-size: var(--f-small); }
+.hex.on { background: var(--accent); color: var(--on-accent); }
+.hex:active { transform: scale(0.94); }
 
 /* ---------- the vault ----------
    A review you can open early is a dashboard, so the year is a number counting
