@@ -30,6 +30,7 @@ import { renderHabitEdit } from './habits/edit.js';
 import { renderHabitDetail } from './habits/tracking.js';
 import * as habitsProgram from './habits/program.js';
 import { renderArena, renderFeats } from './arena/home.js';
+import { renderDivisions } from './arena/divisions.js';
 import { renderCabinet } from './arena/cabinet.js';
 import * as arenaProgram from './arena/program.js';
 import { renderYear } from './arena/year.js';
@@ -136,6 +137,7 @@ const ROUTES = {
   '#/cabinet/year': (params) => renderYear(app, params.get('y')),
   // Moved to the Cabinet. Aliases kept.
   '#/arena/feats': () => renderFeats(app),
+  '#/arena/divisions': () => renderDivisions(app),
   '#/arena/year': (params) => renderYear(app, params.get('y')),
   '#/breathe': () => renderBreatheHome(app),
   '#/breathe/run': () => runBreathe(),

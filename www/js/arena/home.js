@@ -19,9 +19,11 @@ const hex = (h) => (h.colour ? habits.hexOf(h.colour) : 'var(--accent)');
 
 function ladder(id) {
   const at = arena.divisionIndex(id);
-  return `<div class="ar-ladder" role="img" aria-label="Division ${escapeHtml(arena.divisionOf(id).name)}, ${at + 1} of ${arena.DIVISIONS.length}">
-    ${arena.DIVISIONS.map((d, i) => `<i class="${i <= at ? 'on' : ''} ${i === at ? 'here' : ''}" title="${escapeHtml(d.name)}"></i>`).join('')}
-  </div>`;
+  return `<a class="ar-ladder" href="#/arena/divisions"
+    aria-label="Division ${escapeHtml(arena.divisionOf(id).name)}, ${at + 1} of ${arena.DIVISIONS.length}. See every division">
+    <span class="ar-ladder-pips">${arena.DIVISIONS.map((d, i) => `<i class="${i <= at ? 'on' : ''} ${i === at ? 'here' : ''}" title="${escapeHtml(d.name)}"></i>`).join('')}</span>
+    <span class="ar-ladder-go">Divisions ${icon('back', 13)}</span>
+  </a>`;
 }
 
 /** Unranked: the ladder unlit, and a countdown to the week that places you.
@@ -29,7 +31,13 @@ function ladder(id) {
 function unrankedHero() {
   const left = arena.daysLeftInWeek();
   const live = arena.scoreWeek(arena.currentWeek());
-  return `<div class="ar-count">
+  // Unlit, but still the way in: what you are about to be placed into is worth
+  // reading before you are placed.
+  return `<a class="ar-ladder none" href="#/arena/divisions" aria-label="See every division">
+      <span class="ar-ladder-pips">${arena.DIVISIONS.map(() => '<i></i>').join('')}</span>
+      <span class="ar-ladder-go">Divisions ${icon('back', 13)}</span>
+    </a>
+    <div class="ar-count">
       <b>${left}</b>
       <i>day${left === 1 ? '' : 's'} until you are placed</i>
     </div>
@@ -316,8 +324,7 @@ export function renderArena(mount) {
     <div class="screen">
       <section class="ar-hero ${st.unranked ? 'unranked' : ''} ${!st.unranked && !st.next ? 'top' : ''}"
         style="--lift:${st.unranked ? 0 : rung}">
-        <span class="ar-crest">${crest(rung, 92)}</span>
-        <h1 class="ar-rank">${escapeHtml(st.division.name)}</h1>
+        <span class="ar-crest">${crest(rung, 104).replace('alt="" aria-hidden="true"', `alt="${escapeHtml(st.division.name)}"`)}</span>
         ${st.unranked
           ? unrankedHero()
           : `${ladder(a.division)}

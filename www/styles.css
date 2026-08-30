@@ -1900,11 +1900,78 @@ body.blacked .br-orb { opacity: 0.09; }
   background: var(--brand); -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 
-/* One segment per division, however many there are. */
-.ar-ladder { display: flex; gap: 4px; margin: 14px 0; }
+/* One segment per division, however many there are. The pips were already a
+   ladder, so they are the way into the full one and the control costs no line
+   of its own. */
+.ar-ladder {
+  display: grid; gap: 7px; margin: 14px 0;
+  text-decoration: none; color: inherit;
+}
+.ar-ladder-pips { display: flex; gap: 4px; }
 .ar-ladder i { flex: 1 1 0; height: 5px; border-radius: 3px; background: var(--line); }
 .ar-ladder i.on { background: var(--accent); opacity: 0.42; }
 .ar-ladder i.here { opacity: 1; box-shadow: 0 0 10px rgba(34, 211, 197, 0.5); }
+.ar-ladder-go {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  font-size: var(--f-fine); color: var(--faint);
+}
+.ar-ladder-go .ico { transform: rotate(180deg); }
+.ar-ladder:active .ar-ladder-go { color: var(--text); }
+
+/* ---------- every division ----------
+   A rail with the crests standing on it. The rail is painted in each crest's
+   own colour for the rungs behind you and left grey above, so the colour on
+   screen is exactly the ladder you have climbed. */
+
+.dv-rule { margin: 0 0 22px; }
+.dv-list { list-style: none; margin: 0; padding: 0; }
+.dv-row {
+  position: relative;
+  display: grid; grid-template-columns: 58px 1fr auto;
+  align-items: center; gap: 12px;
+  padding: 11px 12px 11px 0;
+  border-radius: var(--radius);
+}
+/* The rail runs the full height of the row so the segments meet with no seam.
+   Behind the crest, which is why it is a pseudo-element and not a box. */
+.dv-row::before {
+  content: ''; position: absolute; z-index: 0;
+  left: 28px; top: 0; bottom: 0; width: 3px; margin-left: -1.5px;
+  background: var(--dc);
+}
+.dv-row:first-child::before { top: 50%; border-radius: 2px 2px 0 0; }
+.dv-row:last-child::before { bottom: 50%; border-radius: 0 0 2px 2px; }
+.dv-row.locked::before { background: var(--line); }
+
+.dv-node { position: relative; z-index: 1; display: grid; place-items: center; }
+/* The rail must not show through the artwork's transparent corners. */
+.dv-node::before {
+  content: ''; position: absolute; width: 44px; height: 44px; border-radius: var(--radius-pill);
+  background: var(--bg);
+}
+.dv-node .crest { position: relative; }
+.dv-row.locked .dv-node .crest { filter: grayscale(0.9); opacity: 0.55; }
+
+.dv-body { min-width: 0; display: grid; gap: 1px; }
+.dv-body b { font-size: var(--f-body); font-weight: var(--w-medium); }
+.dv-body i { font-style: normal; font-size: var(--f-fine); color: var(--faint); }
+.dv-bar { font-size: var(--f-small); color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.dv-row.locked .dv-body b { color: var(--muted); }
+.dv-row.locked .dv-bar { color: var(--faint); }
+.dv-row.done .dv-body b { color: var(--muted); }
+
+/* Where you are. The plate carries the division's own colour, so no ring has
+   to be drawn round the crest to say so. */
+.dv-row.here {
+  background: linear-gradient(90deg, color-mix(in oklab, var(--dc) 34%, var(--surface)), var(--surface) 78%);
+  padding: 13px 12px 13px 0;
+  margin: 4px 0;
+}
+.dv-row.here .dv-body b { font-size: var(--f-title); }
+.dv-row.here .dv-body i { color: var(--text); }
+.dv-row.here .dv-bar { color: var(--text); }
+.dv-row.here .dv-node::before { width: 58px; height: 58px; background: color-mix(in oklab, var(--dc) 22%, var(--bg)); }
 
 /* The month inside its division: floor left, promotion right. A 0-100 bar put
    every threshold within a few pixels of the last. */
