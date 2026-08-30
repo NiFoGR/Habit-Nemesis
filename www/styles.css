@@ -2420,7 +2420,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
    the same arc three years running is three trophies of one shape, so the
    plinth counts rather than the shelf growing without end. */
 
-.cab-shelf { display: flex; justify-content: space-around; align-items: end; padding: 0 4px 14px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+.cab-shelf { display: flex; justify-content: space-around; align-items: start; padding: 0 4px 14px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
 .plinth { display: grid; justify-items: center; gap: 5px; background: none; border: 0; padding: 0; color: inherit; font: inherit; opacity: 0.35; }
 .plinth.won { opacity: 1; }
 .plinth:not(:disabled):active { transform: scale(0.97); }

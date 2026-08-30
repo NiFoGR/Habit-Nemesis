@@ -105,7 +105,7 @@ function shelf(cups) {
         wins.length > 1 ? `<em class="plinth-n">${wins.length}</em>` : ''
       }</span>
       <i>${escapeHtml(a.name)}</i>
-      <u>${wins.length ? escapeHtml(wins.map((w) => w.arc.year).join(', ')) : 'not yet'}</u>
+      ${wins.length ? `<u>${escapeHtml(wins.map((w) => w.arc.year).join(', '))}</u>` : ''}
     </button>`;
   }).join('');
 }
