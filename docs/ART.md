@@ -11,14 +11,14 @@ dropped in with the right name is picked up with no further work.
 |---|---|
 | Format to send | PNG or SVG, transparent background |
 | Size to send | 1024 x 1024 for ranks and cups, 512 x 512 for feat medals, 1080 x 1350 for share banners |
-| What ships | 256px WebP, generated from your file by `npm run art` |
+| What ships | WebP from `npm run art`: 384px ranks and cups, 512px marks, 128px medals |
 | Safe area | keep the artwork inside the middle 88%. Nothing touches the edge |
 | Shape | square canvas, and the art optically centred inside it |
 | Ground | transparent. The app puts it on `#0a0c10` and on `#141821` cards |
 
 **The 28px test.** A rank badge appears at 28px next to a name far more often
-than it appears at 92px as a hero. A feat medal appears at 22px in a grid of
-forty. If it does not read at 28px, it does not work, whatever it looks like
+than it appears at 92px as a hero. A feat medal appears at 19px in a grid of
+forty-six. If it does not read at 28px, it does not work, whatever it looks like
 large. Squint at it: silhouette first, then one colour, then at most one shape
 inside. Three or more details inside a badge turn to mud.
 
@@ -33,19 +33,18 @@ warn    #fbbf24      danger  #f87171      calm   #38bdf8
 bronze  #b06a3a      silver  #c3ccd8      gold   #e8b23a
 ```
 
-**One silhouette per family.** All eight ranks share an outline. All four cups
-share an outline. All feat medals share an outline. The tier is told by what is
-inside it and what it is made of, never by a different shape. This is the single
-biggest problem with the current set: four shields, one dashed hexagon, and a
-crown that breaks the bounding box.
+**One silhouette per family.** The six metal ranks share an outline. All four
+cups share an outline. All feat medals share an outline. The tier is told by
+what is inside it and what it is made of, never by a different shape. This is
+the single biggest problem with the current set: four shields, one dashed
+hexagon, and a crown that breaks the bounding box.
 
 ---
 
 ## 1. Ranks
 
-Eight files. Worn at the top of the profile, in the Arena hero at 92px, and as a
-28px badge beside a name. The ladder is the app's spine, so these carry the most
-weight.
+Ten files. Worn in the Arena hero at 92px, on the ladder, and as a 28px badge
+beside a name. The ladder is the app's spine, so these carry the most weight.
 
 Named by division id, never by position: a division moved or added in the
 middle of the ladder would otherwise renumber every file above it. Mentzer has
@@ -70,9 +69,10 @@ filename, which is the point of keying by id.
 Nine divisions, and a month moves you at most one, so the floor to the top is
 eight months at the very fastest.
 
-**Eight files, not nine: the three joke crests share nothing with the six real
-ones.** That is deliberate. Bottom G, Mentzer and Full are photographs in a
-frame and are supposed to look like a bit; the metal set climbs around them.
+**One silhouette across six of the nine: the three joke crests share nothing
+with the six real ones.** That is deliberate. Bottom G, Mentzer and Full are
+photographs in a frame and are supposed to look like a bit; the metal set climbs
+around them.
 
 The progression has to be readable with the labels covered. Pick one thing that
 climbs and let it climb: metal (dull to bright), rim weight, how much of the rim
@@ -104,20 +104,18 @@ Optional, if you want the bracket to have art: `cup-final.webp`,
 ## 3. Feat medals
 
 One file per feat, named `feat-<id>.webp` where `<id>` is the id in the table.
-They render at 22px in the grid on the Feats screen and at 44px on the profile,
-in two states: earned, in colour, and locked, which the app draws itself by
-desaturating your file. So send the earned version only.
+Until they land the tiles draw an icon from the set, at 19px on the Feats screen
+and in the Cabinet. Two states: earned, in colour, and locked, which the app
+draws itself by desaturating your file. So send the earned version only.
 
 A medal is smaller than a rank badge and must be simpler: one silhouette shared
 by all of them, one shape inside, one colour. A number inside is allowed where
 the feat is a count.
 
-### 3a. Public feats
+### The catalogue
 
-These work for anyone, because they read only the grid and the Arena. This is
-the set a public build ships with, and it is the one worth your time first.
-All forty-five are built and earnable today: twenty-three on the grid,
-twenty-two in the Arena. A public build ships these and nothing else.
+All forty-six are built and earnable today: twenty-three on the grid,
+twenty-three in the Arena.
 
 **Streaks, on any one habit**
 
@@ -126,7 +124,7 @@ twenty-two in the Arena. A public build ships these and nothing else.
 | `streak7` | A week straight | 7 days unbroken |
 | `streak30` | A month straight | 30 days |
 | `streak100` | A hundred days | 100 days |
-| `habitYear` | A year of one thing | 365 days. *exists* |
+| `habitYear` | A year of one thing | 365 days |
 | `streak1000` | A thousand days | 1000 days |
 
 **The grid**
@@ -135,11 +133,10 @@ twenty-two in the Arena. A public build ships these and nothing else.
 |---|---|---|
 | `firstMark` | Day one | The first day you ever marked |
 | `habits5` | Five at once | Five habits alive together |
-| `habits10` | Ten at once | Ten habits alive together. *exists* |
-| `perfectDay` | A perfect day | Every row green on the same day. *exists* |
-| `perfectWeek` | A perfect week | Seven perfect days back to back. *exists* |
+| `habits10` | Ten at once | Ten habits alive together |
+| `perfectDay` | A perfect day | Every row green on the same day |
+| `perfectWeek` | A perfect week | Seven perfect days back to back |
 | `perfectMonth` | A perfect month | Thirty perfect days back to back |
-| `noGaps30` | Nothing missed | Every cell that was due, done, for thirty days |
 | `marks100` | A hundred ticks | 100 days marked, all told |
 | `marks1000` | A thousand ticks | 1000 days marked |
 | `marks10000` | Ten thousand ticks | 10000 days marked |
@@ -185,22 +182,21 @@ twenty-two in the Arena. A public build ships these and nothing else.
 | `weeks100` | A hundred weeks | A hundred fixtures played |
 | `beatWorst` | Beat your worst | Out-scored Your Worst Self |
 | `beatLastMonth` | Beat last month | Out-scored Last Month You |
-| `beatNemesis` | Beat the Nemesis | Out-scored your best week ever. *exists* |
+| `beatNemesis` | Beat the Nemesis | Out-scored your best week ever |
 | `divProspect` | Prospect | Reached the Prospect division |
 | `divContender` | Contender | Reached Contender |
-| `divMenace` | Menace | Reached Menace. *exists* |
-| `divLocked` | Locked In | Reached Locked In. *exists* |
-| `divTopG` | Top G | Reached the top. *exists* |
-| `topgHeld` | Top G, held | Finished a month at Top G and stayed. *exists* |
-| `promoted2` | Two rungs, two months | Promoted in consecutive months |
+| `divMenace` | Menace | Reached Menace |
+| `divMentzer` | Mentzer | Reached Mentzer |
+| `divLocked` | Locked In | Reached Locked In |
+| `divTopG` | Top G | Reached the top |
+| `topgHeld` | Top G, held | Finished a month at Top G and stayed |
+| `promoted2` | Back to back | Promoted in consecutive months |
 | `noDrop6` | Six months, no step back | Six months without relegation |
 | `arcQualified` | Out of the group | Qualified from a group stage |
 | `arcFinal` | Reached a final | Played an Arc final |
-| `arcWin` | An Arc | Won a cup. *exists* |
-| `arcThree` | Three Arcs | Three cups. *exists* |
-| `arcYear` | The clean sweep | All four cups of one year. *exists* |
-
-That is 40 public feats, of which 12 already work.
+| `arcWin` | An Arc | Won a cup |
+| `arcThree` | Three Arcs | Three cups |
+| `arcYear` | The clean sweep | All three cups of one year |
 
 ---
 
@@ -218,6 +214,8 @@ way the crest sits on the Arena. Abstract, not literal.
 512 x 512, and they can be softer and more atmospheric than the badges, because
 they sit behind text rather than beside it.
 
+---
+
 ## 5. The app mark
 
 Missing, and the one thing on this page that blocks a store listing. The app
@@ -228,7 +226,7 @@ transparency and no rounded corners for the two stores.
 
 ---
 
-## 5. Share banners
+## 6. Share banners
 
 The background of the week card, the picture you send someone. Optional: with no
 file the card draws its own gradient, glow and grain, which already works. A
@@ -243,13 +241,14 @@ you think.
 | `share-banner.webp` | any week, unless a division file exists |
 | `share-bottom.webp` … `share-topg.webp` | that division only, one per rung |
 
-Eight files at most, and one is enough to start. The division set is the version
+Ten files at most, and one is enough to start. The division set is the version
 worth having: the card looks different at Top G to how it looks at NPC, which is
 the whole point of a ladder.
 
-**Still outstanding: `share-full` and `share-mentzer`.** Every other division
-has its banner. The card falls back to its own drawn background for these two,
-so nothing is broken until they arrive.
+**Still outstanding: `share-mentzer`, `share-menace`, `share-locked`,
+`share-topg`, `share-full` and the `share-banner` fallback.** Five divisions
+have their banner. The card draws its own background for the rest, so nothing
+is broken until they arrive.
 
 ### The prompt
 

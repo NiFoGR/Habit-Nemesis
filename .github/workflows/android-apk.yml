@@ -14,7 +14,25 @@ permissions:
   contents: write
 
 jobs:
+  # The calendar maths and the stylesheet's own rules. Cheap, and it runs first
+  # so a failing check does not cost a full Gradle build.
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install
+        run: npm ci
+
+      - name: Run the checks
+        run: npm run check
+
   apk:
+    needs: check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

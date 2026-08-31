@@ -16,15 +16,6 @@ const QUALITY = 0.72;
 
 export const face = () => store.get().arena.face;
 
-/** The week the face was taken on, or ''. */
-export const faceWeek = () => face()?.week || '';
-
-export function clearFace() {
-  store.update((st) => {
-    st.arena.face = null;
-  });
-}
-
 /* ---------------- capture ---------------- */
 
 /** Centre-crops to a square and downscales. A phone photo is 4MB and 3000px;

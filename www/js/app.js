@@ -24,9 +24,6 @@ import * as native from './native.js';
 
 const app = document.getElementById('app');
 
-/** The screen the router has to stop before navigating. */
-let activeSession = null;
-
 /* ---------------- router ---------------- */
 
 const ROUTES = {
@@ -63,11 +60,6 @@ const NAV = {
 let lastHash = '';
 
 function route() {
-  if (activeSession) {
-    activeSession.stop();
-    activeSession = null;
-    document.body.classList.remove('in-session');
-  }
   // Both consume their payload on the way out.
   if (lastHash.startsWith('#/arena/result') && !location.hash.startsWith('#/arena/result')) leaveResult();
   if (lastHash.startsWith('#/arena/moment') && !location.hash.startsWith('#/arena/moment')) leaveMoment();

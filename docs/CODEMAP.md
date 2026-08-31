@@ -27,16 +27,16 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/app.js` | 184 | Route table, shell state, boot. Nothing renders here. |
+| `js/app.js` | 177 | Route table, shell state, boot. Nothing renders here. |
 | `js/back.js` | 135 | What Back means: the corner arrow, the hardware button, history. |
-| `js/icons.js` | 102 | The inline SVG icon set, and the placeholder app mark. |
+| `js/icons.js` | 69 | The inline SVG icon set, and the placeholder app mark. |
 | `js/lock.js` | 123 | The optional PIN gate. Owns whether the app is unlocked. |
-| `js/intro.js` | 277 | The introduction, shown once on a new install. |
+| `js/intro.js` | 273 | The introduction, shown once on a new install. |
 | `js/native.js` | 86 | Capacitor bridge for real Android alarms. |
 | `js/settings.js` | 273 | App-wide settings: the grid, marking, feedback, privacy, data, reset. |
 | `js/tabs.js` | 59 | The bottom bar: Cabinet, Grid, Arena. Drawn once, never rebuilt. |
 | `js/store.js` | 457 | localStorage persistence and the input sanitiser. |
-| `js/ui.js` | 381 | Shared helpers: formatting, haptics, SVG charts, the sheet. |
+| `js/ui.js` | 354 | Shared helpers: formatting, haptics, SVG charts, the sheet. |
 | `js/artwork.js` | 25 | Where a crest or cup file lives, and what to draw when it is missing. |
 
 **The PIN is a real lock, not a door.** `lock.js` derives an AES-GCM key from
@@ -48,10 +48,10 @@ sets it says so before you commit.
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/habits/program.js` | 594 | The record, the frequency model, the score, the streaks, the charts. |
-| `js/habits/home.js` | 711 | **The home screen.** The grid, marking, reordering, groups, the archive, the install prompt. |
+| `js/habits/program.js` | 600 | The record, the frequency model, the score, the streaks, the charts. |
+| `js/habits/home.js` | 706 | **The home screen.** The grid, marking, reordering, groups, the archive, the install prompt. |
 | `js/habits/edit.js` | 339 | Creating and editing: the type, colour, frequency and reminder pickers. |
-| `js/habits/tracking.js` | 280 | One habit in full, and the calendar you can write to. |
+| `js/habits/tracking.js` | 279 | One habit in full, and the calendar you can write to. |
 
 Two things are worth knowing before reading the code. **Streaks and scores are
 computed on every read rather than stored**, because the past is editable from
@@ -64,17 +64,22 @@ frequency model.
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/arena/program.js` | 1089 | Weeks, divisions, opponents, arcs, and the only part of the app that writes down what it could recompute. |
-| `js/arena/home.js` | 453 | The Arena in one scrolling screen, and every feat on another. |
-| `js/arena/year.js` | 274 | The Year: twelve months, four arcs, the rows that carried it. |
+| `js/arena/program.js` | 1137 | Weeks, divisions, opponents, arcs, and the only part of the app that writes down what it could recompute. |
+| `js/arena/home.js` | 48 | The Arena screen, assembled. Every block below it, in the order the questions get asked. |
+| `js/arena/standing.js` | 109 | Where you stand: the crest, the division by name, the ladder. |
+| `js/arena/fixture.js` | 106 | This week's match on one track, and the form strip. |
+| `js/arena/arc.js` | 114 | The Arc, in whichever of its five states it is in. |
+| `js/arena/week-sheet.js` | 88 | One week, opened. Reached from every screen that names a week. |
+| `js/arena/year.js` | 274 | The Year: twelve months, the cups, the rows that carried it. |
 | `js/arena/result.js` | 252 | Telling you what happened: the full screen, and the one-line feat pop. |
 | `js/arena/review.js` | 262 | The week in review: what slipped, what held. |
-| `js/arena/cabinet.js` | 144 | The Cabinet: cups, feats, years, and the lines you left. |
+| `js/arena/cabinet.js` | 145 | The Cabinet: cups, feats, years, and the lines you left. |
 | `js/arena/feats.js` | 404 | The predicates over the record. The one catalogue. |
+| `js/arena/feats-screen.js` | 75 | Every feat on a screen, and the sheet one opens into. |
 | `js/arena/share.js` | 390 | The week as a picture, drawn on a canvas. |
 | `js/arena/crest.js` | 41 | The division crests: one file of artwork per rung, in `www/img/`. |
 | `js/arena/cup.js` | 23 | The three seasonal cups, same idea. |
-| `js/arena/face.js` | 109 | Your Nemesis, with the face you gave it. |
+| `js/arena/face.js` | 100 | Your Nemesis, with the face you gave it. |
 | `js/arena/moment.js` | 150 | The Arc's three ceremonies: it opens, you qualify, you win. |
 | `js/arena/rank.js` | 109 | The month settling: promotion, relegation, placement. |
 | `js/arena/divisions.js` | 47 | Every rung and what it costs. |
@@ -89,10 +94,11 @@ Four things to know. **`program.js` stores what it could derive**, alone in
 this app, because a closed week's result is a historical fact rather than a
 view: recomputing it would let a frequency edited this morning rewrite a match
 won in March. **Nothing in `program.js` imports `feats.js`**, only the other
-way, so the cycle cannot form; the callers invoke both. **The roster locks on
-Monday**, which is the rule that took the most argument and is the reason
-adding a habit on Wednesday cannot lose you a match you had already won. And
-**a cup has an off-season**: the four arcs used to tile the year end to end,
+way, so the cycle cannot form; the callers invoke both. **A row owes only the days it
+was on the grid for**, which is the rule that took the most argument: adding a
+habit on Wednesday cannot lose you Monday, and archiving on Wednesday cannot
+erase it. And
+**a cup has an off-season**: the arcs used to tile the year end to end,
 which meant you were always in one and so a cup was never something you
 *entered*. Two weeks of nothing at the end of each quarter is what buys the
 countdown its meaning.

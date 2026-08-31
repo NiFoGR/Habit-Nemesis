@@ -23,7 +23,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The calendar maths and the stylesheet's own rules. A broken build must not
+  # reach the phones this deploys to.
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install
+        run: npm ci
+
+      - name: Run the checks
+        run: npm run check
+
   deploy:
+    needs: check
     runs-on: ubuntu-latest
     environment:
       name: github-pages

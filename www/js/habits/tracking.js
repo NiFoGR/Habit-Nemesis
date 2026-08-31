@@ -54,7 +54,6 @@ function periodSelect(id, value, options) {
 
 /* ---------------- the screen ---------------- */
 
-/** Habits you made only. The five have richer screens inside their sections. */
 export function renderHabitDetail(mount, id) {
   const habit = habits.byId(id);
   if (!habit) {
@@ -65,7 +64,7 @@ export function renderHabitDetail(mount, id) {
           <h1>Not found</h1><span class="icon-btn ghost"></span>
         </header>
         <div class="empty-state"><h2>That habit is gone</h2>
-          <p class="muted">It was deleted. The five the app asks of you keep their numbers in their own sections.</p>
+          <p class="muted">It was deleted, or the link is older than the app's data.</p>
           <a class="btn linkbtn" href="#/habits">Back to the grid</a></div>
       </div>`;
     return;

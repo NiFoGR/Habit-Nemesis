@@ -96,8 +96,8 @@ they actually played.
 
 Nine divisions, ten percent apart, settled monthly:
 
-  Bottom G 20   NPC 30   Mentzer 40   Prospect 50   Contender 60
-  Menace 70   Locked In 80   Top G 90   Full 100
+  Bottom G 20   NPC 30   Prospect 40   Contender 50   Menace 60
+  Mentzer 70   Locked In 80   Top G 90   Full 100
 
 A month is the mean of its weeks; clear the next bar and you go up one rung,
 fall below your own and you go down one. One rung a month, whatever the score,
@@ -119,18 +119,19 @@ countdown its meaning. A cup you were not there for is not yours either: the
 group table needs weeks you actually played and a field of past selves to
 beat, or it says so instead of handing you third place in a field of one.
 
-THE ROSTER LOCKS ON MONDAY. A habit added on Wednesday goes on the grid at
-once and starts counting next week, because otherwise adding one mid-week
-changes the denominator of a match already in progress and you lose a fixture
-for the crime of getting more ambitious. Archiving works the same way in
-reverse, so you cannot dump the row you are failing.
+A ROW OWES THE DAYS IT WAS THERE FOR. A habit added on Wednesday is on this
+week's fixture and owes Wednesday to Sunday, not Monday to Sunday: it cannot
+lose you the two days before it existed. Archiving is the same rule in reverse,
+so you cannot dump the row you are failing. The earlier version cut mid-week
+arrivals outright, which left a new install with nothing to score for its whole
+first week.
 
 FEATS, NOT ACHIEVEMENTS. Predicates over the record, held to one test: could
 you say it out loud to another person and have it mean something? "A hundred
 days unbroken" passes. "Opened the app seven days running" does not.
 
 THE YEAR - twelve months on a fixed scale, the division you finished each in,
-the four Arcs, your best and worst week, and the rows that actually carried
+the three Arcs, your best and worst week, and the rows that actually carried
 the year.
 All of it, including the arguments that were lost: docs/ARENA.md
 

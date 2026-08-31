@@ -26,9 +26,6 @@
   --brand: linear-gradient(120deg, #22d3c5, #a78bfa);
   /* Ink on an accent fill. Never used on the ground. */
   --on-accent: #04121a;
-  /* Absolutes, not palette: absence and presence. A photo sits on black. */
-  --black: #000;
-  --white: #fff;
 
   /* ---- type ----
      Ten sizes, and every size in the app is one of them. A raw rem in a
@@ -50,8 +47,6 @@
   --w-medium: 600;
   --w-bold: 700;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  /* The only second face, and only on scripture and prayer. */
-  --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
 
   /* ---- shape ---- */
   --radius: 12px;
@@ -93,8 +88,6 @@ html, body {
 /* Background on body alone. With one on html too, the canvas painted the
    default and any short screen showed a lighter band at the bottom. */
 body { background: var(--bg); }
-
-body.in-session { overflow: hidden; }
 
 h1 { font-size: var(--f-sub); margin: 0; letter-spacing: -0.02em; }
 h2 { font-size: var(--f-head); margin: 0 0 8px; letter-spacing: -0.01em; }
@@ -161,23 +154,7 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
   margin-bottom: 14px;
 }
 .card.danger { border-color: rgba(248, 113, 113, 0.32); }
-.tag { float: right; font-size: var(--f-fine); color: var(--muted); font-weight: 400; }
-.cue { font-size: var(--f-small); color: var(--muted); margin-bottom: 8px; }
-.cue b { color: var(--text); }
 .warn-inline { color: var(--warn); font-size: var(--f-small); }
-
-/* ---------- today ---------- */
-
-.today {
-  display: flex; align-items: center; gap: 14px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 16px; margin-bottom: 14px;
-}
-.today.release { border-color: var(--calm); }
-.today.test { border-color: var(--violet); }
-.today h2 { font-size: var(--f-title); margin-bottom: 6px; }
 
 /* ---------- buttons ---------- */
 
@@ -220,10 +197,6 @@ a.btn { text-decoration: none; }
 }
 .stat b { display: block; font-size: var(--f-title); letter-spacing: -0.02em; }
 .stat span { display: block; color: var(--muted); font-size: var(--f-fine); }
-.stat .d { display: block; font-style: normal; font-size: var(--f-fine); margin-top: 4px; }
-.stat .d.up { color: var(--good); }
-.stat .d.down { color: var(--warn); }
-.stat .d.flat { color: var(--muted); }
 
 .kv { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: var(--f-body); }
 .kv:last-child { border-bottom: 0; }
@@ -231,30 +204,11 @@ a.btn { text-decoration: none; }
 .kv b { text-align: right; font-weight: 600; }
 .kv b em { font-style: normal; color: var(--accent); font-weight: 500; font-size: var(--f-small); }
 
-/* ---------- ring widget ---------- */
-
-.ringwrap { position: relative; width: var(--size); height: var(--size); flex: 0 0 var(--size); }
-.ringwrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-.rw-track { fill: none; stroke: var(--line); stroke-width: 12; }
-.rw-fill { fill: none; stroke-width: 12; stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
-.ringwrap-core {
-  position: absolute; inset: 0; display: grid; place-content: center; text-align: center;
-}
-.ringwrap-core b { display: block; font-size: calc(var(--size) * 0.2); line-height: 1; letter-spacing: -0.02em; }
-.ringwrap-core span { display: block; color: var(--muted); font-size: calc(var(--size) * 0.085); margin-top: 4px; }
-
-.stage { position: relative; flex: 1; display: grid; place-items: center; min-height: 0; }
-.ring { width: min(74vw, 320px); height: min(74vw, 320px); transform: rotate(-90deg); }
-@keyframes pulse { 50% { opacity: 0.35; } }
-.check { display: flex; align-items: center; gap: 10px; padding: 12px 0; font-size: var(--f-body); }
-.check input { width: 20px; height: 20px; accent-color: var(--warn); }
-
 .chart { width: 100%; height: 110px; overflow: visible; }
 .chart .ct { fill: var(--muted); font-size: var(--f-micro); }
 .chart-empty { color: var(--muted); font-size: var(--f-small); padding: 18px 0; text-align: center; }
 .hm-key i { width: 13px; height: 13px; border-radius: 3px; display: block; }
 .hm-key { display: flex; align-items: center; gap: 5px; margin-top: 8px; color: var(--muted); font-size: var(--f-fine); }
-.hm-key i.none { background: var(--surface-2); } .hm-key i.rest { background: var(--calm); opacity: 0.75; }
 
 /* ---------- settings ---------- */
 
@@ -278,19 +232,9 @@ a.btn { text-decoration: none; }
   opacity: 0; pointer-events: none; transition: all 0.24s ease; z-index: 50;
 }
 #toast.show { opacity: 1; transform: translate(-50%, 0); }
-.tile {
-  display: grid; justify-items: center; gap: 2px; text-decoration: none; color: var(--text);
-  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 6px;
-}
-.tile b { font-size: var(--f-title); line-height: 1; }
-.tile span { font-size: var(--f-small); font-weight: 600; }
-.tile i { font-style: normal; font-size: var(--f-micro); color: var(--muted); }
 input[type="range"] {
   width: 100%; margin: 0 0 4px; accent-color: var(--accent); height: 28px; background: transparent;
 }
-.band { font-size: var(--f-fine); color: var(--muted); margin-top: 2px; }
-.band b { color: var(--accent); }
-.band.danger b { color: var(--danger); }
 
 .field { margin-bottom: 16px; }
 .field label { display: block; font-size: var(--f-small); margin-bottom: 6px; }
@@ -309,20 +253,11 @@ input[type="range"] {
 .small-btn { flex: 0 0 auto; width: auto; padding: 13px 18px; }
 .good-text { color: var(--good); }
 
-.chart.tall { height: 150px; }
-.chart .grid { stroke: var(--line); stroke-width: 0.5; }
-
 .barchart { display: flex; align-items: flex-end; gap: 3px; height: calc(var(--h) + 18px); }
 .bar { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; min-width: 6px; }
 .bar-stack { width: 100%; display: flex; flex-direction: column-reverse; border-radius: 4px 4px 0 0; overflow: hidden; background: var(--surface-2); }
 .bar-stack i { display: block; width: 100%; background: var(--bar, var(--accent)); }
 .bar span { font-size: var(--f-micro); color: var(--muted); margin-top: 4px; white-space: nowrap; }
-.pair { flex: 1; display: flex; align-items: flex-end; gap: 2px; height: 100%; }
-.pair i { flex: 1; border-radius: 3px 3px 0 0; }
-.pair .before { background: var(--calm); }
-.pair .after { background: var(--good); }
-@keyframes shake { 25% { transform: translateX(-7px); } 75% { transform: translateX(7px); } }
-.stat.wide { grid-column: 1 / -1; }
 
 .empty-state { text-align: center; padding: 30px 10px; }
 .empty-state h2 { margin-bottom: 6px; }
@@ -363,16 +298,11 @@ input[type="range"] {
 
 @media (min-width: 760px) {
   :root { --pad: 24px; }
-  .screen { max-width: 880px; }
-  .ring { width: min(52vw, 340px); height: min(52vw, 340px); }}
+  .screen { max-width: 880px; }}
 
 @media (min-width: 1040px) {
   .screen { max-width: 1080px; }
   .stat-grid, .stat-grid.four { grid-template-columns: repeat(4, 1fr); }}
-
-/* Landscape phones: the session ring must not push the controls off-screen. */
-@media (orientation: landscape) and (max-height: 520px) {
-  .ring { width: min(34vh, 220px); height: min(34vh, 220px); }}
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }}
@@ -458,8 +388,7 @@ input[type="range"] {
 .head-actions { display: flex; gap: 8px; flex: 0 0 auto; }
 .screen.home .btn.ghost.wide { margin-top: 18px; }
 
-/* The line under the name. On one of the five it is that section saying what
-   is still outstanding. */
+/* The name, and the detail line under it. */
 .hg-label { display: grid; gap: 1px; min-width: 0; }
 .hg-label b,
 .hg-label i {
@@ -468,9 +397,6 @@ input[type="range"] {
 }
 .hg-label b { font-weight: var(--w-medium); font-size: var(--f-body); }
 .hg-label i { font-style: normal; font-size: var(--f-fine); color: var(--muted); }
-
-/* Today on one of the five is that section's start button, so it is drawn as
-   something to press, not a day you failed to tick. */
 
 /* ---------- the grid's one control ----------
    It sits in the day header's empty name slot, so it costs no band of its own.
@@ -975,19 +901,10 @@ input[type="range"] {
 }
 .ar-bar-ends { display: flex; justify-content: space-between; gap: 10px; font-size: var(--f-micro); color: var(--faint); }
 
-/* Before the first week closes there is no bar to draw, so the days left are
-   the number the screen is about. */
-.ar-count { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 18px 0 0; }
-.ar-count b { font-size: var(--f-hero); font-weight: var(--w-bold); letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
-.ar-count i { font-style: normal; font-size: var(--f-small); color: var(--muted); }
-.ar-ladder { margin-bottom: 6px; }
 /* The one line on the hero allowed a colour: what the rest of the month has
    to average. The bar above already says the same thing in its fill, so the
    month line under it stays uncoloured. */
 .ar-need { margin: 10px 0 0; font-size: var(--f-small); color: var(--muted); }
-
-.ar-monthline { margin: 4px 0 0; font-size: var(--f-fine); color: var(--muted); }
-.ar-monthline b { color: var(--text); font-variant-numeric: tabular-nums; }
 
 /* ---------- this week, as a race ----------
    Two lanes on one scale. Two numbers in two boxes made the reader subtract;
@@ -1024,7 +941,7 @@ button.ar-lane:active { opacity: 0.7; }
   display: flex; align-items: center; gap: 7px;
   font-size: var(--f-fine); color: var(--muted); min-width: 0;
 }
-.ar-lane-who .avatar { flex: 0 0 auto; }
+
 .ar-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); flex: 0 0 auto; }
 .ar-lane.me .ar-dot { background: var(--accent); }
 
@@ -1307,12 +1224,6 @@ button.ar-lane:active { opacity: 0.7; }
 .yr-arc.won { border-color: rgba(251, 191, 36, 0.42); color: var(--warn); }
 .yr-arc.final { border-color: rgba(251, 191, 36, 0.2); }
 
-/* ---------- narrow phones ----------
-   At 340px the two scores stop fitting beside a long opponent name. */
-@media (max-width: 359px) {
-  .ar-side b { font-size: var(--f-title); }
-  .ar-vs { flex: 0 0 20px; }}
-
 /* ==========================================================================
    The bottom bar
    ==========================================================================
@@ -1322,7 +1233,7 @@ button.ar-lane:active { opacity: 0.7; }
    centred whatever the labels say. */
 
 /* `hidden` only maps to display: none through the UA stylesheet, so any author
-   display beats it. Without this the bar sat on the reader and the players. */
+   display beats it. */
 .tabbar[hidden] { display: none; }
 
 .tabbar {
@@ -1625,8 +1536,8 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
   .hg-cell.intro-tap { animation: none; }}
 
 /* ---------- the quiet row at the foot of Settings ----------
-   A screen you can replay, and a door. The smallest text on the page: the door
-   says what it is, it just does not ask to be found. */
+   The smallest text on the page: it says what it is, it just does not ask to
+   be found. */
 .set-tail {
   display: flex; justify-content: center; gap: 22px;
   margin-top: 22px; padding-top: 4px;
@@ -1716,9 +1627,6 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .nem-gap { font-size: var(--f-small); font-weight: var(--w-medium); margin: 10px 0 0; }
 .nem-gap.ahead { color: var(--good); }
 .nem-gap.behind { color: var(--danger); }
-
-/* On the fixture card he sits above his score, so the pair reads as one side. */
-.ar-side.them .nem-face { margin: 0 auto 6px; }
 
 /* ---------- the month settles ----------
    The whole ladder, every rung named with what it costs, and the badge moving

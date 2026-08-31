@@ -93,8 +93,8 @@ there for the days that genuinely did not count.
 ## Streaks
 
 Consecutive satisfied-or-skipped days, ending today, or yesterday if today has
-not happened yet — the same grace `store.streak()` gives every other section, so
-an evening habit does not read as broken at nine in the morning.
+not happened yet, so an evening habit does not read as broken at nine in the
+morning.
 
 A streak is measured in **calendar days, skips included**: five days off with a
 good reason, between ten kept days on either side, is a streak of twenty-five
@@ -115,13 +115,12 @@ data whose *shape* the user defines, so three rules differ from the rest of the
 file:
 
 - **A bad id drops the habit** instead of being replaced with a fresh one.
-  Everywhere else a bad id is regenerated, which is right for a session because
-  a session carries its own data. A habit does not: its record lives in
-  `entries` under that id, so a new one would silently orphan every day ever
+  Everywhere else a bad id is regenerated. A habit cannot be: its record lives
+  in `entries` under that id, so a new one would silently orphan every day ever
   marked.
 - **A bad day key drops the entry** instead of falling back to today, which is
-  what `dateKey()` does. Defaulting is right for a session that has to land
-  somewhere; here it would pile a whole file of junk onto this morning.
+  what `dayKey()` returns. Defaulting would pile a whole file of junk onto this
+  morning.
 - **Entries whose habit no longer exists are dropped**, so deleting a habit
   cannot leave a record behind for a later habit to inherit by id collision.
 

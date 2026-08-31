@@ -125,45 +125,43 @@ Together they are the honest reading of *was this a week*, and a week you
 skipped your way through fails the second floor however many rows you keep —
 which is the case the rule exists for.
 
-## The roster, and why it locks on Monday
+## The roster, and the days a row owes
 
-The roster is the five features the app asks of you — if the grid is set to
-show them — plus **every habit that existed before this Monday**.
+The roster is **every row that was on the grid at any point during the week**,
+and each one owes **only the days it was there for**.
 
-The five follow the display setting rather than always counting. There was a
-version that scored them regardless, on the reasoning that a display toggle
-must not move your division. It is the wrong trade: somebody who has turned
-them off has said they are not what they are keeping, and losing a week to five
-rows you cannot see is a bug however defensible the rule behind it.
+A habit added on Wednesday is on this week's fixture and owes Wednesday to
+Sunday. A habit archived on Wednesday owes Monday to Wednesday.
 
-A habit added on Wednesday appears on your grid at once and starts counting
-next week.
+That is one rule doing two jobs, and it took the most argument of anything
+here, so the reasoning is worth keeping.
 
-This is the rule that took the most argument, so the reasoning is worth
-keeping. Ten daily habits is seventy cells a week; do 56 and you are on 80%.
-Add an eleventh on Wednesday and, counted immediately, it puts five more cells
-in the denominator: nail all five and you are on 81%, miss them and you are on
-75%.
-
-Two things are wrong with that, and only the first is obvious.
+The obvious rule, counting a new habit for the whole week, is wrong. Ten daily
+habits is seventy cells; do 56 and you are on 80%. Add an eleventh on Wednesday
+and, counted from Monday, it puts seven more cells in the denominator including
+two you could never have marked. Nail every day you actually had it and you
+still go down.
 
 **It punishes ambition at the exact moment you have it.** The day you add a
-habit is the day you are most motivated, and docking your score for something
-you have not built yet teaches you not to add habits. It is harshest on the
-hardest ones, which are the ones most worth adding.
+habit is the day you are most motivated, and docking your score for days before
+it existed teaches you not to add habits. It is harshest on the hardest ones,
+which are the ones most worth adding.
 
 **It rigs a match already in progress.** Your opponent is a past week whose
-score was fixed under its own roster. Add a habit on Wednesday and you are
-judged on eleven rows while they were judged on ten — so you lose a match you
-would have won *because you tried to improve*. Once a result feels arbitrary
-the division is worthless.
+score was fixed under its own roster. Being judged for days you had no row on
+loses you a match you would have won *because you tried to improve*. Once a
+result feels arbitrary the division is worthless.
 
-A **season** would have been too long: thirty days of a habit sitting on the
-grid not counting is its own kind of demotivating. A week is the smallest
-window that keeps a match fair, and six days is a bearable wait.
+The rule that shipped first went the other way and cut mid-week arrivals from
+the week entirely. That is fair, and it has one fatal consequence: on a new
+install every habit is created inside the current week, so the roster is empty,
+the score is zero out of zero, and the Arena has nothing to say for seven days.
+The first week of a habit tracker is the only week most people give it.
 
-Archiving follows the same rule in reverse — a habit archived on Saturday still
-counts for that week, so you cannot dump the one you are failing.
+Owing from the creation day keeps both properties. Days before the row existed
+were never due, so the denominator of a match in progress cannot grow behind
+you; days after it did are yours, so a row cannot be dumped to escape them. And
+a brand new install is scoreable on day one.
 
 ## Opponents
 
@@ -321,9 +319,8 @@ Two things are not:
 - **Your division, and the arc bracket.** These are standings, which is a
   historical fact rather than a view.
 
-This is a deliberate departure from *nothing derived is stored*, and it is the
-same distinction the rest of the app already makes: a session that has ended is
-written once, and only the live one is recomputed.
+This is a deliberate departure from *nothing derived is stored*. A week that
+has ended is a fact and is written once; only the live one is recomputed.
 
 ## Backfill
 

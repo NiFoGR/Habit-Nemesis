@@ -149,7 +149,6 @@ const habit = (id, name, extra) => ({
   archived: false, archivedAt: 0, createdAt: at('2026-01-01'), order: 0, ...extra,
 });
 st.update((s) => {
-  s.habits.settings.showLinked = false;
   s.habits.entries = {};
   s.habits.items = [
     habit('h_before', 'Before', { createdAt: at('2026-05-01') }),
@@ -251,7 +250,6 @@ group('the review');
   const run = (from, len) => Object.fromEntries(Array.from({ length: len }, (_, i) => [back(from - i), 1]));
 
   st.update((s) => {
-    s.habits.settings.showLinked = false;
     s.habits.items = [habit('h_a', 'A'), habit('h_b', 'B')];
     const d = a.weekDays('2026-W20');
     s.habits.entries = {
@@ -296,7 +294,6 @@ group('the feats that count runs');
   const run = (from, len) => Object.fromEntries(Array.from({ length: len }, (_, i) => [back(from - i), 1]));
 
   const withEntries = (entries, items) => st.update((s) => {
-    s.habits.settings.showLinked = false;
     s.habits.items = items || [habit('h_r', 'Run')];
     s.habits.entries = entries;
   });

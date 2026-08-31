@@ -8,7 +8,7 @@ service worker's precache list, and the manifest the app reads is regenerated.
   rank-contender  rank-menace  rank-locked  rank-topg
   cup-winter   cup-spring   cup-autumn   cup-blank
   share-banner  share-<division>   the week card's background, 1080x1350
-  mark-habits  mark-arena   mark-kegels  mark-pe  mark-bible  mark-breathe
+  mark-habits  mark-arena
   feat-<id>    one per feat, ids are in www/js/arena/feats.js
 
 WebP or PNG, transparent, square. WebP is passed through untouched and is about
