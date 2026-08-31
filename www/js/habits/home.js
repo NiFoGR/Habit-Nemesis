@@ -6,142 +6,22 @@
 //   The cell does it.     Tapping today starts the thing, or marks the day.
 //
 // Only today acts. A past cell on one of the five is that section's record.
+// The markup is grid.js's, the tap wiring marking.js's; this file is the
+// screens and what arranges them.
 
 import * as store from '../store.js';
 import * as habits from './program.js';
-import { escapeHtml, toast, openSheet, haptic, chime, celebrate, WEEKDAYS } from '../ui.js';
+import { escapeHtml, toast, openSheet, haptic, chime } from '../ui.js';
 import { icon } from '../icons.js';
 import { openTypePicker } from './edit.js';
 import * as arena from '../arena/program.js';
-import { announce } from '../arena/result.js';
-
-const LONG_PRESS_MS = 420;
-
-const rowColour = (habit) => (habit.colour ? habits.hexOf(habit.colour) : 'var(--accent)');
-
-/** The line under the name: what a measurable habit counts. */
-function detailOf(habit) {
-  if (habit.kind !== 'number') return '';
-  const unit = habit.unit || '';
-  if (!habit.target) return unit;
-  const aim = `${habit.targetType === 'atmost' ? 'under' : 'at least'} ${fmtNumber(habit.target)}`;
-  return unit ? `${aim} ${unit}` : aim;
-}
-
-/** The small ring: the score in the habit's own colour. ringSvg is the 168px
- *  one and does not survive being shrunk to 26px. */
-function miniRing(frac, colour) {
-  const r = 9;
-  const c = 2 * Math.PI * r;
-  const off = c * (1 - Math.max(0, Math.min(frac, 1)));
-  return `<svg class="hg-ring" viewBox="0 0 24 24" aria-hidden="true">
-    <circle cx="12" cy="12" r="${r}" fill="none" stroke="var(--line)" stroke-width="3"/>
-    <circle class="hg-ring-fill" cx="12" cy="12" r="${r}" fill="none" stroke="${colour}" stroke-width="3" stroke-linecap="round"
-      stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 12 12)"/>
-  </svg>`;
-}
-
-/** One cell. Four states for a yes/no habit, the measurement for a number. */
-function cellHtml(habit, key, sum, s) {
-  const d = sum.index.get(key);
-  const raw = d?.raw;
-  const colour = rowColour(habit);
-  const future = key > habits.today();
-  if (future) return `<button class="hg-cell future" data-day="${key}" disabled aria-hidden="true"></button>`;
-
-  const label = `${habit.name}, ${key}`;
-  if (raw === habits.SKIP) {
-    return `<button class="hg-cell skip" data-day="${key}" aria-label="${escapeHtml(label)}: skipped">${icon('skip', 15)}</button>`;
-  }
-  if (habit.kind === 'number') {
-    const has = typeof raw === 'number';
-    const met = !!d?.hit;
-    // No unit here. It is said once, under the name.
-    return `<button class="hg-cell num ${met ? 'on' : has ? 'part' : ''}" data-day="${key}"
-      style="${met ? `color:${colour}` : ''}" aria-label="${escapeHtml(label)}: ${has ? fmtNumber(raw) : 'nothing'} ${escapeHtml(habit.unit || '')}">
-      ${has ? escapeHtml(fmtNumber(raw)) : '–'}</button>`;
-  }
-  if (raw === habits.YES) {
-    return `<button class="hg-cell on" data-day="${key}" style="color:${colour}" aria-label="${escapeHtml(label)}: done">${icon('check', 18)}</button>`;
-  }
-  if (raw === habits.NO) {
-    return `<button class="hg-cell no" data-day="${key}" aria-label="${escapeHtml(label)}: missed">${icon('close', 16)}</button>`;
-  }
-  // Carried, not done: a satisfied day inside a window is not a day you did it.
-  const carried = d?.satisfied ? ' carried' : '';
-  return `<button class="hg-cell${carried}" data-day="${key}" aria-label="${escapeHtml(label)}: not recorded">${
-    s.unknownMarks ? '<span class="hg-q">?</span>' : icon('close', 16)
-  }</button>`;
-}
-
-/** A cell is about 45px wide, so "23.18" reads as noise. One decimal under ten,
- *  none above it, and k past a thousand. */
-function fmtNumber(v) {
-  if (typeof v !== 'number') return '–';
-  if (Number.isInteger(v)) return v >= 10000 ? `${Math.round(v / 1000)}k` : String(v);
-  if (Math.abs(v) >= 1000) return `${(v / 1000).toFixed(1)}k`;
-  if (Math.abs(v) >= 10) return String(Math.round(v));
-  return String(Math.round(v * 10) / 10);
-}
-
-function headCell(key) {
-  const [y, m, d] = key.split('-').map(Number);
-  const dt = new Date(y, m - 1, d);
-  return `<i class="${key === habits.today() ? 'now' : ''}"><b>${WEEKDAYS[dt.getDay()].toUpperCase()}</b><em>${dt.getDate()}</em></i>`;
-}
-
-function rowHtml(habit, days, s, { reorder = false, groupOptions = () => '' } = {}) {
-  const sum = habits.summary(habit);
-  const colour = rowColour(habit);
-  // The name goes there, never to the same place as the cell beside it.
-  const href = `#/habits/habit?id=${encodeURIComponent(habit.id)}`;
-  return `<div class="hg-row" data-id="${escapeHtml(habit.id)}">
-    ${reorder ? `<button class="hg-drag" aria-label="Reorder ${escapeHtml(habit.name)}">${icon('reorder', 16)}</button>` : ''}
-    <a class="hg-name" href="${href}">
-      ${miniRing(sum.score, colour)}
-      <span class="hg-label">
-        <b style="color:${colour}">${escapeHtml(habit.name)}</b>
-        ${detailOf(habit) ? `<i>${escapeHtml(detailOf(habit))}</i>` : ''}
-      </span>
-    </a>
-    ${reorder
-      ? `<div class="hg-move">
-          <button class="icon-btn small" data-move="up" aria-label="Move up">${icon('arrowUp', 15)}</button>
-          <button class="icon-btn small" data-move="down" aria-label="Move down">${icon('arrowDown', 15)}</button>
-          <select class="hg-group-pick" aria-label="Group">${groupOptions(habit.group)}</select>
-        </div>`
-      : days.map((key) => cellHtml(habit, key, sum, s)).join('')}
-  </div>`;
-}
-
-/* --------------------- the header --------------------- */
-
-function dueHead(due) {
-  if (!due.total) return { text: 'Nothing here yet', frac: 0 };
-  if (due.pending.length) return { text: `${due.pending.length} left today`, frac: due.done / due.total };
-  return { text: 'All done today', frac: 1 };
-}
-
-function headRing(frac) {
-  const f = Math.max(0, Math.min(frac, 1));
-  const r = 20;
-  const c = 2 * Math.PI * r;
-  return `<svg class="gh-ring" width="46" height="46" viewBox="0 0 46 46" aria-hidden="true">
-    <circle cx="23" cy="23" r="${r}" fill="none" stroke="var(--line)" stroke-width="4"/>
-    <circle class="gh-ring-fill" cx="23" cy="23" r="${r}" fill="none"
-      stroke="${f >= 1 ? 'var(--good)' : 'var(--accent)'}" stroke-width="4" stroke-linecap="round"
-      stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - f)).toFixed(1)}"
-      transform="rotate(-90 23 23)"/>
-  </svg>`;
-}
+import { headCell, rowHtml, dueHead, headRing } from './grid.js';
+import { wireCells } from './marking.js';
 
 /* ---------------- the grid ---------------- */
 
 let reorderMode = false;
 
-/** The router calls this, and it always arrives in the normal state: reorder
- *  mode is something you are doing, not a preference. Internal redraws go
- *  through `redraw`. */
 /* ---------------- the first five ---------------- */
 // An empty grid is the worst first screen this app can show, and "New habit" on
 // its own asks someone to invent a system before they have used one. Five to
@@ -184,6 +64,9 @@ function reviewCta() {
   </a>`;
 }
 
+/** The router calls this, and it always arrives in the normal state: reorder
+ *  mode is something you are doing, not a preference. Internal redraws go
+ *  through `redraw`. */
 export function renderHome(mount) {
   reorderMode = false;
   redraw(mount);
@@ -292,189 +175,7 @@ function wireGrid(mount, days) {
     return;
   }
 
-  wireCells(grid, mount, s);
-}
-
-/* ----------------- one cell, changed ----------------- */
-
-function nodeFrom(html) {
-  const t = document.createElement('template');
-  t.innerHTML = html.trim();
-  return t.content.firstElementChild;
-}
-
-const ringLen = (r) => 2 * Math.PI * r;
-
-/** The habit's own ring. */
-function patchRowRing(row, habit) {
-  const fill = row.querySelector('.hg-ring-fill');
-  if (!fill) return;
-  const f = Math.max(0, Math.min(habits.summary(habit).score, 1));
-  fill.setAttribute('stroke-dashoffset', (ringLen(9) * (1 - f)).toFixed(1));
-}
-
-/** Header and group pills: readings of the record the cell just changed, so
- *  they move together. */
-function patchTotals(mount, wasDone) {
-  const due = habits.dueToday();
-  const { text, frac: f } = dueHead(due);
-  const line = mount.querySelector('#dueLine');
-  if (line) line.textContent = text;
-
-  const fill = mount.querySelector('.gh-ring-fill');
-  if (fill) {
-    fill.setAttribute('stroke-dashoffset', (ringLen(20) * (1 - Math.min(f, 1))).toFixed(1));
-    fill.setAttribute('stroke', f >= 1 ? 'var(--good)' : 'var(--accent)');
-  }
-  mount.querySelectorAll('[data-group-score]').forEach((el) => {
-    const score = habits.groupScore(el.dataset.groupScore);
-    el.textContent = score == null ? '' : `${Math.round(score * 100)}%`;
-  });
-
-  // Once a day, on the tap that earns it, never on the way back down.
-  const done = due.total > 0 && due.pending.length === 0;
-  if (done && !wasDone) {
-    haptic('level');
-    chime('complete');
-    const ring = mount.querySelector('.gh-ring');
-    if (ring) celebrate(ring, { count: 20, spread: 74, colour: 'var(--good)' });
-  }
-}
-
-/** Mark a day and show it, without redrawing what did not change. */
-function markCell(mount, habit, key, cell) {
-  const before = habits.dueToday();
-  const wasDone = before.total > 0 && before.pending.length === 0;
-  const wasOn = !!habits.summary(habit).index.get(key)?.hit;
-
-  habits.setValue(habit.id, key, habits.nextValue(habit, key));
-  announce();
-
-  const row = cell.closest('.hg-row');
-  const next = nodeFrom(cellHtml(habit, key, habits.summary(habit), habits.settings()));
-  cell.replaceWith(next);
-  if (row) patchRowRing(row, habit);
-  patchTotals(mount, wasDone);
-
-  // Only for the direction that earns one: celebrating a miss is a lie.
-  const nowOn = !!habits.summary(habit).index.get(key)?.hit;
-  const skipped = !!habits.summary(habit).index.get(key)?.skipped;
-  haptic(nowOn ? 'hit' : 'tick');
-  chime(nowOn ? 'mark' : skipped ? 'skip' : 'unmark');
-  if (nowOn && !wasOn) {
-    next.classList.add('just-on');
-    celebrate(next, { count: 8, spread: 26, colour: rowColour(habit) });
-    next.addEventListener('animationend', () => next.classList.remove('just-on'), { once: true });
-  }
-}
-
-/* ---------------------- marking ---------------------- */
-
-function wireCells(grid, mount, s) {
-  let timer = null;
-  let held = false;
-
-  const act = (cell) => {
-    const row = cell.closest('.hg-row');
-    if (!row) return;
-    const habit = habits.byId(row.dataset.id);
-    if (!habit) return;
-    const key = cell.dataset.day;
-    if (!key || key > habits.today()) return;
-    if (habit.kind === 'number') return openValueSheet(mount, habit, key);
-    markCell(mount, habit, key, cell);
-  };
-
-  grid.addEventListener('click', (e) => {
-    const cell = e.target.closest('.hg-cell');
-    if (!cell) return;
-    // The click after a long press must not cycle a second time.
-    if (held) {
-      held = false;
-      return;
-    }
-    if (!s.shortPress) return;
-    act(cell);
-  });
-
-  if (s.shortPress) return;
-
-  let from = null;
-  grid.addEventListener('pointerdown', (e) => {
-    const cell = e.target.closest('.hg-cell');
-    if (!cell) return;
-    held = false;
-    from = { x: e.clientX, y: e.clientY };
-    timer = setTimeout(() => {
-      held = true;
-      act(cell);
-    }, LONG_PRESS_MS);
-  });
-  const cancel = () => {
-    clearTimeout(timer);
-    from = null;
-  };
-  // A finger that has travelled is swiping or scrolling, not holding.
-  grid.addEventListener('pointermove', (e) => {
-    if (from && Math.hypot(e.clientX - from.x, e.clientY - from.y) > 10) cancel();
-  });
-  grid.addEventListener('pointerup', cancel);
-  grid.addEventListener('pointercancel', cancel);
-  grid.addEventListener('pointerleave', cancel);
-  grid.addEventListener('scroll', cancel, true);
-}
-
-/** Keypad for a measurable habit, plus a button for each of the other states. */
-function openValueSheet(mount, habit, key) {
-  const s = habits.settings();
-  const current = habits.valueOn(habit, key);
-  const sheet = openSheet(`
-    <h2>${escapeHtml(habit.name)}</h2>
-    <p class="muted small">${escapeHtml(habit.question || `How many ${habit.unit || 'this day'}?`)} · ${escapeHtml(key)}</p>
-    <div class="measure-row">
-      <input type="number" inputmode="decimal" step="any" min="0" id="val"
-        value="${typeof current === 'number' && current >= 0 ? current : ''}" placeholder="0">
-      <span>${escapeHtml(habit.unit || '')}</span>
-    </div>
-    ${habit.target ? `<p class="fineprint">Target: ${habit.targetType === 'atmost' ? 'at most' : 'at least'} ${fmtNumber(habit.target)}${habit.unit ? ` ${escapeHtml(habit.unit)}` : ''}.</p>` : ''}
-    <div class="btn-row">
-      <button class="btn" id="clear">Clear</button>
-      ${s.skipDays ? '<button class="btn" id="skip">Skip</button>' : ''}
-      <button class="btn primary" id="save">Save</button>
-    </div>`);
-
-  const input = sheet.el.querySelector('#val');
-  input.focus();
-  const done = (value) => {
-    // Same event as a cell tap, so it takes the same path: swap, nudge, no rebuild.
-    const before = habits.dueToday();
-    const wasDone = before.total > 0 && before.pending.length === 0;
-    const wasOn = !!habits.summary(habit).index.get(key)?.hit;
-    habits.setValue(habit.id, key, value);
-    announce();
-    sheet.close();
-    const cell = mount.querySelector(`.hg-row[data-id="${CSS.escape(habit.id)}"] .hg-cell[data-day="${key}"]`);
-    if (!cell) return redraw(mount);
-    const next = nodeFrom(cellHtml(habit, key, habits.summary(habit), habits.settings()));
-    cell.replaceWith(next);
-    patchRowRing(next.closest('.hg-row'), habit);
-    patchTotals(mount, wasDone);
-    const nowOn = !!habits.summary(habit).index.get(key)?.hit;
-    if (nowOn && !wasOn) {
-      next.classList.add('just-on');
-      celebrate(next, { count: 8, spread: 26, colour: rowColour(habit) });
-      next.addEventListener('animationend', () => next.classList.remove('just-on'), { once: true });
-    }
-  };
-  sheet.el.querySelector('#save').addEventListener('click', () => {
-    const v = Number(input.value);
-    done(input.value === '' || !Number.isFinite(v) ? undefined : Math.max(0, v));
-  });
-  sheet.el.querySelector('#clear').addEventListener('click', () => done(undefined));
-  sheet.el.querySelector('#skip')?.addEventListener('click', () => done(habits.SKIP));
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') sheet.el.querySelector('#save').click();
-  });
+  wireCells(grid, mount, s, redraw);
 }
 
 /* --------------------- reordering --------------------- */

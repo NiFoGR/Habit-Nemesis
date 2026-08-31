@@ -35,9 +35,10 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 | `js/native.js` | 86 | Capacitor bridge for real Android alarms. |
 | `js/settings.js` | 273 | App-wide settings: the grid, marking, feedback, privacy, data, reset. |
 | `js/tabs.js` | 59 | The bottom bar: Cabinet, Grid, Arena. Drawn once, never rebuilt. |
-| `js/store.js` | 457 | localStorage persistence and the input sanitiser. |
+| `js/store.js` | 483 | localStorage persistence and the input sanitiser. |
 | `js/ui.js` | 354 | Shared helpers: formatting, haptics, SVG charts, the sheet. |
 | `js/artwork.js` | 25 | Where a crest or cup file lives, and what to draw when it is missing. |
+| `js/vendor/supabase.js` | | The Supabase client, vendored so `script-src 'self'` holds. |
 
 **The PIN is a real lock, not a door.** `lock.js` derives an AES-GCM key from
 the PIN with PBKDF2 and stores only an encrypted check blob, so a wrong PIN
@@ -48,8 +49,10 @@ sets it says so before you commit.
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/habits/program.js` | 600 | The record, the frequency model, the score, the streaks, the charts. |
-| `js/habits/home.js` | 706 | **The home screen.** The grid, marking, reordering, groups, the archive, the install prompt. |
+| `js/habits/program.js` | 609 | The record, the frequency model, the score, the streaks, the charts. |
+| `js/habits/home.js` | 407 | **The home screen.** The screens and what arranges them: the grid, reordering, groups, the archive, the install prompt. |
+| `js/habits/grid.js` | 142 | The grid's HTML: header, rows, cells, rings. Builds markup, never wires it. |
+| `js/habits/marking.js` | 173 | Marking a day: tap and long-press wiring, the cell swap, the keypad sheet. |
 | `js/habits/edit.js` | 339 | Creating and editing: the type, colour, frequency and reminder pickers. |
 | `js/habits/tracking.js` | 279 | One habit in full, and the calendar you can write to. |
 
@@ -62,9 +65,17 @@ frequency model.
 
 ## The Arena, which is a reading of the grid
 
+The domain is five modules in dependency order, re-exported whole by
+`program.js` so every screen has one import.
+
 | File | Lines | What it is |
 |---|---|---|
-| `js/arena/program.js` | 1137 | Weeks, divisions, opponents, arcs, and the only part of the app that writes down what it could recompute. |
+| `js/arena/ladder.js` | 32 | The nine divisions. Imports nothing, so `store.js` reads it too. |
+| `js/arena/calendar.js` | 204 | ISO weeks, the months they file under, the arcs laid over them. Dates only. |
+| `js/arena/scoring.js` | 162 | The roster, the days each row owed, and what a week is worth. |
+| `js/arena/fixtures.js` | 164 | Who you play: the four opponents, the knockout, the group table. |
+| `js/arena/ledger.js` | 245 | The write path. `sync()` and everything it settles. The only code that stores a result. |
+| `js/arena/program.js` | 390 | The re-export, plus what sits across the parts: arc state, moments, alarms, notes, years, standing, the review. |
 | `js/arena/home.js` | 48 | The Arena screen, assembled. Every block below it, in the order the questions get asked. |
 | `js/arena/standing.js` | 109 | Where you stand: the crest, the division by name, the ladder. |
 | `js/arena/fixture.js` | 106 | This week's match on one track, and the form strip. |
@@ -90,10 +101,10 @@ running, and **Cabinet** is *forever*, the cups won, the feats, the years, the
 lines you left yourself. Nothing in the Cabinet changes hour to hour, which is
 what lets it be still.
 
-Four things to know. **`program.js` stores what it could derive**, alone in
+Four things to know. **`ledger.js` stores what it could derive**, alone in
 this app, because a closed week's result is a historical fact rather than a
 view: recomputing it would let a frequency edited this morning rewrite a match
-won in March. **Nothing in `program.js` imports `feats.js`**, only the other
+won in March. **Nothing in the domain imports `feats.js`**, only the other
 way, so the cycle cannot form; the callers invoke both. **A row owes only the days it
 was on the grid for**, which is the rule that took the most argument: adding a
 habit on Wednesday cannot lose you Monday, and archiving on Wednesday cannot
@@ -104,6 +115,26 @@ which meant you were always in one and so a cup was never something you
 countdown its meaning.
 [`docs/ARENA.md`](ARENA.md) has all of it, and `npm run check:arena` asserts
 the parts that cannot be read off a screen.
+
+## Accounts, which are optional
+
+| File | Lines | What it is |
+|---|---|---|
+| `js/account/config.js` | 23 | The Supabase project values. Empty until a project exists; see `docs/ACCOUNTS.md`. |
+| `js/account/session.js` | 121 | The client, sign up, sign in, reset, sign out, delete. |
+| `js/account/oauth.js` | 59 | Google sign-in: a Custom Tab out, a deep link back. |
+| `js/account/sync.js` | 63 | Backup and restore, whole-record. Not a merge. |
+| `js/account/screen.js` | 252 | The Account screen in its three states: unconfigured, signed out, signed in. |
+
+The account is a copy of the record, never the record. Everything pulled from
+it goes through `store.js`'s sanitiser like any other untrusted file.
+`SECURITY.md` is the model; `docs/ACCOUNTS.md` is the setup.
+
+## Legal
+
+`www/legal/`: privacy, terms, licences, wellbeing, one shared stylesheet, and
+`publisher.js`, the single file naming the publisher. Unset fields render as
+`[NOT SET]` so a placeholder cannot pass for a policy.
 
 ## Native
 
@@ -129,3 +160,5 @@ Everything here is build-time and never ships in `www/`.
 | `tools/art.mjs` | Takes a dropped-in image, makes the WebP the app loads, updates `sw.js`. |
 | `tools/patch-signing.mjs` | Pins the debug signing key into the generated Gradle build. |
 | `tools/patch-backup.mjs` | Turns on Android's own backup, which is what carries the record off the device. |
+| `tools/patch-deeplink.mjs` | Adds the `com.habitnemesis.app://auth` intent filter Google sign-in returns through. |
+| `tools/patch-release-signing.mjs` | Release signing from CI secrets. Refuses the debug key and a debuggable config. |

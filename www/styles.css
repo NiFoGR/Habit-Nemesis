@@ -810,7 +810,7 @@ input[type="range"] {
 /* One pip per division, and the way into the full ladder. The control costs no
    line of its own. */
 .ar-ladder-link {
-  display: grid; gap: 7px; margin: 16px 0 0;
+  display: grid; gap: 7px; margin: 10px 0 0; padding: 8px 0;
   text-decoration: none; color: inherit;
 }
 .ar-pips { display: flex; gap: 4px; }
@@ -819,7 +819,7 @@ input[type="range"] {
 .ar-pips i.here { opacity: 1; box-shadow: 0 0 10px rgba(34, 211, 197, 0.5); }
 .ar-ladder-link span {
   display: inline-flex; align-items: center; gap: 4px;
-  font-size: var(--f-fine); color: var(--faint);
+  font-size: var(--f-fine); color: var(--muted);
 }
 .ar-ladder-link .ico { transform: rotate(180deg); }
 .ar-ladder-link:active span { color: var(--text); }
@@ -876,6 +876,11 @@ input[type="range"] {
   padding: 13px 12px 13px 0;
   margin: 4px 0;
 }
+
+/* Unranked, mid-week: the rung today's marking would place you at. */
+.dv-row.entering { opacity: 1; }
+.dv-row.entering .dv-body i { color: var(--accent); }
+.dv-row.entering .dv-node .crest { filter: none; opacity: 1; }
 .dv-row.here .dv-body b { font-size: var(--f-title); }
 .dv-row.here .dv-body i { color: var(--text); }
 .dv-row.here .dv-bar { color: var(--text); }
@@ -924,7 +929,7 @@ input[type="range"] {
 .ar-fx-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
 .ar-fx-head h2 { margin: 0; }
 .ar-fx-sub { margin: -6px 0 2px; font-size: var(--f-fine); color: var(--muted); }
-.ar-fx-meta { margin: 0 0 12px; font-size: var(--f-fine); color: var(--faint); }
+.ar-fx-meta { margin: 0 0 12px; font-size: var(--f-fine); color: var(--muted); }
 .ar-fx-none { margin: 0; font-size: var(--f-small); color: var(--muted); }
 .ar-fixture .btn { margin-top: 14px; }
 
@@ -991,7 +996,8 @@ button.ar-lane:active { opacity: 0.7; }
 /* Eight on one line at any width: fixed-width chips wrapped on a 360px phone. */
 .ar-form { display: flex; gap: 5px; margin-bottom: 12px; }
 .ar-chip {
-  flex: 1 1 0; min-width: 0; padding: 7px 0; text-align: center;
+  flex: 1 1 0; min-width: 0; min-height: 44px; padding: 7px 0; text-align: center;
+  display: grid; place-content: center;
   border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2);
   color: var(--muted); cursor: pointer;
 }
@@ -1019,7 +1025,7 @@ button.ar-lane:active { opacity: 0.7; }
 /* ---------- the arc ---------- */
 
 .ar-table { border-top: 1px solid var(--line-soft); }
-.ar-tr { display: flex; align-items: center; gap: 10px; padding: 9px 6px; border-bottom: 1px solid var(--line-soft); font-size: var(--f-small); }
+.ar-tr { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 6px; border-bottom: 1px solid var(--line-soft); font-size: var(--f-small); }
 .ar-tr:last-child { border-bottom: 0; }
 .ar-tr .ar-pos { flex: 0 0 20px; color: var(--faint); font-variant-numeric: tabular-nums; }
 .ar-tr .ar-tn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
@@ -1033,10 +1039,13 @@ button.ar-lane:active { opacity: 0.7; }
 }
 .ar-tr.q .ar-pos { color: var(--good); font-weight: 700; }
 .ar-tr.q b { color: var(--good); }
-.ar-tr.nq { opacity: 0.5; }
+/* The qualifying line, drawn once rather than by dimming everything under it:
+   half-opacity on the whole field made the card's only content unreadable, and
+   painting your own row red for an unfinished group judged a match still on. */
+.ar-tr.q:nth-of-type(3) { border-bottom: 1px dashed var(--line); }
 .ar-tr.you .ar-tn { color: var(--text); font-weight: 600; }
-.ar-tr.you.nq { opacity: 0.85; background: rgba(248, 113, 113, 0.07); box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.2); }
-.ar-tr.you.nq .ar-pos, .ar-tr.you.nq b { color: var(--danger); }
+.ar-tr.you { background: color-mix(in srgb, var(--accent) 6%, transparent); box-shadow: inset 2px 0 0 var(--accent); }
+.ar-tr.nq .ar-pos { color: var(--faint); }
 .ar-tr[data-week] { cursor: pointer; }
 .ar-tr[data-week]:active { transform: scale(0.995); }
 
@@ -1297,7 +1306,7 @@ button.ar-lane:active { opacity: 0.7; }
 .tab.main .tab-badge.count { top: 0; right: 2px; background: var(--bg); color: var(--text); }
 
 /* Room for the bar, only where it is there. */
-body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
+body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 
 /* ---------- the grid's header ----------
    The today card is gone: the same three facts with no border around them. */

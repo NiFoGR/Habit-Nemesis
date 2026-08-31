@@ -3,17 +3,15 @@
 // account. www/legal/privacy.html is the full account of where it goes.
 
 import { toast, setFeedback } from './ui.js';
+import { DIVISIONS } from './arena/ladder.js';
 
 // Closed sets. A colour id lands in a style attribute, free text would be a hole.
 const HABIT_COLOURS = ['teal', 'mint', 'lime', 'amber', 'orange', 'clay', 'rose', 'red', 'violet', 'indigo', 'sky', 'slate'];
 const HABIT_KINDS = ['yesno', 'number'];
 const HABIT_TARGET_TYPES = ['atleast', 'atmost'];
 
-// The ladder, low to high.
-// The ladder, second copy. store.js cannot import arena/program.js, which
-// imports it back, so a rung added there must be added here. check:arena
-// fails if the two drift.
-const ARENA_DIVISIONS = ['bottom', 'npc', 'prospect', 'contender', 'menace', 'mentzer', 'locked', 'topg', 'full'];
+// ladder.js imports nothing, so the sanitiser can read the one list.
+const ARENA_DIVISIONS = DIVISIONS.map((d) => d.id);
 
 const KEY = 'habitnemesis.state.v1';
 const SCHEMA = 1;

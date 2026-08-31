@@ -8,8 +8,6 @@
 // no DOM in it. If that stops being true, this file failing to start is the
 // warning.
 
-import { readFileSync } from 'node:fs';
-
 const store = new Map();
 globalThis.localStorage = {
   getItem: (k) => (store.has(k) ? store.get(k) : null),
@@ -59,17 +57,6 @@ is('the clocks going forward does not drop a week',
   ['2026-03-23', '2026-03-30', '2026-04-06'].map(a.weekKey), ['2026-W13', '2026-W14', '2026-W15']);
 is('a week belongs to the month holding its Thursday',
   [a.monthOfWeek(a.weekKey('2026-08-31')), a.monthOfWeek(a.weekKey('2026-09-01'))], ['2026-09', '2026-09']);
-
-group('the ladder is one list');
-{
-  // store.js keeps its own copy for the sanitiser, and a rung added to one and
-  // not the other silently drops every saved month naming it.
-  const src = readFileSync(new URL('../www/js/store.js', import.meta.url), 'utf8');
-  const listed = src.match(/const ARENA_DIVISIONS = \[([^\]]*)\]/)[1]
-    .split(',').map((x) => x.trim().replace(/'/g, '')).filter(Boolean);
-  is('the sanitiser knows every division', listed, a.DIVISIONS.map((d) => d.id));
-  is('and in the same order', listed.join('>'), a.DIVISIONS.map((d) => d.id).join('>'));
-}
 
 group('a year of weeks, partitioned');
 {

@@ -11,6 +11,7 @@
     "android:add": "cap add android",
     "android:sync": "cap sync android",
     "android:apk": "cap sync android && node tools/patch-signing.mjs && node tools/patch-backup.mjs && node tools/patch-deeplink.mjs && cd android && ./gradlew assembleDebug",
+    "android:aab": "cap sync android && node tools/patch-backup.mjs && node tools/patch-deeplink.mjs && node tools/patch-release-signing.mjs && cd android && ./gradlew bundleRelease",
     "check:arena": "node tools/check-arena.mjs",
     "art": "node tools/art.mjs",
     "check:ui": "node tools/check-ui.mjs",

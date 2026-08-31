@@ -42,8 +42,15 @@ export function listenForReturn() {
   if (!app || !isNative()) return;
   app.addListener('appUrlOpen', async ({ url }) => {
     const sb = supabase();
-    if (!sb || !url) return;
-    const code = new URL(url).searchParams.get('code');
+    // Only our own auth callback. Anything else through the scheme is ignored,
+    // and a malformed URL must not throw inside the listener.
+    if (!sb || typeof url !== 'string' || !url.startsWith(redirectTo())) return;
+    let code = null;
+    try {
+      code = new URL(url).searchParams.get('code');
+    } catch {
+      return;
+    }
     if (!code) return;
     plugin('Browser')?.close?.();
     const { error } = await sb.auth.exchangeCodeForSession(code);
