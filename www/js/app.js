@@ -16,6 +16,9 @@ import { renderMoment, hasMoment, leaveMoment } from './arena/moment.js';
 import { renderRank, hasRank, leaveRank } from './arena/rank.js';
 import { renderWeekReview } from './arena/review.js';
 import { renderSettings } from './settings.js';
+import { render as renderAccount } from './account/screen.js';
+import * as account from './account/session.js';
+import { listenForReturn } from './account/oauth.js';
 import { lockActive, renderLock, relock } from './lock.js';
 import { renderIntro, introDue } from './intro.js';
 import { initBack, navigate, replaceWith } from './back.js';
@@ -29,6 +32,7 @@ const app = document.getElementById('app');
 const ROUTES = {
   '#/hub': () => renderHome(app),
   '#/settings': () => renderSettings(app),
+  '#/account': () => renderAccount(app),
   // Aliases. A pinned link must not land on a dead route.
   '#/habits': () => renderHome(app),
   '#/habits/habit': (params) => renderHabitDetail(app, params.get('id')),
@@ -50,7 +54,7 @@ const ROUTES = {
 };
 
 const NAV = {
-  hub: '#/hub', settings: '#/settings',
+  hub: '#/hub', settings: '#/settings', account: '#/account',
   habits: '#/habits', 'habits-archive': '#/habits/archive',
   arena: '#/arena', cabinet: '#/cabinet',
   'cabinet-feats': '#/cabinet/feats', 'cabinet-year': '#/cabinet/year',
@@ -164,6 +168,12 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('hashchange', route);
 
 route();
+
+// Optional, and absent from a build with no project configured.
+account.init().then(() => {
+  if (location.hash.startsWith('#/account')) route();
+});
+listenForReturn();
 
 habitsProgram.syncAlarms();
 // Arc alarms: opens, group ends, round ends.

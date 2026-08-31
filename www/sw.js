@@ -1,6 +1,6 @@
 // Offline-first service worker. Bump CACHE to drop everything stored.
 // Code is revalidated against the network; the cache is the offline answer.
-const CACHE = 'habit-nemesis-v2';
+const CACHE = 'habit-nemesis-v3';
 
 const SHELL = [
   './',
@@ -10,6 +10,7 @@ const SHELL = [
 
   // shell
   './js/app.js',
+  './js/vendor/supabase.js',
   './js/back.js',
   './js/settings.js',
   './js/lock.js',
@@ -47,6 +48,13 @@ const SHELL = [
   './js/arena/arc.js',
   './js/arena/week-sheet.js',
   './js/arena/feats-screen.js',
+
+  // the account
+  './js/account/config.js',
+  './js/account/session.js',
+  './js/account/oauth.js',
+  './js/account/sync.js',
+  './js/account/screen.js',
 
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -96,7 +104,10 @@ function put(request, response) {
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
-  const mine = url.origin === location.origin;
+  /* Off-origin is not ours. The fallback below answers with index.html, and an
+     API client handed a page of HTML reports a parse error rather than saying
+     you are offline. */
+  if (url.origin !== location.origin) return;
 
   /* Network first for the app's own code. Cache-first meant a release that
      edited styles.css but not sw.js was invisible on a phone that already had a
@@ -105,7 +116,7 @@ self.addEventListener('fetch', (e) => {
 
   e.respondWith(
     fetch(e.request)
-      .then((res) => { if (mine) put(e.request, res); return res; })
+      .then((res) => { put(e.request, res); return res; })
       .catch(() => caches.match(e.request).then((hit) => hit || caches.match('./index.html')))
   );
 });

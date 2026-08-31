@@ -1755,6 +1755,30 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 104px); }
 .starter-meta { font-size: var(--f-fine); color: var(--muted); }
 .starter-add { color: var(--faint); display: grid; place-items: center; }
 
+/* ---------- the account ----------
+   A form, two providers, and a divider that says the two are alternatives
+   rather than steps. */
+
+.acc-form { display: grid; gap: 14px; }
+/* The label is the .field, so the caption inside it needs its own rule. */
+.acc-form .field { display: grid; gap: 6px; }
+.acc-form .field > span { font-size: var(--f-small); color: var(--muted); }
+.acc-form input {
+  width: 100%; padding: 12px 14px;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
+  color: var(--text); font: inherit;
+}
+.acc-form input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.acc-alt { display: flex; justify-content: space-between; gap: 10px; }
+
+.acc-or { display: flex; align-items: center; gap: 12px; margin: 16px 0; color: var(--faint); font-size: var(--f-fine); }
+.acc-or::before, .acc-or::after { content: ''; flex: 1; height: 1px; background: var(--line-soft); }
+
+.acc-providers { display: grid; gap: 8px; }
+
+/* No global anchor rule in this app: every other link is a button or a row. */
+.fineprint a, .muted a { color: var(--accent); text-underline-offset: 2px; }
+
 /* ---------- restore points ----------
    Under the backup buttons, because it is the same question: what happens to
    the record when something goes wrong. */

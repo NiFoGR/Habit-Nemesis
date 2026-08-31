@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="index, follow">
+<title>Privacy Policy | Habit Nemesis</title>
+<style>
+/* Tokens copied from ../styles.css. This page is standalone: it must render
+   with no stylesheet, no font and no network. */
+:root {
+  --bg: #0a0c10;
+  --bg-2: #101419;
+  --surface: #171d28;
+  --surface-2: #2a3446;
+  --line: #3a4459;
+  --line-soft: #262e3d;
+  --text: #e6eaf0;
+  --muted: #97a1b0;
+  --faint: #6b7686;
+  --accent: #22d3c5;
+  --good: #4ade80;
+  --warn: #fbbf24;
+  --danger: #f87171;
+  --calm: #38bdf8;
+  --on-accent: #04121a;
+
+  --f-sub: 1.5rem;
+  --f-title: 1.3rem;
+  --f-head: 1.05rem;
+  --f-body: 0.95rem;
+  --f-small: 0.84rem;
+  --f-fine: 0.76rem;
+  --w-medium: 600;
+  --w-bold: 700;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+
+  --radius: 12px;
+  --radius-sm: 9px;
+  --radius-pill: 999px;
+  --pad: 16px;
+
+  color-scheme: dark;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  color: var(--text);
+  font: 16px/1.5 var(--sans);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+body { background: var(--bg); }
+
+.wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: calc(var(--safe-t) + 14px) var(--pad) calc(var(--safe-b) + 56px);
+}
+
+/* ---- header ---- */
+header { border-bottom: 1px solid var(--line-soft); padding-bottom: 18px; margin-bottom: 24px; }
+.eyebrow {
+  color: var(--muted); font-size: var(--f-fine); text-transform: uppercase;
+  letter-spacing: 0.12em; margin: 0 0 6px;
+}
+h1 { font-size: var(--f-sub); margin: 0 0 8px; letter-spacing: -0.02em; }
+.stamp { color: var(--muted); font-size: var(--f-small); margin: 0; }
+
+/* ---- body ---- */
+h2 {
+  font-size: var(--f-title); margin: 34px 0 10px; letter-spacing: -0.01em;
+  scroll-margin-top: 12px;
+}
+h2 .n { color: var(--faint); font-weight: var(--w-medium); margin-right: 8px; }
+h3 { font-size: var(--f-head); margin: 20px 0 8px; color: var(--text); }
+p { margin: 0 0 12px; font-size: var(--f-body); }
+p:last-child { margin-bottom: 0; }
+ul { margin: 0 0 12px; padding-left: 20px; font-size: var(--f-body); }
+li { margin-bottom: 6px; }
+li:last-child { margin-bottom: 0; }
+strong { font-weight: var(--w-medium); }
+a { color: var(--accent); }
+code {
+  background: var(--surface-2); padding: 1px 5px; border-radius: 5px;
+  font-size: 0.85em; word-break: break-all;
+}
+.muted { color: var(--muted); }
+.small { font-size: var(--f-small); }
+
+/* ---- contents ---- */
+nav.toc {
+  background: var(--surface); border: 1px solid var(--line-soft);
+  border-radius: var(--radius); padding: 14px var(--pad); margin-bottom: 8px;
+}
+nav.toc p { font-size: var(--f-fine); text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin: 0 0 8px; }
+nav.toc ol { margin: 0; padding-left: 20px; font-size: var(--f-small); }
+nav.toc li { margin-bottom: 4px; }
+nav.toc a { text-decoration: none; }
+nav.toc a:hover { text-decoration: underline; }
+
+/* ---- callouts ---- */
+.card {
+  background: var(--surface); border: 1px solid var(--line-soft);
+  border-radius: var(--radius); padding: 14px var(--pad); margin: 0 0 14px;
+}
+.card.warn { border-left: 3px solid var(--warn); }
+.card.danger { border-left: 3px solid var(--danger); }
+.card.good { border-left: 3px solid var(--good); }
+.card.calm { border-left: 3px solid var(--calm); }
+.card h3 { margin-top: 0; }
+
+.tag {
+  display: inline-block; font-size: var(--f-fine); font-weight: var(--w-medium);
+  padding: 3px 9px; border-radius: var(--radius-pill);
+  border: 1px solid var(--line); color: var(--muted); background: var(--bg-2);
+  margin: 0 0 10px;
+}
+.tag.soon { border-color: var(--warn); color: var(--warn); }
+.tag.now { border-color: var(--good); color: var(--good); }
+
+/* ---- tables ---- */
+.scroll { overflow-x: auto; margin: 0 0 14px; -webkit-overflow-scrolling: touch; }
+table { border-collapse: collapse; width: 100%; min-width: 460px; font-size: var(--f-small); }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+th { color: var(--muted); font-weight: var(--w-medium); font-size: var(--f-fine); text-transform: uppercase; letter-spacing: 0.08em; }
+tr:last-child td { border-bottom: none; }
+td code { font-size: 0.8em; }
+
+/* ---- unfilled publisher fields ---- */
+.not-set {
+  color: var(--danger); font-weight: var(--w-bold);
+  background: rgba(248, 113, 113, 0.12);
+  padding: 1px 5px; border-radius: 5px;
+}
+
+/* ---- footer ---- */
+footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line-soft); }
+.btn {
+  display: inline-block; text-decoration: none;
+  background: var(--accent); color: var(--on-accent);
+  font-weight: var(--w-medium); font-size: var(--f-body);
+  padding: 11px 20px; border-radius: var(--radius-sm);
+}
+.fineprint { color: var(--muted); font-size: var(--f-fine); line-height: 1.45; margin-top: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow"><span data-publisher="appName">Habit Nemesis</span></p>
+  <h1>Privacy Policy</h1>
+  <p class="stamp">Effective <span data-publisher="effective">[NOT SET: effective]</span>. Published by <span data-publisher="name">[NOT SET: name]</span>, <span data-publisher="country">United Kingdom</span>.</p>
+</header>
+
+<p>This policy says what Habit Nemesis does with your information. It describes the app as it is built today, and it describes the accounts, sync and advertising that are planned. Anything not yet switched on is marked <span class="tag soon">Not yet active</span> so you can tell the two apart.</p>
+
+<nav class="toc">
+  <p>Contents</p>
+  <ol>
+    <li><a href="#controller">Who is responsible</a></li>
+    <li><a href="#today">What the app holds today</a></li>
+    <li><a href="#later">What accounts, sync and ads will add</a></li>
+    <li><a href="#honest">The claim that nothing leaves your phone</a></li>
+    <li><a href="#basis">Lawful basis for each purpose</a></li>
+    <li><a href="#retention">How long each thing is kept</a></li>
+    <li><a href="#backup">Android Auto Backup</a></li>
+    <li><a href="#processors">Who else handles the data</a></li>
+    <li><a href="#transfers">International transfers</a></li>
+    <li><a href="#rights">Your rights, and how to use them</a></li>
+    <li><a href="#deletion">Deleting your account and your data</a></li>
+    <li><a href="#pin">The PIN, and what losing it costs</a></li>
+    <li><a href="#children">Children</a></li>
+    <li><a href="#storage">Local storage, cookies and PECR</a></li>
+    <li><a href="#changes">Changes to this policy</a></li>
+    <li><a href="#complaints">Complaints, and the ICO</a></li>
+  </ol>
+</nav>
+
+<h2 id="controller"><span class="n">1</span>Who is responsible</h2>
+
+<p>Habit Nemesis is published by <span data-publisher="name">[NOT SET: name]</span>, a sole trader in the <span data-publisher="country">United Kingdom</span>, trading as <span data-publisher="trading">[NOT SET: trading]</span>.</p>
+
+<p>That person is the data controller under the UK General Data Protection Regulation and the Data Protection Act 2018. It means they decide why and how your personal data is used, and they answer for it.</p>
+
+<div class="scroll">
+<table>
+  <tr><th>Controller</th><td><span data-publisher="name">[NOT SET: name]</span></td></tr>
+  <tr><th>Trading as</th><td><span data-publisher="trading">[NOT SET: trading]</span></td></tr>
+  <tr><th>Address</th><td><span data-publisher="address">[NOT SET: address]</span>, <span data-publisher="country">United Kingdom</span></td></tr>
+  <tr><th>Email</th><td><span data-publisher="email">[NOT SET: email]</span></td></tr>
+  <tr><th>Governing law</th><td><span data-publisher="jurisdiction">England and Wales</span></td></tr>
+</table>
+</div>
+
+<p>There is no data protection officer. One is not required for processing at this scale. Write to the email above and the controller answers personally.</p>
+
+<h2 id="today"><span class="n">2</span>What the app holds today</h2>
+
+<span class="tag now">Active now</span>
+
+<p>Everything below is written by the app into your device's own storage, under two keys: <code>habitnemesis.state.v1</code> for the record, and <code>habitnemesis.snap.YYYY-MM-DD</code> for the daily restore points. Nothing is sent anywhere. The list is taken from the code that defines the record, not from a template.</p>
+
+<h3>Your habits</h3>
+<ul>
+  <li>The habit's name, its question, and your free-text notes on it.</li>
+  <li>Its colour, whether it is a yes/no habit or a number, its unit, its target and whether the target is a floor or a ceiling.</li>
+  <li>How often you want to do it, written as a number of times in a number of days.</li>
+  <li>The group you filed it in, and that group's name.</li>
+  <li>The time of day and the weekdays you asked to be reminded.</li>
+  <li>Whether it is archived, when it was archived, when it was created, and when it was last edited.</li>
+</ul>
+
+<h3>The days you marked</h3>
+<p>For each habit, one entry per day: the date, and what you recorded. A skip, a lapse, or the number you logged. This is the record itself, and it is the whole point of the app.</p>
+
+<h3>The Arena's record</h3>
+<ul>
+  <li>Every closed week: your score, days done, days due, the opponent week, its name and score, whether you won, lost or voided it, the cup round it belonged to, and any note you wrote on it.</li>
+  <li>Every month: your score, wins, losses, the division you started and finished in, and whether you moved.</li>
+  <li>Every season arc: whether you qualified and how far you got, plus any note.</li>
+  <li>Your current division, the feats you have earned and when, and which result and ceremony screens you have already seen.</li>
+</ul>
+
+<h3>Your settings</h3>
+<p>Haptics, sound, first day of the week, the hour a day starts, tap or press-and-hold to mark, whether skip days and unknown days are shown, day order, the number of grid columns, and whether you have seen the introduction. Also the date this device last wrote to or read from an account, which stays on this device and never travels with the record.</p>
+
+<h3>The PIN's check blob</h3>
+<p>If you set an app PIN, the app stores three values: a random salt, a random initialisation vector, and one short encrypted block. Your PIN is <strong>not</strong> stored, not in plain form and not as a hash of its own. See section 12.</p>
+
+<h3>The face photo</h3>
+<p>You may attach a photo of yourself to your Nemesis, so the best week you ever had has a face. The app crops it square, shrinks it to 256 pixels and saves it as a small JPEG inside the record on your device, along with the week it belongs to and the moment you took it.</p>
+
+<div class="card calm">
+  <p>The photo is a picture, not a biometric. The app never measures a face, never matches one and never runs recognition of any kind. It draws the image on screen and nothing else. The share card deliberately leaves it out, so sending someone your week never sends them your face.</p>
+</div>
+
+<h3>What is not collected</h3>
+<p>No name, no email, no phone number, no contacts, no location, no device identifier, no advertising ID, no analytics, no crash reports, no usage statistics. The app has no account today and asks you for nothing about yourself.</p>
+
+<h2 id="later"><span class="n">3</span>What accounts, sync and ads will add</h2>
+
+<span class="tag soon">Not yet active</span>
+
+<p>None of this is switched on in the version you are using. It is written here now so the policy does not change under you later. When each part arrives, the app will say so on screen before it does anything.</p>
+
+<h3>An optional account</h3>
+<p>Signing in will be optional and the app will keep working fully without one. If you choose to create an account you will be able to use an email address and a password, or sign in with Google, or sign in with Apple. The account will hold your email address, an account identifier, and the dates the account was created and last used. Passwords will be stored only as a salted hash by the authentication provider, never in readable form and never by the app.</p>
+
+<h3>Sync</h3>
+<p>If you sign in and switch sync on, your record is copied to your account so it survives a new phone. The copy is the same record described in section 2, including your habits, your marked days, the Arena's history and the face photo if you have set one. The PIN and its settings stay on the device and are never copied.</p>
+
+<h3>Advertising</h3>
+<p>The free version is expected to show ads through Google AdMob. Ad SDKs read and write identifiers on your device and that needs your permission, so before any ad code runs you will be asked through a Google-certified consent platform. If you are in the UK or the EEA and you decline, you will see non-personalised ads, and the app will still work. On iOS a separate Apple prompt controls tracking, and declining it is respected.</p>
+
+<h3>A paid tier</h3>
+<p>Payment will go through the App Store and Google Play, most likely with RevenueCat holding the record of what you have bought. The app will receive whether you are entitled to the paid features and nothing more. Your card details never reach the app or the publisher: Apple and Google take the payment, and they are the seller.</p>
+
+<h2 id="honest"><span class="n">4</span>The claim that nothing leaves your phone</h2>
+
+<p>The app has said that nothing leaves your phone. That is worth being exact about, because it is true in most places and not true in one.</p>
+
+<h3>Where it holds</h3>
+<ul>
+  <li>The app makes no network request of its own. There is no server to call and no account configured in this build.</li>
+  <li>The offline cache stores only the app's own files, from the app itself. It fetches nothing from anyone else.</li>
+  <li>There is no analytics, no tracker, no advertising code and no third-party SDK reporting anything.</li>
+  <li>Reminders are scheduled by your phone's own alarm clock. They never reach the internet.</li>
+  <li>The publisher cannot see your record. There is nowhere for it to be seen.</li>
+</ul>
+
+<h3>Where it does not hold</h3>
+
+<div class="card warn">
+  <h3>Android backup</h3>
+  <p>On Android the app turns on Android's own Auto Backup. Your record is copied to your Google account. That is a real copy of your habits, your marked days, the Arena's history, your face photo and your PIN's check blob, held by Google. Section 7 covers what that means and how to turn it off.</p>
+</div>
+
+<p>Two other things leave the device, but only when you send them:</p>
+<ul>
+  <li><strong>The share card.</strong> If you make one and hand it to the share sheet, it goes wherever you send it. It never includes your face photo.</li>
+  <li><strong>Your export.</strong> The JSON backup and the CSV are files you save. Once saved they are ordinary files on your device and are as private as wherever you put them.</li>
+</ul>
+
+<p>When accounts, sync and ads arrive, more will leave. Section 3 says exactly what.</p>
+
+<h2 id="basis"><span class="n">5</span>Lawful basis for each purpose</h2>
+
+<p>UK GDPR requires a lawful basis for every purpose. Here is each one.</p>
+
+<div class="scroll">
+<table>
+  <tr>
+    <th>Purpose</th><th>Basis</th><th>Status</th>
+  </tr>
+  <tr>
+    <td>Keeping your habits and record on your device so the app works</td>
+    <td>The publisher does not process this data. It is written by the app, on your device, under your control, and no copy reaches the publisher.</td>
+    <td>Active</td>
+  </tr>
+  <tr>
+    <td>Scheduling reminders on your phone</td>
+    <td>Same. The reminder is set by your device using times you chose.</td>
+    <td>Active</td>
+  </tr>
+  <tr>
+    <td>Copying your data to your own Google account through Android backup</td>
+    <td>Android's own setting, controlled by you, between you and Google under Google's terms with you.</td>
+    <td>Active on Android</td>
+  </tr>
+  <tr>
+    <td>Running your account and syncing your record</td>
+    <td>Contract, UK GDPR Article 6(1)(b). You asked for the account and sync is what it does.</td>
+    <td>Not yet active</td>
+  </tr>
+  <tr>
+    <td>Keeping the service secure and stopping abuse</td>
+    <td>Legitimate interests, Article 6(1)(f). The interest is a working service that is not being attacked, and it does not override your rights.</td>
+    <td>Not yet active</td>
+  </tr>
+  <tr>
+    <td>Sign-up and password reset emails</td>
+    <td>Contract, Article 6(1)(b). You cannot have an account without them.</td>
+    <td>Not yet active</td>
+  </tr>
+  <tr>
+    <td>Personalised advertising, and any storage on your device that ads need</td>
+    <td>Consent, Article 6(1)(a) and PECR regulation 6. Asked for before any ad code runs, and withdrawable.</td>
+    <td>Not yet active</td>
+  </tr>
+  <tr>
+    <td>Non-personalised advertising</td>
+    <td>Consent for the storage the SDK needs, then legitimate interests for showing the ad itself.</td>
+    <td>Not yet active</td>
+  </tr>
+  <tr>
+    <td>Recording what you have bought so paid features unlock</td>
+    <td>Contract, Article 6(1)(b).</td>
+    <td>Not yet active</td>
+  </tr>
+  <tr>
+    <td>Keeping sales records for tax</td>
+    <td>Legal obligation, Article 6(1)(c).</td>
+    <td>Not yet active</td>
+  </tr>
+</table>
+</div>
+
+<p>Your face photo is personal data, and it is handled on the basis above like the rest of the record. It is not special category data, because nothing in the app processes it for the purpose of identifying anyone.</p>
+
+<h2 id="retention"><span class="n">6</span>How long each thing is kept</h2>
+
+<div class="scroll">
+<table>
+  <tr><th>What</th><th>Kept for</th></tr>
+  <tr>
+    <td>Your record on the device</td>
+    <td>Until you delete it. Deleting a habit removes its days, resetting the app clears everything, and uninstalling deletes the lot with the app.</td>
+  </tr>
+  <tr>
+    <td>Daily restore points</td>
+    <td>The three most recent days. Older ones are deleted automatically, and all of them are dropped first if the device runs out of storage.</td>
+  </tr>
+  <tr>
+    <td>The PIN's check blob</td>
+    <td>Until you remove the PIN or reset the app.</td>
+  </tr>
+  <tr>
+    <td>The face photo</td>
+    <td>Until a better week replaces it, you remove it, or you reset the app.</td>
+  </tr>
+  <tr>
+    <td>Your Android backup</td>
+    <td>Google decides, not the publisher. Google removes backups for apps you have uninstalled and for devices you stop using. You can delete it yourself at any time in your Google account.</td>
+  </tr>
+  <tr>
+    <td>Your account and synced record <span class="muted">(not yet active)</span></td>
+    <td>While the account exists. Deleting the account deletes them, and copies in the database provider's own backups age out within 30 days.</td>
+  </tr>
+  <tr>
+    <td>Ad identifiers and ad data <span class="muted">(not yet active)</span></td>
+    <td>By the ad network's own retention rules, which their policy sets out. The app keeps none of it.</td>
+  </tr>
+  <tr>
+    <td>Purchase and tax records <span class="muted">(not yet active)</span></td>
+    <td>As long as UK tax law requires. For a sole trader that is at least five years after the 31 January submission deadline for the relevant tax year.</td>
+  </tr>
+  <tr>
+    <td>Emails you send to support</td>
+    <td>Up to two years after the matter is closed, so a repeat problem has its history.</td>
+  </tr>
+</table>
+</div>
+
+<h2 id="backup"><span class="n">7</span>Android Auto Backup</h2>
+
+<div class="card warn">
+  <p>On Android, this app deliberately turns on Android's Auto Backup, and the whole record is included.</p>
+</div>
+
+<p>Everything the app stores lives inside its own private folder on the phone, and Android deletes that folder when you uninstall the app. Auto Backup is the only way that record survives a new phone without a server, so the app switches it on.</p>
+
+<p><strong>What is copied.</strong> The app's stored data: your habits, your marked days, the Arena's history, your settings, your face photo, your restore points and the PIN's check blob. Your PIN itself is not in there, because it is never stored anywhere.</p>
+
+<p><strong>Where it goes.</strong> Your own Google account, not the publisher's. Google also uses the same data for device-to-device transfer when you set up a new phone. The publisher has no access to it and cannot read it, delete it or ask for it.</p>
+
+<p><strong>How it is protected.</strong> Google encrypts these backups. On devices with a screen lock, Google encrypts them with a key tied to that lock, which means Google itself cannot read them. The app does not control that and does not require it, so on a device that cannot provide it the backup still goes ahead with Google's server-side encryption alone. If that matters to you, turn the backup off.</p>
+
+<p><strong>How to turn it off.</strong> Android Settings, then Google, then Backup. You can switch backup off for this app, and you can delete an existing backup from the same place. Turning it off means an uninstall loses your record, so export a copy from the app's Settings first.</p>
+
+<p><strong>Google's role here.</strong> This is a service Google provides to you under your Google account. The publisher is not a party to it and does not receive the data.</p>
+
+<h2 id="processors"><span class="n">8</span>Who else handles the data</h2>
+
+<p><strong>Today: nobody.</strong> No third party receives anything from this app. The only other company involved is Google, through the Android backup described above, and that is Google's arrangement with you rather than with the publisher.</p>
+
+<p><span class="tag soon">Not yet active</span> When the features in section 3 arrive, these companies will be involved. Each is bound by a written contract that limits what they may do with your data.</p>
+
+<div class="scroll">
+<table>
+  <tr><th>Who</th><th>What they do</th><th>What they see</th></tr>
+  <tr>
+    <td>Supabase</td>
+    <td>Database and sign-in, hosted in the European Union</td>
+    <td>Your email address, your password hash, your account id, and your synced record</td>
+  </tr>
+  <tr>
+    <td>Supabase's email sender</td>
+    <td>Sends the sign-up confirmation and password reset emails</td>
+    <td>Your email address and the contents of those messages</td>
+  </tr>
+  <tr>
+    <td>Google, for Sign in with Google</td>
+    <td>Confirms it is you, if you choose that route</td>
+    <td>That you signed in to this app, plus the email address they return</td>
+  </tr>
+  <tr>
+    <td>Apple, for Sign in with Apple</td>
+    <td>Confirms it is you, if you choose that route. You may hide your real email</td>
+    <td>That you signed in to this app, plus the email or relay address they return</td>
+  </tr>
+  <tr>
+    <td>Google AdMob</td>
+    <td>Serves the ads in the free version</td>
+    <td>Device and ad identifiers, approximate location from your IP address, and the ads you saw, subject to your consent</td>
+  </tr>
+  <tr>
+    <td>Google's consent platform</td>
+    <td>Asks for and records your ad consent choice</td>
+    <td>Your choice, stored on your device</td>
+  </tr>
+  <tr>
+    <td>RevenueCat</td>
+    <td>Records what you have bought so the app can unlock it</td>
+    <td>An anonymous app user id and the store's purchase receipt</td>
+  </tr>
+  <tr>
+    <td>Apple and Google, as stores</td>
+    <td>Take the payment. They are the seller, not the publisher</td>
+    <td>Your payment details, which the app never sees. Refunds and cancellations go to them</td>
+  </tr>
+</table>
+</div>
+
+<p>Nothing is ever sold. Your record is not shared with advertisers, data brokers, or anyone else, and it never will be.</p>
+
+<h2 id="transfers"><span class="n">9</span>International transfers</h2>
+
+<p><strong>Today there are none.</strong> Your data does not leave your device except through your own Google backup, and that is Google's arrangement with you.</p>
+
+<p><span class="tag soon">Not yet active</span> Once accounts exist, the database and sign-in will be hosted in the European Union. The UK government has ruled that the EU protects personal data adequately, so a transfer from the UK to the EU needs nothing further.</p>
+
+<p>Some of the companies in section 8 are based in the United States and their staff may access data from there for support. Where that happens, the transfer is covered by the UK International Data Transfer Addendum to the European Commission's standard contractual clauses, or by the UK Extension to the EU-US Data Privacy Framework where the company is certified under it. You can ask for a copy of the safeguards used by writing to <span data-publisher="email">[NOT SET: email]</span>.</p>
+
+<h2 id="rights"><span class="n">10</span>Your rights, and how to use them</h2>
+
+<p>Under UK GDPR you have the rights below. Most of them you can exercise yourself, in the app, without asking anyone. That is deliberate.</p>
+
+<div class="scroll">
+<table>
+  <tr><th>Right</th><th>How to use it</th></tr>
+  <tr>
+    <td><strong>Access.</strong> A copy of what is held about you</td>
+    <td>Settings, then Export. You get the whole record as a JSON file, and your habits as a CSV. Once accounts exist, email the address below for anything held in an account.</td>
+  </tr>
+  <tr>
+    <td><strong>Rectification.</strong> Correcting what is wrong</td>
+    <td>Edit it in the app. Past days are editable, and so is every habit.</td>
+  </tr>
+  <tr>
+    <td><strong>Erasure.</strong> Having it deleted</td>
+    <td>Delete a habit, use Reset in Settings, or uninstall the app. Once accounts exist, Settings has Delete account. See section 11.</td>
+  </tr>
+  <tr>
+    <td><strong>Restriction.</strong> Pausing what is done with it</td>
+    <td>Email the address below. Once sync exists you can also just switch sync off.</td>
+  </tr>
+  <tr>
+    <td><strong>Portability.</strong> Taking it elsewhere</td>
+    <td>The JSON export and the CSV are the whole record in ordinary machine-readable formats. They are yours to take anywhere.</td>
+  </tr>
+  <tr>
+    <td><strong>Objection.</strong> Objecting to processing based on legitimate interests, including direct marketing</td>
+    <td>Email the address below. Objections to marketing are always honoured, with no argument.</td>
+  </tr>
+  <tr>
+    <td><strong>Withdrawing consent</strong></td>
+    <td>Ad consent can be reopened and changed in Settings at any time. Withdrawing does not undo what was done while consent was in force.</td>
+  </tr>
+  <tr>
+    <td><strong>Automated decisions and profiling</strong></td>
+    <td>There are none with any legal or similarly significant effect. The Arena's scoring runs on your device, decides nothing outside the app, and cannot be used against you anywhere.</td>
+  </tr>
+  <tr>
+    <td><strong>Complaint to the regulator</strong></td>
+    <td>See section 16.</td>
+  </tr>
+</table>
+</div>
+
+<p>To make a request, email <span data-publisher="email">[NOT SET: email]</span>. It is free, and it is answered within one month. If the request is unusually complex the deadline can be extended by two further months, and you will be told why within the first month.</p>
+
+<p>Identity is checked only where it is needed. If you write from the email address on the account, that is enough. If there is no account, there is nothing to look up, because the publisher holds nothing about you.</p>
+
+<h2 id="deletion"><span class="n">11</span>Deleting your account and your data</h2>
+
+<h3>Today</h3>
+<p>There is no account, so there is nothing to delete anywhere but your own phone. Settings has a reset that clears the record, and uninstalling removes it with the app. Your Android backup is separate: delete it in your Google account settings, as section 7 explains.</p>
+
+<h3>Once accounts exist <span class="tag soon">Not yet active</span></h3>
+<p>Deletion will be available inside the app, in Settings, and from a page on the web so you can do it without installing anything.</p>
+
+<p><strong>Deleting your account deletes:</strong></p>
+<ul>
+  <li>The copy of your record held in your account, in full.</li>
+  <li>Your sign-in details: email address, password hash, and the account itself.</li>
+  <li>Any link to a Google or Apple sign-in.</li>
+</ul>
+
+<p><strong>Deleting your account does not delete:</strong></p>
+<ul>
+  <li>The copy on your phone. That is yours and stays until you clear it or uninstall.</li>
+  <li>Your Android backup in your Google account. Delete that through Google.</li>
+  <li>Records of purchases held by Apple, Google or the purchase provider. They keep those for tax and refund law.</li>
+  <li>A subscription. Deleting the account does not cancel it. Cancel through the App Store or Google Play, whichever you bought it from.</li>
+  <li>Emails you have sent to support, which are kept as described in section 6.</li>
+</ul>
+
+<p>Deletion is deletion, not deactivation, and it is not reversible. The record cannot be recovered afterwards. Export a copy first if you want one.</p>
+
+<h2 id="pin"><span class="n">12</span>The PIN, and what losing it costs</h2>
+
+<p>The app lock works like this. A random salt is generated on your device. Your PIN and that salt are stretched through 250,000 rounds of PBKDF2 into an encryption key, and that key encrypts one short known phrase. Only the salt, the initialisation vector and the encrypted phrase are stored. When you enter a PIN, the app derives a key from it and tries to decrypt that phrase. The right PIN works. The wrong one fails and reveals nothing.</p>
+
+<div class="card danger">
+  <h3>There is no recovery</h3>
+  <p>Your PIN is not stored anywhere, so it cannot be looked up, reset or bypassed. Not by you, not by the publisher, not by anyone with the phone in their hand. If you forget it, the only way back into the app is to erase its data and start again, and your entire record goes with it.</p>
+  <p>This is what makes the lock worth having, and it is the price. The app warns you before you set one. Export a backup from Settings and keep it somewhere safe, and a forgotten PIN costs you an import rather than everything.</p>
+</div>
+
+<p>The lock protects the app's screens. It is not full-disk encryption: the record itself is stored unencrypted in the app's private folder, where your phone's own encryption and screen lock protect it. The PIN is not copied into an export and is not carried in by an import, because it belongs to the device rather than to the record.</p>
+
+<h2 id="children"><span class="n">13</span>Children</h2>
+
+<p>Habit Nemesis is not designed for or aimed at children. It is a habit tracker for adults.</p>
+
+<p>Today the app collects nothing and sends nothing, so a younger user is in the same position as anyone else: their record is on their own device and nobody else can see it.</p>
+
+<p>Once accounts exist, you must be <strong>13 or over</strong> to create one. That is the age set by section 9 of the Data Protection Act 2018 for consenting to an online service in the UK. If you are under 13, do not create an account. If the publisher learns that an account belongs to someone under 13, it is deleted along with the data in it.</p>
+
+<p>If you are a parent or guardian and you believe a child has created an account, email <span data-publisher="email">[NOT SET: email]</span> and it will be removed.</p>
+
+<h2 id="storage"><span class="n">14</span>Local storage, cookies and PECR</h2>
+
+<p><strong>There are no cookies.</strong> There is no analytics, no tracking pixel, no fingerprinting and no advertising identifier in the app today.</p>
+
+<p>The app does store information on your device, in your browser or WebView's local storage, under the two keys named in section 2. The Privacy and Electronic Communications Regulations require your consent for storing information on your device, unless that storage is strictly necessary to provide the service you asked for.</p>
+
+<p>Here it is strictly necessary. The stored record <em>is</em> the service. A habit tracker that cannot remember which days you marked is not a habit tracker, and there is no version of this app that works without it. So no consent banner is shown, and showing one would be theatre.</p>
+
+<p>The app's offline cache is in the same position. It stores copies of the app's own files so the app opens without a connection, which is what you installed it for.</p>
+
+<p><span class="tag soon">Not yet active</span> Advertising is different. An ad SDK's storage and identifiers are not strictly necessary, so they need consent. Before any advertising code runs, a Google-certified consent platform will ask you, and nothing ad-related is stored on your device until you have answered. You can change that answer in Settings whenever you like.</p>
+
+<h2 id="changes"><span class="n">15</span>Changes to this policy</h2>
+
+<p>This policy changes when the app does. The date at the top is the version in force.</p>
+
+<p>Small corrections are made quietly. Anything that changes what happens to your data, and in particular the arrival of accounts, sync or advertising, is announced in the app before it takes effect, and you are not opted into anything new without being asked.</p>
+
+<p>Past versions are available on request from <span data-publisher="email">[NOT SET: email]</span>.</p>
+
+<h2 id="complaints"><span class="n">16</span>Complaints, and the ICO</h2>
+
+<p>Start with the publisher. Email <span data-publisher="email">[NOT SET: email]</span> and say what is wrong. Most things are a misunderstanding or a bug and are fixed the same week.</p>
+
+<p>If that does not settle it, you have the right to complain to the UK's data protection regulator. You can do that whether or not you have contacted the publisher first.</p>
+
+<div class="card">
+  <h3>Information Commissioner's Office</h3>
+  <p class="small">Wycliffe House, Water Lane, Wilmslow, Cheshire, SK9 5AF<br>
+  Helpline: 0303 123 1113<br>
+  Website: <a href="https://ico.org.uk/make-a-complaint/" rel="noopener">ico.org.uk/make-a-complaint</a></p>
+</div>
+
+<p>Complaining to the ICO costs nothing and does not stop you taking your own legal action.</p>
+
+<footer>
+  <p><a class="btn" href="../index.html">Back to <span data-publisher="appName">Habit Nemesis</span></a></p>
+  <p class="fineprint">
+    Last updated <span data-publisher="effective">[NOT SET: effective]</span>.
+    <span data-publisher="appName">Habit Nemesis</span> is published by
+    <span data-publisher="name">[NOT SET: name]</span>,
+    <span data-publisher="address">[NOT SET: address]</span>,
+    <span data-publisher="country">United Kingdom</span>.
+    Contact <span data-publisher="email">[NOT SET: email]</span>.
+    This policy is governed by the law of <span data-publisher="jurisdiction">England and Wales</span>.
+  </p>
+</footer>
+
+</div>
+
+<script type="module">
+  import { fill } from './publisher.js';
+  fill();
+</script>
+</body>
+</html>

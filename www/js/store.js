@@ -26,6 +26,9 @@ function blank() {
       appLock: false, // ask for the PIN on open
       lock: null, // { salt, iv, check } once a PIN is set. See lock.js.
       onboarded: false, // the introduction has been seen at least once
+      // ISO time of the last write to or from the account. Device-local: it
+      // describes this copy, so it never travels with the record.
+      syncedAt: '',
     },
     // Habits. `entries` is habit id, then day. Streaks and scores are computed on
     // read, never stored: the past is editable here.
@@ -39,8 +42,8 @@ function blank() {
         reverseDays: false, // off: today first. On: oldest first
         columns: 4, // day columns on the grid
       },
-      groups: [], // { id, name, order, collapsed }
-      items: [], // the habits themselves
+      groups: [], // { id, name, order, collapsed, updatedAt }
+      items: [], // the habits themselves, each stamped updatedAt
       entries: {}, // habitId -> { dayKey: value }, -1 skip, 0 lapse, else done
     },
 
@@ -95,6 +98,8 @@ const oneOf = (v, list, dflt) => (list.includes(v) ? v : dflt);
 const bool = (v) => v === true;
 const arr = (v, max) => (Array.isArray(v) ? v.slice(0, max) : []);
 const b64 = (v) => (typeof v === 'string' && /^[A-Za-z0-9+/=]{1,4096}$/.test(v) ? v : null);
+/** An ISO instant, or ''. Compared as a string, so the shape has to be exact. */
+const isoStr = (v) => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T[\d:.]+Z?$/.test(v) ? v : '');
 /** HH:MM and a real time: "99:99" fits the shape, then asks for hour 99. */
 const timeStr = (v, dflt = '') => {
   if (typeof v !== 'string' || !/^\d{2}:\d{2}$/.test(v)) return dflt;
@@ -124,6 +129,7 @@ function hydrate(saved) {
       // Defaults the opposite way to blank(): reaching hydrate means a saved
       // state exists, so this install is already in use.
       onboarded: ss.onboarded !== false,
+      syncedAt: isoStr(ss.syncedAt),
     },
     habits: cleanHabits(saved.habits, base.habits),
     arena: cleanArena(saved.arena, base.arena),
@@ -238,7 +244,15 @@ function cleanHabits(sh, base) {
   const groups = arr(src.groups, 30)
     .map((g) => {
       const gid = groupId(g?.id);
-      return gid ? { id: gid, name: str(g?.name, 40), order: int(g?.order, 0, 1000, 0), collapsed: bool(g?.collapsed) } : null;
+      return gid
+        ? {
+            id: gid,
+            name: str(g?.name, 40),
+            order: int(g?.order, 0, 1000, 0),
+            collapsed: bool(g?.collapsed),
+            updatedAt: num(g?.updatedAt, 0, 4e12) ?? 0,
+          }
+        : null;
     })
     .filter(Boolean);
   const groupIds = new Set(groups.map((g) => g.id));
@@ -269,6 +283,8 @@ function cleanHabits(sh, base) {
         // When, not just that: the Arena locks its roster on Monday.
         archivedAt: num(h?.archivedAt, 0, 4e12),
         createdAt: num(h?.createdAt, 0, 4e12) ?? Date.now(),
+        // Which of two copies of this habit is newer. Stamped on every write.
+        updatedAt: num(h?.updatedAt, 0, 4e12) ?? 0,
         order: int(h?.order, 0, 1000, 0),
       };
     })
@@ -364,6 +380,15 @@ export function update(fn) {
   return state;
 }
 
+/** The account holds this exact copy. Device-local, never exported. */
+export function markSynced() {
+  return update((s) => {
+    s.settings.syncedAt = new Date().toISOString();
+  });
+}
+
+export const lastSynced = () => state.settings.syncedAt || '';
+
 export function setSetting(key, value) {
   return update((s) => {
     s.settings[key] = value;
@@ -434,11 +459,12 @@ export function importJson(text) {
   if (!parsed || typeof parsed !== 'object' || !parsed.habits) {
     throw new Error('Not a Habit Nemesis backup file');
   }
-  const lock = state.settings.lock;
-  const appLock = state.settings.appLock;
+  const { lock, appLock, syncedAt } = state.settings;
   state = hydrate(parsed);
+  // All three describe this device, not the record, so they stay behind.
   state.settings.lock = lock;
   state.settings.appLock = appLock;
+  state.settings.syncedAt = syncedAt;
   save();
 }
 

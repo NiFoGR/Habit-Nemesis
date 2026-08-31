@@ -144,16 +144,24 @@ export function draft(kind = 'yesno') {
   return { ...blankHabit(), kind, target: kind === 'number' ? 1 : 0 };
 }
 
+/** Every write stamps updatedAt, so two copies of one habit can be told apart.
+ *  Reconstructing it after the fact is impossible, which is why it is here
+ *  before there is anything to sync it with. */
+const stamp = (rec) => {
+  if (rec) rec.updatedAt = Date.now();
+  return rec;
+};
+
 export function save(habit) {
   return store.update((st) => {
     const i = st.habits.items.findIndex((h) => h.id === habit.id);
     if (i >= 0) {
-      st.habits.items[i] = { ...st.habits.items[i], ...habit };
+      st.habits.items[i] = stamp({ ...st.habits.items[i], ...habit });
       return;
     }
     if (st.habits.items.length >= MAX_HABITS) return;
     const max = st.habits.items.reduce((a, h) => Math.max(a, h.order), -1);
-    st.habits.items.push({ ...habit, order: max + 1 });
+    st.habits.items.push(stamp({ ...habit, order: max + 1 }));
   });
 }
 
@@ -171,6 +179,7 @@ export function setArchived(id, archived) {
     h.archived = !!archived;
     // When, not just that: the Arena owes a row only the days it was on the grid.
     h.archivedAt = h.archived ? Date.now() : 0;
+    stamp(h);
   });
 }
 
@@ -179,14 +188,14 @@ export function reorder(ids) {
   return store.update((st) => {
     ids.forEach((id, i) => {
       const h = st.habits.items.find((x) => x.id === id);
-      if (h) h.order = i;
+      if (h) stamp(h).order = i;
     });
     let next = ids.length;
     st.habits.items
       .filter((h) => !ids.includes(h.id))
       .sort((a, b) => a.order - b.order)
       .forEach((h) => {
-        h.order = next++;
+        stamp(h).order = next++;
       });
   });
 }
@@ -194,7 +203,7 @@ export function reorder(ids) {
 export function moveToGroup(id, groupId) {
   return store.update((st) => {
     const h = st.habits.items.find((x) => x.id === id);
-    if (h) h.group = groupId || '';
+    if (h) stamp(h).group = groupId || '';
   });
 }
 
@@ -202,7 +211,7 @@ export function addGroup(name) {
   const id = `g_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
   store.update((st) => {
     const max = st.habits.groups.reduce((a, g) => Math.max(a, g.order), -1);
-    st.habits.groups.push({ id, name: String(name).slice(0, 40), order: max + 1, collapsed: false });
+    st.habits.groups.push(stamp({ id, name: String(name).slice(0, 40), order: max + 1, collapsed: false }));
   });
   return id;
 }
@@ -210,7 +219,7 @@ export function addGroup(name) {
 export function renameGroup(id, name) {
   return store.update((st) => {
     const g = st.habits.groups.find((x) => x.id === id);
-    if (g) g.name = String(name).slice(0, 40);
+    if (g) stamp(g).name = String(name).slice(0, 40);
   });
 }
 
@@ -219,7 +228,7 @@ export function removeGroup(id) {
   return store.update((st) => {
     st.habits.groups = st.habits.groups.filter((g) => g.id !== id);
     st.habits.items.forEach((h) => {
-      if (h.group === id) h.group = '';
+      if (h.group === id) stamp(h).group = '';
     });
   });
 }
@@ -227,7 +236,7 @@ export function removeGroup(id) {
 export function toggleGroup(id) {
   return store.update((st) => {
     const g = st.habits.groups.find((x) => x.id === id);
-    if (g) g.collapsed = !g.collapsed;
+    if (g) stamp(g).collapsed = !g.collapsed;
   });
 }
 

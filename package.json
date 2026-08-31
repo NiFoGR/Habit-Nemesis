@@ -2,6 +2,7 @@
   "name": "habit-nemesis",
   "version": "0.1.0",
   "private": true,
+  "license": "UNLICENSED",
   "description": "Habit Nemesis. A habit grid, and a week that plays your own best week.",
   "type": "module",
   "scripts": {
@@ -9,7 +10,7 @@
     "icons": "node tools/gen-icons.mjs",
     "android:add": "cap add android",
     "android:sync": "cap sync android",
-    "android:apk": "cap sync android && node tools/patch-signing.mjs && node tools/patch-backup.mjs && cd android && ./gradlew assembleDebug",
+    "android:apk": "cap sync android && node tools/patch-signing.mjs && node tools/patch-backup.mjs && node tools/patch-deeplink.mjs && cd android && ./gradlew assembleDebug",
     "check:arena": "node tools/check-arena.mjs",
     "art": "node tools/art.mjs",
     "check:ui": "node tools/check-ui.mjs",
@@ -20,6 +21,7 @@
     "@capacitor/app": "^7.0.0",
     "@capacitor/core": "^7.0.0",
     "@capacitor/local-notifications": "^7.0.0",
+    "@supabase/supabase-js": "^2.112.4",
     "habit-nemesis-systemui": "file:./native/systemui"
   },
   "devDependencies": {

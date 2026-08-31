@@ -5,7 +5,16 @@ import { escapeHtml, toast, openSheet, saveFile, haptic, relDay, WEEKDAYS_LONG }
 import * as habits from './habits/program.js';
 import { icon } from './icons.js';
 import * as lock from './lock.js';
+import * as account from './account/session.js';
+import { configured } from './account/config.js';
 import { isNative } from './native.js';
+
+/** One line that says where the record lives, which is the question the row
+ *  is actually answering. */
+function accountRow() {
+  if (!configured()) return 'On this phone only';
+  return account.signedIn() ? account.emailOf() : 'Sign in to keep a copy';
+}
 
 export function renderSettings(mount) {
   const s = store.get().settings;
@@ -54,6 +63,9 @@ export function renderSettings(mount) {
         row('Vibration', toggle('haptics', s.haptics)),
         row('Sound', toggle('sound', s.sound)),
       ].join(''))}
+
+      <h3 class="set-group">Account</h3>
+      <div class="set-nav"><a href="#/account">${icon('user', 16)}<span>${escapeHtml(accountRow())}</span></a></div>
 
       ${group('Privacy', [
         row('Lock the app', toggle('appLock', s.appLock, lock.isAvailable() ? '' : 'disabled'),

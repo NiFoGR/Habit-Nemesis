@@ -1,0 +1,71 @@
+Habit Nemesis
+Copyright (c) [YEAR - NOT SET] [PUBLISHER NAME - NOT SET]
+All rights reserved.
+
+The two bracketed values above are placeholders. Fill them in before this app
+is listed on any store or advertised anywhere. The name must match the `name`
+field in www/legal/publisher.js. The year is the year the app was first
+published.
+
+
+PROPRIETARY LICENCE
+
+This software is proprietary. It is not open source. This repository is public
+so that anyone can read the code and check what the app does with their data.
+Public is not permission, and a fork button is not a licence.
+
+Everything not granted below is reserved by the copyright holder.
+
+
+YOU MAY
+
+- Read the source, here or in a clone.
+- Clone or fork it to read it, to review it, or to prepare a bug report or a
+  contribution to this repository.
+- Quote short extracts to discuss, review or report a problem with it, with
+  credit and a link back.
+
+
+YOU MAY NOT, WITHOUT WRITTEN PERMISSION FROM THE COPYRIGHT HOLDER
+
+- Copy, publish, distribute, sell, rent or sublicense the source or any part of
+  it.
+- Build this app, or anything derived from it, and put it on a store or ship it
+  by any other route.
+- Make a derivative work, including a rewrite that reuses this code, this data
+  model or this design.
+- Use the code, the artwork, the icons, the copy, the name or the branding in
+  any other product, paid or free.
+- Use the source to train a machine learning model, or include it in a training
+  dataset.
+
+"Habit Nemesis", the app's name and its marks belong to the copyright holder.
+Nothing here grants a right to use them.
+
+
+CONTRIBUTIONS
+
+Send a pull request only if you are happy for the copyright holder to use your
+change in this app, including in paid versions, under this licence, with no
+payment and no further conditions.
+
+
+THIRD-PARTY COMPONENTS
+
+The app ships components written by other people. Each keeps its own licence,
+and this notice neither replaces those licences nor narrows any right they give
+you. The list, with each licence in full, is in the app at
+www/legal/licences.html.
+
+
+NO WARRANTY
+
+The software is provided as is, with no warranty of any kind, to the extent the
+law allows. This does not affect the statutory rights of a consumer under the
+law of England and Wales, and it does not limit liability for death or personal
+injury caused by negligence, or for fraud.
+
+
+PERMISSION REQUESTS
+
+Write to the contact address in www/legal/publisher.js. It is not set yet.

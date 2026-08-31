@@ -1,0 +1,32 @@
+name: Keep the account service awake
+
+# A free Supabase project is paused after seven days of low DATABASE activity,
+# and only a manual click in the dashboard brings it back. During store review,
+# or any quiet week, that is an outage: every sign-in fails and the reviewer
+# rejects the build.
+#
+# This makes one real database read a day. A ping to the hostname would not
+# count: the pause criterion is queries, not traffic.
+#
+# Delete this once the project is on a paid plan, where pausing does not apply.
+# GitHub also disables scheduled workflows in a repo with no activity for 60
+# days, so treat it as a backstop rather than a guarantee.
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    # Skipped rather than failed when the secrets are not set yet.
+    if: vars.SUPABASE_CONFIGURED == 'true'
+    steps:
+      - name: Read one row through PostgREST
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+            -H "apikey: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/keepalive?select=id&limit=1")
+          echo "HTTP $code"
+          [ "$code" = "200" ] || exit 1

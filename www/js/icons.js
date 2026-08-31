@@ -26,6 +26,8 @@ const PATHS = {
   calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
   repeat: '<path d="M4 10a6 6 0 0 1 6-6h9"/><path d="M16 1l3 3-3 3"/><path d="M20 14a6 6 0 0 1-6 6H5"/><path d="M8 23l-3-3 3-3"/>',
   book: '<path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H19v16H5.5A1.5 1.5 0 0 0 4 20.5z"/><path d="M4 17.5A1.5 1.5 0 0 1 5.5 16H19"/>',
+  // The account row in Settings.
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/>',
   external: '<path d="M14 4h6v6"/><path d="M20 4l-8 8"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
   // Habits: a checklist. A calendar and a tick are both taken.
   habits: '<path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6.2l1.4 1.4L7.6 4.9"/><path d="M3.5 12.2l1.4 1.4 2.7-2.7"/><path d="M3.5 18.2l1.4 1.4 2.7-2.7"/>',
