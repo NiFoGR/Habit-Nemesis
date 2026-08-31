@@ -94,26 +94,50 @@ export const nextWeek = (key) => weekKey(store.addDays(weekStart(key), 7));
 /** Has this week finished? */
 export const weekClosed = (key) => weekEnd(key) < habits.today();
 
-/** A week's dates, as a fixture list writes them. */
+/** A week's dates, as a fixture list writes them.
+ *  formatRange drops the repeated month by the locale's own rule. Hand-rolling
+ *  that assumed the day comes first, which gave "24 – Aug 30" on en-US and
+ *  "24 – 8月30日" on ja-JP. */
+const RANGE = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
+
 export function weekLabel(key) {
   const a = asDate(weekStart(key));
   const b = asDate(weekEnd(key));
-  const fmt = (d, withMonth) =>
-    withMonth ? d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : String(d.getDate());
-  return `${fmt(a, a.getMonth() !== b.getMonth())} – ${fmt(b, true)}`;
+  return RANGE.formatRange ? RANGE.formatRange(a, b) : `${RANGE.format(a)} – ${RANGE.format(b)}`;
 }
 
 /* --------------------- the roster --------------------- */
 
+/** The first and last day a row was on the grid, as day keys. */
+const bornOn = (h) => store.dayKey(new Date(h.createdAt || 0));
+const leftOn = (h) => (h.archived && h.archivedAt ? store.dayKey(new Date(h.archivedAt)) : null);
+
+/** Every row that was on the grid at any point during the week.
+ *
+ *  A row owes only the days it existed for, which is what makes one rule do
+ *  both jobs. Adding a habit on Wednesday cannot lose you Monday and Tuesday,
+ *  because it was never due then; archiving on Wednesday cannot erase them,
+ *  because it was. The old rule cut any habit created inside the week, which
+ *  left a new install with an empty roster and no scoreable first week. */
 export function rosterFor(key) {
-  const monday = asDate(weekStart(key)).getTime();
-  const mine = habits.all().filter((h) => {
-    if (h.createdAt >= monday) return false; // added after the whistle
-    if (!h.archived) return true;
+  const from = weekStart(key);
+  const to = weekEnd(key);
+  return habits.all().filter((h) => {
+    if (bornOn(h) > to) return false; // added after the final whistle
+    const left = leftOn(h);
     // No archive date means it left before the week. The safe reading.
-    return !!h.archivedAt && h.archivedAt >= monday;
+    if (h.archived && !left) return false;
+    return !left || left >= from;
   });
-  return mine;
+}
+
+/** The days of `key` this row was both alive for and answerable on. */
+function owedDays(h, key, today, sum) {
+  const born = bornOn(h);
+  const left = leftOn(h);
+  return weekDays(key).filter(
+    (d) => d <= today && d >= born && (!left || d <= left) && !sum?.index.get(d)?.skipped
+  );
 }
 
 /* ---------------------- scoring ---------------------- */
@@ -127,8 +151,7 @@ export function scoreWeek(key) {
   let due = 0;
   for (const h of roster) {
     const sum = habits.summary(h);
-    // Days that have happened and were not skipped.
-    const live = weekDays(key).filter((d) => d <= today && !sum?.index.get(d)?.skipped);
+    const live = owedDays(h, key, today, sum);
     for (const d of live) days.add(d);
     const { num, den } = h.freq || { num: 1, den: 1 };
 
@@ -845,6 +868,16 @@ function firstWeekWithData() {
   return earliest ? weekKey(earliest) : currentWeek();
 }
 
+/** Did anything actually get answered in this week? A roster that merely
+ *  existed is not a week you played, and scoring one invents a defeat. */
+function weekHasEntries(key) {
+  const days = weekDays(key);
+  return habits.all().some((h) => {
+    const sum = habits.summary(h);
+    return !!sum && days.some((d) => sum.index.get(d)?.raw !== undefined);
+  });
+}
+
 /** Past weeks get a score so there is something to compete against at once.
  *  Marked 'record', not won or lost: they are the opponents, not results. */
 function backfill(st) {
@@ -855,7 +888,9 @@ function backfill(st) {
   while (key < stop && guard-- > 0) {
     if (!st.arena.weeks[key]) {
       const s = scoreWeek(key);
-      if (s.due > 0) {
+      // One marked cell used to conjure a record back to the habit's creation,
+      // then relegate you for the empty weeks in between.
+      if (s.due > 0 && weekHasEntries(key)) {
         st.arena.weeks[key] = {
           score: s.score, due: s.due, done: s.done,
           opponent: '', oppName: '', oppScore: null,
@@ -888,7 +923,9 @@ function closeWeeks(st, events) {
       continue;
     }
     const s = scoreWeek(key);
-    if (s.due === 0) {
+    // A week nobody answered is not a week they lost. Without this a single
+    // marked cell settled every week between then and now as a defeat.
+    if (s.due === 0 || !weekHasEntries(key)) {
       key = nextWeek(key);
       continue;
     }
@@ -979,6 +1016,9 @@ function closeGroups(st, events) {
     const k = arcKey(a);
     const groupWeeks = arcGroupWeeks(a);
     if (!groupWeeks.length || !weekClosed(groupWeeks[groupWeeks.length - 1])) continue;
+    // A cup you were never in is not one you went out of. Settling an arc whose
+    // group weeks predate the record wrote a defeat on first launch.
+    if (!groupWeeks.some((w) => st.arena.weeks[w])) continue;
     const rec = (st.arena.arcs[k] ||= blankArc());
     if (rec.qualified !== null) continue;
     const table = groupTable(a);
@@ -994,7 +1034,11 @@ function closeMonths(st, events) {
   const months = [...new Set(known)].filter((m) => m < nowMonth).sort();
   for (const m of months) {
     if (st.arena.months[m]) continue;
-    const weeks = weeksOfMonth(m);
+    // Weeks before the record began are absent, not pending: waiting on them
+    // meant the first month never settled and the ladder never applied.
+    const recordFrom = firstWeekWithData();
+    const weeks = weeksOfMonth(m).filter((w) => w >= recordFrom);
+    if (!weeks.length) continue;
     if (!weeks.every((w) => st.arena.weeks[w] || w > currentWeek())) continue;
     const ms = monthScore(m);
     if (ms.empty) continue;
@@ -1016,6 +1060,10 @@ function closeMonths(st, events) {
       move = 'held';
     }
     st.arena.division = to;
+    // A settled month places you. Only closeWeeks used to, and it skips any
+    // week backfill had already stamped, so an install with history was told
+    // for ever that it was still its placement month.
+    st.arena.placed = true;
     st.arena.months[m] = { score: ms.score, w: ms.w, l: ms.l, from, to, move };
     events.push({ kind: 'month', month: m, score: ms.score, from, to, move, w: ms.w, l: ms.l });
   }

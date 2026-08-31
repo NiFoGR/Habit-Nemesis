@@ -167,7 +167,10 @@ export function remove(id) {
 export function setArchived(id, archived) {
   return store.update((st) => {
     const h = st.habits.items.find((x) => x.id === id);
-    if (h) h.archived = !!archived;
+    if (!h) return;
+    h.archived = !!archived;
+    // When, not just that: the Arena owes a row only the days it was on the grid.
+    h.archivedAt = h.archived ? Date.now() : 0;
   });
 }
 
@@ -348,7 +351,10 @@ export function summary(habit) {
   // or when you did it: marking one day of a four-a-week habit must not score
   // zero on the day you did the thing. Daily falls out as the trivial case and
   // keeps partial credit, so 1.4 of 2 litres is worth more than nothing.
-  let score = 0;
+  // Seeded with the first day that counted, not with zero. Starting at zero
+  // meant the average spent a fortnight climbing out of a hole the record never
+  // put you in: a flawless first day rendered as 5%.
+  let score = null;
   let window = 0;
   for (let i = 0; i < days.length; i++) {
     const d = days[i];
@@ -363,8 +369,8 @@ export function summary(habit) {
       d.value = d.unit;
     }
     // A skip leaves the series rather than scoring zero.
-    if (!d.skipped) score = score * mult + d.value * (1 - mult);
-    d.score = score;
+    if (!d.skipped) score = score === null ? d.value : score * mult + d.value * (1 - mult);
+    d.score = score ?? 0;
   }
 
   // Streaks are calendar days, skips included: ten kept, five skipped, ten kept
@@ -400,7 +406,7 @@ export function summary(habit) {
     habit,
     days,
     index,
-    score,
+    score: score ?? 0,
     streak,
     total,
     best: streaks.reduce((a, s) => Math.max(a, s.len), 0),

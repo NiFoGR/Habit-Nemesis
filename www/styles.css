@@ -852,51 +852,53 @@ input[type="range"] {
 .sheet { animation: sheet-in var(--t-base) var(--ease); }
 @keyframes sheet-in { from { transform: translateY(12px); opacity: 0; } }
 
-/* ---------- the rank, as the head of the page ----------
-   Not a card. The crest, the name, the ladder and the bar, and the sentence
-   reduced to one coloured word.
+/* ---------- where you stand, as the head of the page ----------
+   Not a card. The crest carries the personality, so it is paired with the
+   division's name rather than floating alone above an unlabelled row of pips.
    The glow grows with the rung: same accent, more of it. */
 
-.ar-hero {
-  position: relative; text-align: center;
-  padding: 8px 4px 14px; margin-bottom: 16px;
+.ar-head { position: relative; margin-bottom: 18px; }
+.ar-head::before {
+  content: ''; position: absolute; left: 46px; top: -34px; transform: translateX(-50%);
+  width: 240px; height: 200px; pointer-events: none; z-index: -1;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(34, 211, 197, calc(0.04 + var(--lift, 0) * 0.035)), transparent 70%);
 }
-.ar-hero::before {
-  content: ''; position: absolute; left: 50%; top: -30px; transform: translateX(-50%);
-  width: 260px; height: 190px; pointer-events: none; z-index: -1;
-  background: radial-gradient(50% 50% at 50% 50%, rgba(34, 211, 197, calc(0.03 + var(--lift, 0) * 0.035)), transparent 70%);
-}
-/* --lift is set inline from the rung, so a division added to the ladder needs
-   no rule here. */
-/* No glow at all before there is anything to glow about. */
-.ar-hero.unranked { --lift: 0; }
-.ar-hero.unranked::before { display: none; }
-.ar-ladder.none i { opacity: 0.35; }
 
-.ar-crest { display: block; margin-bottom: 2px; }
+.ar-standing { display: flex; align-items: center; gap: 14px; }
+.ar-standing.unranked { --lift: 0; }
+.ar-standing.unranked ~ .ar-ladder-link i { opacity: 0.3; }
+
+.ar-crest { flex: 0 0 auto; display: block; }
 .crest { display: block; object-fit: contain; -webkit-user-select: none; user-select: none; }
 /* Same rules as a crest: artwork, drawn at the size it is asked for. */
 .cup-img { display: block; object-fit: contain; -webkit-user-select: none; user-select: none; }
 .cup-img.cup-none { opacity: 0.35; }
-.ar-crest .crest { margin: 0 auto; }
 
-/* One segment per division, however many there are. The pips were already a
-   ladder, so they are the way into the full one and the control costs no line
-   of its own. */
-.ar-ladder {
-  display: grid; gap: 7px; margin: 14px 0;
+.ar-titles { min-width: 0; }
+.ar-titles h1 {
+  margin: 0; font-size: var(--f-sub); line-height: 1.05; letter-spacing: -0.03em;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.ar-rung { margin: 5px 0 0; font-size: var(--f-fine); color: var(--muted); }
+
+/* One pip per division, and the way into the full ladder. The control costs no
+   line of its own. */
+.ar-ladder-link {
+  display: grid; gap: 7px; margin: 16px 0 0;
   text-decoration: none; color: inherit;
 }
-.ar-ladder-pips { display: flex; gap: 4px; }
-.ar-ladder i { flex: 1 1 0; height: 5px; border-radius: 3px; background: var(--line); }
-.ar-ladder i.on { background: var(--accent); opacity: 0.42; }
-.ar-ladder i.here { opacity: 1; box-shadow: 0 0 10px rgba(34, 211, 197, 0.5); }
-.ar-ladder-go {
-  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+.ar-pips { display: flex; gap: 4px; }
+.ar-pips i { flex: 1 1 0; height: 5px; border-radius: 3px; background: var(--line); }
+.ar-pips i.on { background: var(--accent); opacity: 0.42; }
+.ar-pips i.here { opacity: 1; box-shadow: 0 0 10px rgba(34, 211, 197, 0.5); }
+.ar-ladder-link span {
+  display: inline-flex; align-items: center; gap: 4px;
   font-size: var(--f-fine); color: var(--faint);
 }
-.ar-ladder-go .ico { transform: rotate(180deg); }
-.ar-ladder:active .ar-ladder-go { color: var(--text); }
+.ar-ladder-link .ico { transform: rotate(180deg); }
+.ar-ladder-link:active span { color: var(--text); }
+
+.ar-progress { margin-top: 14px; }
 
 /* ---------- every division ----------
    A rail with the crests standing on it. The rail is painted in each crest's
@@ -987,41 +989,75 @@ input[type="range"] {
 .ar-monthline { margin: 4px 0 0; font-size: var(--f-fine); color: var(--muted); }
 .ar-monthline b { color: var(--text); font-variant-numeric: tabular-nums; }
 
-/* ---------- the week ---------- */
+/* ---------- this week, as a race ----------
+   Two lanes on one scale. Two numbers in two boxes made the reader subtract;
+   a shared axis puts the gap on screen as a distance, and the verdict says it
+   in words so nobody has to. */
 
 /* The one elevated surface here, so it reads as the thing that is happening. */
-.card.ar-week {
+.card.ar-fixture {
   border-color: rgba(34, 211, 197, 0.22);
   box-shadow: 0 14px 40px -20px rgba(34, 211, 197, 0.5);
   padding: 18px 16px 16px;
 }
-.card.ar-week.ahead { border-color: rgba(74, 222, 128, 0.3); box-shadow: 0 14px 40px -20px rgba(74, 222, 128, 0.55); }
-.card.ar-week.behind { border-color: rgba(251, 191, 36, 0.3); box-shadow: 0 14px 40px -20px rgba(251, 191, 36, 0.45); }
-.card.ar-week.void { border-color: var(--line); box-shadow: none; }
+.card.ar-fixture.ahead { border-color: rgba(74, 222, 128, 0.3); box-shadow: 0 14px 40px -20px rgba(74, 222, 128, 0.55); }
+.card.ar-fixture.behind { border-color: rgba(251, 191, 36, 0.3); box-shadow: 0 14px 40px -20px rgba(251, 191, 36, 0.45); }
+.card.ar-fixture.waiting { border-color: var(--line); box-shadow: none; }
 
-.ar-week-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
-.ar-week-head h2 { margin: 0; }
+.ar-fx-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.ar-fx-head h2 { margin: 0; }
+.ar-fx-sub { margin: -6px 0 2px; font-size: var(--f-fine); color: var(--muted); }
+.ar-fx-meta { margin: 0 0 12px; font-size: var(--f-fine); color: var(--faint); }
+.ar-fx-none { margin: 0; font-size: var(--f-small); color: var(--muted); }
+.ar-fixture .btn { margin-top: 14px; }
 
-.ar-score { display: flex; align-items: stretch; gap: 8px; }
-.ar-side {
-  flex: 1 1 0; min-width: 0; text-align: center;
-  background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
-  padding: 12px 8px; color: inherit; font: inherit; cursor: pointer;
+.ar-track { display: grid; gap: 10px; }
+.ar-lane {
+  display: grid; grid-template-columns: 1fr; gap: 6px;
+  width: 100%; padding: 0; text-align: left;
+  background: none; border: 0; color: inherit; font: inherit;
 }
-.ar-side b { display: block; font-size: var(--f-hero); letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
-.ar-side span { display: block; margin-top: 5px; font-size: var(--f-fine); color: var(--muted);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ar-side.me b { color: var(--text); }
-.ar-side.them b { color: var(--muted); }
-.ar-side.them:active { background: var(--surface); transform: scale(0.98); }
-.ar-vs { display: grid; place-items: center; color: var(--faint); flex: 0 0 30px; }
-/* Not a fixture yet. Neither side is winning, so neither is coloured. */
-.ar-week.void .ar-side b, .ar-week.void .ar-verdict b { color: var(--muted); }
+button.ar-lane { cursor: pointer; }
+button.ar-lane:active { opacity: 0.7; }
 
-.ar-verdict { display: flex; justify-content: space-between; gap: 10px; margin: 12px 0 0; font-size: var(--f-small); }
+.ar-lane-who {
+  display: flex; align-items: center; gap: 7px;
+  font-size: var(--f-fine); color: var(--muted); min-width: 0;
+}
+.ar-lane-who .avatar { flex: 0 0 auto; }
+.ar-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); flex: 0 0 auto; }
+.ar-lane.me .ar-dot { background: var(--accent); }
+
+/* The bar and the number share a row, so both lanes align on the same axis. */
+.ar-lane-bar {
+  grid-column: 1; grid-row: 2;
+  height: 30px; border-radius: 8px; background: var(--surface-2); overflow: hidden;
+  margin-right: 64px;
+}
+.ar-lane-bar i {
+  display: block; height: 100%; border-radius: 8px;
+  background: var(--line); transition: width var(--t-slow) var(--ease);
+}
+.ar-lane.me .ar-lane-bar i { background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 55%, transparent), var(--accent)); }
+.ar-fixture.ahead .ar-lane.me .ar-lane-bar i { background: linear-gradient(90deg, color-mix(in srgb, var(--good) 55%, transparent), var(--good)); }
+.ar-lane.them .ar-lane-bar i { background: color-mix(in srgb, var(--muted) 45%, transparent); }
+
+.ar-lane b {
+  grid-column: 1; grid-row: 2; justify-self: end; align-self: center;
+  width: 58px; text-align: right;
+  font-size: var(--f-head); letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+}
+.ar-lane.me b { color: var(--text); }
+.ar-lane.them b { color: var(--muted); }
+
+.ar-verdict {
+  display: flex; justify-content: space-between; gap: 10px;
+  margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--line-soft);
+  font-size: var(--f-small);
+}
 .ar-verdict i { font-style: normal; color: var(--muted); font-size: var(--f-fine); }
-.ar-week.ahead .ar-verdict b { color: var(--good); }
-.ar-week.behind .ar-verdict b { color: var(--warn); }
+.ar-fixture.ahead .ar-verdict b { color: var(--good); }
+.ar-fixture.behind .ar-verdict b { color: var(--warn); }
 
 /* The same rows as the grid, in the same order, so the eye can map one onto
    the other. What is new is the fraction. */

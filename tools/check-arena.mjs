@@ -140,8 +140,8 @@ is('years do not overlap and leave no gap',
   [a.yearAt(0).to, a.yearAt(1).from], [a.yearAt(0).to, st.addDays(a.yearAt(0).to, 1)]);
 is('the one running is not open', a.yearAt(a.currentYearIndex()).open, false);
 
-/* ---------------- the Monday roster lock ---------------- */
-group('the roster, locked on Monday');
+/* ---------------- the roster ---------------- */
+group('the roster, and the days a row owes');
 const at = (k) => new Date(k + 'T12:00').getTime();
 const habit = (id, name, extra) => ({
   id, name, question: '', notes: '', colour: 'teal', kind: 'yesno', unit: '', target: 0,
@@ -159,8 +159,39 @@ st.update((s) => {
   ];
 });
 is('the week begins on the Monday', a.weekStart('2026-W20'), '2026-05-11');
-is('a habit added mid-week is not on it, and one archived mid-week still is',
-  a.rosterFor('2026-W20').map((h) => h.name), ['Before', 'Left during']);
+// A row is on the week if it existed at any point during it, and owes only the
+// days it was there for. Cutting mid-week arrivals outright left a new install
+// with an empty roster and no scoreable first week.
+is('a row that arrived or left mid-week is on it, one that left before is not',
+  a.rosterFor('2026-W20').map((h) => h.name), ['Before', 'Mid-week', 'Left during']);
+is('a row created after the final whistle is not on it',
+  a.rosterFor('2026-W19').map((h) => h.name), ['Before', 'Left during']);
+
+{
+  // Wednesday arrival: Mon and Tue were never its days, so it owes five, not seven.
+  st.update((s) => {
+    s.habits.items = [habit('h_mid', 'Mid-week', { createdAt: at('2026-05-13') })];
+    s.habits.entries = {};
+  });
+  is('a row owes only the days it existed for', a.scoreWeek('2026-W20').due, 5);
+  // The same rule in reverse: archiving cannot erase the days already missed.
+  st.update((s) => {
+    s.habits.items = [habit('h_gone', 'Left during', { archived: true, archivedAt: at('2026-05-14') })];
+  });
+  is('archiving mid-week does not erase the days already owed', a.scoreWeek('2026-W20').due, 4);
+}
+
+{
+  // The first week of a brand new install has to be scoreable at all.
+  st.update((s) => {
+    s.habits.items = [habit('h_new', 'New', { createdAt: at('2026-05-11') })];
+    s.habits.entries = { h_new: { '2026-05-11': 1, '2026-05-12': 1, '2026-05-13': 1,
+      '2026-05-14': 1, '2026-05-15': 1, '2026-05-16': 1, '2026-05-17': 1 } };
+  });
+  const w = a.scoreWeek('2026-W20');
+  is('a habit created on the Monday is scored that same week', [w.done, w.due], [7, 7]);
+  is('and a perfect first week is not void', w.void, false);
+}
 
 /* ---------------- scoring ---------------- */
 group('scoring');
@@ -353,6 +384,76 @@ group('every feat survives being saved and read back');
   const kept = Object.keys(st.get().arena.feats);
   is('every one comes back', kept.length, ids.length);
   is('and none was renamed', ids.filter((id) => !kept.includes(id)), []);
+}
+
+/* ---------------- the write path ---------------- */
+// The only code in the app that can change your division, and until these it
+// had no assertions at all.
+group('what sync writes');
+
+/** A clean store with `weeks` of daily marking ending last Sunday. */
+function seedWeeks(weeks, hit) {
+  st.reset();
+  const end = a.weekEnd(a.prevWeek(a.currentWeek()));
+  const start = st.addDays(end, -(weeks * 7 - 1));
+  const entries = {};
+  for (let k = start, i = 0; k <= end; k = st.addDays(k, 1), i++) entries[k] = hit(i) ? 1 : 0;
+  st.update((s) => {
+    s.habits.items = [habit('h_x', 'X', { createdAt: new Date(start + 'T12:00').getTime() })];
+    s.habits.entries = { h_x: entries };
+  });
+  return { start, end };
+}
+
+{
+  // One cell, months ago, used to conjure a full record of empty weeks between
+  // then and now, and relegate you for every one of them.
+  st.reset();
+  const long_ago = st.addDays(a.weekStart(a.currentWeek()), -70);
+  st.update((s) => {
+    s.habits.items = [habit('h_one', 'One', { createdAt: new Date(long_ago + 'T12:00').getTime() })];
+    s.habits.entries = { h_one: { [long_ago]: 1 } };
+  });
+  a.sync();
+  const weeks = Object.keys(st.get().arena.weeks);
+  is('one marked cell writes one week, not ten', weeks.length, 1);
+  is('and it is the week that cell is in', weeks[0], a.weekKey(long_ago));
+}
+
+{
+  // A cup you were never in is not a cup you went out of.
+  st.reset();
+  a.sync();
+  const arcs = st.get().arena.arcs;
+  is('an empty install settles no arc', Object.keys(arcs).length, 0);
+  is('and records no result at all', Object.values(arcs).filter((x) => x.qualified === false).length, 0);
+}
+
+{
+  // Five perfect weeks: the months they cover have to settle, and settling has
+  // to move the ladder and mark you placed.
+  seedWeeks(5, () => true);
+  a.sync();
+  const arena = st.get().arena;
+  const months = Object.keys(arena.months);
+  is('a full month of played weeks settles', months.length > 0, true);
+  is('a settled month marks you placed', arena.placed, true);
+  is('and a perfect month is never a relegation',
+    Object.values(arena.months).every((m) => m.move !== 'down'), true);
+}
+
+{
+  // The same run, missed every other day: the ladder has to be able to fall.
+  seedWeeks(9, (i) => i % 2 === 0);
+  a.sync();
+  const arena = st.get().arena;
+  const moves = Object.values(arena.months).map((m) => m.move);
+  is('a half-kept run still settles its months', moves.length > 0, true);
+  // Every rung is ten points apart, so one month can only ever move you one.
+  is('and a month moves you one rung at most',
+    Object.values(arena.months).every((m) => Math.abs(a.divisionIndex(m.to) - a.divisionIndex(m.from)) <= 1), true);
+  is('a run at half owes a division no higher than half',
+    a.divisionOf(arena.division).bar <= 0.5, true);
 }
 
 console.log(failed.length ? `\n${failed.length} FAILED: ${failed.join('; ')}` : `\nall ${passed} checks passed`);

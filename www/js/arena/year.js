@@ -12,7 +12,7 @@ import * as arena from './program.js';
 import * as feats from './feats.js';
 import { escapeHtml, haptic } from '../ui.js';
 import { icon } from '../icons.js';
-import { openWeekSheet } from './home.js';
+import { openWeekSheet } from './week-sheet.js';
 
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 const MONTH_LETTER = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];

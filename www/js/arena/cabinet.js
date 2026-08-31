@@ -7,7 +7,8 @@ import * as feats from './feats.js';
 import { escapeHtml, haptic } from '../ui.js';
 import { icon } from '../icons.js';
 import { cup } from './cup.js';
-import { openWeekSheet, wireFeatTiles } from './home.js';
+import { openWeekSheet } from './week-sheet.js';
+import { wireFeatTiles } from './feats-screen.js';
 
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 

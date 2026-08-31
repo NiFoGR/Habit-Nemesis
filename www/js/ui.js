@@ -14,7 +14,7 @@ export function setFeedback(s) {
 }
 
 const PATTERNS = {
-  tick: 12, press: 18, hit: [0, 30, 60, 30], go: 25, rest: 10, done: 22, miss: [0, 40, 40, 40], phase: [0, 20, 40, 20], level: [0, 40, 60, 40, 60, 80],
+  tick: 12, press: 18, hit: [0, 30, 60, 30], done: 22, miss: [0, 40, 40, 40], level: [0, 40, 60, 40, 60, 80],
   // Arena: two beats for a win, three rising for a promotion.
   win: [0, 35, 50, 90], loss: [0, 120], promote: [0, 40, 50, 40, 50, 120], relegate: [0, 160, 80, 160],
   feat: [0, 25, 40, 25, 40, 60], trophy: [0, 60, 60, 60, 60, 60, 60, 200],
@@ -60,7 +60,7 @@ function audio() {
 }
 
 // A context made before the first gesture starts suspended and swallows the cue
-// silently, so the first tap of a session is mute. Resume on the first touch.
+// silently, so the first tap after opening is mute. Resume on the first touch.
 const wake = () => {
   if (ctx && ctx.state === 'suspended') ctx.resume();
 };
@@ -110,9 +110,8 @@ function strike(at, dur = 0.14, { peak = 0.16, tone = 1400 } = {}) {
 }
 
 const N = {
-  c2: 130.81, g2: 196.0, a2: 220.0,
-  c: 261.63, d: 293.66, e: 329.63, f: 349.23, g: 392.0, a: 440.0, b: 493.88,
-  C: 523.25, D: 587.33, E: 659.25, G: 783.99, A: 880.0, C2: 1046.5, E2: 1318.5,
+  c: 261.63, d: 293.66, e: 329.63, g: 392.0,
+  C: 523.25, E: 659.25, G: 783.99, A: 880.0, C2: 1046.5,
 };
 
 /* One key throughout, so two cues overlapping are still music. Each entry is
@@ -124,12 +123,9 @@ const CUES = {
   mark: { notes: [[N.E, 0, 0.07, { peak: 0.07 }], [N.A, 0.045, 0.14, { peak: 0.08 }]] },
   unmark: { notes: [[N.A, 0, 0.06, { peak: 0.05 }], [N.E, 0.04, 0.12, { peak: 0.05 }]] },
   skip: { notes: [[N.d, 0, 0.1, { peak: 0.05, type: 'triangle', bright: 2 }]] },
-  // sessions
-  go: { notes: [[N.c, 0, 0.12, { peak: 0.1 }], [N.g, 0.07, 0.22, { peak: 0.1 }]] },
-  phase: { notes: [[N.G, 0, 0.12, { peak: 0.09 }]] },
-  rest: { notes: [[N.e, 0, 0.18, { peak: 0.07, bright: 2.5 }]] },
   complete: { notes: [[N.c, 0, 0.14, { peak: 0.11 }], [N.e, 0.08, 0.14, { peak: 0.11 }], [N.G, 0.16, 0.4, { peak: 0.12 }]] },
   // the Arena
+  phase: { notes: [[N.G, 0, 0.12, { peak: 0.09 }]] },
   win: { notes: [[N.g, 0, 0.16, { peak: 0.13 }], [N.C, 0.09, 0.34, { peak: 0.14 }]] },
   loss: { notes: [[N.e, 0, 0.2, { peak: 0.1, bright: 2.5 }], [N.c, 0.1, 0.4, { peak: 0.1, bright: 2 }]] },
   feat: { notes: [[N.C, 0, 0.12, { peak: 0.1 }], [N.E, 0.06, 0.12, { peak: 0.11 }], [N.G, 0.12, 0.12, { peak: 0.12 }], [N.C2, 0.18, 0.42, { peak: 0.13 }]] },
@@ -147,8 +143,6 @@ const CUES = {
     strike: [0, 0.2, { peak: 0.2, tone: 2200 }],
     notes: [[N.c, 0.02, 0.2, { peak: 0.13 }], [N.g, 0.12, 0.2, { peak: 0.13 }], [N.C, 0.22, 0.2, { peak: 0.14 }], [N.E, 0.32, 0.2, { peak: 0.14 }], [N.G, 0.42, 0.9, { peak: 0.15 }], [N.C2, 0.42, 0.9, { peak: 0.08, bright: 6 }]],
   },
-  // Not a scold. Low, short, and over.
-  refuse: { notes: [[N.a2, 0, 0.12, { peak: 0.08, type: 'triangle', bright: 2 }]] },
 };
 
 /** Play a cue by name. Unknown names are silent rather than an error, so a
@@ -183,7 +177,7 @@ export function celebrate(el, { colour = 'var(--accent)', count = 14, spread = 9
   setTimeout(() => wrap.remove(), 1200);
 }
 
-export const pct = (v) => `${Math.round(v * 100)}%`;
+export const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 
 /* ---------------- small components ---------------- */
 
@@ -271,27 +265,6 @@ export function lineChart(values, { w = 320, h = 110, pad = 10, color = 'var(--a
     </linearGradient></defs>
     ${area}<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>${dots}${lab}
   </svg>`;
-}
-
-/** Progress ring. */
-export function ringSvg(fraction, label, sub, { size = 168, color = null } = {}) {
-  const r = 70;
-  const c = 2 * Math.PI * r;
-  const off = c * (1 - Math.max(0, Math.min(fraction, 1)));
-  // Default is the logo's teal-to-violet sweep.
-  const gid = `rg${Math.random().toString(36).slice(2, 8)}`;
-  const stroke = color || `url(#${gid})`;
-  return `<div class="ringwrap" style="--size:${size}px">
-    <svg viewBox="0 0 160 160">
-      <defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#22d3c5"/><stop offset="100%" stop-color="#a78bfa"/>
-      </linearGradient></defs>
-      <circle cx="80" cy="80" r="${r}" class="rw-track"/>
-      <circle cx="80" cy="80" r="${r}" class="rw-fill" stroke="${stroke}"
-        stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/>
-    </svg>
-    <div class="ringwrap-core"><b>${label}</b><span>${sub}</span></div>
-  </div>`;
 }
 
 /* ---------------- handing a file to the user ----------------
