@@ -49,8 +49,8 @@ be the end of the app, and Google holds it.
     alias      habitnemesis-upload
     store type PKCS12, RSA 2048
     validity   until January 2054
-    SHA256     01:C8:70:2A:EB:FE:CD:29:44:06:AF:1D:02:F8:E1:9E:
-               E2:F0:F2:BB:F0:32:3F:DE:1C:E8:84:19:68:95:C4:90
+    SHA256     30:A2:80:A5:FA:C3:4C:18:12:B5:33:7B:3B:0A:B5:84:
+               DB:D4:81:4F:C2:50:35:AD:23:BC:B1:72:31:81:E4:BA
 
 The file and its password were handed over once, outside the repo. Put them in
 a password manager. Then, before the first store build, add four repository
