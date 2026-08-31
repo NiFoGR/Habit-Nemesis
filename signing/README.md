@@ -1,6 +1,6 @@
 # Signing
 
-`nifo-debug.keystore` is the fixed key every NiFo APK is signed with.
+`debug.keystore` is the fixed key every sideloaded APK is signed with.
 
 ## Why it is committed
 
@@ -9,8 +9,7 @@ a throwaway one when that file is missing. On a fresh CI runner it is always
 missing, so every build used to come out signed by a different key. Android
 refuses to install an update whose signature does not match the installed app,
 so the only way to take an update was to uninstall first, and uninstalling wipes
-localStorage and IndexedDB. That is every session, measurement and encrypted
-photo gone.
+localStorage and IndexedDB. That is every habit and every day you marked, gone.
 
 Pinning one key keeps the signature stable, so updates install straight over the
 top and the data stays.
@@ -21,8 +20,9 @@ A release key. It uses Android's standard debug alias and passwords
 (`androiddebugkey`, `android`, `android`), which are public by definition, so
 this file protects nothing and is safe to commit for a personal sideloaded app.
 
-If NiFo is ever published, generate a real release key, keep it out of the repo
-in a secret, and sign release builds with that instead. Do not reuse this one.
+This key must never sign a store release. Play and the App Store take an upload
+key once and hold you to it: generate a real release key, keep it in a secret
+outside the repo, and see docs/RELEASE.md. Do not reuse this one.
 
 ## Details
 

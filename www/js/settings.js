@@ -1,33 +1,14 @@
 // App-wide settings. A setting lives where the thing it affects lives.
 
 import * as store from './store.js';
-import * as vault from './pe/vault.js';
-import { usage as photoUsage } from './pe/db.js';
 import { escapeHtml, toast, openSheet, saveFile, haptic, relDay, WEEKDAYS_LONG } from './ui.js';
 import * as habits from './habits/program.js';
 import { icon } from './icons.js';
-import { kegelName, peName } from './names.js';
-import { markUnlocked } from './lock.js';
-import { nifoOffered, nifoUnlocked, tryNifoPin } from './nifo.js';
+import * as lock from './lock.js';
 import { isNative } from './native.js';
-
-const navLink = (href, ico, name) => `<a href="${href}">${icon(ico, 16)}<span>${escapeHtml(name)}</span></a>`;
-
-/** One row per section with its own settings screen. Prayer's live on the
- *  Bible row: prayer lives in the Bible section. Night light is not one of the
- *  five and sits outside, or a locked install cannot reach it at all. */
-function settingsNav() {
-  return `<div class="set-nav">
-    ${navLink('#/kegels/settings', 'target', kegelName())}
-    ${navLink('#/pe/settings', 'trend', peName())}
-    ${navLink('#/bible/settings', 'scripture', 'Bible and prayer')}
-    ${navLink('#/breathe/settings', 'breath', 'Wind-down')}
-  </div>`;
-}
 
 export function renderSettings(mount) {
   const s = store.get().settings;
-  const pe = store.get().pe.settings;
   const hs = habits.settings();
 
   // Label left, value right. No explanation under it.
@@ -55,18 +36,12 @@ export function renderSettings(mount) {
         <span>on this phone, and nowhere else.</span>
       </section>
 
-      ${nifoUnlocked() ? `<h3 class="set-group">Sections</h3>${settingsNav()}` : ''}
-
-      <h3 class="set-group">The screen</h3>
-      <div class="set-nav">${navLink('#/settings/night', 'moon', 'Night light')}</div>
-
       ${group('The grid', [
         row('Week starts', select('firstDay', WEEKDAYS_LONG.map((d, i) => [i, d]), hs.firstDay)),
         row('A new day begins at', select('dayStart', [0, 1, 2, 3, 4, 5, 6].map((h) => [h, h === 0 ? 'Midnight' : `${String(h).padStart(2, '0')}:00`]), hs.dayStartHour),
-          'The grid only. Sessions and readings record against midnight.'),
+          'Set it past midnight and a late night still counts as the day before.'),
         row('Days on screen', select('columns', [3, 4, 5, 6, 7].map((n) => [n, n]), hs.columns)),
         row('Oldest first', toggle('reverseDays', hs.reverseDays)),
-        nifoUnlocked() ? row('Show the five', toggle('showLinked', hs.showLinked)) : '',
       ].join(''))}
 
       ${group('Marking', [
@@ -78,14 +53,13 @@ export function renderSettings(mount) {
       ${group('Feedback', [
         row('Vibration', toggle('haptics', s.haptics)),
         row('Sound', toggle('sound', s.sound)),
-        nifoUnlocked() ? row('Discreet mode', toggle('discreet', s.discreet), 'Renames Kegels and PE.') : '',
       ].join(''))}
 
-      ${nifoUnlocked() ? group('Privacy', [
-        row('Lock the app', toggle('appLock', s.appLock, vault.isSet() ? '' : 'disabled'),
-          vault.isSet() ? 'Asks for your gallery PIN when you open NiFo.' : 'Needs a gallery PIN first.'),
-        row('Gallery auto-lock', select('autoLockMin', [1, 2, 5, 10].map((m) => [m, `${m} min`]), pe.autoLockMin)),
-      ].join('')) : ''}
+      ${group('Privacy', [
+        row('Lock the app', toggle('appLock', s.appLock, lock.isAvailable() ? '' : 'disabled'),
+          lock.isSet() ? 'Asks for your PIN when you open the app.' : 'Sets a PIN. Forgetting it means erasing the app.'),
+        lock.isSet() ? `<div class="set-actions"><button class="btn" id="changePin">Change PIN</button></div>` : '',
+      ].join(''))}
 
       <h3 class="set-group">Your data</h3>
       <div class="set-actions">
@@ -99,13 +73,10 @@ export function renderSettings(mount) {
       ${restorePoints()}
 
       <button class="btn danger wide" id="reset">Erase all data</button>
-      <p class="fineprint">${nifoUnlocked()
-        ? 'Every session, measurement, prayer day, chapter read, habit and feat. No undo.'
-        : 'Every habit, every day you have marked, and everything the Arena has recorded. No undo.'}</p>
+      <p class="fineprint">Every habit, every day you have marked, and everything the Arena has recorded. No undo.</p>
 
       <div class="set-tail">
         <a class="tail-btn" href="#/intro">Show the introduction again</a>
-        ${nifoOffered() ? '<button class="tail-btn" id="nifoOnly">nifo only</button>' : ''}
       </div>
     </div>`;
 
@@ -124,34 +95,17 @@ export function renderSettings(mount) {
     toast('Saved');
   });
   mount.querySelector('#columns').addEventListener('change', (e) => setGrid('columns', Number(e.target.value)));
-  ['reverseDays', 'showLinked', 'shortPress', 'skipDays', 'unknownMarks'].forEach((id) =>
-    // `?.`: the five-sections switch is absent on a locked install.
-    mount.querySelector(`#${id}`)?.addEventListener('change', (e) => setGrid(id, e.target.checked))
+  ['reverseDays', 'shortPress', 'skipDays', 'unknownMarks'].forEach((id) =>
+    mount.querySelector(`#${id}`).addEventListener('change', (e) => setGrid(id, e.target.checked))
   );
   mount.querySelector('#csv').addEventListener('click', exportCsv);
 
   bind('haptics', 'haptics', (e) => e.checked);
   bind('sound', 'sound', (e) => e.checked);
-  // Both belong to sections a locked install does not have.
-  if (mount.querySelector('#discreet')) bind('discreet', 'discreet', (e) => e.checked);
 
-  mount.querySelector('#autoLockMin')?.addEventListener('change', (e) => {
-    store.update((st) => {
-      st.pe.settings.autoLockMin = Number(e.target.value);
-    });
-    toast('Saved');
-  });
-
-  mount.querySelector('#appLock')?.addEventListener('change', (e) => {
-    store.setSetting('appLock', e.target.checked);
-    // Takes effect next launch, so enabling it cannot lock you out here.
-    markUnlocked();
-    toast(e.target.checked ? 'The app will ask for your PIN next time' : 'App lock off');
-  });
-
+  wireLock(mount);
   showUsage(mount);
   wireBackup(mount);
-  mount.querySelector('#nifoOnly')?.addEventListener('click', askNifoPin);
 
   mount.querySelector('#reset').addEventListener('click', () => {
     if (confirm('Erase everything and start from scratch? This cannot be undone.')) {
@@ -181,40 +135,67 @@ function restorePoints() {
   </div>`;
 }
 
-/* ---------------- the door at the bottom ---------------- */
-// One attempt, and it says so first. The sheet never names what is behind it.
+/* ---------------- the PIN ---------------- */
+// One switch. Turning it on asks for a PIN, because a lock with no PIN is a
+// setting that does nothing.
 
-function askNifoPin() {
+function wireLock(mount) {
+  mount.querySelector('#changePin')?.addEventListener('click', () => askPin({ change: true }));
+
+  mount.querySelector('#appLock').addEventListener('change', (e) => {
+    if (!e.target.checked) {
+      lock.clearPin();
+      toast('App lock off');
+      return renderSettings(mount);
+    }
+    e.target.checked = false;
+    if (!lock.isAvailable()) return toast('This browser cannot store a PIN. Open the app over HTTPS.');
+    askPin({ change: false });
+  });
+}
+
+/** Four digits, twice, and it says what forgetting costs before you commit. */
+function askPin({ change }) {
   const sheet = openSheet(`
-    <h2>nifo only</h2>
-    <p class="warn-inline">One attempt. Wrong, and this is gone for good.</p>
-    <input type="password" id="nifoPin" inputmode="numeric" autocomplete="off" class="pin-input" placeholder="••••">
+    <h2>${change ? 'Change your PIN' : 'Set a PIN'}</h2>
+    <p class="fineprint">There is no recovery. Forget it and the only way back in is erasing the app.</p>
+    ${change ? '<input type="password" id="pinOld" inputmode="numeric" autocomplete="off" class="pin-input" placeholder="Current">' : ''}
+    <input type="password" id="pinA" inputmode="numeric" autocomplete="off" class="pin-input" placeholder="New PIN">
+    <input type="password" id="pinB" inputmode="numeric" autocomplete="off" class="pin-input" placeholder="Again">
+    <p class="warn-inline" id="pinErr" hidden></p>
     <div class="btn-row">
-      <button class="btn ghost" data-close>Not now</button>
-      <button class="btn primary" id="nifoGo">Enter</button>
+      <button class="btn ghost" data-close>Cancel</button>
+      <button class="btn primary" id="pinGo">${change ? 'Change' : 'Turn on'}</button>
     </div>`);
 
-  const input = sheet.el.querySelector('#nifoPin');
-  const attempt = () => {
-    if (!input.value) return;
-    const ok = tryNifoPin(input.value);
-    sheet.close();
-    haptic(ok ? 'done' : 'miss');
-    if (!ok) {
-      toast('No.');
-      renderSettings(document.getElementById('app'));
-      return;
-    }
-    // Straight to the grid: the new rows are the answer.
-    toast('Unlocked');
-    location.hash = '#/hub';
+  const el = (id) => sheet.el.querySelector('#' + id);
+  const err = el('pinErr');
+  const fail = (msg) => {
+    err.textContent = msg;
+    err.hidden = false;
+    haptic('miss');
   };
 
-  sheet.el.querySelector('#nifoGo').addEventListener('click', attempt);
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') attempt();
+  el('pinGo').addEventListener('click', async () => {
+    const a = el('pinA').value;
+    const b = el('pinB').value;
+    if (a.length < 4) return fail('At least four digits.');
+    if (a !== b) return fail('Those two do not match.');
+    if (change && !(await lock.verify(el('pinOld').value))) return fail('That is not your current PIN.');
+
+    await lock.setPin(a);
+    if (!change) {
+      store.setSetting('appLock', true);
+      // Takes effect next launch, so turning it on cannot lock you out here.
+      lock.markUnlocked();
+    }
+    sheet.close();
+    haptic('done');
+    toast(change ? 'PIN changed' : 'The app will ask for your PIN next time');
+    renderSettings(document.getElementById('app'));
   });
-  input.focus();
+
+  (change ? el('pinOld') : el('pinA')).focus();
 }
 
 /** Storage: the thing that fills up, and a backup is the only defence. */
@@ -232,7 +213,7 @@ async function showUsage(mount) {
 
 function wireBackup(mount) {
   mount.querySelector('#exportBtn').addEventListener('click', () => {
-    saveFile(`nifo-backup-${store.dayKey()}.json`, store.exportJson());
+    saveFile(`habit-nemesis-backup-${store.dayKey()}.json`, store.exportJson());
   });
 
   const file = mount.querySelector('#importFile');
@@ -251,38 +232,18 @@ function wireBackup(mount) {
         toast(e.message);
       }
     }));
+
   file.addEventListener('change', async () => {
     const f = file.files?.[0];
     if (!f) return;
     try {
-      const text = await f.text();
-      let keepVault = false;
-      // A backup from another device would orphan the photos already here.
-      const count = await photoCount();
-      if (count > 0 && store.backupChangesVault(text)) {
-        keepVault = !confirm(
-          `This backup was made with a different gallery PIN, and there ${count === 1 ? 'is 1 photo' : `are ${count} photos`} stored on this device.\n\n` +
-            "OK: use the backup's PIN. The photos already here become permanently unreadable.\n" +
-            "Cancel: keep this device's PIN, and restore everything else."
-
-        );
-      }
-      const res = store.importJson(text, { keepVault });
-      toast(keepVault ? 'Backup restored, gallery PIN kept' : res.vaultChanged ? 'Backup restored, gallery PIN replaced' : 'Backup restored');
+      store.importJson(await f.text());
+      toast('Backup restored');
       renderSettings(mount);
     } catch (err) {
       toast(`Could not read that file: ${err.message}`);
     }
   });
-}
-
-async function photoCount() {
-  try {
-    const u = await photoUsage();
-    return u?.count || 0;
-  } catch {
-    return 0;
-  }
 }
 
 /** Every habit by day, newest first. Quoted: `Run, then stretch` is one column. */
@@ -308,5 +269,5 @@ function exportCsv() {
         .join(',')
     );
   }
-  saveFile(`nifo-habits-${store.dayKey()}.csv`, rows.join('\n'), 'text/csv');
+  saveFile(`habit-nemesis-${store.dayKey()}.csv`, rows.join('\n'), 'text/csv');
 }

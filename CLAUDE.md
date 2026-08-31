@@ -1,4 +1,4 @@
-# NiFo: standing rules
+# Habit Nemesis: standing rules
 
 Read before changing anything. These outrank habit and outrank the old code
 still sitting in the tree.
@@ -29,7 +29,7 @@ Applies to comments, UI copy, docs, commits and PRs.
   Only when it fits and looks right. A bad chart is worse than a number.
 - Numbers carry units, dates are short, nothing wraps to three lines.
 - One accent, one sans. Colour means state (done, due, missed), never section.
-  Exceptions: a habit's own colour, the serif on scripture, division crests.
+  Exceptions: a habit's own colour, and the division crests.
 
 ### The scale, and how it stays one
 
@@ -58,7 +58,7 @@ and a repetition, and the repetition is what makes a screen feel bloated.
 
 - One folder per feature under `www/js/`. Shell files at the top level.
 - Same filenames in each: `program.js` domain, `home.js` screens,
-  `session.js` the thing that runs, `tracking.js` the record.
+  `tracking.js` the record.
 - A setting lives with the thing it affects. App-wide ones in `settings.js`.
 - Export only what another file imports. Everything else stays local.
 - No dead code. Delete it, git has it.
@@ -68,9 +68,16 @@ and a repetition, and the repetition is what makes a screen feel bloated.
 
 ## Data
 
-- localStorage on device. No account, no server, no analytics.
+- localStorage on device. No account, no server, no analytics. Accounts are
+  planned, not built: see `docs/RELEASE.md` before assuming either way.
 - Schema additive: `hydrate()` merges saved state over `blank()`.
 - Sanitise on read. A saved file is untrusted input.
+
+## The mark
+
+The app icon is a placeholder, and deliberately looks like one. It is drawn
+twice, in `www/js/icons.js` and `tools/gen-icons.mjs`, and the two must agree.
+Replacing it means replacing both and re-running `npm run icons`.
 
 ## Before pushing
 

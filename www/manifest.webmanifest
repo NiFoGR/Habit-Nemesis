@@ -1,7 +1,7 @@
 {
-  "name": "NiFo",
-  "short_name": "NiFo",
-  "description": "Personal app. Pelvic floor training, length training, a prayer rule, Bible reading and a habit grid, all tracked on-device.",
+  "name": "Habit Nemesis",
+  "short_name": "Habit Nemesis",
+  "description": "A habit grid, and a week that plays the best week you ever had.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

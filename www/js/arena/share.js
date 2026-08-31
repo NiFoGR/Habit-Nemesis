@@ -296,7 +296,7 @@ async function render(key) {
   background(ctx, p, f.rung, banner, state, f.key);
 
   // Header.
-  text(ctx, 'NIFO', 72, 100, { size: 30, weight: 700, colour: p.text, align: 'left', spacing: 8 });
+  text(ctx, 'HABIT NEMESIS', 72, 100, { size: 30, weight: 700, colour: p.text, align: 'left', spacing: 8 });
   text(ctx, f.key.replace('-W', ' · WEEK '), W - 72, 100, { size: 30, weight: 600, colour: p.faint, align: 'right', spacing: 4 });
 
   // Crest and division.
@@ -364,7 +364,7 @@ function rowWidth(ctx, r) {
 
 /* ---------------- the sheet ---------------- */
 
-const fileName = (key) => `nifo-${key.toLowerCase().replace('-w', '-week-')}.png`;
+const fileName = (key) => `habit-nemesis-${key.toLowerCase().replace('-w', '-week-')}.png`;
 
 /** Preview first: a share sheet that opens on an image nobody has seen is a
  *  gamble, and this one is the point. */

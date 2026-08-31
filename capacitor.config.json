@@ -1,6 +1,6 @@
 {
-  "appId": "gr.nifo.app",
-  "appName": "NiFo",
+  "appId": "com.habitnemesis.app",
+  "appName": "Habit Nemesis",
   "webDir": "www",
   "android": {
     "backgroundColor": "#0b0f14"

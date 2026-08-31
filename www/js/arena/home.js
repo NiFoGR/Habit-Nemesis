@@ -105,7 +105,7 @@ function weekCard() {
   const rows = live.rows
     .map((r) => {
       const frac = r.due ? r.done / r.due : 0;
-      const colour = r.linked ? 'var(--accent)' : hex(r);
+      const colour = hex(r);
       return `<div class="ar-row">
         <span class="ar-row-name">${escapeHtml(r.name)}</span>
         <span class="ar-row-bar"><i style="width:${(frac * 100).toFixed(0)}%;background:${colour}"></i></span>
@@ -148,7 +148,7 @@ export function openWeekSheet(key) {
   const result = stored?.result === 'won' || stored?.result === 'lost' ? stored.result : '';
   const rows = live.rows
     .map((r) => {
-      const colour = r.linked ? 'var(--accent)' : hex(r);
+      const colour = hex(r);
       return `<div class="ar-row">
         <span class="ar-row-name">${escapeHtml(r.name)}</span>
         <span class="ar-row-bar"><i style="width:${((r.done / Math.max(1, r.due)) * 100).toFixed(0)}%;background:${colour}"></i></span>

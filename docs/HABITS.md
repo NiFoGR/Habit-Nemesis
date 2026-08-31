@@ -1,15 +1,13 @@
 # Habits
 
-The sixth feature, and the one the other five are not: a room with nothing in
-it until you put something there. Kegels encodes a 104-week protocol, PE
-encodes safety limits, the Bible section encodes a canon. This encodes only
-the shape of a question asked once a day, and leaves the question to you.
+The grid, and the whole app under it. A room with nothing in it until you put
+something there: it encodes the shape of a question asked once a day, and
+leaves the question to you.
 
-It is a port of [Loop Habit Tracker](https://github.com/iSoron/uhabits)'s model
-into NiFo's shape. Loop's model is the right one and there was no reason to
-invent a worse one: an exponential score rather than a percentage, a frequency
-expressed as a fraction rather than as a weekday pattern, and four states in a
-cell rather than two.
+The model is [Loop Habit Tracker](https://github.com/iSoron/uhabits)'s, and
+there was no reason to invent a worse one: an exponential score rather than a
+percentage, a frequency expressed as a fraction rather than as a weekday
+pattern, and four states in a cell rather than two.
 
 ## The record
 
@@ -23,13 +21,11 @@ One map, `entries[habitId][dayKey]`, and four values:
 | any number | the measurement | the value and its unit |
 | `-1` | skipped | a skip mark |
 
-Nothing else is stored. **Streaks and scores are computed on every read.** Every
-other section in NiFo caches its streak, which is safe there because the past is
-written once, by a session that has just ended. Here the past is editable from
-the calendar on purpose, so a cached streak would be wrong the moment you
-corrected last Tuesday. The cost is one pass over the habit's history per
-render, memoised until the next write, which for a decade of daily entries is a
-few thousand additions.
+Nothing else is stored. **Streaks and scores are computed on every read.** A
+cached streak would be wrong the moment you corrected last Tuesday, and the past
+is editable from the calendar on purpose. The cost is one pass over the habit's
+history per render, memoised until the next write, which for a decade of daily
+entries is a few thousand additions.
 
 ## Frequency is a fraction
 
@@ -109,39 +105,8 @@ streak at all.
 ## The day boundary
 
 `dayStartHour` moves when a day begins, up to 06:00, so something ticked at
-01:00 belongs to the night you were still up for. **It shifts the grid only.** Sessions and readings record against midnight, and rewriting their history to
-agree would be a far bigger change than the setting is worth; the five feature
-rows are therefore read on their own boundary, which can disagree with the
-grid's by a few hours around midnight.
-
-## The five feature rows
-
-The grid is the home screen, and the five other features are rows on it, filled
-from their own records: a day is done when there is a kegel session, a PE
-session, a chapter read, both halves of the day's prayer, or a wind-down on it.
-
-Two rules govern every row, these included:
-
-- **The name goes there.** The Kegels row opens the Kegels section, where its
-  real numbers live. It does not open a habit-stats screen: that would be a
-  second, thinner view of a record the section already draws properly.
-- **The cell does it.** Today's cell starts the session, opens the reader,
-  begins the wind-down. Every cell behind today is read-only, because of two
-  editable copies of one morning, the one you can reach from the grid is
-  always the one that ends up wrong.
-
-This is the answer to the obvious objection to a habit tracker inside an app
-that already tracks five things. Without these rows you would keep two records
-of the same morning; with them editable you would keep two *writers*.
-
-They read `store.get()` directly rather than importing each feature's program
-module. The store schema is the contract both already depend on, so the grid
-cannot be broken by a change to how, say, PE computes a projection.
-
-The grid asks "did you do it", not "did you hit the target": one kegel session
-is a done day here even when the plan asked for two. The targets live in their
-own sections, and a row that went red for a half-finished day would be a second
-opinion on a question those sections already answer.
+01:00 belongs to the night you were still up for. The Arena scores weeks out of
+the same day keys, so the boundary moves for both together.
 
 ## What the sanitiser has to be careful about
 

@@ -285,10 +285,10 @@ function syncSw() {
     const block = fresh.map((n) => `  './img/${n}',\n`).join('');
     sw = sw.includes(anchor) ? sw.replace(anchor, anchor + block) : sw.replace("  './img/", block + "  './img/");
   }
-  const version = Number(sw.match(/nifo-v(\d+)/)[1]) + 1;
-  sw = sw.replace(/nifo-v\d+/, `nifo-v${version}`);
+  const version = Number(sw.match(/habit-nemesis-v(\d+)/)[1]) + 1;
+  sw = sw.replace(/habit-nemesis-v\d+/, `habit-nemesis-v${version}`);
   writeFileSync(SW, sw);
-  console.log(`sw.js: ${fresh.length} added, ${stale.length} dropped, cache bumped to nifo-v${version}`);
+  console.log(`sw.js: ${fresh.length} added, ${stale.length} dropped, cache bumped to habit-nemesis-v${version}`);
 }
 
 if (written.length) {

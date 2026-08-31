@@ -7,16 +7,6 @@ const plugin = () => window.Capacitor?.Plugins?.LocalNotifications;
 
 export const hasAlarms = () => isNative() && !!plugin();
 
-export async function ensureAlarmPermission() {
-  if (!hasAlarms()) return false;
-  try {
-    const p = await plugin().requestPermissions();
-    return p.display === 'granted';
-  } catch {
-    return false;
-  }
-}
-
 /** One-shot alarm. The same id replaces the previous one. */
 export async function scheduleAlarm(id, at, title, body) {
   if (!hasAlarms()) return false;
@@ -37,20 +27,6 @@ export async function cancelAlarm(id) {
     await plugin().cancel({ notifications: [{ id }] });
   } catch {
     /* never fired is fine */
-  }
-}
-
-/** Daily reminder at hour:minute. */
-export async function scheduleDaily(id, hour, minute, title, body) {
-  if (!hasAlarms()) return false;
-  try {
-    await cancelAlarm(id);
-    await plugin().schedule({
-      notifications: [{ id, title, body, schedule: { on: { hour, minute }, allowWhileIdle: true } }],
-    });
-    return true;
-  } catch {
-    return false;
   }
 }
 
@@ -102,12 +78,6 @@ export async function hideNavBar() {
 }
 
 // Fixed ids: re-scheduling replaces rather than stacks.
-export const ALARM_SESSION = 1001;
-export const ALARM_KEGEL_REMINDER = 2001;
-export const ALARM_PRAY_MORNING = 3001;
-export const ALARM_PRAY_EVENING = 3002;
-export const ALARM_BIBLE = 4001;
-export const ALARM_BREATHE = 5001;
 // Habits get a block: eight ids each, seven weekdays plus the daily collapse.
 export const ALARM_HABIT_BASE = 6001;
 export const ALARM_HABIT_SLOTS = 40;

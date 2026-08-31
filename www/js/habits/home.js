@@ -11,7 +11,6 @@ import * as store from '../store.js';
 import * as habits from './program.js';
 import { escapeHtml, toast, openSheet, haptic, chime, celebrate, WEEKDAYS } from '../ui.js';
 import { icon } from '../icons.js';
-import { navigate } from '../back.js';
 import { openTypePicker } from './edit.js';
 import * as arena from '../arena/program.js';
 import { announce } from '../arena/result.js';
@@ -20,10 +19,8 @@ const LONG_PRESS_MS = 420;
 
 const rowColour = (habit) => (habit.colour ? habits.hexOf(habit.colour) : 'var(--accent)');
 
-/** The line under the name: what one of the five still owes today, or what a
- *  measurable habit counts. */
+/** The line under the name: what a measurable habit counts. */
 function detailOf(habit) {
-  if (habit.linked) return habit.detail;
   if (habit.kind !== 'number') return '';
   const unit = habit.unit || '';
   if (!habit.target) return unit;
@@ -52,35 +49,26 @@ function cellHtml(habit, key, sum, s) {
   const future = key > habits.today();
   if (future) return `<button class="hg-cell future" data-day="${key}" disabled aria-hidden="true"></button>`;
 
-  // One of the five: only today acts. Behind it is that section's record.
-  const go = habit.linked && key === habits.today() && habit.action
-    ? ` data-go="${escapeHtml(habit.action)}"`
-    : '';
   const label = `${habit.name}, ${key}`;
   if (raw === habits.SKIP) {
-    return `<button class="hg-cell skip" data-day="${key}"${go} aria-label="${escapeHtml(label)}: skipped">${icon('skip', 15)}</button>`;
+    return `<button class="hg-cell skip" data-day="${key}" aria-label="${escapeHtml(label)}: skipped">${icon('skip', 15)}</button>`;
   }
   if (habit.kind === 'number') {
     const has = typeof raw === 'number';
     const met = !!d?.hit;
     // No unit here. It is said once, under the name.
-    return `<button class="hg-cell num ${met ? 'on' : has ? 'part' : ''}" data-day="${key}"${go}
+    return `<button class="hg-cell num ${met ? 'on' : has ? 'part' : ''}" data-day="${key}"
       style="${met ? `color:${colour}` : ''}" aria-label="${escapeHtml(label)}: ${has ? fmtNumber(raw) : 'nothing'} ${escapeHtml(habit.unit || '')}">
       ${has ? escapeHtml(fmtNumber(raw)) : '–'}</button>`;
   }
   if (raw === habits.YES) {
-    return `<button class="hg-cell on" data-day="${key}"${go} style="color:${colour}" aria-label="${escapeHtml(label)}: done">${icon('check', 18)}</button>`;
+    return `<button class="hg-cell on" data-day="${key}" style="color:${colour}" aria-label="${escapeHtml(label)}: done">${icon('check', 18)}</button>`;
   }
   if (raw === habits.NO) {
-    return `<button class="hg-cell no" data-day="${key}"${go} aria-label="${escapeHtml(label)}: missed">${icon('close', 16)}</button>`;
+    return `<button class="hg-cell no" data-day="${key}" aria-label="${escapeHtml(label)}: missed">${icon('close', 16)}</button>`;
   }
   // Carried, not done: a satisfied day inside a window is not a day you did it.
   const carried = d?.satisfied ? ' carried' : '';
-  // Still owed: this cell starts it, so it is drawn as something to press.
-  if (go) {
-    return `<button class="hg-cell go" data-day="${key}"${go} style="color:${colour}"
-      aria-label="Start ${escapeHtml(habit.name)}">${icon('play', 15)}</button>`;
-  }
   return `<button class="hg-cell${carried}" data-day="${key}" aria-label="${escapeHtml(label)}: not recorded">${
     s.unknownMarks ? '<span class="hg-q">?</span>' : icon('close', 16)
   }</button>`;
@@ -104,20 +92,19 @@ function headCell(key) {
 
 function rowHtml(habit, days, s, { reorder = false, groupOptions = () => '' } = {}) {
   const sum = habits.summary(habit);
-  // The five take the accent, yours take your colour. Colour here means "mine".
   const colour = rowColour(habit);
   // The name goes there, never to the same place as the cell beside it.
-  const href = habit.linked ? habit.href : `#/habits/habit?id=${encodeURIComponent(habit.id)}`;
-  return `<div class="hg-row ${habit.linked ? 'linked' : ''}" data-id="${escapeHtml(habit.id)}">
-    ${reorder && !habit.linked ? `<button class="hg-drag" aria-label="Reorder ${escapeHtml(habit.name)}">${icon('reorder', 16)}</button>` : ''}
+  const href = `#/habits/habit?id=${encodeURIComponent(habit.id)}`;
+  return `<div class="hg-row" data-id="${escapeHtml(habit.id)}">
+    ${reorder ? `<button class="hg-drag" aria-label="Reorder ${escapeHtml(habit.name)}">${icon('reorder', 16)}</button>` : ''}
     <a class="hg-name" href="${href}">
-      ${habit.linked ? `<span class="hg-link-ico" style="color:${colour}">${icon(habit.icon, 17)}</span>` : miniRing(sum.score, colour)}
+      ${miniRing(sum.score, colour)}
       <span class="hg-label">
-        <b${habit.linked ? '' : ` style="color:${colour}"`}>${escapeHtml(habit.name)}</b>
+        <b style="color:${colour}">${escapeHtml(habit.name)}</b>
         ${detailOf(habit) ? `<i>${escapeHtml(detailOf(habit))}</i>` : ''}
       </span>
     </a>
-    ${reorder && !habit.linked
+    ${reorder
       ? `<div class="hg-move">
           <button class="icon-btn small" data-move="up" aria-label="Move up">${icon('arrowUp', 15)}</button>
           <button class="icon-btn small" data-move="down" aria-label="Move down">${icon('arrowDown', 15)}</button>
@@ -205,7 +192,6 @@ export function renderHome(mount) {
 function redraw(mount) {
   const s = habits.settings();
   const sections = habits.grouped();
-  const linked = habits.linkedHabits();
   const list = habits.active();
   const due = habits.dueToday();
   const days = s.reverseDays ? habits.recentDays(s.columns) : habits.recentDays(s.columns).reverse();
@@ -259,10 +245,7 @@ function redraw(mount) {
       <div class="hgrid ${reorderMode ? 'reordering' : ''}" style="--cols:${reorderMode ? 1 : s.columns}">
         ${reorderMode
           ? `<div class="hg-arrange"><button class="arrange on" id="arrangeBtn">${icon('check', 14)}<span>Done</span></button></div>`
-          : linked.length || habits.active().length ? head : ''}
-        ${linked.length && !reorderMode
-          ? `<div class="hg-rows">${linked.map((h) => rowHtml(h, days, s)).join('')}</div>`
-          : ''}
+          : list.length ? head : ''}
         ${groupSections}
       </div>
 
@@ -392,10 +375,8 @@ function wireCells(grid, mount, s) {
   let held = false;
 
   const act = (cell) => {
-    // One of the five: today's cell is that section's start button.
-    if (cell.dataset.go) return navigate(cell.dataset.go);
     const row = cell.closest('.hg-row');
-    if (!row || row.classList.contains('linked')) return;
+    if (!row) return;
     const habit = habits.byId(row.dataset.id);
     if (!habit) return;
     const key = cell.dataset.day;
@@ -407,8 +388,6 @@ function wireCells(grid, mount, s) {
   grid.addEventListener('click', (e) => {
     const cell = e.target.closest('.hg-cell');
     if (!cell) return;
-    // Navigation, not marking, so it never waits for a long press.
-    if (cell.dataset.go) return navigate(cell.dataset.go);
     // The click after a long press must not cycle a second time.
     if (held) {
       held = false;
@@ -717,7 +696,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
 function mountInstall() {
   const slot = document.getElementById('installSlot');
   if (!slot || !installPrompt) return;
-  slot.innerHTML = '<button class="btn ghost wide" id="installBtn">Install NiFo to your home screen</button>';
+  slot.innerHTML = '<button class="btn ghost wide" id="installBtn">Install Habit Nemesis to your home screen</button>';
   slot.querySelector('#installBtn').addEventListener('click', async () => {
     installPrompt.prompt();
     await installPrompt.userChoice;

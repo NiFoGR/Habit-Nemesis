@@ -28,4 +28,4 @@ createServer(async (req, res) => {
   } catch {
     res.writeHead(404, { 'content-type': 'text/plain' }).end('Not found');
   }
-}).listen(PORT, () => console.log(`NiFo dev server: http://localhost:${PORT}`));
+}).listen(PORT, () => console.log(`Habit Nemesis dev server: http://localhost:${PORT}`));

@@ -251,9 +251,9 @@ What is stored is that you have seen it — the record already says it happened.
 
 ### Shouting through the door
 
-Three real Android alarms, on the same machinery as the prayer and reading
-reminders, re-armed on every launch because a launch is exactly when what is
-true about them has changed:
+Three real Android alarms, on the same machinery as the habit reminders,
+re-armed on every launch because a launch is exactly when what is true about
+them has changed:
 
 - the morning a cup opens
 - the morning its group stage ends
@@ -298,12 +298,9 @@ Not achievements. A feat is something you did, and the test in the code is:
 
 > Could you say it out loud to another person and have it mean something?
 
-*Held a contraction for thirty seconds* passes. *Opened the app seven days
-running* does not. The second is a fact about using an app; only the first is a
-fact about your life. That test retired both of the catalogues the app used to
-have — fifteen kegel badges and fifteen PE achievements, neither of which knew
-the other existed and neither visible outside its own section — and everything
-worth keeping was carried into the one list. Nothing had to be migrated:
+*A hundred days unbroken* passes. *Opened the app seven days running* does not.
+The second is a fact about using an app; only the first is a fact about your
+life. That test is what keeps the list short. Nothing ever has to be migrated:
 because a feat is a predicate, anything you had already earned is earned again
 the first time the list is checked.
 

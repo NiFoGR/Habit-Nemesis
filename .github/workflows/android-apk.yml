@@ -62,7 +62,7 @@ jobs:
         # checked rather than assumed.
         run: |
           APK=android/app/build/outputs/apk/debug/app-debug.apk
-          EXPECTED=$(keytool -list -v -keystore signing/nifo-debug.keystore \
+          EXPECTED=$(keytool -list -v -keystore signing/debug.keystore \
             -storepass android 2>/dev/null | grep 'SHA256:' | head -1 | tr -d ' ')
           ACTUAL=$(keytool -printcert -jarfile "$APK" 2>/dev/null \
             | grep 'SHA256:' | head -1 | tr -d ' ')
@@ -73,11 +73,11 @@ jobs:
       - name: Name the APK after the run
         run: |
           mkdir -p out
-          cp android/app/build/outputs/apk/debug/app-debug.apk "out/nifo-${GITHUB_SHA::7}.apk"
+          cp android/app/build/outputs/apk/debug/app-debug.apk "out/habit-nemesis-${GITHUB_SHA::7}.apk"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: nifo-apk
+          name: habit-nemesis-apk
           path: out/*.apk
           if-no-files-found: error
           retention-days: 90
@@ -93,14 +93,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           SHORT="${GITHUB_SHA::7}"
-          APK="out/nifo-$SHORT.apk"
+          APK="out/habit-nemesis-$SHORT.apk"
           # Re-running a build of the same commit must not fail on the tag it
           # created the first time round.
           if gh release view "build-$SHORT" >/dev/null 2>&1; then
             gh release upload "build-$SHORT" "$APK" --clobber
           else
             gh release create "build-$SHORT" "$APK" \
-              --title "NiFo $SHORT" \
+              --title "Habit Nemesis $SHORT" \
               --notes "Debug APK built from $GITHUB_SHA. Signed with the project's fixed key, so it installs over an earlier build without clearing your data." \
               --latest
           fi

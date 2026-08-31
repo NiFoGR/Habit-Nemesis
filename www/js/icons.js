@@ -91,16 +91,12 @@ export function icon(name, size = 20) {
   return svg(PATHS[name] || PATHS.target, size);
 }
 
-/** The mark: three rising bars, like the N beside it. Survives 16px and a
- *  circle crop. The gradient is the last place the teal-to-violet ramp lives. */
+/** Placeholder. The real mark is not drawn yet, so this one is deliberately
+ *  unfinished: a stand-in that looks final is one nobody remembers to replace. */
 export function logoMark(size = 26) {
-  // Unique id per call: duplicate gradient ids are invalid and Safari picks the first.
-  const id = `nifoG${Math.random().toString(36).slice(2, 7)}`;
-  const bar = (x, y) => `<rect x="${x}" y="${y}" width="7.5" height="${34 - y}" rx="3.75" fill="url(#${id})"/>`;
   return `<svg width="${size}" height="${size}" viewBox="0 0 40 40" fill="none" aria-hidden="true" class="logo-mark">
-    <defs><linearGradient id="${id}" x1="0" y1="1" x2="1" y2="0">
-      <stop offset="0%" stop-color="#22d3c5"/><stop offset="100%" stop-color="#a78bfa"/>
-    </linearGradient></defs>
-    ${bar(4.5, 22)}${bar(16.25, 14.5)}${bar(28, 6)}
+    <rect x="3" y="3" width="34" height="34" rx="9" stroke="currentColor" stroke-width="2.5" stroke-dasharray="5 4" opacity=".55"/>
+    <path d="M14 16.5l3.5 3.5 7-7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/>
+    <path d="M14 26h12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity=".3"/>
   </svg>`;
 }

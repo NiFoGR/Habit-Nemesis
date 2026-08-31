@@ -8,15 +8,8 @@
 //   Frequency is a fraction, n in d. Daily is 1/1, three a week is 3/7.
 
 import * as store from '../store.js';
-import { kegelName, peName } from '../names.js';
-import * as kegels from '../kegels/program.js';
-import * as pe from '../pe/program.js';
-import * as bible from '../bible/program.js';
-import * as pray from '../pray/program.js';
-import * as breathe from '../breathe/program.js';
-import { fmtHours, WEEKDAYS } from '../ui.js';
+import { WEEKDAYS } from '../ui.js';
 import { cancelAlarms, scheduleMany, ALARM_HABIT_BASE, ALARM_HABIT_SLOTS } from '../native.js';
-import { nifoUnlocked } from '../nifo.js';
 
 /* -------------------- the palette -------------------- */
 
@@ -46,8 +39,6 @@ export const YES = 1;
 export const MAX_HABITS = 100;
 /** Longer than this is a corrupt createdAt, not a habit. */
 const MAX_SPAN_DAYS = 3650;
-/** How far back a linked row reads. */
-const LINKED_SPAN_DAYS = 730;
 
 /* ---------------- the day ---------------- */
 
@@ -303,138 +294,12 @@ export function freqLabel(freq) {
   return `${num} times in ${den} days`;
 }
 
-/* -------------------- linked rows -------------------- */
-
-// Each source returns the set of days it happened on. Asked per day instead,
-// the grid would rescan every log seven hundred times per row.
-export const LINKED = [
-  {
-    id: 'link:kegels', icon: 'target', href: '#/kegels',
-    name: () => kegelName(),
-    question: 'Did you train the pelvic floor?',
-    days: (st) => new Set(st.sessions.map((s) => s.date)),
-    action: () => '#/session',
-    detail: () => {
-      const plan = kegels.planForToday();
-      if (plan.type === 'release') return 'Release day';
-      const left = Math.max(0, plan.target - plan.doneToday);
-      if (plan.complete) return `Week ${plan.level} · done today`;
-      return `${left} left · week ${plan.level}`;
-    },
-  },
-  {
-    id: 'link:pe', icon: 'trend', href: '#/pe',
-    name: () => peName(),
-    question: 'Did you put the work in?',
-    days: (st) => new Set(st.pe.sessions.map((s) => s.date)),
-    action: () => '#/pe/timer?type=stretch',
-    detail: () => {
-      const done = store
-        .get()
-        .pe.sessions.filter((s) => s.date === store.dayKey() && s.type === 'stretch')
-        .reduce((a, s) => a + s.durationSec * 1000, 0);
-      const goal = pe.DAILY_STRETCH_GOAL_MS;
-      return done >= goal ? 'Two hours done' : `${fmtHours(done)} of ${fmtHours(goal)}`;
-    },
-  },
-  {
-    id: 'link:bible', icon: 'scripture', href: '#/bible',
-    name: () => 'Bible',
-    question: 'Did you read?',
-    days: (st) => new Set(Object.entries(st.bible.days).filter(([, d]) => d?.chapters?.length).map(([k]) => k)),
-    action: () => {
-      const p = bible.position();
-      return `#/bible/reader?book=${p.book}&ch=${p.ch}`;
-    },
-    detail: () => {
-      const today = bible.dayRead();
-      if (today.any) return `${today.count} chapter${today.count === 1 ? '' : 's'} today`;
-      const p = bible.position();
-      return bible.refName(`${p.book}:${p.ch}`);
-    },
-  },
-  {
-    id: 'link:pray', icon: 'sun', href: '#/bible',
-    name: () => 'Prayer',
-    question: 'Morning and night, both?',
-    days: (st) => new Set(Object.entries(st.pray.days).filter(([, d]) => d && d.morning && d.evening).map(([k]) => k)),
-    // Whichever half is owed. Both kept opens the morning again, which is harmless.
-    action: () => `#/bible/pray?slot=${pray.dayState().morning ? 'evening' : 'morning'}`,
-    detail: () => {
-      const d = pray.dayState();
-      if (d.morning && d.evening) return 'Kept, both';
-      return d.morning ? 'Night owed' : 'Morning owed';
-    },
-  },
-  {
-    id: 'link:breathe', icon: 'breath', href: '#/breathe',
-    name: () => 'Wind-down',
-    question: 'Did you breathe before sleep?',
-    days: (st) => new Set(Object.keys(st.breathe.days)),
-    action: () => '#/breathe/run',
-    detail: () => {
-      const t = breathe.dayState();
-      if (t.done) return 'Done tonight';
-      const s = breathe.settings();
-      const p = breathe.PATTERNS[s.pattern];
-      return `${s.minutes} min · ${p ? p.short : 'paced breathing'}`;
-    },
-  },
-];
-
-/** A feature's status, asked so it cannot break the grid. */
-function safely(fn, fallback) {
-  try {
-    return fn();
-  } catch {
-    return fallback;
-  }
-}
-
-/** A linked source dressed as a habit. `linked` marks its past read-only.
- *  The setting is honoured downstream too, the Arena included: rows you have
- *  switched off must not lose you a week. */
-export function linkedHabits() {
-  const st = store.get();
-  // A locked install has nothing to read. Checked ahead of the setting: "I turned
-  // these off" and "these are not mine" are different things.
-  if (!nifoUnlocked()) return [];
-  if (!settings().showLinked) return [];
-  return LINKED.map((l) => {
-    const days = l.days(st);
-    return {
-      id: l.id,
-      linked: true,
-      icon: l.icon,
-      href: l.href,
-      name: l.name(),
-      question: l.question,
-      notes: '',
-      colour: null, // the app's own rows take the accent, not a colour of their own
-      kind: 'yesno',
-      unit: '',
-      target: 0,
-      targetType: 'atleast',
-      freq: { num: 1, den: 1 },
-      group: '',
-      archived: false,
-      createdAt: st.createdAt,
-      order: -1,
-      read: (key) => days.has(key),
-      // Both computed, not stored: they describe now, not the record.
-      action: safely(l.action, null),
-      detail: safely(l.detail, ''),
-    };
-  });
-}
-
 /* --------------------- the series --------------------- */
 
 const cache = new Map();
 store.subscribe(() => cache.clear());
 
 function rawOf(habit, key) {
-  if (habit.linked) return habit.read(key) ? YES : undefined;
   return valueOn(habit, key);
 }
 
@@ -467,8 +332,7 @@ export function summary(habit) {
   if (hit) return hit;
 
   const end = today();
-  // A linked row gets a fixed window; a real habit starts at created or oldest entry.
-  const start = habit.linked ? store.addDays(end, -LINKED_SPAN_DAYS) : firstKey(habit);
+  const start = firstKey(habit);
   const { num, den } = habit.freq;
   const mult = Math.pow(0.5, Math.sqrt(num / den) / 13);
 
@@ -668,10 +532,9 @@ export function calendar(sum, weeks = 17) {
 
 /* ---------------- across all habits ---------------- */
 
-/** What is still owed today across the grid, linked rows included when they
- *  are on it: the number always describes what is on screen. */
+/** What is still owed today across the grid. */
 export function dueToday() {
-  const list = [...linkedHabits(), ...active()];
+  const list = active();
   let done = 0;
   const pending = [];
   for (const h of list) {
@@ -705,7 +568,7 @@ export function syncAlarms() {
     for (const d of days) {
       notifications.push({
         id: ALARM_HABIT_BASE + slot * 8 + d,
-        title: 'NiFo',
+        title: 'Habit Nemesis',
         body: h.question || h.name,
         hour,
         minute,

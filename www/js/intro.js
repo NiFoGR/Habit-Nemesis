@@ -2,8 +2,6 @@
 //
 // Two of them are done rather than read: page 2 makes you mark a cell, page 7
 // builds the grid you leave on. Everything else is one picture and one line.
-//
-// It says nothing about the five private sections. Those are behind the door.
 
 import * as store from './store.js';
 import * as habits from './habits/program.js';
@@ -108,7 +106,7 @@ function starters(picked) {
 
 const PAGES = [
   {
-    title: 'NiFo',
+    title: 'Habit Nemesis',
     line: 'Everything you are keeping, on one screen. No account and no server: none of it leaves this phone.',
     art: () => `<span class="intro-logo">${logoMark(76)}</span>`,
     next: 'Show me',
@@ -141,8 +139,6 @@ const PAGES = [
   },
   {
     title: 'What you keep',
-    // counts() is what this install can earn, not the catalogue: the five
-    // sections are locked on a fresh phone and their feats are unreachable.
     // A function, not a string: PAGES is built at import time and the store is
     // not hydrated yet.
     line: () => `Three cups a year, on the seasons. ${counts().total} feats, each one worth saying out loud.`,

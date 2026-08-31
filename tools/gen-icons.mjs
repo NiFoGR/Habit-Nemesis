@@ -1,4 +1,4 @@
-// PWA and launcher icons as PNGs, no dependencies. Draws the NiFo mark.
+// PWA and launcher icons as PNGs, no dependencies. Draws the placeholder mark.
 //   node tools/gen-icons.mjs [--android]
 import { deflateSync } from 'node:zlib';
 import { writeFileSync, mkdirSync } from 'node:fs';
@@ -52,32 +52,25 @@ const clamp01 = (t) => (t < 0 ? 0 : t > 1 ? 1 : t);
 // Antialiasing coverage: 1 inside, 0 outside, ramped over ~1px.
 const band = (d, edge, soft = 1.2) => clamp01((edge - d) / soft + 0.5);
 
-/** A rounded bar as coverage at (x, y). */
-function barCoverage(x, y, bx, by, bw, bh) {
-  const rad = bw / 2;
-  const cx = Math.min(Math.max(x, bx + rad), bx + bw - rad);
-  const cy = Math.min(Math.max(y, by + rad), by + bh - rad);
-  return band(Math.hypot(x - cx, y - cy), rad);
+/** Signed distance from (x, y) to a rounded square's edge. Negative inside. */
+function roundSquare(dx, dy, half, rad) {
+  const qx = Math.abs(dx) - (half - rad);
+  const qy = Math.abs(dy) - (half - rad);
+  return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - rad;
 }
 
-/** The mark: three rising bars. Survives being cropped to a circle. */
+/** The placeholder: a dashed square, matching logoMark in www/js/icons.js.
+ *  Deliberately unfinished. Replace both when the real mark exists. */
 function drawIcon(size, { maskable, foreground = false }) {
   const px = Buffer.alloc(size * size * 4);
   const c = size / 2;
   // Maskable is cropped by the launcher, so the art shrinks into the safe zone.
   const scale = foreground ? 0.46 : maskable ? 0.64 : 0.8;
-  const art = size * scale;            // the mark's own square
-  const x0 = c - art / 2;
-  const y0 = c - art / 2;
-
-  // Geometry in fractions of the art square, so it matches icons.js exactly.
-  const BARS = [
-    { x: 0.0125, top: 0.4 },
-    { x: 0.3437, top: 0.2125 },
-    { x: 0.675, top: 0.05 },
-  ];
-  const BAR_W = 0.2125;
-  const BASE = 0.95;
+  const half = (size * scale) / 2;
+  const rad = half * 0.26;
+  const stroke = Math.max(1.5, half * 0.15);
+  // Dash length along the edge, in pixels.
+  const dash = half * 0.3;
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
@@ -94,22 +87,24 @@ function drawIcon(size, { maskable, foreground = false }) {
 
       if (!maskable) {
         // Maskable stays full-bleed opaque: Android crops it to its own shape.
-        const rad = size * 0.22;
-        const qx = Math.max(Math.abs(dx) - (size / 2 - rad), 0);
-        const qy = Math.max(Math.abs(dy) - (size / 2 - rad), 0);
-        a = Math.round(255 * band(Math.hypot(qx, qy), rad));
+        const tileRad = size * 0.22;
+        const qx = Math.max(Math.abs(dx) - (size / 2 - tileRad), 0);
+        const qy = Math.max(Math.abs(dy) - (size / 2 - tileRad), 0);
+        a = Math.round(255 * band(Math.hypot(qx, qy), tileRad));
       }
 
-      for (const bar of BARS) {
-        const bx = x0 + bar.x * art;
-        const by = y0 + bar.top * art;
-        const cov = barCoverage(x + 0.5, y + 0.5, bx, by, BAR_W * art, (BASE - bar.top) * art);
-        if (cov <= 0) continue;
-        // Left to right, so the tallest bar is the violet end, as in the SVG.
-        const t = clamp01((bar.x + BAR_W / 2));
-        r = lerp(r, lerp(34, 167, t), cov);
-        g = lerp(g, lerp(211, 139, t), cov);
-        b = lerp(b, lerp(197, 250, t), cov);
+      // On the outline, and on the lit half of a dash.
+      const onRing = band(Math.abs(roundSquare(dx, dy, half, rad)), stroke / 2);
+      // Arc length, near enough: the long axis runs along the edge you are on.
+      const along = Math.abs(dx) > Math.abs(dy) ? dy : dx;
+      const lit = Math.floor((along + half * 20) / dash) % 2 === 0 ? 1 : 0;
+      const cov = onRing * lit;
+
+      if (cov > 0) {
+        // One muted slate. A placeholder that reads as brand colour is not one.
+        r = lerp(r, 125, cov);
+        g = lerp(g, 143, cov);
+        b = lerp(b, 166, cov);
         if (foreground) a = Math.max(a, Math.round(255 * cov));
       }
 

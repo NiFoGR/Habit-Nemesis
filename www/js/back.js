@@ -27,13 +27,13 @@ let was = '';     // hash we were on before the current navigation
 const canGoBack = () => here > first;
 
 /** The screen beneath this one, or null at the bottom. */
-const beneath = () => history.state?.nifoUnder ?? null;
+const beneath = () => history.state?.hnUnder ?? null;
 
 /** Kept across a replace: the browser wipes history.state. */
 let carried = null;
 
 function onNavigated() {
-  const stamp = history.state?.nifoState;
+  const stamp = history.state?.hnState;
   if (typeof stamp === 'number') {
     // Seen before: back, forward, or the hashchange after a popstate.
     here = stamp;
@@ -45,7 +45,7 @@ function onNavigated() {
   here = carried ? carried.serial : ++seq;
   const under = carried ? carried.under : was;
   carried = null;
-  history.replaceState({ ...(history.state || {}), nifoState: here, nifoUnder: under }, '');
+  history.replaceState({ ...(history.state || {}), hnState: here, hnUnder: under }, '');
   was = location.hash;
 }
 
@@ -87,12 +87,6 @@ export function goBack() {
   return false;
 }
 
-/** Way out for a screen that handles Back itself. `fallback` when no history. */
-export function leaveTo(fallback) {
-  if (canGoBack()) return history.back();
-  replaceWith(fallback);
-}
-
 /** Navigate. A screen that runs something is replaced, never stacked. */
 export function navigate(hash) {
   if (!ephemeral(location.hash)) {
@@ -112,7 +106,7 @@ export function initBack(opts) {
   ephemeral = opts.ephemeral;
 
   // The launch entry is the floor.
-  history.replaceState({ ...(history.state || {}), nifoState: 0, nifoUnder: null }, '');
+  history.replaceState({ ...(history.state || {}), hnState: 0, hnUnder: null }, '');
   seq = here = first = 0;
   was = location.hash;
   // Both: a push raises only hashchange, a same-hash back only popstate.

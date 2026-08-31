@@ -230,7 +230,7 @@ function rowsOfYear(weeks) {
   const tally = new Map();
   for (const w of weeks) {
     for (const r of arena.scoreWeek(w.key).rows) {
-      const t = tally.get(r.id) || { name: r.name, colour: r.colour, linked: r.linked, done: 0, due: 0 };
+      const t = tally.get(r.id) || { name: r.name, colour: r.colour, done: 0, due: 0 };
       t.done += r.done;
       t.due += r.due;
       tally.set(r.id, t);
@@ -243,7 +243,7 @@ function rowsOfYear(weeks) {
     <div class="ar-rows">
       ${rows
         .map((r) => {
-          const colour = r.linked ? 'var(--accent)' : r.colour ? habits.hexOf(r.colour) : 'var(--accent)';
+          const colour = r.colour ? habits.hexOf(r.colour) : 'var(--accent)';
           return `<div class="ar-row">
             <span class="ar-row-name" style="color:${colour}">${escapeHtml(r.name)}</span>
             <span class="ar-row-bar"><i style="width:${((r.done / r.due) * 100).toFixed(0)}%;background:${colour}"></i></span>

@@ -1,4 +1,4 @@
-package gr.nifo.systemui;
+package com.habitnemesis.systemui;
 
 import android.app.Activity;
 import android.view.View;

@@ -1,6 +1,6 @@
-// Modelled on the nightlight plugin's build file, which is itself modelled on
-// @capacitor/local-notifications'. Never published; resolved from a file:
-// dependency in the app's package.json.
+// Modelled on @capacitor/local-notifications' build file. Never published;
+// resolved from a file: dependency in the app's package.json.
+
 ext {
     androidxAppCompatVersion = project.hasProperty('androidxAppCompatVersion') ? rootProject.ext.androidxAppCompatVersion : '1.7.0'
     androidxCoreVersion = project.hasProperty('androidxCoreVersion') ? rootProject.ext.androidxCoreVersion : '1.13.1'
@@ -19,7 +19,7 @@ buildscript {
 apply plugin: 'com.android.library'
 
 android {
-    namespace "gr.nifo.systemui"
+    namespace "com.habitnemesis.systemui"
     compileSdk project.hasProperty('compileSdkVersion') ? rootProject.ext.compileSdkVersion : 35
     defaultConfig {
         minSdkVersion project.hasProperty('minSdkVersion') ? rootProject.ext.minSdkVersion : 23

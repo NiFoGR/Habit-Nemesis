@@ -1,7 +1,7 @@
 {
-  "name": "nifo-systemui",
+  "name": "habit-nemesis-systemui",
   "version": "1.0.0",
-  "description": "Hides the Android navigation bar for NiFo, so the app's own bottom bar is the bottom of the screen. Swipe from the edge brings the system bar back transiently. The status bar is deliberately left alone.",
+  "description": "Hides the Android navigation bar, so the app's own bottom bar is the bottom of the screen. Swipe from the edge brings the system bar back transiently. The status bar is deliberately left alone.",
   "main": "index.js",
   "license": "UNLICENSED",
   "capacitor": {

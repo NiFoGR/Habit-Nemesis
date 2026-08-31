@@ -202,44 +202,29 @@ twenty-two in the Arena. A public build ships these and nothing else.
 
 That is 40 public feats, of which 12 already work.
 
-### 3b. Private feats
-
-These read the five preloaded sections, so they only exist on an unlocked
-install. They work today. Their art is lower priority: the app currently draws
-them with six shared line icons, which is why that screen looks like a
-spreadsheet of stopwatches.
-
-Kegels: `hold20` `hold30` `hold60` `reps1k` `reps10k` `kegel30` `week26`
-`week52` `week104`
-
-PE: `stretch2h` `stretch2hWeek` `stretch10` `stretch50` `stretch100` `grew1cm`
-`girth5mm` `checkins12`
-
-Bible: `books10` `gospels` `torah` `psalter` `newTestament` `wholeCanon`
-
-Prayer: `rule40` `rule100` `rule1000`
-
-Wind-down: `nights30` `nights100`
-
 ---
 
 ## 4. Section marks
 
-Six, optional, and the thing that would move the app furthest away from looking
-like a spreadsheet. One large mark per section home, sitting behind the header
-the way the crest sits on the Arena. Abstract, not literal.
+Two, optional, and the thing that would move the app furthest away from looking
+like a spreadsheet. One large mark per room home, sitting behind the header the
+way the crest sits on the Arena. Abstract, not literal.
 
-| File | Section | Idea |
+| File | Room | Idea |
 |---|---|---|
 | `mark-habits.webp` | The grid | A field of cells, some filled |
 | `mark-arena.webp` | The Arena | Two chevrons meeting |
-| `mark-kegels.webp` | Kegels | A sling under tension |
-| `mark-pe.webp` | PE | A line being drawn out |
-| `mark-bible.webp` | Bible | An open codex |
-| `mark-breathe.webp` | Wind-down | A held centre, rings moving out |
 
 512 x 512, and they can be softer and more atmospheric than the badges, because
 they sit behind text rather than beside it.
+
+## 5. The app mark
+
+Missing, and the one thing on this page that blocks a store listing. The app
+currently draws a dashed square placeholder in `www/js/icons.js` and
+`tools/gen-icons.mjs`, deliberately unfinished so nobody mistakes it for done.
+Both need replacing together, plus a 1024 x 1024 opaque PNG with no
+transparency and no rounded corners for the two stores.
 
 ---
 

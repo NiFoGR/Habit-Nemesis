@@ -62,8 +62,8 @@ const EXTRACTION = `<?xml version="1.0" encoding="utf-8"?>
 `;
 
 mkdirSync(RES, { recursive: true });
-writeFileSync(`${RES}/nifo_backup.xml`, FULL_BACKUP);
-writeFileSync(`${RES}/nifo_extraction.xml`, EXTRACTION);
+writeFileSync(`${RES}/hn_backup.xml`, FULL_BACKUP);
+writeFileSync(`${RES}/hn_extraction.xml`, EXTRACTION);
 
 let xml = readFileSync(MANIFEST, 'utf8');
 
@@ -73,8 +73,8 @@ if (!xml.includes('xmlns:tools=')) {
 
 const WANT = {
   'android:allowBackup': 'true',
-  'android:fullBackupContent': '@xml/nifo_backup',
-  'android:dataExtractionRules': '@xml/nifo_extraction',
+  'android:fullBackupContent': '@xml/hn_backup',
+  'android:dataExtractionRules': '@xml/hn_extraction',
 };
 
 // The <application> tag, however Capacitor happens to have written it.

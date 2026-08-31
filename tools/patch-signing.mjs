@@ -8,7 +8,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 const GRADLE = 'android/app/build.gradle';
-const KEYSTORE = 'signing/nifo-debug.keystore';
+const KEYSTORE = 'signing/debug.keystore';
 
 if (!existsSync(KEYSTORE)) {
   console.error(`patch-signing: ${KEYSTORE} is missing; refusing to build an APK with an unknown key.`);
@@ -19,7 +19,7 @@ if (!existsSync(GRADLE)) {
   process.exit(1);
 }
 
-const MARKER = 'nifo-fixed-signing';
+const MARKER = 'fixed-signing';
 let gradle = readFileSync(GRADLE, 'utf8');
 if (gradle.includes(MARKER)) {
   console.log('patch-signing: already applied.');
@@ -28,7 +28,7 @@ if (gradle.includes(MARKER)) {
 
 // `android { }` is an extension, so a second block is additive.
 gradle += `
-// ${MARKER}: every NiFo build is signed with the same committed key so that
+// ${MARKER}: every build is signed with the same committed key so that
 // updates install over the top instead of forcing a data-losing reinstall.
 android {
     signingConfigs {

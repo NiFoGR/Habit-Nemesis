@@ -1,8 +1,8 @@
 {
-  "name": "nifo-app",
+  "name": "habit-nemesis",
   "version": "0.1.0",
   "private": true,
-  "description": "NiFo, a personal app of features that make life measurably better. Kegels, PE, prayer, Bible reading and habits.",
+  "description": "Habit Nemesis. A habit grid, and a week that plays your own best week.",
   "type": "module",
   "scripts": {
     "dev": "node tools/serve.mjs",
@@ -11,7 +11,6 @@
     "android:sync": "cap sync android",
     "android:apk": "cap sync android && node tools/patch-signing.mjs && node tools/patch-backup.mjs && cd android && ./gradlew assembleDebug",
     "check:arena": "node tools/check-arena.mjs",
-    "pack:web": "node tools/pack-web.mjs",
     "art": "node tools/art.mjs",
     "check:ui": "node tools/check-ui.mjs",
     "check": "npm run check:arena && npm run check:ui"
@@ -21,8 +20,7 @@
     "@capacitor/app": "^7.0.0",
     "@capacitor/core": "^7.0.0",
     "@capacitor/local-notifications": "^7.0.0",
-    "nifo-nightlight": "file:./native/nightlight",
-    "nifo-systemui": "file:./native/systemui"
+    "habit-nemesis-systemui": "file:./native/systemui"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.0.0"

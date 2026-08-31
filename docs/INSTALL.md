@@ -1,12 +1,11 @@
-# Putting NiFo on a phone
+# Putting Habit Nemesis on a phone
 
-The app is a PWA. There is no App Store listing and there never will be, so
-it goes on a phone from a link.
+The app is a PWA. Until the store builds exist, it goes on a phone from a link.
 
-**https://nifogr.github.io/NiFo-App/**
+**https://nifogr.github.io/Habit-Nemesis/**
 
 That page is published by `.github/workflows/pages.yml` on every push to the
-default branch. It serves `dist-web/`, which is the app minus `www/bible/`.
+default branch, which the workflow expects to be called `main`.
 
 ## iPhone
 
@@ -33,31 +32,22 @@ Two causes, in order of likelihood.
 
 **The path is missing.** `nifogr.github.io` on its own is a user site and there
 is not one. The app is a project site, so the repo name is part of the address
-and it is case-sensitive: `NiFo-App`, not `nifo-app`.
+and it is case-sensitive: `Habit-Nemesis`, not `habit-nemesis`.
 
 **Pages is serving the wrong thing.** Under **Settings -> Pages**, Source has
 to be **GitHub Actions**. On "Deploy from a branch" it serves the repository
 root, and the root is not the app, so every URL 404s. The tell is a
 `pages build and deployment` run in the Actions tab that did not come from
-`pages.yml`, and one appearing on a branch `pages.yml` does not even run on.
+`pages.yml`.
 
 There is a root `index.html` that redirects into `www/` so a branch-served site
-works anyway, but it serves the full 8 MB rather than the packed 1 MB. Fix the
-Source setting rather than living on it.
+works anyway. Fix the Source setting rather than living on it.
 
 ## Android
 
 Same link in Chrome, then **Install app** from the menu, or the prompt that
 appears on its own. The APK from `.github/workflows/android-apk.yml` is the
 better build if you can sideload: only that one has real alarms.
-
-## What a new install gets
-
-The three rooms: the habit grid, the Arena and the Cabinet. Build your own
-rows, mark them, play a week against a week you already had.
-
-It does not get the five preloaded sections, so no scripture is downloaded,
-which is why the hosted build is 1 MB rather than 8.
 
 ## What an iPhone does not do
 
@@ -78,4 +68,6 @@ Which also means: deleting the home-screen icon deletes the record, and iOS
 can clear a site's storage when it is low on space. **Settings → Export
 backup** writes a file. Worth doing once a month.
 
-Two installs cannot be merged. Import replaces what is there.
+Two installs cannot be merged. Import replaces what is there. Accounts and sync
+are the first milestone in [`docs/RELEASE.md`](RELEASE.md), and they exist
+mostly to make this paragraph shorter.

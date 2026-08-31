@@ -1,14 +1,7 @@
 name: Deploy to GitHub Pages
 
 # Publishes the app so it can be installed straight to a phone's home screen.
-# This is the only route onto an iPhone, which cannot sideload an APK.
-#
-# It publishes `dist-web/`, not `www/`: the difference is `www/bible/`, which
-# is 7 MB of the app's 8 and belongs to a section a locked install has no way
-# to open. Anyone given this link gets a locked install, so shipping them the
-# scripture is a slower download and nothing else. tools/pack-web.mjs builds
-# that copy and checks its own output, so the size holds by measurement rather
-# than by whoever edits this file next remembering.
+# This is the only route onto an iPhone until the App Store build exists.
 #
 # Needs Pages switched on once, under Settings -> Pages -> Source: GitHub
 # Actions. The workflow token cannot do that itself (configure-pages with
@@ -16,7 +9,7 @@ name: Deploy to GitHub Pages
 # first run fails until that box is ticked.
 on:
   push:
-    branches: [claude/nifo-kegel-tracking-h86l0u]
+    branches: [main]
     paths-ignore: ['docs/**', '**/*.md']
   workflow_dispatch:
 
@@ -42,17 +35,12 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Build the publishable copy
-        # Writes dist-web/ = www/ minus www/bible/.
-        run: node tools/pack-web.mjs
-
       - name: Report what is being published
-        run: |
-          echo "dist-web/: $(find dist-web -type f | wc -l) files, $(du -sh dist-web | cut -f1)"
+        run: echo "www/: $(find www -type f | wc -l) files, $(du -sh www | cut -f1)"
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist-web
+          path: www
       - id: deployment
         uses: actions/deploy-pages@v4

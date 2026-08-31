@@ -1,86 +1,21 @@
 // Feats. Not achievements.
 //
 // One test: could you say it out loud to another person and have it mean
-// something? "Held a contraction for thirty seconds" passes, "opened the app
-// seven days running" does not.
+// something? "A hundred days unbroken" passes, "opened the app seven days
+// running" does not.
 //
 // Each is a predicate over the record, so only the date first seen is stored
 // and the rest recomputes.
 
 import * as store from '../store.js';
 import * as habits from '../habits/program.js';
-import { dailyStretchTotals } from '../pe/program.js';
 import * as arena from './program.js';
-import { BOOKS } from '../bible/canon.js';
-import { fmtHours } from '../ui.js';
-import { nifoUnlocked } from '../nifo.js';
 
 /* ---------------- helpers the tests share ---------------- */
 
-const chaptersRead = (id) => Object.keys(store.get().bible.read[id] || {}).length;
-const bookDone = (id) => {
-  const b = BOOKS.find((x) => x.id === id);
-  return !!b && chaptersRead(id) >= b.chapters.length;
-};
-const booksDone = () => BOOKS.filter((b) => bookDone(b.id)).length;
-
-const NEW_TESTAMENT = ['mat', 'mrk', 'luk', 'jhn', 'act', 'rom', '1co', '2co', 'gal', 'eph', 'php', 'col',
-  '1th', '2th', '1ti', '2ti', 'tit', 'phm', 'heb', 'jas', '1pe', '2pe', '1jn', '2jn', '3jn', 'jud', 'rev'];
-const GOSPELS = ['mat', 'mrk', 'luk', 'jhn'];
-const TORAH = ['gen', 'exo', 'lev', 'num', 'deu'];
-
-const readOf = (ids) => ids.filter(bookDone).length;
-
-const stretchMs = () => store.get().pe.sessions.filter((s) => s.type === 'stretch').reduce((a, s) => a + s.durationSec * 1000, 0);
-
-/** Longest run at or over the stretch target. */
-function bestStretchRun(target = 2 * 3600000) {
-  const days = Object.entries(
-    store.get().pe.sessions.reduce((acc, s) => {
-      if (s.type === 'stretch') acc[s.date] = (acc[s.date] || 0) + s.durationSec * 1000;
-      return acc;
-    }, {})
-  ).sort((a, b) => (a[0] < b[0] ? -1 : 1));
-  let best = 0;
-  let run = 0;
-  let prev = null;
-  for (const [key, ms] of days) {
-    const consecutive = prev && store.addDays(prev, 1) === key;
-    run = ms >= target ? (consecutive ? run + 1 : 1) : 0;
-    if (run > best) best = run;
-    prev = key;
-  }
-  return best;
-}
-
-/** Growth on one measurement, first check-in to best, in cm. */
-const grew = (key) => {
-  const m = store.get().pe.measurements.filter((x) => x[key]);
-  return m.length > 1 ? Math.max(...m.map((x) => x[key])) - m[0][key] : 0;
-};
-
-/** Longest run of days satisfying a predicate. */
-function longestRun(has, days = 1200) {
-  let best = 0;
-  let run = 0;
-  let key = store.addDays(habits.today(), -days);
-  const end = habits.today();
-  while (key <= end) {
-    run = has(key) ? run + 1 : 0;
-    if (run > best) best = run;
-    key = store.addDays(key, 1);
-  }
-  return best;
-}
-
-const ruleKept = (key) => {
-  const d = store.get().pray.days[key];
-  return !!(d && d.morning && d.evening);
-};
-
 /** A day where every row came good. */
 function perfectDays() {
-  const rows = [...habits.linkedHabits(), ...habits.active()];
+  const rows = habits.active();
   if (!rows.length) return { best: 0, count: 0 };
   const sums = rows.map((h) => habits.summary(h));
   let count = 0;
@@ -234,99 +169,6 @@ const arcList = () => Object.values(arenaState().arcs);
 // from "a thousand days straight", and it is a claim about the work, so it is
 // written down rather than derived from the target.
 export const FEATS = [
-  /* --- Kegels --- */
-  { id: 'hold20', section: 'Kegels', icon: 'timer', days: 30, name: 'Twenty seconds',
-    blurb: 'Held a single contraction for twenty seconds.',
-    now: () => store.get().prs.maxHoldMs / 1000, at: 20, unit: 's' },
-  { id: 'hold30', section: 'Kegels', icon: 'timer', days: 90, name: 'Half a minute',
-    blurb: 'Held a single contraction for thirty seconds.',
-    now: () => store.get().prs.maxHoldMs / 1000, at: 30, unit: 's' },
-  { id: 'hold60', section: 'Kegels', icon: 'flame', days: 270, name: 'A full minute',
-    blurb: 'Held a single contraction for sixty seconds. Very few people can.',
-    now: () => store.get().prs.maxHoldMs / 1000, at: 60, unit: 's' },
-  { id: 'reps1k', section: 'Kegels', icon: 'target', days: 20, name: 'A thousand reps',
-    blurb: 'A thousand contractions, counted one at a time.',
-    now: () => store.totals().contractions, at: 1000 },
-  { id: 'reps10k', section: 'Kegels', icon: 'target', days: 180, name: 'Ten thousand reps',
-    blurb: 'Ten thousand contractions. That is years of work.',
-    now: () => store.totals().contractions, at: 10000 },
-  { id: 'kegel30', section: 'Kegels', icon: 'flame', days: 30, name: 'A month of kegels',
-    blurb: 'Thirty days running without missing a session.',
-    now: () => Math.max(store.get().prs.streak, store.streak()), at: 30, unit: ' d' },
-  { id: 'week26', section: 'Kegels', icon: 'route', days: 182, name: 'Six months in',
-    blurb: 'Reached week 26 of the two-year plan.',
-    now: () => store.get().program.level, at: 26, unit: ' wk' },
-  { id: 'week52', section: 'Kegels', icon: 'route', days: 364, name: 'A year in',
-    blurb: 'Reached week 52 of the two-year plan.',
-    now: () => store.get().program.level, at: 52, unit: ' wk' },
-  { id: 'week104', section: 'Kegels', icon: 'medal', days: 728, name: 'The whole programme',
-    blurb: 'Finished all 104 weeks. There is no more ladder.',
-    now: () => store.get().program.level, at: 104, unit: ' wk' },
-
-  /* --- PE --- */
-  { id: 'stretch2h', section: 'PE', icon: 'timer', days: 1, name: 'Two hours in a day',
-    blurb: 'A full two hours under tension inside one day.',
-    now: () => Math.max(0, ...dailyStretchTotals()) / 3600000, at: 2, unit: 'h' },
-  { id: 'stretch2hWeek', section: 'PE', icon: 'flame', days: 7, name: 'A week at target',
-    blurb: 'Two hours a day, seven days running.',
-    now: bestStretchRun, at: 7, unit: ' d' },
-  { id: 'stretch10', section: 'PE', icon: 'stretch', days: 5, name: 'Ten hours',
-    blurb: 'Ten hours under tension.',
-    now: () => stretchMs() / 3600000, at: 10, unit: 'h' },
-  { id: 'stretch50', section: 'PE', icon: 'stretch', days: 25, name: 'Fifty hours',
-    blurb: 'Fifty hours under tension.',
-    now: () => stretchMs() / 3600000, at: 50, unit: 'h' },
-  { id: 'stretch100', section: 'PE', icon: 'stretch', days: 50, name: 'A hundred hours',
-    blurb: 'A hundred hours under tension. Nothing about that was quick.',
-    now: () => stretchMs() / 3600000, at: 100, unit: 'h' },
-  { id: 'grew1cm', section: 'PE', icon: 'trend', days: 180, name: 'A centimetre',
-    blurb: 'A full centimetre on your first measurement, measured the same way.',
-    now: () => grew('bpel'), at: 1, unit: ' cm' },
-  { id: 'girth5mm', section: 'PE', icon: 'trend', days: 240, name: 'Half a centimetre',
-    blurb: 'Half a centimetre of erect girth on your first measurement.',
-    now: () => grew('eg'), at: 0.5, unit: ' cm' },
-  { id: 'checkins12', section: 'PE', icon: 'ruler', days: 365, name: 'A year of measuring',
-    blurb: 'Twelve monthly check-ins. The data is worth more than any single one.',
-    now: () => store.get().pe.measurements.length, at: 12 },
-
-  /* --- Bible --- */
-  { id: 'books10', section: 'Bible', icon: 'book', days: 45, name: 'Ten books',
-    blurb: 'Ten books of the canon, finished.', now: booksDone, at: 10 },
-  { id: 'gospels', section: 'Bible', icon: 'scripture', days: 45, name: 'The four Gospels',
-    blurb: 'Matthew, Mark, Luke and John, all the way through.',
-    now: () => readOf(GOSPELS), at: 4 },
-  { id: 'torah', section: 'Bible', icon: 'scripture', days: 94, name: 'The Law',
-    blurb: 'The five books of Moses, Genesis to Deuteronomy.',
-    now: () => readOf(TORAH), at: 5 },
-  { id: 'psalter', section: 'Bible', icon: 'scripture', days: 75, name: 'The Psalter',
-    blurb: 'All 151 psalms.',
-    now: () => chaptersRead('psa'), at: 151 },
-  { id: 'newTestament', section: 'Bible', icon: 'medal', days: 130, name: 'The New Testament',
-    blurb: 'Every book of it, Matthew to Revelation.',
-    now: () => readOf(NEW_TESTAMENT), at: NEW_TESTAMENT.length },
-  { id: 'wholeCanon', section: 'Bible', icon: 'medal', days: 365, name: 'The whole canon',
-    blurb: 'All 76 books. Genesis 1 to Revelation 22.',
-    now: booksDone, at: BOOKS.length },
-
-  /* --- Prayer --- */
-  { id: 'rule40', section: 'Prayer', icon: 'sun', days: 40, name: 'Forty days',
-    blurb: 'Morning and night, both kept, forty days running.',
-    now: () => longestRun(ruleKept), at: 40, unit: ' d' },
-  { id: 'rule100', section: 'Prayer', icon: 'sun', days: 100, name: 'A hundred days',
-    blurb: 'Morning and night, both kept, a hundred days running.',
-    now: () => longestRun(ruleKept), at: 100, unit: ' d' },
-  { id: 'rule1000', section: 'Prayer', icon: 'medal', days: 500, name: 'A thousand prayers',
-    blurb: 'A thousand mornings and nights kept, all told.',
-    now: () => Object.values(store.get().pray.days).reduce((a, d) => a + (d.morning ? 1 : 0) + (d.evening ? 1 : 0), 0), at: 1000 },
-
-  /* --- Wind-down --- */
-  { id: 'nights30', section: 'Wind-down', icon: 'breath', days: 30, name: 'Thirty nights',
-    blurb: 'Thirty nights running, breathing before sleep.',
-    now: () => longestRun((k) => !!store.get().breathe.days[k]), at: 30, unit: ' d' },
-  { id: 'nights100', section: 'Wind-down', icon: 'moon', days: 100, name: 'A hundred nights',
-    blurb: 'A hundred nights ended the right way.',
-    now: () => Object.keys(store.get().breathe.days).length, at: 100 },
-
   /* --- The grid --- */
   { id: 'firstMark', section: 'The grid', icon: 'check', days: 1, name: 'Day one',
     blurb: 'The first day you marked. Everything else is built on it.',
@@ -507,15 +349,9 @@ export function check() {
 
 /** Grouped, in catalogue order. Not earned-first: several sections are ladders. */
 
-/* ------------- what this install can earn ------------- */
-
-const OPEN_SECTIONS = ['The grid', 'The Arena'];
-
-const visible = () => (nifoUnlocked() ? FEATS : FEATS.filter((f) => OPEN_SECTIONS.includes(f.section)));
-
 export function bySection() {
   const out = new Map();
-  for (const f of visible()) {
+  for (const f of FEATS) {
     if (!out.has(f.section)) out.set(f.section, []);
     out.get(f.section).push({ ...f, ...progressOf(f), at: earnedAt(f.id) });
   }
@@ -548,23 +384,21 @@ export function priceOf(days) {
 /** The hardest thing on the record. A sum would double-count: a year straight
  *  and a month straight are the same days twice. */
 export function steepest() {
-  const earned = visible().filter((f) => earnedAt(f.id) && progressOf(f).earned);
+  const earned = FEATS.filter((f) => earnedAt(f.id) && progressOf(f).earned);
   if (!earned.length) return null;
   return earned.reduce((a, f) => (f.days > a.days ? f : a));
 }
 
 export function counts() {
-  const list = visible();
+  const list = FEATS;
   const all = list.map(progressOf);
   return { earned: all.filter((f) => f.earned).length, total: list.length };
 }
 
 /** Nearest to earned, for the "next up" line. Measurable ones only. */
 export function closest(n = 3) {
-  return visible().map((f) => ({ ...f, ...progressOf(f) }))
+  return FEATS.map((f) => ({ ...f, ...progressOf(f) }))
     .filter((f) => !f.earned && f.need)
     .sort((a, b) => b.frac - a.frac)
     .slice(0, n);
 }
-
-export { fmtHours };

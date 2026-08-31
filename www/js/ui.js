@@ -183,109 +183,9 @@ export function celebrate(el, { colour = 'var(--accent)', count = 14, spread = 9
   setTimeout(() => wrap.remove(), 1200);
 }
 
-export function fmtMs(ms) {
-  if (!ms) return '0s';
-  if (ms < 60000) return `${(ms / 1000).toFixed(ms < 10000 ? 1 : 0)}s`;
-  const m = Math.floor(ms / 60000);
-  const s = Math.round((ms % 60000) / 1000);
-  return s ? `${m}m ${s}s` : `${m}m`;
-}
-
 export const pct = (v) => `${Math.round(v * 100)}%`;
 
-export function fmtDuration(sec) {
-  if (!sec) return '0s';
-  return sec < 90 ? `${Math.round(sec)}s` : `${Math.round(sec / 60)} min`;
-}
-
-/** mm:ss, or h:mm:ss past an hour. */
-export function fmtClock(ms) {
-  const total = Math.max(0, Math.round(ms / 1000));
-  const h = Math.floor(total / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
-  const p = (n) => String(n).padStart(2, '0');
-  return h ? `${h}:${p(m)}:${p(s)}` : `${m}:${p(s)}`;
-}
-
-export function fmtHours(ms) {
-  const h = ms / 3600000;
-  if (h >= 10) return `${Math.round(h)}h`;
-  if (h >= 1) return `${h.toFixed(1)}h`;
-  return `${Math.round(ms / 60000)}m`;
-}
-
-/* ---------------- notifications ---------------- */
-
-export async function askNotifyPermission() {
-  if (!('Notification' in window)) return false;
-  if (Notification.permission === 'granted') return true;
-  if (Notification.permission === 'denied') return false;
-  try {
-    return (await Notification.requestPermission()) === 'granted';
-  } catch {
-    return false;
-  }
-}
-
-/** Through the service worker where possible, so it shows in the background. */
-export async function notify(title, body) {
-  haptic('hit');
-  if (!('Notification' in window) || Notification.permission !== 'granted') return false;
-  try {
-    const reg = await navigator.serviceWorker?.getRegistration();
-    const opts = { body, icon: './icons/icon-192.png', badge: './icons/icon-192.png', vibrate: [200, 100, 200], tag: 'nifo-timer', renotify: true };
-    if (reg?.showNotification) await reg.showNotification(title, opts);
-    else new Notification(title, opts);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 /* ---------------- small components ---------------- */
-
-/** Segmented control. Markup only, wire it with `onSegment`. */
-export function segmented(name, options, active) {
-  return `<div class="segmented" data-seg="${escapeHtml(name)}">${options
-    .map((o) => `<button type="button" data-val="${escapeHtml(o.id)}" class="${o.id === active ? 'on' : ''}">${escapeHtml(o.label)}</button>`)
-    .join('')}</div>`;
-}
-
-export function onSegment(root, name, fn) {
-  const el = root.querySelector(`[data-seg="${name}"]`);
-  if (!el) return;
-  el.addEventListener('click', (e) => {
-    const b = e.target.closest('button[data-val]');
-    if (!b) return;
-    el.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
-    fn(b.dataset.val);
-  });
-}
-
-/** Inline trend line for a headline number. Shape at a glance, not read off. */
-export function sparkline(values, { color = 'var(--accent)', w = 120, h = 34, fill = true } = {}) {
-  const vals = values.filter((v) => Number.isFinite(v));
-  if (vals.length < 2) return '';
-  // All zeroes draws nothing: a flat line across an untouched tile reads as steady activity.
-  if (vals.every((v) => v === 0)) return '';
-  const min = Math.min(...vals);
-  const max = Math.max(...vals);
-  const flat = max - min < 1e-9;
-  const span = flat ? 1 : max - min;
-  const x = (i) => (i * w) / (vals.length - 1);
-  // Flat sits mid-height, not on the floor: that would read as zero.
-  const y = (v) => (flat ? h / 2 : h - 3 - ((v - min) / span) * (h - 6));
-  const pts = vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
-  const area = fill
-    ? `<polygon points="0,${h} ${pts} ${w},${h}" fill="${color}" opacity="0.13"/>`
-    : '';
-  const last = vals[vals.length - 1];
-  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
-    ${area}<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-    <circle cx="${w}" cy="${y(last).toFixed(1)}" r="2.5" fill="${color}"/>
-  </svg>`;
-}
 
 /** Vertical bars. `colour` is for a habit's own screen, which is not in the accent. */
 export function barChart(bars, { h = 120, unit = '', colour = null } = {}) {
@@ -373,110 +273,6 @@ export function lineChart(values, { w = 320, h = 110, pad = 10, color = 'var(--a
   </svg>`;
 }
 
-/** Shared axes, plotted against real timestamps so irregular check-ins stay irregular. */
-export function multiLine(series, { w = 320, h = 150, padL = 34, padR = 8, padT = 10, padB = 22 } = {}) {
-  const all = series.flatMap((s) => s.points);
-  if (all.length < 2) return '<div class="chart-empty">Two check-ins fill this in</div>';
-  const t0 = Math.min(...all.map((p) => p.ts));
-  const t1 = Math.max(...all.map((p) => p.ts));
-  const span = Math.max(t1 - t0, 864e5);
-  let min = Math.min(...all.map((p) => p.value));
-  let max = Math.max(...all.map((p) => p.value));
-  const pad = Math.max((max - min) * 0.2, 0.3);
-  min -= pad;
-  max += pad;
-
-  const x = (ts) => padL + ((ts - t0) / span) * (w - padL - padR);
-  const y = (v) => h - padB - ((v - min) / (max - min)) * (h - padT - padB);
-
-  const grid = [min + (max - min) * 0.15, (min + max) / 2, max - (max - min) * 0.15]
-    .map((v) => `<text x="2" y="${(y(v) + 3).toFixed(1)}" class="ct">${v.toFixed(1)}</text>
-                 <line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${w - padR}" y2="${y(v).toFixed(1)}" class="grid"/>`)
-    .join('');
-
-  const lines = series
-    .map((s) => {
-      const pts = s.points.map((p) => `${x(p.ts).toFixed(1)},${y(p.value).toFixed(1)}`).join(' ');
-      const dots = s.points.map((p) => `<circle cx="${x(p.ts).toFixed(1)}" cy="${y(p.value).toFixed(1)}" r="2.5" fill="${s.colour}"/>`).join('');
-      return `<polyline points="${pts}" fill="none" stroke="${s.colour}" stroke-width="2.5"
-        stroke-linejoin="round" stroke-linecap="round" ${s.dashed ? 'stroke-dasharray="4 4"' : ''}/>${dots}`;
-    })
-    .join('');
-
-  return `<svg class="chart tall" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img">
-    ${grid}${lines}
-    <text x="${padL}" y="${h - 5}" class="ct">${new Date(t0).toLocaleDateString(undefined, { month: 'short', year: '2-digit' })}</text>
-    <text x="${w - padR}" y="${h - 5}" text-anchor="end" class="ct">${new Date(t1).toLocaleDateString(undefined, { month: 'short', year: '2-digit' })}</text>
-  </svg>`;
-}
-
-/** Scatter with a least-squares trend. */
-export function scatter(points, { w = 320, h = 160, xLabel = '', yLabel = '', color = 'var(--accent)', trend = true } = {}) {
-  if (points.length < 2) return '<div class="chart-empty">Three check-ins fill this in</div>';
-  const padL = 34;
-  const padR = 10;
-  const padT = 10;
-  const padB = 26;
-  const xs = points.map((p) => p.x);
-  const ys = points.map((p) => p.y);
-  const x0 = Math.min(...xs, 0);
-  const x1 = Math.max(...xs) * 1.08 || 1;
-  let y0 = Math.min(...ys, 0);
-  let y1 = Math.max(...ys, 0);
-  if (y1 - y0 < 1e-6) y1 = y0 + 1;
-  const padY = (y1 - y0) * 0.15;
-  y0 -= padY;
-  y1 += padY;
-
-  const X = (v) => padL + ((v - x0) / (x1 - x0 || 1)) * (w - padL - padR);
-  const Y = (v) => h - padB - ((v - y0) / (y1 - y0)) * (h - padT - padB);
-
-  const zero = y0 <= 0 && y1 >= 0 ? `<line x1="${padL}" y1="${Y(0).toFixed(1)}" x2="${w - padR}" y2="${Y(0).toFixed(1)}" class="grid zero"/>` : '';
-  const ticks = [y0 + (y1 - y0) * 0.2, y1 - (y1 - y0) * 0.2]
-    .map((v) => `<text x="2" y="${(Y(v) + 3).toFixed(1)}" class="ct">${v.toFixed(1)}</text>`)
-    .join('');
-
-  let line = '';
-  if (trend && points.length >= 3) {
-    const n = points.length;
-    const mx = xs.reduce((a, b) => a + b, 0) / n;
-    const my = ys.reduce((a, b) => a + b, 0) / n;
-    const sxx = xs.reduce((a, v) => a + (v - mx) ** 2, 0);
-    if (sxx > 0) {
-      const slope = points.reduce((a, p) => a + (p.x - mx) * (p.y - my), 0) / sxx;
-      const b = my - slope * mx;
-      line = `<line x1="${X(x0).toFixed(1)}" y1="${Y(b + slope * x0).toFixed(1)}"
-        x2="${X(x1).toFixed(1)}" y2="${Y(b + slope * x1).toFixed(1)}"
-        stroke="${color}" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.6"/>`;
-    }
-  }
-
-  const dots = points
-    .map((p) => `<circle cx="${X(p.x).toFixed(1)}" cy="${Y(p.y).toFixed(1)}" r="4" fill="${color}" opacity="0.85">
-      <title>${escapeHtml(p.label || `${p.x.toFixed(0)} → ${p.y.toFixed(2)}`)}</title></circle>`)
-    .join('');
-
-  // Captions at the far end of the axis they name, never both in one corner.
-  return `<svg class="chart tall" viewBox="0 0 ${w} ${h}" role="img">
-    ${ticks}${zero}${line}${dots}
-    <text x="2" y="${padT}" class="ct">${escapeHtml(yLabel)}</text>
-    <text x="${w - padR}" y="${h - 4}" text-anchor="end" class="ct">${escapeHtml(xLabel)}</text>
-  </svg>`;
-}
-
-/** Per-rep bars: the fatigue curve for one session. */
-export function repBars(reps, { h = 54 } = {}) {
-  if (!reps.length) return '';
-  return `<div class="repbars" style="--h:${h}px">${reps
-    .map((r) => {
-      const ratio = Math.min(r.actualMs / r.targetMs, 1.3);
-      const cls = r.actualMs < 250 ? 'miss' : ratio >= 0.98 ? 'good' : ratio >= 0.75 ? 'ok' : 'low';
-      const title = `${r.kind} · ${(r.actualMs / 1000).toFixed(1)}s of ${(r.targetMs / 1000).toFixed(0)}s`;
-      return `<i class="${cls}" style="height:${Math.max(4, ratio * h).toFixed(0)}px" title="${escapeHtml(title)}"></i>`;
-    })
-    .join('')}</div>`;
-}
-
 /** Progress ring. */
 export function ringSvg(fraction, label, sub, { size = 168, color = null } = {}) {
   const r = 70;
@@ -545,7 +341,7 @@ export async function saveFile(name, text, mime = 'application/json') {
       /* same message */
     }
   }
-  toast('Could not save that here. Open NiFo in a browser and save from there.');
+  toast('Could not save that here. Open the app in a browser and save from there.');
   return 'failed';
 }
 

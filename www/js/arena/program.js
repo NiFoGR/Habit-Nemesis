@@ -113,7 +113,7 @@ export function rosterFor(key) {
     // No archive date means it left before the week. The safe reading.
     return !!h.archivedAt && h.archivedAt >= monday;
   });
-  return [...habits.linkedHabits(), ...mine];
+  return mine;
 }
 
 /* ---------------------- scoring ---------------------- */
@@ -147,7 +147,7 @@ export function scoreWeek(key) {
       rDone = live.filter((d) => sum?.index.get(d)?.satisfied).length;
     }
 
-    if (rDue) rows.push({ id: h.id, name: h.name, colour: h.colour, linked: !!h.linked, done: rDone, due: rDue });
+    if (rDue) rows.push({ id: h.id, name: h.name, colour: h.colour, done: rDone, due: rDue });
     done += rDone;
     due += rDue;
   }
@@ -702,7 +702,7 @@ export function anchorDay() {
 /** Earliest recorded day across every row. */
 function firstRecordDay() {
   let earliest = null;
-  for (const h of [...habits.linkedHabits(), ...habits.all()]) {
+  for (const h of habits.all()) {
     const sum = habits.summary(h);
     const first = sum?.days.find((d) => d.raw !== undefined);
     if (first && (!earliest || first.key < earliest)) earliest = first.key;
@@ -835,7 +835,7 @@ export function daysLeftInWeek() {
 
 /** The oldest week with any data. */
 function firstWeekWithData() {
-  const all = [...habits.linkedHabits(), ...habits.all()];
+  const all = habits.all();
   let earliest = null;
   for (const h of all) {
     const sum = habits.summary(h);
