@@ -61,13 +61,17 @@ and the year all run on-device and work the same.
 
 ## The data
 
-On the phone, in the phone's own storage. No account, no server, nothing
-leaves the device. Two people with the app share nothing.
+On the phone, in its own storage. Two people with the app share nothing.
+
+Two things carry it off the device. Android's own backup copies it to your
+Google account, which is what makes reinstalling work. An account, if you sign
+in, keeps a copy you can restore onto a new phone. Both are described in full
+in the app's privacy policy.
 
 Which also means: deleting the home-screen icon deletes the record, and iOS
 can clear a site's storage when it is low on space. **Settings → Export
 backup** writes a file. Worth doing once a month.
 
-Two installs cannot be merged. Import replaces what is there. Accounts and sync
-are the first milestone in [`docs/RELEASE.md`](RELEASE.md), and they exist
-mostly to make this paragraph shorter.
+Two installs cannot be merged. Import replaces what is there, and so does
+restoring from an account. Turning the account on is
+[`docs/ACCOUNTS.md`](ACCOUNTS.md).

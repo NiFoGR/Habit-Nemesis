@@ -107,7 +107,7 @@ function starters(picked) {
 const PAGES = [
   {
     title: 'Habit Nemesis',
-    line: 'Everything you are keeping, on one screen. No account and no server: none of it leaves this phone.',
+    line: 'Everything you are keeping, on one screen. It lives on your phone, and an account is optional.',
     art: () => `<span class="intro-logo">${logoMark(76)}</span>`,
     next: 'Show me',
   },

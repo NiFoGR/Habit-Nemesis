@@ -3,9 +3,13 @@ Habit Nemesis
 A habit grid, and a week that plays the best week you ever had.
 ================================================================================
 
-No account. No server. No analytics. Nothing leaves the device. There is no
-build step, no bundler and no framework: www/ is the app, plain ES modules,
-open the folder and refresh the page.
+No analytics. The record lives on the phone, and an account is optional. Two
+things do carry it off the device and the app says so rather than pretending
+otherwise: Android's own backup, and an account if you sign in. The full
+account of where it goes is www/legal/privacy.html.
+
+There is no build step, no bundler and no framework: www/ is the app, plain ES
+modules, open the folder and refresh the page.
 
 Where it is going next, and what it costs to get there: docs/RELEASE.md
 

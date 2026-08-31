@@ -1,6 +1,6 @@
 // Offline-first service worker. Bump CACHE to drop everything stored.
 // Code is revalidated against the network; the cache is the offline answer.
-const CACHE = 'habit-nemesis-v3';
+const CACHE = 'habit-nemesis-v4';
 
 const SHELL = [
   './',
@@ -55,6 +55,14 @@ const SHELL = [
   './js/account/oauth.js',
   './js/account/sync.js',
   './js/account/screen.js',
+
+  // the legal set, reachable offline and from a public URL for the stores
+  './legal/legal.css',
+  './legal/publisher.js',
+  './legal/privacy.html',
+  './legal/terms.html',
+  './legal/wellbeing.html',
+  './legal/licences.html',
 
   './icons/icon-192.png',
   './icons/icon-512.png',

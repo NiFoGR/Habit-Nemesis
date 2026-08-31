@@ -87,6 +87,14 @@ export function renderSettings(mount) {
       <button class="btn danger wide" id="reset">Erase all data</button>
       <p class="fineprint">Every habit, every day you have marked, and everything the Arena has recorded. No undo.</p>
 
+      <h3 class="set-group">About</h3>
+      <div class="set-nav">
+        <a href="./legal/privacy.html">${icon('shield', 16)}<span>Privacy policy</span></a>
+        <a href="./legal/terms.html">${icon('book', 16)}<span>Terms of service</span></a>
+        <a href="./legal/wellbeing.html">${icon('flash', 16)}<span>Health and wellbeing</span></a>
+        <a href="./legal/licences.html">${icon('external', 16)}<span>Open source licences</span></a>
+      </div>
+
       <div class="set-tail">
         <a class="tail-btn" href="#/intro">Show the introduction again</a>
       </div>

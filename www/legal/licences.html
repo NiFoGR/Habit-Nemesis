@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="index, follow">
+<title>Open Source Licences | Habit Nemesis</title>
+<link rel="icon" href="../icons/icon-192.png">
+<link rel="stylesheet" href="./legal.css">
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow"><span data-publisher="appName">Habit Nemesis</span></p>
+  <h1>Open source licences</h1>
+  <p class="stamp">Last updated <span data-publisher="effective">[NOT SET: effective]</span>.</p>
+</header>
+
+<p>Habit Nemesis ships some code other people wrote. MIT and Apache-2.0 both require their copyright notice to travel with the software, and this page is where it travels. Everything below is listed because it reaches your device, not because it was used to build the app.</p>
+
+<nav class="toc">
+  <p>Contents</p>
+  <ol>
+    <li><a href="#ships">What ships with the app</a></li>
+    <li><a href="#mit">The MIT licence</a></li>
+    <li><a href="#build">What does not ship</a></li>
+    <li><a href="#fonts">Fonts</a></li>
+    <li><a href="#art">Artwork</a></li>
+    <li><a href="#app">The app itself</a></li>
+  </ol>
+</nav>
+
+<h2 id="ships"><span class="n">1</span>What ships with the app</h2>
+
+<p>Five packages. All five are MIT, so one copy of the licence text covers them all, and it is in section 2.</p>
+
+<div class="scroll">
+<table>
+  <thead><tr><th>Component</th><th>Version</th><th>Copyright</th><th>Licence</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>@capacitor/core</code></td><td>7.6.8</td>
+      <td>Ionic (Drifty Co.)</td><td>MIT</td>
+    </tr>
+    <tr>
+      <td><code>@capacitor/android</code></td><td>7.6.8</td>
+      <td>Ionic (Drifty Co.)</td><td>MIT</td>
+    </tr>
+    <tr>
+      <td><code>@capacitor/app</code></td><td>7.1.2</td>
+      <td>Ionic (Drifty Co.)</td><td>MIT</td>
+    </tr>
+    <tr>
+      <td><code>@capacitor/local-notifications</code></td><td>7.0.7</td>
+      <td>Ionic (Drifty Co.)</td><td>MIT</td>
+    </tr>
+    <tr>
+      <td><code>@supabase/supabase-js</code></td><td>2.112.4</td>
+      <td>Supabase</td><td>MIT</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p class="small muted">The Supabase client is vendored into the app at <code>www/js/vendor/supabase.js</code> rather than fetched from a content delivery network, so the app starts with no network and loads no third-party script at runtime.</p>
+
+<h2 id="mit"><span class="n">2</span>The MIT licence</h2>
+
+<p>This is the text every component in section 1 is released under. The copyright holder for each is named in the table above.</p>
+
+<div class="card">
+<p class="small">Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
+<p class="small">The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
+<p class="small">THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+</div>
+
+<h2 id="build"><span class="n">3</span>What does not ship</h2>
+
+<p>Listed for completeness, because people reasonably expect to see it. None of this reaches your device.</p>
+
+<ul>
+  <li><strong>@capacitor/cli</strong>. Builds the Android project on a developer's machine. MIT.</li>
+  <li><strong>The Android toolchain</strong>. Gradle, the Android SDK and the Java compiler run at build time only.</li>
+  <li><strong>The app's own tooling</strong>, under <code>tools/</code>: the development server, the icon generator, the two checks and the build patches. Written for this app and part of it.</li>
+</ul>
+
+<p>One package in the build is ours and is not open source: <code>habit-nemesis-systemui</code>, a small Capacitor plugin under <code>native/</code> that hides the Android navigation bar. It is covered by section 6.</p>
+
+<h2 id="fonts"><span class="n">4</span>Fonts</h2>
+
+<p>There are none, and that is deliberate. The app asks for the system font stack and uses whatever the phone already has, so nothing is downloaded and no font licence applies. On an iPhone that is San Francisco, on Android it is Roboto, and in a browser it is whatever the operating system provides.</p>
+
+<h2 id="art"><span class="n">5</span>Artwork</h2>
+
+<div class="card warn">
+<h3>Under review</h3>
+<p class="small">The division crests, the seasonal cups and the share-card backgrounds in <code>www/img/</code> are images, and their provenance is being established before the app is published. They are not asserted to be original work and they are not asserted to be licensed.</p>
+<p class="small">Their status is recorded in the app's own documentation, in <code>docs/ART.md</code>, and replacing them is a listed blocker in <code>docs/RELEASE.md</code>. This page will name the artist and licence for each once that is done.</p>
+</div>
+
+<p>The app icon is a placeholder drawn by the app itself, not an image file.</p>
+
+<p>Every other visual element is drawn in code: the icon set is inline SVG in <code>www/js/icons.js</code>, and the charts, rings and bars are drawn by the app.</p>
+
+<h2 id="app"><span class="n">6</span>The app itself</h2>
+
+<p>Habit Nemesis is not open source. Its source is readable on GitHub, which is not the same thing as a licence to use it. The terms are in the <code>LICENSE</code> file at the root of the repository, and the short version is copyright <span data-publisher="name">[NOT SET: name]</span>, all rights reserved.</p>
+
+<p>Nothing on this page changes that. The components in section 1 keep their own licences, and this page exists to honour them.</p>
+
+<footer>
+  <a class="btn" href="../index.html">Back to the app</a>
+  <p class="fineprint">
+    Questions about anything on this page: <span data-publisher="email">[NOT SET: email]</span>.
+    Published by <span data-publisher="name">[NOT SET: name]</span>, <span data-publisher="country">United Kingdom</span>.
+  </p>
+</footer>
+
+</div>
+
+<script type="module">
+  import { fill } from './publisher.js';
+  fill();
+</script>
+</body>
+</html>

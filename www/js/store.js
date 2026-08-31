@@ -1,4 +1,6 @@
-// Persistence. localStorage on device, no account, nothing leaves the phone.
+// Persistence. localStorage on the device. An account is optional and copies
+// this record to it; Android's own backup copies it to the user's Google
+// account. www/legal/privacy.html is the full account of where it goes.
 
 import { toast, setFeedback } from './ui.js';
 
