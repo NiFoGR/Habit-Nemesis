@@ -9,7 +9,8 @@ name: Deploy to GitHub Pages
 # first run fails until that box is ticked.
 on:
   push:
-    branches: [main]
+    # The default branch. Rename it here if the branch is ever renamed.
+    branches: [claude/copy-nifo-app-habit-nemesis-b92gim]
     paths-ignore: ['docs/**', '**/*.md']
   workflow_dispatch:
 
@@ -54,7 +55,8 @@ jobs:
           node-version: '20'
 
       - name: Report what is being published
-        run: echo "www/: $(find www -type f | wc -l) files, $(du -sh www | cut -f1)"
+        run: |
+          echo "www/ holds $(find www -type f | wc -l) files, $(du -sh www | cut -f1)"
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
