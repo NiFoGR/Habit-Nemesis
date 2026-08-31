@@ -45,7 +45,20 @@ if (/"webContentsDebuggingEnabled"\s*:\s*true/.test(cap)) {
 }
 
 mkdirSync('android', { recursive: true });
-writeFileSync(OUT, Buffer.from(b64, 'base64'));
+const keystore = Buffer.from(b64, 'base64');
+
+// PKCS12 keeps one password for the store and the key inside it: keytool says
+// so and ignores a second one. Gradle then fails on the key password with an
+// error naming neither. JKS is the only format with two. A JKS file starts
+// FE ED FE ED; anything else here is PKCS12.
+const isJks = keystore[0] === 0xfe && keystore[1] === 0xed;
+if (!isJks && storePassword !== keyPassword) {
+  console.error('patch-release-signing: this keystore is PKCS12, which has one password.');
+  console.error('  Set RELEASE_KEY_PASSWORD to the same value as RELEASE_KEYSTORE_PASSWORD.');
+  process.exit(1);
+}
+
+writeFileSync(OUT, keystore);
 
 const MARKER = 'release-signing';
 let gradle = readFileSync(GRADLE, 'utf8');

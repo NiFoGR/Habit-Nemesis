@@ -7,3 +7,11 @@ node_modules/
 *.apk
 *.log
 .DS_Store
+
+# Signing keys. The release key never enters the repo: it lives in CI secrets.
+# The debug key is the exception and is committed on purpose, so sideloaded
+# builds install over each other. signing/README.md says why that is safe.
+*.keystore
+*.jks
+*.p12
+!signing/debug.keystore

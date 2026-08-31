@@ -3,8 +3,13 @@ name: Deploy to GitHub Pages
 # Publishes the app so it can be installed straight to a phone's home screen.
 # This is the only route onto an iPhone until the App Store build exists.
 #
-# configure-pages switches Pages on itself with enablement: true, using the
-# workflow token and the pages: write permission below. No box to tick.
+# Needs Pages switched on once, by a human, under Settings -> Pages -> Source:
+# GitHub Actions. enablement: true below asks the workflow token to do it and
+# the token is refused ("Resource not accessible by integration"), tested, not
+# assumed. It stays because it costs nothing and works the moment the box is
+# ticked. Until then the deploy job fails, so it is marked continue-on-error:
+# the checks above it are the real gate, and a red mark on every push for a
+# setting nobody has changed is how people learn to ignore CI.
 on:
   push:
     # The default branch. Rename it here if the branch is ever renamed.
@@ -42,6 +47,7 @@ jobs:
   deploy:
     needs: check
     runs-on: ubuntu-latest
+    continue-on-error: true
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
