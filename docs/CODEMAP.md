@@ -29,7 +29,7 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 |---|---|---|
 | `js/app.js` | 193 | Route table, shell state, boot. Nothing renders here. |
 | `js/back.js` | 135 | What Back means: the corner arrow, the hardware button, history. |
-| `js/icons.js` | 69 | The inline SVG icon set, and the placeholder app mark. |
+| `js/icons.js` | 93 | The inline SVG icon set, and the app mark as one polygon. |
 | `js/lock.js` | 123 | The optional PIN gate. Owns whether the app is unlocked. |
 | `js/intro.js` | 274 | The introduction, shown once on a new install. |
 | `js/native.js` | 115 | Capacitor bridge: Android alarms and the notification permission. |
@@ -173,7 +173,8 @@ Everything here is build-time and never ships in `www/`.
 | `tools/serve.mjs` | The dev server. `npm run dev`. |
 | `tools/check-arena.mjs` | The Arena's calendar maths, asserted. `npm run check:arena`. |
 | `tools/check-ui.mjs` | The stylesheet's own rules: one type scale, one palette. `npm run check:ui`. |
-| `tools/gen-icons.mjs` | PWA and launcher icons as PNGs, no dependencies. |
+| `tools/png.mjs` | PNG in, PNG out, and the box filter between. Shared, so art and icons cannot drift. |
+| `tools/gen-icons.mjs` | PWA, launcher and store icons. Uses `art/source/mark.png` when it exists, `MARK` otherwise. |
 | `tools/art.mjs` | Takes a dropped-in image, makes the WebP the app loads, updates `sw.js`. |
 | `tools/patch-signing.mjs` | Pins the debug signing key into the generated Gradle build. |
 | `tools/patch-backup.mjs` | Turns on Android's own backup, which is what carries the record off the device. |

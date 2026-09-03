@@ -95,12 +95,19 @@ has ever been built. Set it, push, and the workflow produces
 
 ## 4. The app icon
 
-`www/js/icons.js` and `tools/gen-icons.mjs` both draw a dashed square on
-purpose, so it cannot ship by accident. `docs/ART.md` section 5 has the prompt
-to generate one and what to do with the result.
-
 Play needs a **512 x 512 PNG, 32-bit, no transparency, no rounded corners**.
-Play rounds the corners itself; a pre-rounded icon comes out rounded twice.
+You do not have to make that yourself:
+
+    cp your-icon.png art/source/mark.png
+    npm run icons
+
+Upload the `store/icon-512.png` it writes. The tool trims the padding off your
+export and squares the corners, because Play rounds its own and a pre-rounded
+icon comes out rounded twice with a pale seam in the gap.
+
+Without that file the icons fall back to a polygon drawn in
+`www/js/icons.js`, which is a reconstruction rather than the artwork.
+`docs/ART.md` section 5 has the detail.
 
 ## 5. The listing
 

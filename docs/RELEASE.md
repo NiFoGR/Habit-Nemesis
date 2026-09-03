@@ -28,14 +28,17 @@ behind it and the plan past launch.
 
 In the order they will hurt.
 
-### 1. There is no app mark
+### 1. The app mark is a stand-in
 
-Deliberately. It is a dashed square in `www/js/icons.js` and
-`tools/gen-icons.mjs`, and it looks unfinished on purpose so it cannot be
-shipped by accident. Play wants 512 x 512, opaque, square corners. `docs/ART.md`
-section 5 has the prompt and what to do with the result.
+There is a mark now: an N cut through the diagonal, drawn from `MARK` in
+`www/js/icons.js`. It is a reconstruction of the artwork rather than the
+artwork, so it ships only until the real file lands.
 
-**This is the only thing standing between the current tree and an upload.**
+Drop the export at `art/source/mark.png` and run `npm run icons`. It wins over
+the polygon everywhere, gets trimmed and squared for the stores, and writes
+`store/icon-512.png` to upload. `docs/ART.md` section 5 has the detail.
+
+**Until that file exists, what ships is an approximation of the intended mark.**
 
 ### 2. Nobody has tested it but you
 
@@ -409,6 +412,12 @@ thing. Saying the old thing while doing the new one is what gets written about.
 
 **The crest artwork is a takedown waiting to be filed**, and a takedown lands on
 the listing rather than on one file. Kept knowingly. Blocker 3.
+
+**The icon is a red N on black**, which is Netflix's mark, and an icon is the
+asset a store looks at hardest. The letterform is not the problem, the colour
+pairing is, and the colour is one token: `--mark` in `www/styles.css` and `INK`
+in `tools/gen-icons.mjs`. Kept knowingly. If review does flag it, that is a
+rejection and a resubmission, not a ban.
 
 **The 12 testers are real people** who have to keep the app installed for a
 fortnight. Line them up before you need them.
