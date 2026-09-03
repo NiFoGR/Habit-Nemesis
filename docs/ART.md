@@ -221,8 +221,63 @@ they sit behind text rather than beside it.
 Missing, and the one thing on this page that blocks a store listing. The app
 currently draws a dashed square placeholder in `www/js/icons.js` and
 `tools/gen-icons.mjs`, deliberately unfinished so nobody mistakes it for done.
-Both need replacing together, plus a 1024 x 1024 opaque PNG with no
-transparency and no rounded corners for the two stores.
+
+**Play wants 512 x 512, PNG, 32-bit, opaque, square corners.** Play rounds the
+corners itself, so a pre-rounded icon comes out rounded twice. Generate at
+1024 and downscale: it is also the size Apple wants later.
+
+The mark is not a crest. The crests are loud and belong to the ladder; the icon
+is the app, and the app is dark, quiet and teal. An icon that matches the crests
+would promise a different app to the one that opens.
+
+### The test that decides it
+
+A launcher icon is 48px on the home screen and about 36px in the app drawer.
+Squint at the result on a phone-sized square before judging it large. One shape,
+one accent, no text, no thin lines. Anything with three ideas in it turns to mud
+at 48px, which is where it is actually seen.
+
+### The prompt
+
+Attach nothing. Paste as is.
+
+> Design a mobile app icon, 1024 x 1024, square canvas, completely flat, no
+> rounded corners, no drop shadow, no border, no text and no letters anywhere.
+>
+> Subject: a 3 x 3 grid of nine rounded squares, evenly spaced, centred, filling
+> about 70% of the canvas. The three squares on the diagonal from bottom left to
+> top right are filled bright teal and glow slightly. The other six are dark and
+> flat, barely lighter than the background. It should read at once as a habit
+> grid and as a line rising to the right.
+>
+> Background: solid near-black, a very dark blue-black, edge to edge, no
+> gradient and no vignette.
+>
+> Palette: exactly two colours. Background #0a0c10. Teal #22d3c5 for the three
+> lit squares. The six dark squares are #1a1f2a. Nothing else, no white, no
+> second accent.
+>
+> Style: flat vector, geometric, precise, calm. Modern developer-tool aesthetic.
+> NOT 3D, NOT glossy, NOT a render, no bevel, no reflection, no photorealism, no
+> mascot, no character, no hand-drawn texture.
+>
+> It must stay legible when shrunk to 48 x 48 pixels, so keep the shapes large,
+> the spacing generous and the contrast high.
+
+If the generator keeps adding a glossy dome or a shadow, add "iOS-style flat
+sticker, single flat layer" and regenerate rather than arguing with it.
+
+### What to do with the file
+
+1. Save it as `art/source/mark.png` at 1024 x 1024.
+2. Redraw `logoMark()` in `www/js/icons.js` as the same nine squares in SVG. The
+   in-app mark and the launcher icon have to be the same drawing, not two
+   drawings of the same idea.
+3. Redraw the same shape in `tools/gen-icons.mjs`, then `npm run icons`.
+4. Upload the 512px version to Play. `docs/STORE.md` step 4.
+
+The two files must agree. They are checked by eye, not by a tool, which is the
+one place in this repo where that is true.
 
 ---
 

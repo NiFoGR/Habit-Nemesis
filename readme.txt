@@ -175,6 +175,7 @@ docs/
   ARENA.md          weeks, divisions, arcs, feats, the roster lock
   ART.md            every image the app wants, and what it has to say
   INSTALL.md        putting it on a phone, written for someone else
+  STORE.md          shipping to Google Play, step by step, console by console
   RELEASE.md        the road to the App Store and Play: accounts, money, dates
   BRAINSTORM.md     design notes and the backlog
 

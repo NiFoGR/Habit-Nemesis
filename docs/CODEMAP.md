@@ -27,15 +27,15 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 
 | File | Lines | What it is |
 |---|---|---|
-| `js/app.js` | 177 | Route table, shell state, boot. Nothing renders here. |
+| `js/app.js` | 193 | Route table, shell state, boot. Nothing renders here. |
 | `js/back.js` | 135 | What Back means: the corner arrow, the hardware button, history. |
 | `js/icons.js` | 69 | The inline SVG icon set, and the placeholder app mark. |
 | `js/lock.js` | 123 | The optional PIN gate. Owns whether the app is unlocked. |
-| `js/intro.js` | 273 | The introduction, shown once on a new install. |
-| `js/native.js` | 86 | Capacitor bridge for real Android alarms. |
-| `js/settings.js` | 273 | App-wide settings: the grid, marking, feedback, privacy, data, reset. |
+| `js/intro.js` | 274 | The introduction, shown once on a new install. |
+| `js/native.js` | 115 | Capacitor bridge: Android alarms and the notification permission. |
+| `js/settings.js` | 330 | App-wide settings: the grid, marking, feedback, privacy, data, reset. |
 | `js/tabs.js` | 59 | The bottom bar: Cabinet, Grid, Arena. Drawn once, never rebuilt. |
-| `js/store.js` | 483 | localStorage persistence and the input sanitiser. |
+| `js/store.js` | 492 | localStorage persistence and the input sanitiser. |
 | `js/ui.js` | 354 | Shared helpers: formatting, haptics, SVG charts, the sheet. |
 | `js/artwork.js` | 25 | Where a crest or cup file lives, and what to draw when it is missing. |
 | `js/vendor/supabase.js` | | The Supabase client, vendored so `script-src 'self'` holds. |
@@ -53,7 +53,7 @@ sets it says so before you commit.
 | `js/habits/home.js` | 407 | **The home screen.** The screens and what arranges them: the grid, reordering, groups, the archive, the install prompt. |
 | `js/habits/grid.js` | 142 | The grid's HTML: header, rows, cells, rings. Builds markup, never wires it. |
 | `js/habits/marking.js` | 173 | Marking a day: tap and long-press wiring, the cell swap, the keypad sheet. |
-| `js/habits/edit.js` | 339 | Creating and editing: the type, colour, frequency and reminder pickers. |
+| `js/habits/edit.js` | 344 | Creating and editing: the type, colour, frequency and reminder pickers. |
 | `js/habits/tracking.js` | 279 | One habit in full, and the calendar you can write to. |
 
 Two things are worth knowing before reading the code. **Streaks and scores are
@@ -82,7 +82,7 @@ The domain is five modules in dependency order, re-exported whole by
 | `js/arena/arc.js` | 114 | The Arc, in whichever of its five states it is in. |
 | `js/arena/week-sheet.js` | 88 | One week, opened. Reached from every screen that names a week. |
 | `js/arena/year.js` | 274 | The Year: twelve months, the cups, the rows that carried it. |
-| `js/arena/result.js` | 252 | Telling you what happened: the full screen, and the one-line feat pop. |
+| `js/arena/result.js` | 259 | Telling you what happened: the full screen, and the one-line feat pop. |
 | `js/arena/review.js` | 262 | The week in review: what slipped, what held. |
 | `js/arena/cabinet.js` | 145 | The Cabinet: cups, feats, years, and the lines you left. |
 | `js/arena/feats.js` | 404 | The predicates over the record. The one catalogue. |
@@ -124,11 +124,28 @@ the parts that cannot be read off a screen.
 | `js/account/session.js` | 121 | The client, sign up, sign in, reset, sign out, delete. |
 | `js/account/oauth.js` | 59 | Google sign-in: a Custom Tab out, a deep link back. |
 | `js/account/sync.js` | 63 | Backup and restore, whole-record. Not a merge. |
-| `js/account/screen.js` | 252 | The Account screen in its three states: unconfigured, signed out, signed in. |
+| `js/account/screen.js` | 251 | The Account screen in its three states: unconfigured, signed out, signed in. |
 
 The account is a copy of the record, never the record. Everything pulled from
 it goes through `store.js`'s sanitiser like any other untrusted file.
 `SECURITY.md` is the model; `docs/ACCOUNTS.md` is the setup.
+
+With no project configured the Settings row is absent rather than a dead end,
+which is how v1 ships.
+
+## Ads, which are optional too
+
+| File | Lines | What it is |
+|---|---|---|
+| `js/ads/config.js` | 38 | The AdMob app and unit ids, and the testing flag. Empty until an account exists; see `docs/STORE.md`. |
+| `js/ads/program.js` | 150 | Consent, the banner rule, and the one interstitial a week. |
+
+Four things must all be true before an ad exists: ids configured, running in
+the APK, past the three-day grace, and Google's consent platform saying ads can
+be requested. `app.js` calls `onRoute()` on every navigation, so the banner is
+decided in one place and a screen not on the list cannot acquire one by
+accident. `tools/patch-ads.mjs` turns the real units on in the store bundle and
+nowhere else.
 
 ## Legal
 
@@ -162,3 +179,5 @@ Everything here is build-time and never ships in `www/`.
 | `tools/patch-backup.mjs` | Turns on Android's own backup, which is what carries the record off the device. |
 | `tools/patch-deeplink.mjs` | Adds the `com.habitnemesis.app://auth` intent filter Google sign-in returns through. |
 | `tools/patch-release-signing.mjs` | Release signing from CI secrets. Refuses the debug key and a debuggable config. |
+| `tools/patch-version.mjs` | Stamps versionCode and versionName from `package.json`. Play rejects a repeat versionCode. |
+| `tools/patch-ads.mjs` | Turns the real ad units live, in the store bundle only, and writes the AdMob app id into the manifest. |
