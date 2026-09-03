@@ -12,6 +12,7 @@ import { counts } from './arena/feats.js';
 import { cup } from './arena/cup.js';
 import { escapeHtml, chime, haptic, celebrate } from './ui.js';
 import { navigate } from './back.js';
+import { configured } from './account/config.js';
 
 /** True until it has been finished or skipped once. */
 export const introDue = () => !store.get().settings.onboarded;
@@ -107,7 +108,7 @@ function starters(picked) {
 const PAGES = [
   {
     title: 'Habit Nemesis',
-    line: 'Everything you are keeping, on one screen. It lives on your phone, and an account is optional.',
+    line: `Everything you are keeping, on one screen. It lives on your phone${configured() ? ', and an account is optional' : ''}.`,
     art: () => `<span class="intro-logo">${logoMark(76)}</span>`,
     next: 'Show me',
   },

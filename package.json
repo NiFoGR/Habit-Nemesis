@@ -1,6 +1,6 @@
 {
   "name": "habit-nemesis",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "license": "UNLICENSED",
   "description": "Habit Nemesis. A habit grid, and a week that plays your own best week.",
@@ -11,21 +11,22 @@
     "android:add": "cap add android",
     "android:sync": "cap sync android",
     "android:apk": "cap sync android && node tools/patch-signing.mjs && node tools/patch-backup.mjs && node tools/patch-deeplink.mjs && cd android && ./gradlew assembleDebug",
-    "android:aab": "cap sync android && node tools/patch-backup.mjs && node tools/patch-deeplink.mjs && node tools/patch-release-signing.mjs && cd android && ./gradlew bundleRelease",
+    "android:aab": "cap sync android && node tools/patch-backup.mjs && node tools/patch-deeplink.mjs && node tools/patch-version.mjs && node tools/patch-ads.mjs && node tools/patch-release-signing.mjs && cd android && ./gradlew bundleRelease",
     "check:arena": "node tools/check-arena.mjs",
     "art": "node tools/art.mjs",
     "check:ui": "node tools/check-ui.mjs",
     "check": "npm run check:arena && npm run check:ui"
   },
   "dependencies": {
-    "@capacitor/android": "^7.0.0",
-    "@capacitor/app": "^7.0.0",
-    "@capacitor/core": "^7.0.0",
-    "@capacitor/local-notifications": "^7.0.0",
+    "@capacitor-community/admob": "^8.1.0",
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/local-notifications": "^8.3.1",
     "@supabase/supabase-js": "^2.112.4",
     "habit-nemesis-systemui": "file:./native/systemui"
   },
   "devDependencies": {
-    "@capacitor/cli": "^7.0.0"
+    "@capacitor/cli": "^8.0.0"
   }
 }

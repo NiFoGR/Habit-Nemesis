@@ -7,6 +7,35 @@ const plugin = () => window.Capacitor?.Plugins?.LocalNotifications;
 
 export const hasAlarms = () => isNative() && !!plugin();
 
+/* ----------------- permission ----------------- */
+// Android 13 made notifications a runtime permission and denies them by
+// default. Scheduling without it throws, which this file swallows, so an
+// unasked app saves reminder times that can never fire.
+
+/** 'granted', 'denied', or 'prompt' when it has never been asked. */
+export async function alarmPermission() {
+  if (!hasAlarms()) return 'denied';
+  try {
+    const { display } = await plugin().checkPermissions();
+    if (display === 'granted') return 'granted';
+    return display === 'denied' ? 'denied' : 'prompt';
+  } catch {
+    return 'denied';
+  }
+}
+
+/** Asks, unless already granted or already refused. Call it where a reminder is
+ *  switched on, never on launch. */
+export async function askAlarms() {
+  if (!hasAlarms()) return false;
+  try {
+    if ((await plugin().checkPermissions()).display === 'granted') return true;
+    return (await plugin().requestPermissions()).display === 'granted';
+  } catch {
+    return false;
+  }
+}
+
 /** One-shot alarm. The same id replaces the previous one. */
 export async function scheduleAlarm(id, at, title, body) {
   if (!hasAlarms()) return false;

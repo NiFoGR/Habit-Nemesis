@@ -1594,6 +1594,8 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 }
 .set-row select { flex: 0 0 auto; }
 .set-row input[type="checkbox"] { flex: 0 0 auto; }
+/* A row whose value is read, not set. */
+.set-state { flex: 0 0 auto; font-size: var(--f-small); color: var(--muted); }
 
 .set-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
 .settings .btn.danger.wide { margin-top: 22px; }

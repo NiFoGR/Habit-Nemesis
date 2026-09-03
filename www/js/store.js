@@ -72,6 +72,11 @@ function blank() {
       face: null,
     },
 
+    // Ads. Consent itself is held by the UMP SDK, not here.
+    ads: {
+      lastFull: '', // 'YYYY-Www' of the last interstitial. One a week, never two.
+    },
+
   };
 }
 
@@ -133,8 +138,12 @@ function hydrate(saved) {
     },
     habits: cleanHabits(saved.habits, base.habits),
     arena: cleanArena(saved.arena, base.arena),
+    ads: { lastFull: weekKeyOf(saved.ads?.lastFull) },
   };
 }
+
+/** A week key, or nothing. Anything else would owe an extra ad or none at all. */
+const weekKeyOf = (v) => (typeof v === 'string' && /^\d{4}-W\d{2}$/.test(v) ? v : '');
 
 /** Arena. Stored facts, not a cache. Period keys are checked by shape and
  *  dropped, never defaulted: defaulting would rewrite a real season. */

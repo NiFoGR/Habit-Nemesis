@@ -23,7 +23,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install
         run: npm ci
@@ -39,7 +39,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - uses: actions/setup-java@v4
         with:
@@ -140,7 +140,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - uses: actions/setup-java@v4
         with:
@@ -161,6 +161,12 @@ jobs:
 
       - name: Register the sign-in deep link
         run: node tools/patch-deeplink.mjs
+
+      - name: Stamp the version
+        run: node tools/patch-version.mjs
+
+      - name: Turn ads live
+        run: node tools/patch-ads.mjs
 
       - name: Sign with the release key
         env:

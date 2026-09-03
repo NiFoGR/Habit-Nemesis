@@ -24,6 +24,7 @@ import { renderIntro, introDue } from './intro.js';
 import { initBack, navigate, replaceWith } from './back.js';
 import { initTabs, syncTabs } from './tabs.js';
 import * as native from './native.js';
+import * as ads from './ads/program.js';
 
 const app = document.getElementById('app');
 
@@ -87,6 +88,8 @@ function route() {
   }
 
   syncTabs(path);
+  // The banner is a property of the screen, so it is decided where the screen is.
+  ads.onRoute(path);
 
   const fn = ROUTES[path] || (() => renderHome(app));
   fn(new URLSearchParams(query || ''));
@@ -178,6 +181,9 @@ listenForReturn();
 habitsProgram.syncAlarms();
 // Arc alarms: opens, group ends, round ends.
 arenaProgram.syncAlarms();
+
+// Consent first, then the SDK. Absent from a build with no AdMob account.
+ads.init().then(() => ads.onRoute(location.hash.split('?')[0]));
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));

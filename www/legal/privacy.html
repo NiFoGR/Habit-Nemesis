@@ -17,7 +17,7 @@
   <p class="stamp">Effective <span data-publisher="effective">[NOT SET: effective]</span>. Published by <span data-publisher="name">[NOT SET: name]</span>, <span data-publisher="country">United Kingdom</span>.</p>
 </header>
 
-<p>This policy says what Habit Nemesis does with your information. It describes the app as it is built today, and it describes the accounts, sync and advertising that are planned. Anything not yet switched on is marked <span class="tag soon">Not yet active</span> so you can tell the two apart.</p>
+<p>This policy says what Habit Nemesis does with your information. It describes the app as it is built today, including the advertising in the free version, and it describes the accounts, sync and paid tier that are planned. Anything not yet switched on is marked <span class="tag soon">Not yet active</span> so you can tell the two apart.</p>
 
 <nav class="toc">
   <p>Contents</p>
@@ -51,7 +51,8 @@
 <table>
   <tr><th>Controller</th><td><span data-publisher="name">[NOT SET: name]</span></td></tr>
   <tr><th>Trading as</th><td><span data-publisher="trading">[NOT SET: trading]</span></td></tr>
-  <tr><th>Address</th><td><span data-publisher="address">[NOT SET: address]</span>, <span data-publisher="country">United Kingdom</span></td></tr>
+  <tr data-publisher-when="address"><th>Address</th><td><span data-publisher="address"></span>, <span data-publisher="country">United Kingdom</span></td></tr>
+  <tr><th>Based in</th><td><span data-publisher="country">United Kingdom</span></td></tr>
   <tr><th>Email</th><td><span data-publisher="email">[NOT SET: email]</span></td></tr>
   <tr><th>Governing law</th><td><span data-publisher="jurisdiction">England and Wales</span></td></tr>
 </table>
@@ -100,35 +101,38 @@
 </div>
 
 <h3>What is not collected</h3>
-<p>No name, no email, no phone number, no contacts, no location, no device identifier, no advertising ID, no analytics, no crash reports, no usage statistics. The app has no account today and asks you for nothing about yourself.</p>
+<p>No name, no email, no phone number, no contacts, no precise location, no analytics, no crash reports, no usage statistics. The app has no account today and asks you for nothing about yourself. The advertising in section 3 is the one exception, and it never sees your record.</p>
 
-<h2 id="later"><span class="n">3</span>What accounts, sync and ads will add</h2>
-
-<span class="tag soon">Not yet active</span>
-
-<p>None of this is switched on in the version you are using. It is written here now so the policy does not change under you later. When each part arrives, the app will say so on screen before it does anything.</p>
-
-<h3>An optional account</h3>
-<p>Signing in will be optional and the app will keep working fully without one. If you choose to create an account you will be able to use an email address and a password, or sign in with Google, or sign in with Apple. The account will hold your email address, an account identifier, and the dates the account was created and last used. Passwords will be stored only as a salted hash by the authentication provider, never in readable form and never by the app.</p>
-
-<h3>Sync</h3>
-<p>If you sign in and switch sync on, your record is copied to your account so it survives a new phone. The copy is the same record described in section 2, including your habits, your marked days, the Arena's history and the face photo if you have set one. The PIN and its settings stay on the device and are never copied.</p>
+<h2 id="later"><span class="n">3</span>Advertising, and what accounts will add</h2>
 
 <h3>Advertising</h3>
-<p>The free version is expected to show ads through Google AdMob. Ad SDKs read and write identifiers on your device and that needs your permission, so before any ad code runs you will be asked through a Google-certified consent platform. If you are in the UK or the EEA and you decline, you will see non-personalised ads, and the app will still work. On iOS a separate Apple prompt controls tracking, and declining it is respected.</p>
 
-<h3>A paid tier</h3>
+<p>The free version shows ads through Google AdMob. This is switched on.</p>
+
+<p>Ads appear in two places and nowhere else: a banner at the foot of the screens you browse, which are the Cabinet, the Year, the divisions, the archive and a habit's own history, and one full-screen ad a week on the way out of your week's result. There are no ads on the grid, none when you open the app, none you can watch for a reward, and none at all in your first three days.</p>
+
+<p>The ad SDK reads and writes identifiers on your device, and that needs your permission. If you are in the UK, the EEA or Switzerland you are asked through Google's own consent platform before any ad code runs, and you can change that answer at any time under Settings, Privacy, Ad privacy choices. Decline and you see non-personalised ads, and the app works exactly the same. On iOS a separate Apple prompt controls tracking and declining it is respected.</p>
+
+<p>Google receives what the ad request carries: a device advertising identifier, an approximate location derived from your IP address, and which ads were shown. It never receives your habits, your marked days, the Arena's history or your face photo. Those are never sent anywhere by the app.</p>
+
+<h3>An optional account <span class="tag soon">Not yet active</span></h3>
+<p>Signing in will be optional and the app will keep working fully without one. If you choose to create an account you will be able to use an email address and a password, or sign in with Google, or sign in with Apple. The account will hold your email address, an account identifier, and the dates the account was created and last used. Passwords will be stored only as a salted hash by the authentication provider, never in readable form and never by the app.</p>
+
+<h3>Sync <span class="tag soon">Not yet active</span></h3>
+<p>If you sign in and switch sync on, your record is copied to your account so it survives a new phone. The copy is the same record described in section 2, including your habits, your marked days, the Arena's history and the face photo if you have set one. The PIN and its settings stay on the device and are never copied.</p>
+
+<h3>A paid tier <span class="tag soon">Not yet active</span></h3>
 <p>Payment will go through the App Store and Google Play, most likely with RevenueCat holding the record of what you have bought. The app will receive whether you are entitled to the paid features and nothing more. Your card details never reach the app or the publisher: Apple and Google take the payment, and they are the seller.</p>
 
 <h2 id="honest"><span class="n">4</span>The claim that nothing leaves your phone</h2>
 
-<p>The app has said that nothing leaves your phone. That is worth being exact about, because it is true in most places and not true in one.</p>
+<p>The claim is about your record: your habits, the days you marked, the Arena's history and your face photo. That never leaves your phone. Other things do, and this section is the exact list of them.</p>
 
 <h3>Where it holds</h3>
 <ul>
-  <li>The app makes no network request of its own. There is no server to call and no account configured in this build.</li>
-  <li>The offline cache stores only the app's own files, from the app itself. It fetches nothing from anyone else.</li>
-  <li>There is no analytics, no tracker, no advertising code and no third-party SDK reporting anything.</li>
+  <li>The app never sends your record anywhere. There is no server to send it to and no account configured in this build.</li>
+  <li>The offline cache stores only the app's own files, from the app itself.</li>
+  <li>There is no analytics, no tracker and no crash reporting.</li>
   <li>Reminders are scheduled by your phone's own alarm clock. They never reach the internet.</li>
   <li>The publisher cannot see your record. There is nowhere for it to be seen.</li>
 </ul>
@@ -140,13 +144,18 @@
   <p>On Android the app turns on Android's own Auto Backup. Your record is copied to your Google account. That is a real copy of your habits, your marked days, the Arena's history, your face photo and your PIN's check blob, held by Google. Section 7 covers what that means and how to turn it off.</p>
 </div>
 
+<div class="card warn">
+  <h3>Advertising</h3>
+  <p>The ad SDK is a third party running on your device, and it talks to Google. It sends an advertising identifier, an approximate location from your IP address, and which ads you saw. It cannot read your record and is never given it. Section 3 has the detail and says how to change your answer.</p>
+</div>
+
 <p>Two other things leave the device, but only when you send them:</p>
 <ul>
   <li><strong>The share card.</strong> If you make one and hand it to the share sheet, it goes wherever you send it. It never includes your face photo.</li>
   <li><strong>Your export.</strong> The JSON backup and the CSV are files you save. Once saved they are ordinary files on your device and are as private as wherever you put them.</li>
 </ul>
 
-<p>When accounts, sync and ads arrive, more will leave. Section 3 says exactly what.</p>
+<p>When accounts and sync arrive, more will leave. Section 3 says exactly what.</p>
 
 <h2 id="basis"><span class="n">5</span>Lawful basis for each purpose</h2>
 
@@ -189,13 +198,13 @@
   </tr>
   <tr>
     <td>Personalised advertising, and any storage on your device that ads need</td>
-    <td>Consent, Article 6(1)(a) and PECR regulation 6. Asked for before any ad code runs, and withdrawable.</td>
-    <td>Not yet active</td>
+    <td>Consent, Article 6(1)(a) and PECR regulation 6. Asked for before any ad code runs, and withdrawable in Settings.</td>
+    <td>Active</td>
   </tr>
   <tr>
     <td>Non-personalised advertising</td>
     <td>Consent for the storage the SDK needs, then legitimate interests for showing the ad itself.</td>
-    <td>Not yet active</td>
+    <td>Active</td>
   </tr>
   <tr>
     <td>Recording what you have bought so paid features unlock</td>
@@ -276,30 +285,30 @@
 
 <h2 id="processors"><span class="n">8</span>Who else handles the data</h2>
 
-<p><strong>Today: nobody.</strong> No third party receives anything from this app. The only other company involved is Google, through the Android backup described above, and that is Google's arrangement with you rather than with the publisher.</p>
+<p><strong>Today: Google, twice.</strong> Google AdMob serves the ads described in section 3, and Android's own backup copies your record to your Google account as described in section 7. The backup is Google's arrangement with you rather than with the publisher. Nobody else receives anything from this app, and nobody receives your record.</p>
 
-<p><span class="tag soon">Not yet active</span> When the features in section 3 arrive, these companies will be involved. Each is bound by a written contract that limits what they may do with your data.</p>
+<p>The rows below marked not yet active are the companies that will be involved when the rest of section 3 arrives. Each is bound by a written contract that limits what they may do with your data.</p>
 
 <div class="scroll">
 <table>
   <tr><th>Who</th><th>What they do</th><th>What they see</th></tr>
   <tr>
-    <td>Supabase</td>
+    <td>Supabase <span class="tag soon">Not yet active</span></td>
     <td>Database and sign-in, hosted in the European Union</td>
     <td>Your email address, your password hash, your account id, and your synced record</td>
   </tr>
   <tr>
-    <td>Supabase's email sender</td>
+    <td>Supabase's email sender <span class="tag soon">Not yet active</span></td>
     <td>Sends the sign-up confirmation and password reset emails</td>
     <td>Your email address and the contents of those messages</td>
   </tr>
   <tr>
-    <td>Google, for Sign in with Google</td>
+    <td>Google, for Sign in with Google <span class="tag soon">Not yet active</span></td>
     <td>Confirms it is you, if you choose that route</td>
     <td>That you signed in to this app, plus the email address they return</td>
   </tr>
   <tr>
-    <td>Apple, for Sign in with Apple</td>
+    <td>Apple, for Sign in with Apple <span class="tag soon">Not yet active</span></td>
     <td>Confirms it is you, if you choose that route. You may hide your real email</td>
     <td>That you signed in to this app, plus the email or relay address they return</td>
   </tr>
@@ -314,12 +323,12 @@
     <td>Your choice, stored on your device</td>
   </tr>
   <tr>
-    <td>RevenueCat</td>
+    <td>RevenueCat <span class="tag soon">Not yet active</span></td>
     <td>Records what you have bought so the app can unlock it</td>
     <td>An anonymous app user id and the store's purchase receipt</td>
   </tr>
   <tr>
-    <td>Apple and Google, as stores</td>
+    <td>Apple and Google, as stores <span class="tag soon">Not yet active</span></td>
     <td>Take the payment. They are the seller, not the publisher</td>
     <td>Your payment details, which the app never sees. Refunds and cancellations go to them</td>
   </tr>
@@ -330,7 +339,7 @@
 
 <h2 id="transfers"><span class="n">9</span>International transfers</h2>
 
-<p><strong>Today there are none.</strong> Your data does not leave your device except through your own Google backup, and that is Google's arrangement with you.</p>
+<p><strong>Your record makes none.</strong> It does not leave your device except through your own Google backup, and that is Google's arrangement with you. The ad requests in section 3 reach Google, which operates globally and handles them under its own transfer safeguards.</p>
 
 <p><span class="tag soon">Not yet active</span> Once accounts exist, the database and sign-in will be hosted in the European Union. The UK government has ruled that the EU protects personal data adequately, so a transfer from the UK to the EU needs nothing further.</p>
 
@@ -436,7 +445,7 @@
 
 <h2 id="storage"><span class="n">14</span>Local storage, cookies and PECR</h2>
 
-<p><strong>There are no cookies.</strong> There is no analytics, no tracking pixel, no fingerprinting and no advertising identifier in the app today.</p>
+<p><strong>There are no cookies.</strong> There is no analytics, no tracking pixel and no fingerprinting. The advertising identifier the ad SDK uses is covered below.</p>
 
 <p>The app does store information on your device, in your browser or WebView's local storage, under the two keys named in section 2. The Privacy and Electronic Communications Regulations require your consent for storing information on your device, unless that storage is strictly necessary to provide the service you asked for.</p>
 
@@ -444,7 +453,7 @@
 
 <p>The app's offline cache is in the same position. It stores copies of the app's own files so the app opens without a connection, which is what you installed it for.</p>
 
-<p><span class="tag soon">Not yet active</span> Advertising is different. An ad SDK's storage and identifiers are not strictly necessary, so they need consent. Before any advertising code runs, a Google-certified consent platform will ask you, and nothing ad-related is stored on your device until you have answered. You can change that answer in Settings whenever you like.</p>
+<p>Advertising is different. An ad SDK's storage and identifiers are not strictly necessary, so they need consent. Before any advertising code runs, Google's own consent platform asks you, and nothing ad-related is stored on your device until you have answered. Change that answer any time under Settings, Privacy, Ad privacy choices.</p>
 
 <h2 id="changes"><span class="n">15</span>Changes to this policy</h2>
 
@@ -474,8 +483,8 @@
   <p class="fineprint">
     Last updated <span data-publisher="effective">[NOT SET: effective]</span>.
     <span data-publisher="appName">Habit Nemesis</span> is published by
-    <span data-publisher="name">[NOT SET: name]</span>,
-    <span data-publisher="address">[NOT SET: address]</span>,
+    <span data-publisher="name">[NOT SET: name]</span><span data-publisher-when="address">,
+    <span data-publisher="address"></span></span>,
     <span data-publisher="country">United Kingdom</span>.
     Contact <span data-publisher="email">[NOT SET: email]</span>.
     This policy is governed by the law of <span data-publisher="jurisdiction">England and Wales</span>.
