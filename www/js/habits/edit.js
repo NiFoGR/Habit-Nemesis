@@ -6,6 +6,7 @@ import * as habits from './program.js';
 import { escapeHtml, toast, openSheet } from '../ui.js';
 import { icon } from '../icons.js';
 import { navigate, replaceWith } from '../back.js';
+import { askAlarms, hasAlarms } from '../native.js';
 
 const WEEK_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const WEEK_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -328,12 +329,16 @@ function openRemindSheet(h, done) {
     sheet.close();
     done();
   });
-  sheet.el.querySelector('#remSave').addEventListener('click', () => {
+  sheet.el.querySelector('#remSave').addEventListener('click', async () => {
     const at = sheet.el.querySelector('#at').value;
     // No days chosen means every day. A reminder that never fires looks like a bug.
     h.remindDays = picked.size ? [...picked].sort() : [0, 1, 2, 3, 4, 5, 6];
     h.remindAt = /^\d{2}:\d{2}$/.test(at) ? at : '';
+    // Ask here, where a reminder is being switched on. Refused, the time still
+    // saves: the switch is honest about being off rather than silently dead.
+    const allowed = h.remindAt && hasAlarms() ? await askAlarms() : true;
     sheet.close();
     done();
+    if (!allowed) toast('Notifications are off for this app. Turn them on in Android settings.');
   });
 }

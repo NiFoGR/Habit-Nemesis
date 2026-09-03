@@ -21,7 +21,6 @@ function unconfigured(mount) {
     <section class="card">
       <h2>Not in this build</h2>
       <p class="muted small">This copy of the app has no account service configured, so there is nothing to sign in to. Everything works exactly as it does now, on this device.</p>
-      <p class="muted small">Set the two values in <code>www/js/account/config.js</code> to turn it on.</p>
     </section>
     <p class="fineprint">Your record is on this phone either way. Settings has the backup.</p>
   </div>`;

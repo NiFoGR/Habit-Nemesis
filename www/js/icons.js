@@ -61,11 +61,33 @@ export function icon(name, size = 20) {
   return svg(PATHS[name] || PATHS.target, size);
 }
 
-/** Placeholder mark, deliberately unfinished. Drawn again in tools/gen-icons.mjs. */
+/* ---- the mark ---- */
+
+// An N with two slits cut down its diagonal, on a 100 x 100 box with y down.
+// Contours, outer first: the two after it are holes, so both the SVG below and
+// the rasteriser in tools/gen-icons.mjs fill even-odd. Exported rather than
+// copied, because the launcher icon and the mark on screen have to be one
+// drawing and two point lists drift apart.
+//
+// The outer ring is a heavy N with every outside corner chamfered, which is
+// what stops it reading as a typeface. The slits run parallel to the diagonal,
+// wide where they meet a stem and tapering to a point: thin slivers, not
+// wedges. Fattening them turns the middle into a zigzag and the letter stops
+// being an N at launcher size.
+export const MARK = [
+  [
+    [0, 11], [11, 0], [30, 0], [70, 56], [70, 0], [89, 0], [100, 11],
+    [100, 89], [89, 100], [70, 100], [30, 44], [30, 100], [11, 100], [0, 89],
+  ],
+  [[26, 20], [40, 54], [26, 34]],
+  [[56, 42], [70, 76], [56, 56]],
+];
+
+const points = (ring) => ring.map(([x, y]) => `${x},${y}`).join(' ');
+
+/** The app mark. Takes its colour from the text colour around it. */
 export function logoMark(size = 26) {
-  return `<svg width="${size}" height="${size}" viewBox="0 0 40 40" fill="none" aria-hidden="true" class="logo-mark">
-    <rect x="3" y="3" width="34" height="34" rx="9" stroke="currentColor" stroke-width="2.5" stroke-dasharray="5 4" opacity=".55"/>
-    <path d="M14 16.5l3.5 3.5 7-7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/>
-    <path d="M14 26h12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity=".3"/>
+  return `<svg width="${size}" height="${size}" viewBox="-6 -6 112 112" fill="none" aria-hidden="true" class="logo-mark">
+    <path fill="currentColor" fill-rule="evenodd" d="${MARK.map((ring) => `M${points(ring)}Z`).join('')}"/>
   </svg>`;
 }

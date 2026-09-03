@@ -75,9 +75,18 @@ and a repetition, and the repetition is what makes a screen feel bloated.
 
 ## The mark
 
-The app icon is a placeholder, and deliberately looks like one. It is drawn
-twice, in `www/js/icons.js` and `tools/gen-icons.mjs`, and the two must agree.
-Replacing it means replacing both and re-running `npm run icons`.
+An N, cut through the diagonal. It exists twice over and the order matters:
+
+- `art/source/mark.png` is the artwork, and wins whenever it is present.
+- `MARK` in `www/js/icons.js` is a polygon, used on screen and as the stand-in
+  for the icons when there is no file.
+
+`tools/gen-icons.mjs` imports both, so there is no third copy to drift. It trims
+the padding off an export and squares the corners, because both stores round
+their own and a pre-rounded icon comes out rounded twice.
+
+Changing either means re-running `npm run icons`. The store's copy lands in
+`store/`, never in `www/`.
 
 ## Before pushing
 

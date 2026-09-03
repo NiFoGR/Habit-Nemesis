@@ -11,80 +11,74 @@ Dates assume one person working evenings and weekends. Full time, halve them.
 ## Where it stands today
 
 The app works. The grid, the Arena, the Cabinet, the feats, the year, the
-share card, the PIN, the backup, offline, and a real Android build. That is
-more finished product than most projects have when they start thinking about a
-store, and it is worth saying plainly, because everything below is a list of
-what is missing and lists like that read as though nothing is done.
+share card, the PIN, the backup, offline, and a real Android build.
 
-What is missing is not features. It is the things that turn a personal app
-into a product other people can be sold: an identity, artwork you own,
-accounts, a way to take money, and two store listings.
+Since this page was first written, most of the code on it has been done:
+`updatedAt` on every record, the account and sync layer, the legal set, the
+release key, the AAB job, ads with consent, working reminders, and a stamped
+version. What is left is mostly not code. It is an icon, a Play account, twelve
+people, and a listing.
+
+`docs/STORE.md` is the step-by-step for all of that. This page is the reasoning
+behind it and the plan past launch.
 
 ---
 
-## The five blockers
+## The blockers
 
-In the order they will hurt. Nothing ships past the first three.
+In the order they will hurt.
 
-### 1. The division artwork is other people's
+### 1. The app mark is a stand-in
 
-`www/img/rank-*.webp` are photographs of real, identifiable people, several of
-them recognisable public figures, at least one deceased, in what look like meme
-crops. On a phone you sideloaded yourself that is nobody's business. On a paid
-app in two stores it is three separate problems at once:
+There is a mark now: an N cut through the diagonal, drawn from `MARK` in
+`www/js/icons.js`. It is a reconstruction of the artwork rather than the
+artwork, so it ships only until the real file lands.
 
-- **Copyright.** Somebody took each of those photographs and owns it.
-- **Personality rights.** Using an identifiable person to sell a product needs
-  their permission in most of the markets that matter, and their estate's after
-  they die.
-- **Review.** Both stores prohibit third-party IP you cannot show rights to,
-  and both act on complaints faster than they act on appeals.
+Drop the export at `art/source/mark.png` and run `npm run icons`. It wins over
+the polygon everywhere, gets trimmed and squared for the stores, and writes
+`store/icon-512.png` to upload. `docs/ART.md` section 5 has the detail.
 
-There is also a brand judgement underneath the legal one. "Top G" is bound to
-one living person with an active criminal case attached to his name, and it is
-the sort of association a store listing carries in public forever. That is
-a call about who the app is for, and it is yours to make. The artwork is not a
-call: every crest has to be replaced with something original before submission,
-whatever the divisions end up being called.
+**Until that file exists, what ships is an approximation of the intended mark.**
 
-Nine crests, three cups, and the share-card grounds. Budget £500 to £1,500 for
-an illustrator, or draw them. `docs/ART.md` already says what each one has to
-say and what size to send. **This is the long pole.** Start it first, because
-it is the only item on this page that cannot be hurried by working harder.
-
-### 2. There is no app mark
-
-Deliberately. It is a dashed square in `www/js/icons.js` and
-`tools/gen-icons.mjs`, and it looks unfinished on purpose so it cannot be
-shipped by accident. Both stores need a 1024 x 1024 opaque PNG with no
-transparency and no rounded corners. Do it with the crests, from the same hand.
-
-### 3. Trader status publishes your address
-
-Under the EU Digital Services Act, anyone taking money from EU users, ads
-included, has to declare trader status and publish a name, address, email and
-phone. Apple has enforced this since February 2025 and removes apps from all
-27 EU storefronts until it is provided. Google requires the same through Play
-Console.
-
-An individual publishing that publishes their home address. **Form a limited
-company, or buy a registered-office address, before the first submission.** UK
-incorporation is £50 at Companies House and a registered office service is
-about £50 a year. Doing it after the fact means changing the developer name on
-a live listing, which is slow and loses the reviews.
-
-### 4. There is no way to take money
-
-No accounts, no entitlement, no billing. Milestones 2 and 3.
-
-### 5. Nobody has tested it but you
+### 2. Nobody has tested it but you
 
 Google requires a new personal Play Console account to run a closed test with
 **12 testers opted in continuously for 14 days** before it will grant
 production access. Not 12 sign-ups: 12 people who stay opted in for a
-fortnight. This is the single most underestimated delay in shipping to Android
-and it costs nothing to start early. Get the closed track running the week the
-Play account exists, months before you need it.
+fortnight, and since April 2026 people who actually open the app. This is the
+single most underestimated delay in shipping to Android and it costs nothing to
+start early. Get the closed track running the week the Play account exists.
+
+### 3. The division artwork is other people's
+
+`www/img/rank-*.webp` carry likenesses of real, identifiable people, at least
+one deceased. Two divisions are named after real people as well. On a phone you
+sideloaded yourself that is nobody's business. On a store listing it is
+copyright, personality rights, and a store policy that acts on complaints faster
+than it acts on appeals.
+
+**Kept on purpose, at the owner's decision.** Recorded here because it is the
+one risk on this page that arrives as a takedown rather than a rejection, and
+because a takedown lands on the whole listing, not on one file. Replacing the
+set is nine crests, three cups and the share grounds; `docs/ART.md` says what
+each has to say and the prompts that produce them.
+
+### 4. There is no way to take money
+
+Ads ship. Beyond them there is no billing, no entitlement and no paywall.
+Milestone 3, and it needs accounts first.
+
+### 5. Trader status, and why the EU is off
+
+Under the EU Digital Services Act, anyone monetising in the EU has to declare
+trader status and publish a name, address, email and phone. Play Console asks
+for it as a required field, so an individual either publishes their home address
+or does not list in the EU.
+
+**Settled for now: no address, and the 27 EU countries stay off.** The legal
+pages read correctly without one and turn the address sentences back on by
+themselves when `www/legal/publisher.js` is filled. A registered office is about
+£30 a year whenever the EU is worth having.
 
 ---
 
@@ -98,48 +92,52 @@ change once a store has it.
 | Package name | `com.habitnemesis.app` | Play never lets you change it. A new one is a new app with zero installs and zero reviews. |
 | Storage key | `habitnemesis.state.v1` | Changing it orphans every existing install's record. |
 | Display name | Habit Nemesis | Changeable, but it is the search term you spend a year building. |
-| Publisher | undecided | See blocker 3. Decide before the first submission, not after. |
-| Free vs paid line | undecided | See milestone 3. Moving something from free to paid after launch is the fastest way to a one-star review pile. |
+| Publisher | sole trader, no address | Set in `www/legal/publisher.js`. Changing the developer name on a live listing is slow and loses the reviews. |
+| Free vs paid line | free with ads | See milestone 3. Moving something from free to paid after launch is the fastest way to a one-star review pile. |
 
-The first two are already set in the tree and are fine. Leave them.
+All four are set in the tree. Leave them.
 
 ---
 
 ## Milestone 1: make it shippable
 
-Three to five weeks, and the artwork sets the pace.
+Mostly done. What is left is the icon and the console work.
 
-- **The artwork.** Blockers 1 and 2.
-- **A company or an address.** Blocker 3.
-- **A domain and three pages.** A privacy policy, terms, and a support page
-  with a real email. Both stores require URLs for these before review, and the
-  privacy policy has to be accurate about the *next* version, not this one:
-  write it for a world with accounts, sync and ads in it.
-- **One thing in the code.** Add an `updatedAt` timestamp to every habit,
-  group and entry, and start writing it now. Sync in milestone 2 needs to know
-  which of two versions of a day is newer, and a timestamp cannot be
-  reconstructed for history that was written without one. The schema is
-  additive and `hydrate()` merges over `blank()`, so this is a small change
-  today and an impossible one later. **Do this before anyone else installs the
-  app.**
-- **Screenshots and a listing.** Six per platform per device size, plus the
-  text. The Arena is the thing nothing else has: lead with the fixture card and
-  the ladder, not with a grid, because every habit app screenshot is a grid.
+- **The icon.** Blocker 1, and the only code-adjacent thing outstanding.
+  `docs/ART.md` section 5.
+- ~~A company or an address.~~ Settled: no address, EU off. Blocker 5.
+- ~~The legal pages.~~ `www/legal/` has privacy, terms, wellbeing and licences,
+  each written against the code rather than a template, and published through
+  GitHub Pages so the URLs Play asks for already exist. No domain needed.
+- ~~`updatedAt` on every record.~~ Done, and stamped on every write. Sync needs
+  it to tell two versions of a day apart, and it could not have been added
+  after other people had installs.
+- **Screenshots and a listing.** Six, plus the text. The Arena is the thing
+  nothing else has: lead with the fixture card and the ladder, not with a grid,
+  because every habit app screenshot is a grid. `docs/STORE.md` step 5.
 
 ---
 
 ## Milestone 2: accounts and sync
 
-Four to six weeks. The hardest engineering left, and the thing that makes the
-rest possible: an entitlement has to live somewhere, and "the record survives a
-new phone" is the most common reason people pay for an app like this.
+**Built, and switched off.** `www/js/account/` has email, Google and Apple
+sign-in, the sync layer and account deletion. `supabase/schema.sql` has the
+tables with row-level security on every one.
+
+What is missing is a Supabase project. `SUPABASE_URL` and `SUPABASE_KEY` in
+`www/js/account/config.js` are empty, so the app runs local-only and the account
+row is hidden rather than offered as a dead end. Two strings turn it on.
+
+V1 ships without it. The simplest launch has no server to run, no password
+resets at midnight and no Data Safety answers about a database. Turn it on when
+there is a reason to.
 
 ### Keep local-first
 
-The app's claim today is "no account, no server, nothing leaves this phone",
-and that is a feature, not an accident. Do not trade it for sync. **The account
-stays optional.** The app works forever without one; signing in adds a copy in
-the cloud and a second device. Say exactly that on the sign-in screen, and the
+The app's claim is that your record never leaves the phone, and that is a
+feature, not an accident. Do not trade it for sync. **The account stays
+optional.** The app works forever without one; signing in adds a copy in the
+cloud and a second device. Say exactly that on the sign-in screen, and the
 people who came for the privacy stay.
 
 ### The shape of it
@@ -223,6 +221,10 @@ well as principle.
 
 ### Where the ads go
 
+**Built.** `www/js/ads/program.js` enforces every rule below, and the router
+decides the banner, so a screen not on the list cannot get one by accident. Ads
+stay off until `www/js/ads/config.js` has an AdMob account in it.
+
 Not in the daily ritual. An interstitial between opening the app and marking a
 habit would be the end of it: the entire value is that marking takes eight
 seconds, and an ad triples that.
@@ -239,8 +241,9 @@ seconds, and an ad triples that.
 
 On the technical side, AdMob has required a Google-certified consent platform
 for EEA and UK traffic since January 2024, and personalised ads on iOS need
-Apple's tracking prompt. Google's UMP SDK handles the first. Expect most users
-to decline the second and price the model on non-personalised rates.
+Apple's tracking prompt. Google's own UMP handles the first and the app calls
+it before any ad code runs, with the re-open Google requires in Settings. Expect
+most users to decline the second and price the model on non-personalised rates.
 
 ### The free and paid line
 
@@ -284,14 +287,21 @@ Three to four weeks of wall clock, much of it waiting.
 
 ### Android
 
-Capacitor already builds it and `.github/workflows/android-apk.yml` already
-signs it. Three things change for a release:
+The pipeline is built. `.github/workflows/android-apk.yml` has an `aab` job that
+runs `bundleRelease` against the real upload key, stamps the version, and turns
+the ad units live. It is gated on the repository variable `RELEASE_SIGNING`, so
+it has never run.
 
-- **A real upload key.** The key in `signing/` is Android's public debug key.
-  It must never sign a store build. Generate a release key, keep it in a GitHub
-  secret, and turn on Play App Signing so losing it is not fatal.
-- **A release build**, not `assembleDebug`. An `aab`, not an `apk`.
-- **The 12-tester closed test.** Blocker 5. Start it first.
+- ~~A real upload key.~~ Cut on 31 August 2026. `signing/README.md` has the
+  fingerprint. The four secrets still need adding: `docs/STORE.md` step 3.
+- ~~A release build, an `aab` not an `apk`.~~ Done.
+- ~~The API level.~~ Play stopped accepting API 35 for new apps on 31 August
+  2026. Capacitor 8 targets 36, which is why the upgrade happened.
+- ~~versionCode.~~ `tools/patch-version.mjs` stamps it from `package.json`.
+  Capacitor's default of 1 would have been rejected on the second upload.
+- **Set `RELEASE_SIGNING` to `true`.** One variable, and the first store bundle
+  builds itself.
+- **The 12-tester closed test.** Blocker 2. Start it first.
 
 ### iOS
 
@@ -304,11 +314,12 @@ but `npx cap add ios` and every build after it need macOS and Xcode.
 | Cloud Mac | £40 to £60 a month | A few weeks of setup, then cancel. |
 | Mac mini | about £600 once | You intend to keep shipping iOS. Cheapest by month six. |
 
-Beyond the build: reminders do not work. Every alarm goes through Android's
-AlarmManager and returns early on iOS, so the reminder switches save a time and
-nothing fires. Shipping that is a one-star review with a fair point in it.
-Either implement iOS local notifications, which Capacitor supports and is a
-day's work, or hide the switches on iOS. Do not ship a dead control.
+Reminders should carry over. `www/js/native.js` goes through Capacitor's
+LocalNotifications, which is cross-platform, and the permission ask added for
+Android 13 covers the iOS authorisation prompt through the same call. Untested
+on a device, because there is no device. Verify it before submitting rather than
+assuming it: a reminder switch that saves a time and never fires is a one-star
+review with a fair point in it.
 
 ### Both
 
@@ -339,39 +350,48 @@ Launching is where the work starts, not where it stops.
 
 | | |
 |---|---|
-| Apple Developer Program | £79 a year |
+**To the first Play listing, as things now stand:**
+
+| | |
+|---|---|
 | Play Console | £20 once |
-| Domain and email | £30 a year |
-| Company and registered office | £50 once, £50 a year |
-| Artwork | £500 to £1,500 |
+| AdMob | free |
+| Domain and email | £0, GitHub Pages hosts the legal pages |
+| Registered office | £0 with the EU off, about £30 a year to switch it on |
+| Icon | £0 generated, or what an illustrator charges |
+| **Total** | **about £20** |
+
+**Later, if it is worth it:**
+
+| | |
+|---|---|
+| Apple Developer Program | £79 a year |
 | Mac, if you have none | £0 to £600 |
+| Replacing the crest artwork | £500 to £1,500 |
 | Supabase | £0, then £20 a month |
 | RevenueCat | £0 under $2,500 a month |
-| **To the first listing** | **roughly £700 to £2,300** |
-
-The variance is entirely the artwork and the Mac. Everything else is under
-£200.
 
 ---
 
 ## The order to do it in
 
-1. **This week.** Decide the publisher, register the company or the address,
-   buy the domain, open the Play account, and start the 12-tester closed test.
-   All of it is waiting time, so it should be waiting from today.
-2. **Also this week.** Add `updatedAt` to habits, groups and entries. It gets
-   harder every day the app is installed anywhere.
-3. **Weeks 1 to 5.** Commission the artwork. Write the three legal pages while
-   you wait.
-4. **Weeks 4 to 10.** Accounts and sync, local-first, account optional.
-5. **Weeks 10 to 13.** Billing, the paywall, and the ad placements above.
-6. **Weeks 12 to 16.** iOS notifications, release signing, screenshots, both
-   submissions.
-7. **Launch.** Then widgets.
+1. **Today.** Open the Play account and the AdMob account, and line up 12
+   testers. All three are waiting time, so they should be waiting from today.
+   `docs/STORE.md` steps 1, 2 and 6.
+2. **This week.** Generate the icon and redraw it in both files.
+   `docs/ART.md` section 5.
+3. **The day identity verification clears.** Add the four secrets, set
+   `RELEASE_SIGNING`, and download the first AAB. Closed track up, opt-in link
+   out, and the 14 days start.
+4. **While the 14 days run.** Screenshots, the listing text, the feature
+   graphic, Data Safety, the country list with the EU off.
+5. **Day 15.** Apply for production access. Budget one rejection.
+6. **After launch.** Widgets, then accounts, then a paid tier if the numbers
+   say so.
 
-Sixteen weeks part time. Eight full time. The artwork and the 12 testers are
-the only two things on the list that a longer day cannot shorten, which is why
-both start in week one.
+Three weeks of wall clock, most of it waiting on Google. The 12 testers are the
+only thing on the list a longer day cannot shorten, which is why they start
+first.
 
 ---
 
@@ -383,13 +403,21 @@ only thing here that none of them have, and the whole marketing case has to be
 that one idea: *your week plays the best week you ever had*. If that sentence
 does not sell it, nothing on the feature list will.
 
-**Ads and the promise are in tension.** The app currently says nothing leaves
-the phone. An ad SDK is a third party on the device by definition. Either the
-free tier's copy changes to be honest about that, or ads go and the model is
-paid-only. Both are defensible. Saying the old thing while doing the new one is
-not, and it is the kind of thing that gets written about.
+**Ads and the promise were in tension, and the copy moved.** An ad SDK is a
+third party on the device by definition, so "nothing leaves this phone" could
+not survive AdMob. The claim is now about the record, which is the part that is
+still exactly true: the habits, the marked days and the Arena's history are
+never sent anywhere. Settings, the privacy policy and the terms all say the same
+thing. Saying the old thing while doing the new one is what gets written about.
 
-**iOS without notifications is half an app**, and iOS is where people pay.
+**The crest artwork is a takedown waiting to be filed**, and a takedown lands on
+the listing rather than on one file. Kept knowingly. Blocker 3.
+
+**The icon is a red N on black**, which is Netflix's mark, and an icon is the
+asset a store looks at hardest. The letterform is not the problem, the colour
+pairing is, and the colour is one token: `--mark` in `www/styles.css` and `INK`
+in `tools/gen-icons.mjs`. Kept knowingly. If review does flag it, that is a
+rejection and a resubmission, not a ban.
 
 **The 12 testers are real people** who have to keep the app installed for a
 fortnight. Line them up before you need them.

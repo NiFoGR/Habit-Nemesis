@@ -218,11 +218,44 @@ they sit behind text rather than beside it.
 
 ## 5. The app mark
 
-Missing, and the one thing on this page that blocks a store listing. The app
-currently draws a dashed square placeholder in `www/js/icons.js` and
-`tools/gen-icons.mjs`, deliberately unfinished so nobody mistakes it for done.
-Both need replacing together, plus a 1024 x 1024 opaque PNG with no
-transparency and no rounded corners for the two stores.
+An N, cut through the diagonal by two thin slits. Red on near-black.
+
+**Play wants 512 x 512, PNG, 32-bit, opaque, square corners.** You do not have
+to produce that yourself. Drop the artwork in and the tool does the rest.
+
+### Where it comes from
+
+Two places, and the first one wins:
+
+| | |
+|---|---|
+| `art/source/mark.png` | the artwork. Square, 8-bit RGB or RGBA, not interlaced |
+| `MARK` in `www/js/icons.js` | a polygon, drawn on screen and standing in for the icons while there is no file |
+
+`tools/gen-icons.mjs` reads both, so nothing is drawn twice and nothing drifts.
+
+### What the tool does to an export
+
+A design tool exports an app icon the way a store displays it: rounded corners,
+white or transparent around them. Both stores round the corners themselves, so
+that ships an icon rounded twice with a pale seam in the gap. `npm run icons`
+trims the padding back to the artwork and floods whatever sat outside the
+rounding with the tile's own colour. The drawing inside is untouched.
+
+### Running it
+
+    cp your-icon.png art/source/mark.png
+    npm run icons
+
+Five files come out. Four go in `www/icons/` for the PWA and the launcher, and
+`store/icon-512.png` is the one you upload to Play. Nothing that only a store
+needs ships inside the app.
+
+### The 28px test
+
+A launcher icon is 48px on the home screen and about 36px in the drawer. Squint
+at it small before judging it large: one shape, one accent, no text, no thin
+lines. Three ideas inside a mark turn to mud at the size it is actually seen.
 
 ---
 

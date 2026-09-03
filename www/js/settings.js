@@ -7,12 +7,13 @@ import { icon } from './icons.js';
 import * as lock from './lock.js';
 import * as account from './account/session.js';
 import { configured } from './account/config.js';
-import { isNative } from './native.js';
+import { isNative, alarmPermission, askAlarms } from './native.js';
+import * as ads from './ads/program.js';
 
 /** One line that says where the record lives, which is the question the row
- *  is actually answering. */
+ *  is actually answering. The row is only drawn when there is a service behind
+ *  it: a build with no project offers no account, rather than a dead end. */
 function accountRow() {
-  if (!configured()) return 'On this phone only';
   return account.signedIn() ? account.emailOf() : 'Sign in to keep a copy';
 }
 
@@ -42,7 +43,7 @@ export function renderSettings(mount) {
            about itself that is worth making twice. -->
       <section class="set-hero">
         <b id="usage">checking</b>
-        <span>on this phone, and nowhere else.</span>
+        <span>on this phone. Your record never leaves it.</span>
       </section>
 
       ${group('The grid', [
@@ -64,13 +65,21 @@ export function renderSettings(mount) {
         row('Sound', toggle('sound', s.sound)),
       ].join(''))}
 
-      <h3 class="set-group">Account</h3>
-      <div class="set-nav"><a href="#/account">${icon('user', 16)}<span>${escapeHtml(accountRow())}</span></a></div>
+      ${isNative() ? group('Reminders', [
+        row('Notifications', '<span class="set-state" id="notifState">checking</span>',
+          'Every habit reminder and every Arena alarm needs this.'),
+        '<div class="set-actions" id="notifAsk" hidden><button class="btn" id="askNotif">Allow notifications</button></div>',
+      ].join('')) : ''}
+
+      ${configured() ? `<h3 class="set-group">Account</h3>
+      <div class="set-nav"><a href="#/account">${icon('user', 16)}<span>${escapeHtml(accountRow())}</span></a></div>` : ''}
 
       ${group('Privacy', [
         row('Lock the app', toggle('appLock', s.appLock, lock.isAvailable() ? '' : 'disabled'),
           lock.isSet() ? 'Asks for your PIN when you open the app.' : 'Sets a PIN. Forgetting it means erasing the app.'),
         lock.isSet() ? `<div class="set-actions"><button class="btn" id="changePin">Change PIN</button></div>` : '',
+        // Hidden outside the EEA and the UK, where there is no answer to change.
+        '<div class="set-actions" id="consentRow" hidden><button class="btn" id="adConsent">Ad privacy choices</button></div>',
       ].join(''))}
 
       <h3 class="set-group">Your data</h3>
@@ -125,6 +134,8 @@ export function renderSettings(mount) {
 
   wireLock(mount);
   showUsage(mount);
+  showNotifications(mount);
+  showAdConsent(mount);
   wireBackup(mount);
 
   mount.querySelector('#reset').addEventListener('click', () => {
@@ -229,6 +240,32 @@ async function showUsage(mount) {
   } catch {
     el.textContent = 'unknown';
   }
+}
+
+/** Android denies notifications until asked, and there is no way back from a
+ *  refusal except the system settings, so the state is worth showing. */
+async function showNotifications(mount) {
+  const el = mount.querySelector('#notifState');
+  if (!el) return;
+  const ask = mount.querySelector('#notifAsk');
+  const draw = (state) => {
+    el.textContent = { granted: 'On', denied: 'Off, blocked in Android', prompt: 'Not asked yet' }[state];
+    ask.hidden = state !== 'prompt';
+  };
+  draw(await alarmPermission());
+  mount.querySelector('#askNotif').addEventListener('click', async () => {
+    await askAlarms();
+    draw(await alarmPermission());
+  });
+}
+
+/** Google requires a way back into the consent form for anyone who was asked,
+ *  and shows nothing to anyone who was not. */
+async function showAdConsent(mount) {
+  const row = mount.querySelector('#consentRow');
+  if (!row || !(await ads.consentChangeable())) return;
+  row.hidden = false;
+  mount.querySelector('#adConsent').addEventListener('click', () => ads.openConsentForm());
 }
 
 function wireBackup(mount) {

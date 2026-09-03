@@ -18,6 +18,7 @@
 
   /* ---- meaning ---- */
   --accent: #22d3c5;   /* the app, and anything you can act on */
+  --mark: #e62429;     /* the app mark only. Never a state, never a surface */
   --violet: #a78bfa;   /* the far end of the brand ramp, for the mark only */
   --good: #4ade80;     /* done */
   --warn: #fbbf24;     /* careful */
@@ -268,7 +269,9 @@ input[type="range"] {
 
 .ico { display: block; flex: 0 0 auto; }
 .icon-btn .ico { width: 20px; height: 20px; }
-.logo-mark { display: block; }
+/* The mark carries its own colour. It is identity, not state, and it is the
+   only red in the app that does not mean something is wrong. */
+.logo-mark { display: block; color: var(--mark); }
 
 /* section headings with an icon */
 .h-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
@@ -1521,7 +1524,8 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 .intro-title { font-size: var(--f-hero); line-height: 1.05; letter-spacing: -0.035em; margin: 0 0 10px; }
 .intro-line { max-width: 30ch; color: var(--muted); font-size: var(--f-body); margin: 0; }
 
-.intro-logo { filter: drop-shadow(0 0 26px rgba(34, 211, 197, 0.28)); }
+/* The glow is the mark's own colour, not the accent's. */
+.intro-logo { filter: drop-shadow(0 0 26px rgba(230, 36, 41, 0.3)); }
 
 /* Built from the grid's own classes, so what you are told to tap looks like the
    thing you then tap. */
@@ -1594,6 +1598,8 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 }
 .set-row select { flex: 0 0 auto; }
 .set-row input[type="checkbox"] { flex: 0 0 auto; }
+/* A row whose value is read, not set. */
+.set-state { flex: 0 0 auto; font-size: var(--f-small); color: var(--muted); }
 
 .set-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
 .settings .btn.danger.wide { margin-top: 22px; }

@@ -9,6 +9,7 @@ import { shareWeek } from './share.js';
 import { escapeHtml, chime, celebrate, haptic } from '../ui.js';
 import { icon } from '../icons.js';
 import { navigate, replaceWith } from '../back.js';
+import * as ads from '../ads/program.js';
 
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 
@@ -68,7 +69,11 @@ function pop(feat) {
 let showing = null;
 
 export function leaveResult() {
-  if (showing?.res) arena.markSeen(showing.res.key);
+  if (showing?.res) {
+    arena.markSeen(showing.res.key);
+    // The week's one ad, on the way out. Never over the result itself.
+    ads.showWeekly(showing.res.key);
+  }
   showing = null;
 }
 
@@ -81,6 +86,8 @@ export function renderResult(mount) {
     // Replace, and to the grid.
     if (!res && !fresh.length) return replaceWith('#/hub');
     showing = { res, fresh, revealed: false };
+    // Loaded now, shown on the way out, so the wait happens while reading.
+    if (res) ads.prepareWeekly(res.key);
   }
   const { res, fresh } = showing;
   if (showing.revealed) return drawFull(mount, res, fresh);
