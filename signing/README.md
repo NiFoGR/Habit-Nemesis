@@ -37,6 +37,11 @@ CI copies it to `~/.android/debug.keystore` before the Gradle build, then checks
 the built APK's certificate matches. A silent signature change is the one
 failure that costs data, so it fails the build rather than shipping.
 
+The check reads the v2 signature with `apksigner`. Capacitor 8 raised minSdk to
+24, and above that AGP stops writing the old v1 JAR signature, which is what
+`keytool -printcert -jarfile` reads and all that it reads. Nothing about the key
+changed: v2 is the scheme Android has installed from since 7.0.
+
 ## The release key
 
 Generated 31 August 2026, and it is not in this repo. It is the **upload key**:

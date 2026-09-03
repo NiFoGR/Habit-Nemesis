@@ -83,12 +83,20 @@ jobs:
       - name: Verify the APK carries the expected signature
         # A silent signature change is the one failure that costs data, so it is
         # checked rather than assumed.
+        #
+        # apksigner, not `keytool -printcert -jarfile`. That reads the v1 JAR
+        # signature only, and AGP stops emitting v1 once minSdk reaches 24,
+        # which Capacitor 8 set. v2 is what Android installs from anyway.
         run: |
           APK=android/app/build/outputs/apk/debug/app-debug.apk
+          APKSIGNER=$(ls -d "${ANDROID_HOME:?}"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1)
+          test -n "$APKSIGNER" || { echo "No apksigner under $ANDROID_HOME/build-tools."; exit 1; }
+          # keytool prints uppercase with colons, apksigner lowercase without.
+          norm() { tr -d ' :' | tr 'A-F' 'a-f'; }
           EXPECTED=$(keytool -list -v -keystore signing/debug.keystore \
-            -storepass android 2>/dev/null | grep 'SHA256:' | head -1 | tr -d ' ')
-          ACTUAL=$(keytool -printcert -jarfile "$APK" 2>/dev/null \
-            | grep 'SHA256:' | head -1 | tr -d ' ')
+            -storepass android 2>/dev/null | grep 'SHA256:' | head -1 | cut -d: -f2- | norm)
+          ACTUAL=$("$APKSIGNER" verify --print-certs "$APK" \
+            | grep -i 'certificate SHA-256 digest' | head -1 | cut -d: -f2- | norm)
           echo "expected $EXPECTED"
           echo "actual   $ACTUAL"
           test -n "$ACTUAL" && test "$EXPECTED" = "$ACTUAL"
