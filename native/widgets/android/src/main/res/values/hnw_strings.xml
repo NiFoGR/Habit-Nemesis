@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget picker labels and the two empty states. Prefixed hnw_ so nothing collides. -->
+<resources>
+    <string name="hnw_fixture_label">Fixture</string>
+    <string name="hnw_today_label">Today</string>
+    <string name="hnw_grid_label">Habits</string>
+    <string name="hnw_no_match">No match yet</string>
+    <string name="hnw_no_habits">No habits yet</string>
+    <string name="hnw_you">You</string>
+</resources>

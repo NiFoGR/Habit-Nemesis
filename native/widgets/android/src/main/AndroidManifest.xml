@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The three widget providers and the tap receiver. Capacitor merges this into
+  the app's manifest, so every class name is fully qualified.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+
+        <receiver
+            android:name="com.habitnemesis.widgets.FixtureWidgetProvider"
+            android:exported="true"
+            android:label="@string/hnw_fixture_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/hnw_fixture_info" />
+        </receiver>
+
+        <receiver
+            android:name="com.habitnemesis.widgets.TodayWidgetProvider"
+            android:exported="true"
+            android:label="@string/hnw_today_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/hnw_today_info" />
+        </receiver>
+
+        <receiver
+            android:name="com.habitnemesis.widgets.GridWidgetProvider"
+            android:exported="true"
+            android:label="@string/hnw_grid_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/hnw_grid_info" />
+        </receiver>
+
+        <!-- Reached only by our own explicit PendingIntent. -->
+        <receiver
+            android:name="com.habitnemesis.widgets.WidgetActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.habitnemesis.widgets.MARK" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+</manifest>

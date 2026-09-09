@@ -1,0 +1,20 @@
+{
+  "name": "habit-nemesis-widgets",
+  "version": "1.0.0",
+  "description": "Three Android home screen widgets: the fixture, today's ring and the habit grid. The app writes a snapshot, the widgets draw it, a tap on today's cell queues a mark.",
+  "main": "index.js",
+  "license": "UNLICENSED",
+  "capacitor": {
+    "android": {
+      "src": "android"
+    }
+  },
+  "files": [
+    "android/src/main/",
+    "android/build.gradle",
+    "index.js"
+  ],
+  "peerDependencies": {
+    "@capacitor/core": "^8.0.0"
+  }
+}
