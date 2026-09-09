@@ -134,7 +134,7 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
 
         ${h.kind === 'timed'
           ? `<section class="card">
-              <div class="h-row">${icon('chart', 16)}<h2>The time</h2></div>
+              <div class="h-row"><h2>The time</h2></div>
               <label class="setting">
                 <span><b>Minutes</b><i>A day counts when the timer reaches this.</i></span>
                 <input type="number" id="target" inputmode="numeric" step="1" min="1" max="1440" value="${h.target}">
@@ -144,7 +144,7 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
 
         ${h.kind === 'number'
           ? `<section class="card">
-              <div class="h-row">${icon('chart', 16)}<h2>The measurement</h2></div>
+              <div class="h-row"><h2>The measurement</h2></div>
               <label class="setting">
                 <span><b>Unit</b><i>What you count.</i></span>
                 <input type="text" id="unit" maxlength="20" placeholder="litres" value="${escapeHtml(h.unit)}">
@@ -154,17 +154,17 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
                 <input type="number" id="target" inputmode="decimal" step="any" min="0" value="${h.target}">
               </label>
               <label class="setting">
-                <span><b>The target is a</b></span>
+                <span><b>Aim</b></span>
                 <select id="targetType">
-                  <option value="atleast" ${h.targetType === 'atleast' ? 'selected' : ''}>Floor, at least</option>
-                  <option value="atmost" ${h.targetType === 'atmost' ? 'selected' : ''}>Ceiling, at most</option>
+                  <option value="atleast" ${h.targetType === 'atleast' ? 'selected' : ''}>At least</option>
+                  <option value="atmost" ${h.targetType === 'atmost' ? 'selected' : ''}>At most</option>
                 </select>
               </label>
             </section>`
           : ''}
 
         <section class="card">
-          <div class="h-row">${icon('calendar', 16)}<h2>How often</h2></div>
+          <div class="h-row"><h2>How often</h2></div>
           <button class="rowbtn" id="freq">
             <span><b>Frequency</b><i>${escapeHtml(habits.freqLabel(h.freq))}</i></span>
             ${icon('pencil', 16)}
@@ -183,13 +183,13 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
         </section>
 
         <section class="card">
-          <div class="h-row">${icon('book', 16)}<h2>Notes</h2></div>
+          <div class="h-row"><h2>Notes</h2></div>
           <textarea id="notes" class="notes" rows="3" maxlength="500" placeholder="(Optional) Why this one, or how it is meant to be done.">${escapeHtml(h.notes)}</textarea>
         </section>
 
         ${existing
           ? `<section class="card danger">
-              <div class="h-row">${icon('warn', 16)}<h2>This habit</h2></div>
+              <div class="h-row"><h2>This habit</h2></div>
               <p class="small muted">Archiving takes it out of the grid and keeps every day you ever marked. Deleting takes the record with it.</p>
               <div class="btn-row">
                 <button class="btn" id="duplicate">Duplicate</button>

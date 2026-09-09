@@ -440,11 +440,11 @@ export function renderArchive(mount) {
               const sum = habits.summary(h);
               return `<div class="arch-row" data-id="${escapeHtml(h.id)}">
                 <span class="arch-text">
-                  <b style="color:${habits.hexOf(h.colour)}">${escapeHtml(h.name)}</b>
+                  <b>${escapeHtml(h.name)}</b>
                   <i>${escapeHtml(habits.freqLabel(h.freq))} · best ${sum.best} day${sum.best === 1 ? '' : 's'}</i>
                 </span>
-                <button class="btn small-btn" data-restore>Restore</button>
-                <button class="icon-btn small danger" data-del aria-label="Delete">${icon('trash', 15)}</button>
+                <button class="row-act" data-restore>Restore</button>
+                <button class="row-act danger" data-del>Delete</button>
               </div>`;
             })
             .join('')}</div>`

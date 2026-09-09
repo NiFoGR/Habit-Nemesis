@@ -700,14 +700,23 @@ button.type-card { width: 100%; text-align: left; font: inherit; cursor: pointer
 }
 
 .arch-list { display: grid; gap: 8px; }
+.arch-list { display: grid; }
 .arch-row {
-  display: flex; align-items: center; gap: 10px;
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); padding: 12px 14px;
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 2px; border-bottom: 1px solid var(--line-soft);
 }
+.arch-list .arch-row:last-child { border-bottom: 0; }
 .arch-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
 .arch-text b { font-size: var(--f-body); }
 .arch-text i { font-style: normal; color: var(--muted); font-size: var(--f-fine); }
-.arch-row .small-btn { padding: 9px 14px; font-size: var(--f-small); }
+/* One treatment for an action on a row. A filled button beside a red circle
+   was two answers to the same question. */
+.row-act {
+  background: none; border: 0; padding: 6px 2px; flex: 0 0 auto;
+  color: var(--muted); font: inherit; font-size: var(--f-small); cursor: pointer;
+}
+.row-act:active { color: var(--text); }
+.row-act.danger { color: var(--danger); }
 
 /* ---------- the timer ----------
    One numeral and nothing near it. The only place --f-mega is used. */
