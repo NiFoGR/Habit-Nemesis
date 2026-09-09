@@ -69,6 +69,9 @@ jobs:
         # a provider sign-in back into the app has to be written each time.
         run: node tools/patch-deeplink.mjs
 
+      - name: Add the launcher shortcuts
+        run: node tools/patch-shortcuts.mjs
+
       - name: Turn on Android's own backup
         # The record has to survive the app being uninstalled, and Auto Backup
         # is the only thing that carries it off the device without a server.
@@ -181,6 +184,9 @@ jobs:
 
       - name: Register the sign-in deep link
         run: node tools/patch-deeplink.mjs
+
+      - name: Add the launcher shortcuts
+        run: node tools/patch-shortcuts.mjs
 
       - name: Stamp the version
         run: node tools/patch-version.mjs
