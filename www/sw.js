@@ -1,6 +1,6 @@
 // Offline-first service worker. Bump CACHE to drop everything stored.
 // Code is revalidated against the network; the cache is the offline answer.
-const CACHE = 'habit-nemesis-v6';
+const CACHE = 'habit-nemesis-v7';
 
 const SHELL = [
   './',
@@ -9,6 +9,7 @@ const SHELL = [
   './manifest.webmanifest',
 
   // shell
+  './js/webview.js',
   './js/app.js',
   './js/vendor/supabase.js',
   './js/back.js',

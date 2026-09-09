@@ -303,6 +303,29 @@ it has never run.
   builds itself.
 - **The 12-tester closed test.** Blocker 2. Start it first.
 
+#### What it runs on
+
+Two floors, and the second is the one that bites.
+
+| | |
+|---|---|
+| minSdk | 24, Android 7.0. Capacitor 8's own floor, about 99% of active devices |
+| targetSdk | 36, Android 16. What Play has required of new apps since 31 August 2026 |
+| WebView | 111, March 2023. `color-mix` and `100dvh` are the highest bars the stylesheet sets |
+
+Android updates the WebView separately from the OS, so minSdk says nothing about
+what a device can draw. A phone on Android 7 with a current WebView is fine; one
+on Android 13 that has never updated it is not. `www/js/webview.js` runs before
+anything else and says so, rather than drawing a screen full of holes.
+
+Nothing is locked to portrait and nothing sets a fixed size, so tablets,
+foldables and Android 16's freeform windows all work. Every screen pads with
+`--safe-t` and `--safe-b`, which is what edge-to-edge needs: Android 16 removed
+the opt-out for anything targeting 36.
+
+The one 16 KB page size dependency is AdMob, and `play-services-ads` 25.4 is
+years past the version that added it. Everything else is Java, Kotlin or JS.
+
 ### iOS
 
 The one thing that needs hardware you may not have. Capacitor supports iOS,
