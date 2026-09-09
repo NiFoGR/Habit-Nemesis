@@ -13,16 +13,24 @@ import * as arena from './program.js';
 
 /* ---------------- helpers the tests share ---------------- */
 
-/** A day where every row came good. */
+/** A day where every row came good. Computed once per store version: five
+ *  feats read it, and each is asked on every mark. */
+let perfectCache = null;
+store.subscribe(() => {
+  perfectCache = null;
+});
+
 function perfectDays() {
+  if (perfectCache) return perfectCache;
   const rows = habits.active();
   if (!rows.length) return { best: 0, count: 0 };
   const sums = rows.map((h) => habits.summary(h));
   let count = 0;
   let best = 0;
   let run = 0;
-  let key = store.addDays(habits.today(), -400);
   const end = habits.today();
+  // From the first day any row answers for, so a count can outgrow a window.
+  let key = sums.reduce((a, s) => (s.from < a ? s.from : a), end);
   while (key <= end) {
     let due = 0;
     let ok = 0;
@@ -38,7 +46,8 @@ function perfectDays() {
     if (run > best) best = run;
     key = store.addDays(key, 1);
   }
-  return { best, count };
+  perfectCache = { best, count };
+  return perfectCache;
 }
 
 const arenaState = () => store.get().arena;
@@ -176,6 +185,12 @@ export const FEATS = [
   { id: 'perfectDay', section: 'The grid', icon: 'check', days: 1, name: 'A perfect day',
     blurb: 'Every row on the grid, green, on the same day.',
     now: () => perfectDays().count, at: 1 },
+  { id: 'perfect10', section: 'The grid', icon: 'check', days: 10, name: 'Ten perfect days',
+    blurb: 'Ten days with every row answered and none a miss. Not in a row: in total.',
+    now: () => perfectDays().count, at: 10 },
+  { id: 'perfect100', section: 'The grid', icon: 'medal', days: 100, name: 'A hundred perfect days',
+    blurb: 'A hundred perfect days, all told. Most people never see ten.',
+    now: () => perfectDays().count, at: 100 },
   { id: 'perfectWeek', section: 'The grid', icon: 'flame', days: 7, name: 'A perfect week',
     blurb: 'Seven perfect days back to back. Everything, all week.',
     now: () => perfectDays().best, at: 7, unit: ' d' },

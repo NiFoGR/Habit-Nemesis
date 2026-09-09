@@ -1344,6 +1344,9 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
   margin-bottom: 16px;
 }
 .gh-ring { flex: 0 0 auto; }
+/* The disc under the ring, shown on a perfect day. */
+.gh-disc { opacity: 0; transform: scale(0.6); transform-origin: center; transition: opacity var(--t-base) var(--ease), transform var(--t-base) var(--ease); }
+.gh-ring.perfect .gh-disc { opacity: 1; transform: scale(1); }
 .gh-text { flex: 1; min-width: 0; }
 .gh-text h1 { font-size: var(--f-title); letter-spacing: -0.02em; line-height: 1.15; }
 .gh-text p { margin: 2px 0 0; font-size: var(--f-fine); color: var(--muted); }
@@ -1962,6 +1965,21 @@ html.reduce-motion .hg-cell.intro-tap { animation: none; }
 .rv-feat.more { color: var(--muted); text-decoration: none; }
 
 .screen.rv .btn.primary { margin-top: 20px; }
+
+/* ---------- yesterday, unanswered ----------
+   One row per thing nobody answered, one tap each. */
+.catch-list { display: grid; gap: 8px; margin: 14px 0 4px; }
+.catch-row {
+  display: grid; grid-template-columns: 12px 1fr 22px; align-items: center; gap: 11px;
+  width: 100%; padding: 13px 14px; border-radius: var(--radius);
+  background: var(--surface-2); border: 1px solid var(--line);
+  color: var(--text); text-align: left; font-size: var(--f-body); cursor: pointer;
+}
+.catch-row:active { transform: scale(0.985); }
+.catch-name { font-weight: var(--w-medium); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.catch-mark { color: var(--faint); display: grid; place-items: center; }
+.catch-row.on { border-color: color-mix(in oklab, var(--sc) 55%, var(--line)); }
+.catch-row.on .catch-mark { color: var(--sc); }
 
 /* No account. One card under the rows, and it never comes back once dismissed twice. */
 .nudge { display: flex; align-items: center; gap: 10px; padding: 12px 14px; margin-top: 14px; }

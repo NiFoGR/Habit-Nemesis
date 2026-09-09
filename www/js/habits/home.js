@@ -16,7 +16,8 @@ import { icon } from '../icons.js';
 import { openTypePicker } from './edit.js';
 import * as arena from '../arena/program.js';
 import { headCell, rowHtml, dueHead, headRing } from './grid.js';
-import { wireCells } from './marking.js';
+import { wireCells, openValueSheet } from './marking.js';
+import { announce } from '../arena/result.js';
 import { configured } from '../account/config.js';
 import { signedIn } from '../account/session.js';
 
@@ -82,6 +83,43 @@ function accountNudge() {
 export function renderHome(mount) {
   reorderMode = false;
   redraw(mount);
+  if (habits.catchUpDue() && !document.querySelector('.sheet-scrim')) openCatchUp(mount);
+}
+
+/* ---------------- yesterday ---------------- */
+// Open the app after a missed day and the honest response is not silence.
+// Yesterday only: the calendar does the longer backfill.
+
+function openCatchUp(mount) {
+  const key = store.addDays(habits.today(), -1);
+  const rows = habits.unansweredOn(key);
+  habits.markCatchUp();
+  const sheet = openSheet(`
+    <h2>Yesterday</h2>
+    <p class="muted small">${rows.length} row${rows.length === 1 ? '' : 's'} unanswered. One tap each.</p>
+    <div class="catch-list">${rows
+      .map((h) => `<button class="catch-row" data-id="${escapeHtml(h.id)}" style="--sc:${habits.hexOf(h.colour)}">
+        <span class="starter-dot"></span>
+        <span class="catch-name">${escapeHtml(h.name)}</span>
+        <span class="catch-mark">${icon('check', 16)}</span>
+      </button>`)
+      .join('')}</div>
+    <button class="btn ghost wide" data-close>Nothing to correct</button>`, { onClose: () => redraw(mount) });
+
+  sheet.el.querySelectorAll('.catch-row').forEach((b) =>
+    b.addEventListener('click', () => {
+      const h = habits.byId(b.dataset.id);
+      if (!h || b.classList.contains('on')) return;
+      if (h.kind !== 'yesno') {
+        sheet.close();
+        return openValueSheet(mount, h, key, redraw);
+      }
+      habits.setValue(h.id, key, habits.YES);
+      announce();
+      haptic('hit');
+      chime('mark');
+      b.classList.add('on');
+    }));
 }
 
 function redraw(mount) {

@@ -108,17 +108,19 @@ export function rowHtml(habit, days, s, { reorder = false, groupOptions = () => 
 export function dueHead(due) {
   if (!due.total) return { text: 'Nothing here yet', frac: 0 };
   if (due.pending.length) return { text: `${due.pending.length} left today`, frac: due.done / due.total };
-  return { text: 'All done today', frac: 1 };
+  return { text: 'Perfect day', frac: 1 };
 }
 
+/** The day's ring. Every row owed answered and none a miss: solid accent. */
 export function headRing(frac) {
   const f = Math.max(0, Math.min(frac, 1));
   const r = 20;
   const c = 2 * Math.PI * r;
-  return `<svg class="gh-ring" width="46" height="46" viewBox="0 0 46 46" aria-hidden="true">
+  return `<svg class="gh-ring ${f >= 1 ? 'perfect' : ''}" width="46" height="46" viewBox="0 0 46 46" aria-hidden="true">
+    <circle class="gh-disc" cx="23" cy="23" r="17" fill="var(--accent)"/>
     <circle cx="23" cy="23" r="${r}" fill="none" stroke="var(--line)" stroke-width="4"/>
     <circle class="gh-ring-fill" cx="23" cy="23" r="${r}" fill="none"
-      stroke="${f >= 1 ? 'var(--good)' : 'var(--accent)'}" stroke-width="4" stroke-linecap="round"
+      stroke="var(--accent)" stroke-width="4" stroke-linecap="round"
       stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - f)).toFixed(1)}"
       transform="rotate(-90 23 23)"/>
   </svg>`;

@@ -559,6 +559,28 @@ export function calendar(sum, weeks = 17) {
 
 /* ---------------- across all habits ---------------- */
 
+/** Rows owed on `key` that nothing answered: no mark, and not carried by the
+ *  window either. */
+export function unansweredOn(key) {
+  return active().filter((h) => {
+    const d = summary(h).index.get(key);
+    return !!d && d.raw === undefined && !d.satisfied;
+  });
+}
+
+/** The catch-up sheet: yesterday only, once a day, never in the first week. */
+export function catchUpDue() {
+  if (settings().catchUpDay === today()) return false;
+  if (store.get().createdAt > Date.now() - 7 * 864e5) return false;
+  return unansweredOn(store.addDays(today(), -1)).length > 0;
+}
+
+export function markCatchUp() {
+  store.update((st) => {
+    st.habits.settings.catchUpDay = today();
+  }, { local: true });
+}
+
 /** What is still owed today across the grid. */
 export function dueToday() {
   const list = active();

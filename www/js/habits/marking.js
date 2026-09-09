@@ -19,7 +19,7 @@ function patchTotals(mount, wasDone) {
   const fill = mount.querySelector('.gh-ring-fill');
   if (fill) {
     fill.setAttribute('stroke-dashoffset', (ringLen(20) * (1 - Math.min(f, 1))).toFixed(1));
-    fill.setAttribute('stroke', f >= 1 ? 'var(--good)' : 'var(--accent)');
+    fill.closest('.gh-ring').classList.toggle('perfect', f >= 1);
   }
   mount.querySelectorAll('[data-group-score]').forEach((el) => {
     const score = habits.groupScore(el.dataset.groupScore);
@@ -30,9 +30,9 @@ function patchTotals(mount, wasDone) {
   const done = due.total > 0 && due.pending.length === 0;
   if (done && !wasDone) {
     haptic('level');
-    chime('complete');
+    chime('perfect');
     const ring = mount.querySelector('.gh-ring');
-    if (ring) celebrate(ring, { count: 20, spread: 74, colour: 'var(--good)' });
+    if (ring) celebrate(ring, { count: 20, spread: 74 });
   }
 }
 
@@ -120,7 +120,7 @@ export function wireCells(grid, mount, s, redraw) {
 }
 
 /** Keypad for a measurable habit, plus a button for each of the other states. */
-function openValueSheet(mount, habit, key, redraw) {
+export function openValueSheet(mount, habit, key, redraw) {
   const s = habits.settings();
   const current = habits.valueOn(habit, key);
   const sheet = openSheet(`

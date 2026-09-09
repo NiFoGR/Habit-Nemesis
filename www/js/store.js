@@ -54,6 +54,7 @@ function blank() {
         unknownMarks: false, // draw days with no data differently from lapses
         reverseDays: false, // off: today first. On: oldest first
         columns: 4, // day columns on the grid
+        catchUpDay: '', // the last day the catch-up sheet was shown
       },
       groups: [], // { id, name, order, collapsed, updatedAt }
       items: [], // the habits themselves, each stamped updatedAt
@@ -344,6 +345,7 @@ function cleanHabits(sh, base) {
       unknownMarks: bool(hs.unknownMarks),
       reverseDays: bool(hs.reverseDays),
       columns: int(hs.columns, 3, 7, base.settings.columns),
+      catchUpDay: /^\d{4}-\d{2}-\d{2}$/.test(hs.catchUpDay) ? hs.catchUpDay : '',
     },
     groups,
     items,
