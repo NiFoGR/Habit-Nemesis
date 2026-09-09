@@ -106,7 +106,7 @@ const LINES = [
     when: () => weekdayRun(new Date().getDay()).run >= 4,
     say: () => {
       const day = WEEKDAYS_LONG[new Date().getDay()];
-      return `You have not missed a ${day} since ${monthOf(weekdayRun(new Date().getDay()).since)}. Today is ${day}.`;
+      return `You have not missed a ${day} since ${monthOf(weekdayRun(new Date().getDay()).since)}.`;
     },
   },
   {
