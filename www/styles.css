@@ -243,7 +243,9 @@ a.btn { text-decoration: none; }
   padding: 11px 18px; border-radius: 999px; font-size: var(--f-small);
   opacity: 0; pointer-events: none; transition: all 0.24s ease; z-index: 50;
 }
-#toast.show { opacity: 1; transform: translate(-50%, 0); }
+#toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+/* The way back, beside the line. */
+.toast-undo { margin-left: 14px; background: none; border: 0; padding: 0; color: var(--accent-ink); font: inherit; font-size: var(--f-small); font-weight: var(--w-bold); cursor: pointer; }
 input[type="range"] {
   width: 100%; margin: 0 0 4px; accent-color: var(--accent); height: 28px; background: transparent;
 }
@@ -420,6 +422,16 @@ input[type="range"] {
 .hg-label b { font-weight: var(--w-medium); font-size: var(--f-body); }
 .hg-label i { font-style: normal; font-size: var(--f-fine); color: var(--muted); }
 
+/* ---------- search ----------
+   Only past twelve rows, where a thumb cannot find a row without it. */
+.hg-search {
+  width: 100%; margin: 0 0 4px; padding: 10px 14px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-pill);
+  color: var(--text); font: inherit; font-size: var(--f-body);
+}
+.hg-search::placeholder { color: var(--faint); }
+.hg-row.hidden { display: none; }
+
 /* ---------- the grid's one control ----------
    It sits in the day header's empty name slot, so it costs no band of its own.
    Three chips up here said "Reorder", "4 days" and "Groups" with equal weight,
@@ -472,6 +484,9 @@ input[type="range"] {
 .hg-head i b { display: block; font-size: var(--f-micro); letter-spacing: 0.06em; font-weight: 600; }
 .hg-head i em { font-style: normal; font-size: var(--f-fine); }
 .hg-head i.now { color: var(--text); }
+/* A day with a line on it. */
+.hg-head i em { position: relative; }
+.hg-head i.noted em::after { content: ''; position: absolute; right: -7px; top: 5px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); }
 
 .hg-row {
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
@@ -1968,6 +1983,11 @@ html.reduce-motion .hg-cell.intro-tap { animation: none; }
    Called "now": .today is the hub card and a column wearing it took a border. */
 .rv-day.now u::after { content: ''; position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); width: 3px; height: 3px; border-radius: 50%; background: var(--accent); }
 @keyframes rv-grow { from { transform: scaleY(0); } }
+
+/* The lines left on the week's days. */
+.rv-notes { margin: 6px 0 0; display: grid; gap: 4px; text-align: left; }
+.rv-notes p { margin: 0; font-size: var(--f-small); font-style: italic; color: var(--muted); }
+.rv-notes b { font-style: normal; color: var(--text); font-weight: var(--w-medium); margin-right: 6px; }
 
 /* Every row, best first, each bar in the colour you gave it. */
 .rv-rows { list-style: none; margin: 14px 0 4px; padding: 0; display: grid; gap: 7px; }

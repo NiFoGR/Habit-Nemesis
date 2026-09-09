@@ -2,7 +2,7 @@
 // for a measurable habit. Patches what changed, never rebuilds the grid.
 
 import * as habits from './program.js';
-import { escapeHtml, openSheet, haptic, chime, celebrate } from '../ui.js';
+import { escapeHtml, openSheet, haptic, chime, celebrate, relDay } from '../ui.js';
 import { announce } from '../arena/result.js';
 import { watchGap, currentWeek, weekDays, scoreWeek } from '../arena/program.js';
 import { syncTabs } from '../tabs.js';
@@ -101,17 +101,21 @@ export function wireCells(grid, mount, s, redraw) {
     act(cell);
   });
 
-  if (s.shortPress) return;
-
+  // A long press. On a past day it is a line on that day; on today, with
+  // short press off, it is the mark.
   let from = null;
   grid.addEventListener('pointerdown', (e) => {
     const cell = e.target.closest('.hg-cell');
-    if (!cell) return;
+    if (!cell || cell.disabled) return;
     held = false;
     from = { x: e.clientX, y: e.clientY };
+    const key = cell.dataset.day;
+    const past = key && key < habits.today();
+    if (!past && s.shortPress) return;
     timer = setTimeout(() => {
       held = true;
-      act(cell);
+      if (past) openDayNote(mount, key, redraw);
+      else act(cell);
     }, LONG_PRESS_MS);
   });
   const cancel = () => {
@@ -142,6 +146,29 @@ function crossing() {
     chime(cue);
     haptic(cue);
   }, 260);
+}
+
+/** One line on a day, for whoever reads the week back. */
+function openDayNote(mount, key, redraw) {
+  haptic('press');
+  const sheet = openSheet(`
+    <h2>${escapeHtml(relDay(key))}</h2>
+    <p class="muted small">A line on the day. It comes back in the week's review.</p>
+    <div class="note-ask"><input type="text" id="dayNote" maxlength="140" autocomplete="off" placeholder="What happened" value="${escapeHtml(habits.noteOn(key))}"></div>
+    <div class="btn-row">
+      <button class="btn ghost" data-close>Cancel</button>
+      <button class="btn primary" id="noteSave">Save</button>
+    </div>`, { onClose: () => redraw(mount) });
+  const input = sheet.el.querySelector('#dayNote');
+  input.focus();
+  const save = () => {
+    habits.setDayNote(key, input.value);
+    sheet.close();
+  };
+  sheet.el.querySelector('#noteSave').addEventListener('click', save);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') save();
+  });
 }
 
 /** Swap one cell for its fresh markup and nudge everything that reads it. */

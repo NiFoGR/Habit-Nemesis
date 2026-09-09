@@ -96,7 +96,8 @@ export function fmtNumber(v) {
 export function headCell(key) {
   const [y, m, d] = key.split('-').map(Number);
   const dt = new Date(y, m - 1, d);
-  return `<i class="${key === habits.today() ? 'now' : ''}"><b>${WEEKDAYS[dt.getDay()].toUpperCase()}</b><em>${dt.getDate()}</em></i>`;
+  const cls = `${key === habits.today() ? 'now' : ''} ${habits.noteOn(key) ? 'noted' : ''}`;
+  return `<i class="${cls.trim()}" title="${escapeHtml(habits.noteOn(key))}"><b>${WEEKDAYS[dt.getDay()].toUpperCase()}</b><em>${dt.getDate()}</em></i>`;
 }
 
 export function rowHtml(habit, days, s, { reorder = false, groupOptions = () => '' } = {}) {

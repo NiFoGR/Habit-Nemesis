@@ -180,12 +180,12 @@ function signedIn(mount) {
       return toast(err.message);
     }
     if (!remote) return toast('Your account has no record in it yet.');
-    if (!confirm(`Replace everything on this phone with the copy backed up ${relDay(remote.updated_at.slice(0, 10))}? What is here now is lost.`)) return;
+    const before = store.exportJson();
     try {
       await sync.pull();
       haptic('done');
-      toast('Restored');
       navigate('#/hub');
+      toast(`Restored the copy from ${relDay(remote.updated_at.slice(0, 10))}`, { undo: () => { store.importJson(before); window.dispatchEvent(new Event('hashchange')); } });
     } catch (err) {
       toast(err.message);
     }

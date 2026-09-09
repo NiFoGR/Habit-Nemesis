@@ -295,7 +295,10 @@ export function relTime(iso) {
 }
 
 let toastTimer = null;
-export function toast(msg) {
+
+/** A line at the foot. With `undo`, a button beside it for six seconds: the
+ *  act has already happened, and this is the way back. */
+export function toast(msg, { undo = null } = {}) {
   let t = document.getElementById('toast');
   if (!t) {
     t = document.createElement('div');
@@ -303,9 +306,20 @@ export function toast(msg) {
     document.body.appendChild(t);
   }
   t.textContent = msg;
+  if (undo) {
+    const b = document.createElement('button');
+    b.className = 'toast-undo';
+    b.textContent = 'Undo';
+    b.addEventListener('click', () => {
+      clearTimeout(toastTimer);
+      t.classList.remove('show');
+      undo();
+    });
+    t.appendChild(b);
+  }
   t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+  toastTimer = setTimeout(() => t.classList.remove('show'), undo ? 6000 : 2600);
 }
 
 /* ---------------- charts ---------------- */

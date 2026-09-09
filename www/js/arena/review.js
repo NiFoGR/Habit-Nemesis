@@ -56,6 +56,7 @@ function readWeek(key) {
     prev: prev.void || !prev.due ? null : prev,
     alive: habits.active().map((h) => habits.summary(h)).filter((s) => s?.streak).sort((a, b) => b.streak - a.streak),
     broke: habits.brokenIn(from, to)[0] || null,
+    notes: habits.notesIn(from, to),
     fresh: featsIn(from, to),
     opponent: live ? arena.fixtureFor(key) : null,
     open: open.length,
@@ -95,9 +96,12 @@ function daysBeat(w) {
     </span>`;
   }).join('');
 
+  const notes = w.notes.length
+    ? `<div class="rv-notes">${w.notes.map((n) => `<p><b>${escapeHtml(weekday(n.key).slice(0, 3))}</b>${escapeHtml(n.text)}</p>`).join('')}</div>`
+    : '';
   return `
     <p class="eyebrow">The days</p>
-    <div class="rv-days">${bars}</div>`;
+    <div class="rv-days">${bars}</div>${notes}`;
 }
 
 function rowsBeat(w) {

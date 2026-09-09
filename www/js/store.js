@@ -64,6 +64,7 @@ function blank() {
       items: [], // the habits themselves, each stamped updatedAt
       entries: {}, // habitId -> { dayKey: value }, -1 skip, 0 lapse, else done
       checks: {}, // habitId -> { dayKey: [item indices ticked] }, checklists only
+      notes: {}, // dayKey -> a line on the day, not on a habit
     },
 
     // Arena. The one slice that stores what it could derive: a closed week is a
@@ -373,6 +374,14 @@ function cleanHabits(sh, base) {
     if (Object.keys(kept).length) checks[hid] = kept;
   }
 
+  const notes = {};
+  const rawNotes = src.notes && typeof src.notes === 'object' ? src.notes : {};
+  for (const [k, v] of Object.entries(rawNotes).slice(0, 4000)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(k)) continue;
+    const text = str(v, 140).trim();
+    if (text) notes[k] = text;
+  }
+
   return {
     settings: {
       firstDay: int(hs.firstDay, 0, 6, base.settings.firstDay),
@@ -388,6 +397,7 @@ function cleanHabits(sh, base) {
     items,
     entries,
     checks,
+    notes,
   };
 }
 

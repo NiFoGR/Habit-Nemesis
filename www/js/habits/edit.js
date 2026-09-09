@@ -175,6 +175,7 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
               <div class="h-row">${icon('warn', 16)}<h2>This habit</h2></div>
               <p class="small muted">Archiving takes it out of the grid and keeps every day you ever marked. Deleting takes the record with it.</p>
               <div class="btn-row">
+                <button class="btn" id="duplicate">Duplicate</button>
                 <button class="btn" id="archive">${h.archived ? 'Restore' : 'Archive'}</button>
                 <button class="btn danger" id="delete">Delete</button>
               </div>
@@ -256,12 +257,18 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
       toast(h.archived ? 'Restored' : 'Archived');
       navigate('#/habits');
     });
+    mount.querySelector('#duplicate')?.addEventListener('click', () => {
+      const id = habits.duplicate(h.id);
+      if (!id) return;
+      toast('Duplicated');
+      navigate(`#/habits/edit?id=${encodeURIComponent(id)}`);
+    });
+    // At once, with the way back on the toast. A modal was the slowest thing here.
     mount.querySelector('#delete')?.addEventListener('click', () => {
-      if (!confirm(`Delete "${h.name}" and every day ever recorded on it? There is no undo.`)) return;
+      const snap = habits.snapshotOf(h.id);
       habits.remove(h.id);
-      habits.syncAlarms();
-      toast('Deleted');
       navigate('#/habits');
+      toast(`${h.name} deleted`, { undo: () => { habits.reinstate(snap); location.hash = '#/habits'; window.dispatchEvent(new Event('hashchange')); } });
     });
   };
 

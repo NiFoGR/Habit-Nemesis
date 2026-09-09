@@ -196,6 +196,56 @@ export function remove(id) {
   });
 }
 
+/* ---------------- undo ---------------- */
+// An act happens at once and a toast holds the way back for six seconds. What
+// it holds is the whole of a habit, or a group and who was in it.
+
+/** Everything a habit is, taken before it goes. */
+export function snapshotOf(id) {
+  const st = store.get().habits;
+  const habit = st.items.find((h) => h.id === id);
+  if (!habit) return null;
+  return { habit: { ...habit }, entries: { ...(st.entries[id] || {}) }, checks: { ...(st.checks[id] || {}) } };
+}
+
+export function reinstate(snap) {
+  if (!snap) return;
+  return store.update((st) => {
+    if (st.habits.items.some((h) => h.id === snap.habit.id)) return;
+    st.habits.items.push({ ...snap.habit });
+    if (Object.keys(snap.entries).length) st.habits.entries[snap.habit.id] = { ...snap.entries };
+    if (Object.keys(snap.checks).length) st.habits.checks[snap.habit.id] = { ...snap.checks };
+  });
+}
+
+/** A group and its members, taken before it goes. */
+export function groupSnapshot(id) {
+  const g = groupById(id);
+  if (!g) return null;
+  return { group: { ...g }, members: all().filter((h) => h.group === id).map((h) => h.id) };
+}
+
+export function reinstateGroup(snap) {
+  if (!snap) return;
+  return store.update((st) => {
+    if (st.habits.groups.some((g) => g.id === snap.group.id)) return;
+    st.habits.groups.push({ ...snap.group });
+    st.habits.items.forEach((h) => {
+      if (snap.members.includes(h.id)) stamp(h).group = snap.group.id;
+    });
+  });
+}
+
+/** The same habit again, with no record. Reminders come along, days do not. */
+export function duplicate(id) {
+  const h = byId(id);
+  if (!h) return null;
+  const copy = { ...blankHabit(), ...h, id: blankHabit().id, name: `${h.name} copy`.slice(0, 60), createdAt: Date.now(), archived: false, archivedAt: 0, order: 0 };
+  delete copy.updatedAt;
+  save(copy);
+  return copy.id;
+}
+
 export function setArchived(id, archived) {
   return store.update((st) => {
     const h = st.habits.items.find((x) => x.id === id);
@@ -292,6 +342,26 @@ export function setValue(habitId, key, value) {
     else map[key] = value;
     if (!Object.keys(map).length) delete st.habits.entries[habitId];
   });
+}
+
+/* ---------------- a line on a day ---------------- */
+
+export const noteOn = (key) => store.get().habits.notes[key] || '';
+
+export function setDayNote(key, text) {
+  return store.update((st) => {
+    const line = String(text || '').trim().slice(0, 140);
+    if (line) st.habits.notes[key] = line;
+    else delete st.habits.notes[key];
+  });
+}
+
+/** The lines inside a span, oldest first. */
+export function notesIn(from, to) {
+  return Object.entries(store.get().habits.notes)
+    .filter(([k]) => k >= from && k <= to)
+    .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+    .map(([key, text]) => ({ key, text }));
 }
 
 /* ---------------- checklists ---------------- */

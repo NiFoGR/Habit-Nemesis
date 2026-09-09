@@ -359,12 +359,12 @@ function wireBackup(el) {
   el.querySelectorAll('[data-restore]').forEach((b) =>
     b.addEventListener('click', () => {
       const day = b.dataset.restore;
-      if (!confirm(`Roll everything back to ${relDay(day)}? Anything recorded since is lost.`)) return;
+      const before = store.exportJson();
       try {
         store.restoreSnapshot(day);
         haptic('done');
-        toast(`Rolled back to ${relDay(day)}`);
         renderSettings(document.getElementById('app'), 'data');
+        toast(`Rolled back to ${relDay(day)}`, { undo: () => { store.importJson(before); renderSettings(document.getElementById('app'), 'data'); } });
       } catch (e) {
         toast(e.message);
       }
