@@ -488,7 +488,8 @@ input[type="range"] {
   border: 1.5px dashed currentColor; opacity: 0.7;
 }
 .hg-cell.carried .ico, .hg-cell.carried .hg-q { display: none; }
-.hg-cell.future { visibility: hidden; }
+/* Not yet, and before it existed. */
+.hg-cell.future, .hg-cell.void { visibility: hidden; }
 .hg-cell:active { background: var(--surface-2); }
 
 /* ---------- a day, turning on ----------
@@ -726,6 +727,8 @@ input[type="range"] {
 .hc-cell.now { box-shadow: inset 0 0 0 1.5px var(--text); }
 .hc-cell.on.now { box-shadow: inset 0 0 0 1.5px var(--bg); }
 .hc-cell.future { visibility: hidden; }
+/* Before the habit existed. Faint, not empty: it can still be filled in. */
+.hc-cell.void { opacity: 0.3; }
 /* The labels read the rows and must never set them. At the inherited
    line-height the side column outgrew the grid and Mon fell a row out of step. */
 .hcal-side { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }

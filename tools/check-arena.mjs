@@ -268,6 +268,43 @@ group('the review');
   is('a live streak has not broken', habits.brokenIn(back(6), back(0)).length, 0);
 }
 
+/* ---------------- the habit score ----------------
+   A weighted mean over the days a habit has lived. The old rule seeded the run
+   with day one at full weight, so a young habit read as whatever day one was. */
+
+group('the score, on a habit younger than its own half-life');
+{
+  const habits = await import('../www/js/habits/program.js');
+  const back = (n) => st.addDays(st.dayKey(), -n);
+  /** `days` old, marked on the days `mark(i)` picks, oldest first. */
+  const score = (days, mark, freq) => {
+    st.reset();
+    const entries = {};
+    for (let i = 0; i < days; i++) if (mark(i)) entries[back(days - 1 - i)] = 1;
+    st.update((s) => {
+      s.habits.items = [habit('h_s', 'S', { createdAt: at(back(days - 1)), ...(freq ? { freq } : {}) })];
+      s.habits.entries = { h_s: entries };
+    });
+    return Math.round(habits.summary(st.get().habits.items[0]).score * 100);
+  };
+
+  is('added today and done is a hundred', score(1, () => true), 100);
+  is('added today and not done is nothing', score(1, () => false), 0);
+  is('a week old and kept every day is a hundred', score(7, () => true), 100);
+  is('a week old and kept nothing is nothing', score(7, () => false), 0);
+  // The bug this rule was written for: four perfect days after one missed one.
+  is('four kept days after a missed first day read as four fifths', score(5, (i) => i > 0), 82);
+  is('and one missed day in five costs about a fifth', score(5, (i) => i !== 2), 80);
+  // A habit asking less of you has a longer memory, so the same miss fades slower.
+  is('four in seven, kept every day since a missed first', score(7, (i) => i > 0, { num: 4, den: 7 }), 87);
+  is('and the daily version of that week is lower still', score(7, (i) => i > 0), 88);
+  // Past the half-life the weighting is the old exponential average again.
+  is('sixty kept days then thirty missed', score(90, (i) => i < 60), 20);
+  is('and the same run the other way round', score(90, (i) => i >= 60), 80);
+  is('the score never leaves 0 to 1',
+    [score(30, (i) => i % 3 === 0), score(200, (i) => i % 7 < 3)].every((v) => v >= 0 && v <= 100), true);
+}
+
 /* ----- the public feats with real logic -----
    Streak counts and run lengths are the same shape of arithmetic as the week
    maths above, and just as unreadable off a screen. Seeded relative to today,

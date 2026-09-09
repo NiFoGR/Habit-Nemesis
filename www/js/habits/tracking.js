@@ -203,7 +203,9 @@ function calendarHtml(cal) {
                       ? 'carried'
                       : d.lapse
                         ? 'lapse'
-                        : '';
+                        : d.before
+                          ? 'void'
+                          : '';
               return `<button class="hc-cell ${cls} ${d.today ? 'now' : ''}" data-day="${d.key}"
                 ${d.future ? 'disabled' : ''} title="${d.key}">${d.day}</button>`;
             })
