@@ -68,8 +68,8 @@ and a repetition, and the repetition is what makes a screen feel bloated.
 
 ## Data
 
-- localStorage on device. No account, no server, no analytics. Accounts are
-  planned, not built: see `docs/RELEASE.md` before assuming either way.
+- localStorage on device, and an optional account that keeps a copy of it.
+  No analytics. `docs/ACCOUNTS.md` is the runbook, `account/sync.js` the rule.
 - Schema additive: `hydrate()` merges saved state over `blank()`.
 - Sanitise on read. A saved file is untrusted input.
 

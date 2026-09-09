@@ -12,7 +12,7 @@
 
 import * as store from '../store.js';
 import { WEEKDAYS } from '../ui.js';
-import { cancelAlarms, scheduleMany, ALARM_HABIT_BASE, ALARM_HABIT_SLOTS } from '../native.js';
+import { cancelAlarms, scheduleMany, ALARM_HABIT_BASE, ALARM_HABIT_SLOTS, ALARM_HABIT_DAYS } from '../native.js';
 
 /* -------------------- the palette -------------------- */
 
@@ -673,42 +673,49 @@ export function groupScore(groupId) {
 }
 
 /* --------------------- reminders --------------------- */
+// One-shots, a week ahead, re-armed on every change. A day already answered
+// gets none, which is what cancels a reminder the moment its cell is marked.
 
-export function syncAlarms() {
-  const ids = [];
-  for (let slot = 0; slot < ALARM_HABIT_SLOTS; slot++) {
-    for (let d = 0; d < 7; d++) ids.push(ALARM_HABIT_BASE + slot * 8 + d);
-  }
-  const list = active().slice(0, ALARM_HABIT_SLOTS);
-  const notifications = [];
-  list.forEach((h, slot) => {
+/** The reminder id for a row's slot and a day `offset` from today. */
+export const alarmIdFor = (slot, offset) => ALARM_HABIT_BASE + slot * 8 + offset;
+
+/** The rows that can carry a reminder, in slot order. */
+export const reminded = () => active().slice(0, ALARM_HABIT_SLOTS);
+
+/** What would be armed. `line` is the match from the Arena, carried in the text. */
+export function planReminders(line = () => '') {
+  const now = Date.now();
+  const match = line();
+  const out = [];
+  reminded().forEach((h, slot) => {
     if (!h.remindAt || !/^\d{2}:\d{2}$/.test(h.remindAt)) return;
     const [hour, minute] = h.remindAt.split(':').map(Number);
     const days = h.remindDays.length ? h.remindDays : [0, 1, 2, 3, 4, 5, 6];
-    for (const d of days) {
-      notifications.push({
-        id: ALARM_HABIT_BASE + slot * 8 + d,
+    const sum = summary(h);
+    for (let offset = 0; offset < ALARM_HABIT_DAYS; offset++) {
+      const key = store.addDays(today(), offset);
+      const [y, m, d] = key.split('-').map(Number);
+      const at = new Date(y, m - 1, d, hour, minute, 0, 0);
+      if (!days.includes(at.getDay()) || at.getTime() <= now) continue;
+      const cell = sum.index.get(key);
+      if (cell?.satisfied || cell?.skipped) continue;
+      out.push({
+        id: alarmIdFor(slot, offset),
         title: 'Habit Nemesis',
-        body: h.question || h.name,
-        hour,
-        minute,
-        // Capacitor counts weekdays from Sunday as 1, JavaScript from 0.
-        weekday: days.length === 7 ? null : d + 1,
+        body: match ? `${h.name}. ${match}` : h.question || h.name,
+        at: at.getTime(),
+        extra: { habitId: h.id, day: key },
+        actionTypeId: h.kind === 'yesno' ? 'yesno' : 'number',
       });
     }
   });
-  // All seven days is one daily alarm, not seven weekly ones.
-  const collapsed = [];
-  const seen = new Set();
-  for (const n of notifications) {
-    if (n.weekday === null) {
-      const slotId = n.id - (n.id - ALARM_HABIT_BASE) % 8;
-      if (seen.has(slotId)) continue;
-      seen.add(slotId);
-      collapsed.push({ ...n, id: slotId });
-      continue;
-    }
-    collapsed.push(n);
+  return out;
+}
+
+export function syncAlarms(line) {
+  const ids = [];
+  for (let slot = 0; slot < ALARM_HABIT_SLOTS; slot++) {
+    for (let d = 0; d < 8; d++) ids.push(alarmIdFor(slot, d));
   }
-  return cancelAlarms(ids).then(() => scheduleMany(collapsed));
+  return cancelAlarms(ids).then(() => scheduleMany(planReminders(line)));
 }

@@ -1,11 +1,16 @@
 // A tap on today's cell: flip the mark in the snapshot, queue it for the app,
-// redraw. Only ever flips a mark, never grows the snapshot.
+// cancel the row's reminder, redraw. Only ever flips a mark, never grows the
+// snapshot.
 package com.habitnemesis.widgets;
 
+import android.app.AlarmManager;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -76,7 +81,28 @@ public class WidgetActionReceiver extends BroadcastReceiver {
         editor.putString(Widgets.KEY_QUEUE, queue(prefs, habitId, day, !wasDone));
         // commit, not apply: the receiver may be gone a moment later.
         editor.commit();
+        if (!wasDone) cancelReminder(context, row.optInt("alarmToday", 0));
         return true;
+    }
+
+    // The reminder the app armed for this row today, cancelled the way
+    // Capacitor's own plugin cancels it: same publisher class, same id.
+    private static final String PUBLISHER = "com.capacitorjs.plugins.localnotifications.TimedNotificationPublisher";
+
+    private void cancelReminder(Context context, int id) {
+        if (id <= 0) return;
+        Intent intent = new Intent();
+        intent.setClassName(context, PUBLISHER);
+        int flags = PendingIntent.FLAG_NO_CREATE;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) flags |= PendingIntent.FLAG_MUTABLE;
+        PendingIntent pending = PendingIntent.getBroadcast(context, id, intent, flags);
+        if (pending != null) {
+            AlarmManager alarms = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            if (alarms != null) alarms.cancel(pending);
+            pending.cancel();
+        }
+        NotificationManager shown = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (shown != null) shown.cancel(id);
     }
 
     private String queue(SharedPreferences prefs, String habitId, String day, boolean done) {

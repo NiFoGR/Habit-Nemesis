@@ -27,6 +27,7 @@ import { initBack, navigate, replaceWith } from './back.js';
 import { initTabs, syncTabs } from './tabs.js';
 import * as native from './native.js';
 import * as ads from './ads/program.js';
+import { initWidgets } from './widgets.js';
 
 // js/webview.js has already said why. Drawing over it would hide the reason.
 if (window.__hnUnsupported) throw new Error('Habit Nemesis needs a newer WebView');
@@ -192,20 +193,38 @@ account.init().then(() => {
 });
 listenForReturn();
 
-habitsProgram.syncAlarms();
-// Arc alarms: opens, group ends, round ends, full time.
-arenaProgram.syncAlarms();
+// Reminders carry the match, so both plans are armed together.
+const armAlarms = () => {
+  habitsProgram.syncAlarms(arenaProgram.matchLine);
+  arenaProgram.syncAlarms();
+};
+native.registerActions().then(armAlarms);
 
 // Every alarm's text is fixed when it is armed, so a change re-arms them all.
 let alarmTimer = null;
 store.subscribe(() => {
   if (!native.hasAlarms()) return;
   clearTimeout(alarmTimer);
-  alarmTimer = setTimeout(() => {
-    habitsProgram.syncAlarms();
-    arenaProgram.syncAlarms();
-  }, 2000);
+  alarmTimer = setTimeout(armAlarms, 2000);
 });
+
+// Done, Skip or Enter on a reminder marks the day it named.
+native.onAction(({ actionId, input, extra }) => {
+  const habit = habitsProgram.byId(extra.habitId);
+  const day = extra.day;
+  if (!habit || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return;
+  if (actionId === 'done') habitsProgram.setValue(habit.id, day, habitsProgram.YES);
+  else if (actionId === 'skip') habitsProgram.setValue(habit.id, day, habitsProgram.SKIP);
+  else if (actionId === 'enter') {
+    const v = Number(String(input || '').replace(',', '.'));
+    if (Number.isFinite(v) && v >= 0) habitsProgram.setValue(habit.id, day, v);
+  } else return;
+  collect();
+  route();
+});
+
+// APK only: the home screen widgets, fed on every change.
+initWidgets();
 
 // Consent first, then the SDK. Absent from a build with no AdMob account.
 ads.init().then(() => ads.onRoute(location.hash.split('?')[0]));

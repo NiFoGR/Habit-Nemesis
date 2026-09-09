@@ -126,6 +126,26 @@ streak at all.
 01:00 belongs to the night you were still up for. The Arena scores weeks out of
 the same day keys, so the boundary moves for both together.
 
+## Reminders
+
+A reminder is a real Android alarm, and the rule that matters is the one the
+incumbents get wrong: **marking a cell cancels that day's reminder, from every
+surface**. The grid, a widget, and the reminder's own buttons all write the
+same record, and the plan is re-armed from the record two seconds after any
+change.
+
+- One-shots, one per row per day, a week ahead. A day already satisfied or
+  skipped gets none. Android caps an app at 500 alarms, which is why the
+  horizon is a week rather than for ever.
+- The text carries the match: `Run. The Nemesis is one ahead.`
+- Done and Skip on a yes/no reminder, Enter with a field on a counted one.
+  Loop's model, and the reason a reminder can be answered without opening
+  the app.
+- Quiet hours move the Arena's own alarms to their end. A reminder the user
+  set by hand is left alone: they chose the time.
+- No snooze. Android 12 removed notification-level snooze and it is not
+  worth fighting.
+
 ## What the sanitiser has to be careful about
 
 `cleanHabits()` in `store.js` is the only part of the sanitiser dealing with

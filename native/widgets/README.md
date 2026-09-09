@@ -28,6 +28,9 @@ One JSON string in SharedPreferences file `habitnemesis.widgets`, key
 ```
 
 - `marks` is aligned with `days`, oldest first, the last one today.
+- `alarmToday` on a row is the id of the reminder armed for it today, or 0.
+  A tap that marks the row done cancels it, so the phone does not ring for a
+  thing already done.
 - `1` done, `0` a recorded miss, `-1` a skip, `null` nothing recorded.
 - Any `kind` other than `yesno` holds the logged value, done at or above `target`.
 - `fixture.state` is `ahead`, `behind` or `level`. `fixture` is absent before a match.

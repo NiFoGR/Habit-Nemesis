@@ -32,7 +32,8 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 | `js/icons.js` | 93 | The inline SVG icon set, and the app mark as one polygon. |
 | `js/lock.js` | 123 | The optional PIN gate. Owns whether the app is unlocked. |
 | `js/intro.js` | 274 | The introduction, shown once on a new install. |
-| `js/native.js` | 115 | Capacitor bridge: Android alarms and the notification permission. |
+| `js/native.js` | 160 | Capacitor bridge: Android alarms, the buttons on a reminder, the notification permission. |
+| `js/widgets.js` | 110 | The home screen widgets' half: the snapshot on every change, the queue drained on resume. |
 | `js/settings.js` | 400 | App-wide settings: six pages from one table, and the account card. |
 | `js/version.js` | 3 | The version string About shows. Checked against package.json. |
 | `js/tabs.js` | 59 | The bottom bar: Cabinet, Grid, Arena. Drawn once, never rebuilt. |
@@ -159,11 +160,19 @@ nowhere else.
 | File | What it is |
 |---|---|
 | `native/systemui/` | A Capacitor plugin: hides the Android navigation bar, so the app's own bottom bar is the bottom of the screen. |
+| `native/widgets/` | A Capacitor plugin: three home screen widgets drawn from a snapshot the app writes, and a queue of the marks tapped on them. Its README is the contract. |
 
-A plugin package rather than a script that patches the generated project,
+Plugin packages rather than scripts that patch the generated project,
 because `android/` is regenerated on every build and would throw such edits
-away. `package.json` pulls it in with a `file:` dependency and Capacitor does
+away. `package.json` pulls each in with a `file:` dependency and Capacitor does
 the rest.
+
+**Reminders are one-shots, a week ahead.** `habits/program.js` plans one per
+row per day, skips any day already answered, and the plan is re-armed on
+every change to the record. That is what cancels a reminder the moment its
+cell is marked, from the grid, from a widget or from the reminder's own Done
+button. Android caps an app at 500 alarms, which is why the week is the
+horizon: reminders stop a week after the last time the app was opened.
 
 ## Tooling
 

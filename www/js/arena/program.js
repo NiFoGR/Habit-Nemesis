@@ -182,6 +182,7 @@ function alarmPlan() {
     });
   }
 
+  for (const a of out) a.at = afterQuiet(a.at);
   const ft = fullTime();
   if (!ft) return out;
   // One Arena notification a day: anything else due that day rides in its body.
@@ -199,7 +200,7 @@ function alarmPlan() {
 // The day closes at the day-start hour and the result lands as one push. The
 // text is fixed when it is armed, so it is re-armed on every change.
 
-const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six'];
+const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
 
 /** Today's cells against the opponent's on the same weekday. */
 function dayMatch() {
@@ -221,12 +222,9 @@ function fullTime() {
   if (!live.due) return null;
 
   // Fires when tomorrow begins. Inside quiet hours it waits for them to end.
-  const shift = habits.settings().dayStartHour;
   const tomorrow = store.addDays(habits.today(), 1);
-  let [hour, minute] = [shift, 0];
-  if (inQuietHours(`${String(hour).padStart(2, '0')}:00`)) [hour, minute] = s.quietTo.split(':').map(Number);
   const [y, m, d] = tomorrow.split('-').map(Number);
-  const at = new Date(y, m - 1, d, hour, minute, 0, 0).getTime();
+  const at = afterQuiet(new Date(y, m - 1, d, habits.settings().dayStartHour, 0, 0, 0).getTime());
 
   const last = habits.today() === weekEnd(currentWeek());
   let body;
@@ -248,6 +246,19 @@ function fullTime() {
   return { slot: 3, at, title: 'Habit Nemesis', body };
 }
 
+/** Inside quiet hours an Arena alarm waits for them to end. A reminder the
+ *  user set by hand is left alone; these are the app's own. */
+function afterQuiet(at) {
+  const d = new Date(at);
+  const clock = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  if (!inQuietHours(clock)) return at;
+  const [h, m] = store.get().settings.quietTo.split(':').map(Number);
+  const end = new Date(d);
+  end.setHours(h, m, 0, 0);
+  if (end <= d) end.setDate(end.getDate() + 1);
+  return end.getTime();
+}
+
 export async function syncAlarms() {
   if (!native.hasAlarms()) return;
   const plan = alarmPlan();
@@ -262,6 +273,20 @@ export async function syncAlarms() {
 
 /** What would be scheduled. An APK-only alarm is otherwise unverifiable. */
 export const plannedAlarms = () => alarmPlan();
+
+/** The match, as one clause a reminder can carry. */
+export function matchLine() {
+  const key = currentWeek();
+  const live = scoreWeek(key);
+  if (live.void && !live.due) return '';
+  const opp = fixtureFor(key);
+  const gap = Math.round(live.score * 100) - Math.round(opp.score * 100);
+  const who = opp.id === 'nemesis' || opp.knockout === 'final' ? 'The Nemesis' : opp.name;
+  const by = (n) => WORDS[n] || String(n);
+  if (gap > 0) return `You are ${by(gap)} ahead.`;
+  if (gap < 0) return `${who} is ${by(-gap)} ahead.`;
+  return `Level with ${who === 'The Nemesis' ? 'the Nemesis' : who}.`;
+}
 
 /* ----------------------- notes ----------------------- */
 
