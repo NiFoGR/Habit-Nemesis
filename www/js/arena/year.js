@@ -2,7 +2,7 @@
 // until it has been lived.
 //
 // A review, not a second competition. The months chart is drawn here rather
-// than with barChart, which scales to its tallest bar: on percentages that
+// than with a shared bar chart, which scales to its tallest bar: on percentages that
 // draws a 44% month as a near-miss of a full column. Always 0 to 100, and as
 // many columns as the year has months, counted from the data.
 

@@ -225,8 +225,6 @@ a.btn { text-decoration: none; }
 .chart { width: 100%; height: 110px; overflow: visible; }
 .chart .ct { fill: var(--muted); font-size: var(--f-micro); }
 .chart-empty { color: var(--muted); font-size: var(--f-small); padding: 18px 0; text-align: center; }
-.hm-key i { width: 13px; height: 13px; border-radius: var(--r-chip); display: block; }
-.hm-key { display: flex; align-items: center; gap: 5px; margin-top: 8px; color: var(--muted); font-size: var(--f-fine); }
 
 /* ---------- settings ---------- */
 
@@ -273,11 +271,6 @@ input[type="range"] {
 .small-btn { flex: 0 0 auto; width: auto; padding: 13px 18px; }
 .good-text { color: var(--good); }
 
-.barchart { display: flex; align-items: flex-end; gap: 3px; height: calc(var(--h) + 18px); }
-.bar { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; min-width: 6px; }
-.bar-stack { width: 100%; display: flex; flex-direction: column-reverse; border-radius: var(--r-chip) var(--r-chip) 0 0; overflow: hidden; background: var(--surface-2); }
-.bar-stack i { display: block; width: 100%; background: var(--bar, var(--accent)); }
-.bar span { font-size: var(--f-micro); color: var(--muted); margin-top: 4px; white-space: nowrap; }
 
 .empty-state { text-align: center; padding: 30px 10px; }
 .empty-state h2 { margin-bottom: 6px; }
@@ -730,12 +723,18 @@ button.type-card { width: 100%; text-align: left; font: inherit; cursor: pointer
 
 /* ---------- one habit's own screen ---------- */
 
-.habit-hero { margin-bottom: 16px; }
-.habit-hero h2 { font-size: var(--f-title); margin-bottom: 6px; }
-.habit-hero p { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
-.habit-hero .ico { width: 14px; height: 14px; }
-/* Why the number moved. One sentence, under the score. */
-.why { margin: 12px 0 0; font-size: var(--f-small); color: var(--muted); }
+/* ---------- one habit ----------
+   The score is what the screen is about, so it is the only large thing on it.
+   Everything else is a line: four equal tiles gave four numbers equal weight
+   and left the screen with no headline. */
+.hb-top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.hb-score { font-size: var(--f-hero); letter-spacing: -0.03em; line-height: 1; }
+.hb-move { font-size: var(--f-small); color: var(--muted); }
+.hb-why { margin: 10px 0 0; font-size: var(--f-small); color: var(--muted); }
+.hb-facts { margin: 6px 0 0; font-size: var(--f-fine); color: var(--faint); }
+.hb-note { font-size: var(--f-small); color: var(--muted); }
+.screen.habits .card { margin-bottom: 30px; }
+.screen.habits .hb-facts + .card { margin-top: 30px; }
 
 .btn.small-btn { width: auto; padding: 10px 15px; font-size: var(--f-small); margin-top: 0; }
 
@@ -779,7 +778,7 @@ button.type-card { width: 100%; text-align: left; font: inherit; cursor: pointer
    a black hole with squares in it. The grid has to be visible for the gaps to
    mean anything. */
   background: var(--line); color: var(--muted);
-  /* About 15px a cell, so the date sits inside one with air around it. */
+  /* The date shows only in edit mode, where you have to aim at a day. */
   font-size: var(--f-micro); font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
   display: grid; place-items: center; padding: 0; cursor: default;
 }
@@ -802,19 +801,15 @@ button.type-card { width: 100%; text-align: left; font: inherit; cursor: pointer
   flex: 1 1 0; min-height: 0; display: flex; align-items: center;
   font-style: normal; font-size: var(--f-micro); line-height: 1; color: var(--muted);
 }
-.hm-key .hc-cell { width: 13px; height: 13px; aspect-ratio: auto; border-radius: var(--r-chip); }
 
-.streak-list { display: grid; gap: 7px; }
-.streak-row { display: flex; align-items: center; gap: 9px; font-size: var(--f-fine); color: var(--muted); }
-.streak-row > span:first-child, .streak-row > span:last-child { flex: 0 0 68px; }
-.streak-row > span:last-child { text-align: right; }
-.streak-bar { flex: 1; background: var(--surface-2); border-radius: var(--r-pill); overflow: hidden; }
-.streak-bar i {
-  display: flex; align-items: center; justify-content: center;
-  height: 22px; min-width: 22px; border-radius: var(--r-pill);
-  font-style: normal; font-size: var(--f-fine); font-weight: 700; color: var(--bg);
+.streak-list { display: grid; margin-top: 10px; }
+.streak-row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  padding: 9px 0; border-bottom: 1px solid var(--line-soft);
+  font-size: var(--f-small); color: var(--muted);
 }
-
+.streak-row:last-child { border-bottom: 0; }
+.streak-row b { color: var(--text); font-variant-numeric: tabular-nums; }
 /* ==========================================================================
    Motion
    ==========================================================================

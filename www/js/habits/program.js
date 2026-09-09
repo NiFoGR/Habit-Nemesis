@@ -685,54 +685,6 @@ export function movement(sum) {
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
 
-/** Bars for the history chart, one bucket per period, oldest first. */
-export function history(sum, period = 'week', buckets = 14) {
-  const parse = (key) => {
-    const [y, m, d] = key.split('-').map(Number);
-    return new Date(y, m - 1, d);
-  };
-  const bucketOf = (dt) => {
-    if (period === 'day') return store.dayKey(dt);
-    if (period === 'week') {
-      const first = settings().firstDay;
-      const shift = (dt.getDay() - first + 7) % 7;
-      return store.dayKey(new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() - shift));
-    }
-    if (period === 'month') return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
-    if (period === 'quarter') return `${dt.getFullYear()}-Q${Math.floor(dt.getMonth() / 3) + 1}`;
-    return String(dt.getFullYear());
-  };
-  const label = (key) => {
-    if (period === 'day' || period === 'week') {
-      const dt = parse(key);
-      return `${dt.getDate()} ${MONTHS[dt.getMonth()]}`;
-    }
-    if (period === 'month') {
-      const [y, m] = key.split('-');
-      return `${MONTHS[Number(m) - 1]} ${y.slice(2)}`;
-    }
-    return key;
-  };
-
-  const map = new Map();
-  for (const d of sum.days) {
-    if (d.skipped) continue;
-    const b = bucketOf(parse(d.key));
-    const add = measurable(sum.habit) ? (typeof d.raw === 'number' && d.raw > 0 ? d.raw : 0) : d.hit ? 1 : 0;
-    map.set(b, (map.get(b) || 0) + add);
-  }
-  const keys = [...map.keys()].sort().slice(-buckets);
-  return keys.map((k) => {
-    const v = map.get(k);
-    return {
-      label: label(k),
-      short: label(k).split(' ')[0],
-      value: Math.round(v * 100) / 100,
-      text: `${Math.round(v * 100) / 100}${sum.habit.unit ? ` ${sum.habit.unit}` : ''}`,
-    };
-  });
-}
-
 /** Weeks as columns, weekdays as rows, with the dates written in. */
 export function calendar(sum, weeks = 17) {
   const first = settings().firstDay;
@@ -745,6 +697,8 @@ export function calendar(sum, weeks = 17) {
 
   const cols = [];
   let lastMonth = -1;
+  // Two months starting three weeks apart printed "AprMay" over one column.
+  let lastLabel = -9;
   for (let w = 0; w < weeks; w++) {
     const cells = [];
     let label = '';
@@ -767,7 +721,10 @@ export function calendar(sum, weeks = 17) {
       });
       if (i === 0 && dt.getMonth() !== lastMonth) {
         lastMonth = dt.getMonth();
-        label = dt.getMonth() === 0 ? `${MONTHS[0]} ${dt.getFullYear()}` : MONTHS[dt.getMonth()];
+        if (w - lastLabel >= 3) {
+          lastLabel = w;
+          label = dt.getMonth() === 0 ? `${MONTHS[0]} ${dt.getFullYear()}` : MONTHS[dt.getMonth()];
+        }
       }
     }
     cols.push({ label, cells });

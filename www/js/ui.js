@@ -235,35 +235,25 @@ export const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 
 /* ---------------- small components ---------------- */
 
-/** Vertical bars. `colour` is for a habit's own screen, which is not in the accent. */
-export function barChart(bars, { h = 120, unit = '', colour = null } = {}) {
-  if (!bars.length) return '<div class="chart-empty">Nothing logged in this period</div>';
-  const max = Math.max(...bars.map((b) => b.value), 1);
-  // Past about eight columns the labels collide, so thin them from the right.
-  const every = Math.max(1, Math.ceil(bars.length / 8));
-  return `<div class="barchart" style="--h:${h}px${colour ? `;--bar:${colour}` : ''}">${bars
-    .map((b, i) => {
-      const pctH = Math.max(b.value > 0 ? 3 : 0, (b.value / max) * 100);
-      const stack = b.parts
-        ? b.parts
-            .filter((p) => p.value > 0)
-            .map((p) => `<i style="height:${(p.value / b.value) * 100}%;background:${p.colour}" title="${escapeHtml(p.label)}"></i>`)
-            .join('')
-        : '<i style="height:100%"></i>';
-      return `<div class="bar" title="${escapeHtml(b.label)}: ${escapeHtml(b.text || String(b.value) + unit)}">
-        <div class="bar-stack" style="height:${pctH}%">${stack}</div>
-        <span>${(bars.length - 1 - i) % every === 0 ? escapeHtml(b.short || b.label) : ''}</span>
-      </div>`;
-    })
-    .join('')}</div>`;
-}
-
 export function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 export const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 export const WEEKDAYS_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+/** Two day keys as one range. formatRange drops the repeated month by the
+ *  locale's own rule; hand-rolling it gave "15 to Apr 17" on en-US. */
+const RANGE = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
+const RANGE_Y = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: '2-digit' });
+
+export function fmtRange(from, to) {
+  const a = new Date(`${from}T00:00:00`);
+  const b = new Date(`${to}T00:00:00`);
+  // The year only when it is not this one.
+  const f = b.getFullYear() === new Date().getFullYear() ? RANGE : RANGE_Y;
+  return f.formatRange ? f.formatRange(a, b) : `${f.format(a)} – ${f.format(b)}`;
+}
 
 export function fmtDate(key) {
   const [y, m, d] = key.split('-').map(Number);
