@@ -160,12 +160,14 @@ function redraw(mount) {
       if (!rows.length && !group) return '';
       const score = group ? habits.groupScore(group.id) : null;
       const collapsed = group?.collapsed;
+      const run = group ? habits.protocolOf(group.id) : null;
       return `
         ${group
           ? `<div class="hg-group ${collapsed ? 'collapsed' : ''}" data-group="${escapeHtml(group.id)}">
               <button class="hg-group-btn" data-toggle="${escapeHtml(group.id)}">
                 ${icon(collapsed ? 'caretDown' : 'caretUp', 14)}<b>${escapeHtml(group.name)}</b>
               </button>
+              ${run ? `<i class="hg-days">${run.days} day${run.days === 1 ? '' : 's'} left</i>` : ''}
               ${score == null ? '' : `<span class="pill ghost" data-group-score="${escapeHtml(group.id)}">${Math.round(score * 100)}%</span>`}
             </div>`
           : sections.length > 1 && rows.length

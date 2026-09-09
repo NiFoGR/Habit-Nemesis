@@ -126,6 +126,16 @@ streak at all.
 01:00 belongs to the night you were still up for. The Arena scores weeks out of
 the same day keys, so the boundary moves for both together.
 
+## Protocols
+
+A curated block: rows created for you in a group of their own, a fixed span,
+and a feat in the Cabinet if you hold four in five of the cells it owed.
+Three ship, as data in `PROTOCOLS`: thirty days of discipline, an eight week
+lifting split, and a four week sleep protocol. A run is judged once, the day
+after it ends, from the same record everything else reads. The rows stay on
+the grid afterwards as ordinary rows: the protocol was the clock, not the
+habits.
+
 ## Reminders
 
 A reminder is a real Android alarm, and the rule that matters is the one the

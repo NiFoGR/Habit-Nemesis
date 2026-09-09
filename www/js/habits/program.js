@@ -344,6 +344,115 @@ export function setValue(habitId, key, value) {
   });
 }
 
+/* ---------------- protocols ---------------- */
+// A curated block: rows created for you, a fixed span, and a feat at the end.
+// Data, never a screen of special cases. A run is a group like any other.
+
+export const PROTOCOLS = [
+  {
+    id: 'discipline',
+    name: '30 days of discipline',
+    days: 30,
+    blurb: 'Four rows, thirty days, nothing optional.',
+    rows: [
+      { name: 'Up before 7', colour: 'amber', kind: 'yesno', question: 'Up before seven?' },
+      { name: 'Cold shower', colour: 'sky', kind: 'yesno', question: 'Cold shower?' },
+      { name: 'No phone in bed', colour: 'clay', kind: 'yesno', question: 'Phone out of the bedroom?' },
+      { name: 'Steps', colour: 'mint', kind: 'number', unit: 'steps', target: 10000, question: 'How many steps?' },
+    ],
+  },
+  {
+    id: 'split',
+    name: 'The split',
+    days: 56,
+    blurb: 'Push, pull, legs, once a week each, and the protein to build on. Eight weeks.',
+    rows: [
+      { name: 'Push', colour: 'orange', kind: 'yesno', freq: { num: 1, den: 7 }, question: 'Push day done?' },
+      { name: 'Pull', colour: 'rose', kind: 'yesno', freq: { num: 1, den: 7 }, question: 'Pull day done?' },
+      { name: 'Legs', colour: 'lime', kind: 'yesno', freq: { num: 1, den: 7 }, question: 'Leg day done?' },
+      { name: 'Protein', colour: 'amber', kind: 'number', unit: 'g', target: 150, question: 'How much protein?' },
+    ],
+  },
+  {
+    id: 'sleep',
+    name: 'Sleep protocol',
+    days: 28,
+    blurb: 'The same night, four weeks running.',
+    rows: [
+      { name: 'No caffeine after 2', colour: 'clay', kind: 'yesno', question: 'Last coffee before two?' },
+      { name: 'Screens off by 10', colour: 'violet', kind: 'yesno', question: 'Screens off by ten?' },
+      { name: 'In bed by 11', colour: 'indigo', kind: 'yesno', question: 'In bed by eleven?' },
+      { name: 'Hours slept', colour: 'sky', kind: 'number', unit: 'h', target: 7, question: 'How many hours?' },
+    ],
+  },
+];
+
+/** The bar a run has to hold: four in five of the cells it owed. */
+const PROTOCOL_BAR = 0.8;
+
+export const protocolRuns = () => store.get().habits.protocols;
+
+/** The run a group belongs to, while it is running. */
+export function protocolOf(groupId) {
+  const [id, run] = Object.entries(protocolRuns()).find(([, r]) => r.group === groupId && !r.settled) || [];
+  return id ? { id, ...run, days: daysLeftIn(run) } : null;
+}
+
+const daysLeftIn = (run) => {
+  let n = 0;
+  let k = today();
+  while (k <= run.ends && n < 400) {
+    n++;
+    k = store.addDays(k, 1);
+  }
+  return n;
+};
+
+/** Creates the group and the rows, and starts the clock. One run per protocol at a time. */
+export function startProtocol(id) {
+  const p = PROTOCOLS.find((x) => x.id === id);
+  if (!p || (protocolRuns()[id] && !protocolRuns()[id].settled)) return null;
+  const group = addGroup(p.name);
+  const rows = [];
+  for (const r of p.rows) {
+    const h = { ...draft(r.kind), ...r, group, order: active().length };
+    save(h);
+    rows.push(h.id);
+  }
+  const started = today();
+  store.update((st) => {
+    st.habits.protocols[id] = { started, ends: store.addDays(started, p.days - 1), group, rows, settled: false, completed: false };
+  });
+  return group;
+}
+
+/** A run past its last day is judged once: the mean of its rows over the span. */
+export function settleProtocols() {
+  const now = today();
+  for (const [id, run] of Object.entries(protocolRuns())) {
+    if (run.settled || run.ends >= now) continue;
+    let owed = 0;
+    let kept = 0;
+    for (const hid of run.rows) {
+      const h = byId(hid);
+      if (!h) continue;
+      const sum = summary(h);
+      for (let k = run.started; k <= run.ends; k = store.addDays(k, 1)) {
+        const d = sum.index.get(k);
+        if (!d || d.skipped) continue;
+        owed++;
+        if (d.satisfied) kept++;
+      }
+    }
+    const completed = owed > 0 && kept / owed >= PROTOCOL_BAR;
+    store.update((st) => {
+      Object.assign(st.habits.protocols[id], { settled: true, completed });
+    });
+  }
+}
+
+export const completedProtocol = (id) => !!protocolRuns()[id]?.completed;
+
 /* ---------------- a line on a day ---------------- */
 
 export const noteOn = (key) => store.get().habits.notes[key] || '';

@@ -65,6 +65,8 @@ function blank() {
       entries: {}, // habitId -> { dayKey: value }, -1 skip, 0 lapse, else done
       checks: {}, // habitId -> { dayKey: [item indices ticked] }, checklists only
       notes: {}, // dayKey -> a line on the day, not on a habit
+      // A protocol run: { started, ends, group, rows, settled, completed }
+      protocols: {},
     },
 
     // Arena. The one slice that stores what it could derive: a closed week is a
@@ -382,6 +384,21 @@ function cleanHabits(sh, base) {
     if (text) notes[k] = text;
   }
 
+  const protocols = {};
+  const rawProtocols = src.protocols && typeof src.protocols === 'object' ? src.protocols : {};
+  const dayOf = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : '');
+  for (const [k, v] of Object.entries(rawProtocols).slice(0, 20)) {
+    if (!/^[a-z]{1,20}$/.test(k) || !v || typeof v !== 'object' || !dayOf(v.started) || !dayOf(v.ends)) continue;
+    protocols[k] = {
+      started: v.started,
+      ends: v.ends,
+      group: groupIds.has(v.group) ? v.group : '',
+      rows: arr(v.rows, 8).filter((id) => itemIds.has(id)),
+      settled: bool(v.settled),
+      completed: bool(v.completed),
+    };
+  }
+
   return {
     settings: {
       firstDay: int(hs.firstDay, 0, 6, base.settings.firstDay),
@@ -398,6 +415,7 @@ function cleanHabits(sh, base) {
     entries,
     checks,
     notes,
+    protocols,
   };
 }
 

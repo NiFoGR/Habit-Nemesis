@@ -126,7 +126,8 @@ applyAppearance();
 // One restore point a day, before anything can write over the day's record.
 store.snapshot();
 
-// Close the Arena's books before the first render.
+// A protocol past its last day is judged, then the Arena's books are closed.
+habitsProgram.settleProtocols();
 collect();
 
 // replaceState: no blank entry under the grid.
@@ -163,6 +164,7 @@ function dayTurned() {
   if (document.querySelector('.sheet-scrim')) return false;
   onDay = now;
   store.snapshot();
+  habitsProgram.settleProtocols();
   collect();
   route();
   // The day closed with the app open: full time, and the lead may have moved.

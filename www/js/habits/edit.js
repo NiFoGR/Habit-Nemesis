@@ -38,7 +38,36 @@ export function typePickerHtml() {
 
 /** Opened from the grid, over the list you are adding to. */
 export function openTypePicker() {
-  openSheet(`${typePickerHtml()}<button class="btn ghost wide" data-close>Cancel</button>`);
+  const sheet = openSheet(`${typePickerHtml()}
+    <button class="btn ghost wide" id="protocols">${icon('flash', 16)}<span>Start a protocol</span></button>
+    <button class="btn ghost wide" data-close>Cancel</button>`);
+  sheet.el.querySelector('#protocols').addEventListener('click', () => {
+    sheet.close();
+    openProtocolSheet();
+  });
+}
+
+/** Three curated blocks. Starting one builds its rows and starts its clock. */
+export function openProtocolSheet() {
+  const runs = habits.protocolRuns();
+  const sheet = openSheet(`
+    <h2>Protocols</h2>
+    <p class="muted small">A block of rows with an end date. Hold four in five of its cells and it goes in the Cabinet.</p>
+    <div class="type-cards">${habits.PROTOCOLS.map((p) => {
+      const running = runs[p.id] && !runs[p.id].settled;
+      return `<button class="type-card" data-protocol="${p.id}" ${running ? 'disabled' : ''}>
+        <b>${escapeHtml(p.name)}</b>
+        <span>${escapeHtml(running ? 'Running now.' : `${p.days} days. ${p.rows.map((r) => r.name).join(', ')}.`)}</span>
+      </button>`;
+    }).join('')}</div>
+    <button class="btn ghost wide" data-close>Cancel</button>`);
+  sheet.el.querySelectorAll('[data-protocol]').forEach((b) =>
+    b.addEventListener('click', () => {
+      if (!habits.startProtocol(b.dataset.protocol)) return;
+      sheet.close();
+      toast('Rows on the grid. The clock is running.');
+      window.dispatchEvent(new Event('hashchange'));
+    }));
 }
 
 /* ---------------- the form ---------------- */
