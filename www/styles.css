@@ -148,6 +148,8 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: var(--r-ch
 }
 .icon-btn:active { background: var(--surface-2); }
 .icon-btn.ghost { border-color: transparent; background: none; pointer-events: none; }
+/* A button that is holding a mode open. */
+.icon-btn.on { border-color: var(--accent); color: var(--accent-ink); }
 
 .pill {
   font-size: var(--f-fine); padding: 4px 9px; border-radius: var(--r-pill);
@@ -441,16 +443,6 @@ input[type="range"] {
    Three chips up here said "Reorder", "4 days" and "Groups" with equal weight,
    which read as a toolbar bolted above the screen. */
 
-.arrange {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: none; border: 0; padding: 0;
-  color: var(--faint); font: inherit; font-size: var(--f-fine); cursor: pointer;
-}
-.arrange .ico { width: 14px; height: 14px; }
-.arrange:active { color: var(--text); }
-.arrange.on { color: var(--accent-ink); }
-/* Reorder mode drops the day columns, so the way out needs its own line. */
-.hg-arrange { padding: 0 10px 10px; }
 
 .chipbtn {
   display: inline-flex; align-items: center; gap: 7px;
@@ -466,7 +458,7 @@ input[type="range"] {
    The widths have to survive a long name and seven columns on a 360px phone,
    so cells take a maximum and the name takes what is left. */
 
-.hgrid { display: grid; gap: 6px; margin: 18px 0; }
+.hgrid { display: grid; margin: 14px 0; }
 
 .hg-head, .hg-row {
   display: grid;
@@ -482,7 +474,7 @@ input[type="range"] {
      to drop and last-child would take the third. */
   .hg-head > :nth-child(n+5), .hg-row > :nth-child(n+5) { display: none; }}
 
-.hg-head { padding: 0 10px; color: var(--muted); align-items: end; }
+.hg-head { padding: 0 2px 6px; color: var(--muted); align-items: end; }
 .hg-head .hg-name { align-self: center; }
 .hg-head i { font-style: normal; text-align: center; line-height: 1.1; }
 .hg-head i b { display: block; font-size: var(--f-micro); letter-spacing: 0.06em; font-weight: 600; }
@@ -492,11 +484,14 @@ input[type="range"] {
 .hg-head i em { position: relative; }
 .hg-head i.noted em::after { content: ''; position: absolute; right: -7px; top: 5px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); }
 
+/* A line, not a card. Six habits used to be six boxes 68px tall, which is what
+   made the grid read as a stack of tiles rather than one list. */
 .hg-row {
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card);
-  padding: 6px 10px; min-height: 68px;
+  padding: 2px 2px; min-height: 54px;
+  border-bottom: 1px solid var(--line-soft);
 }
-.hg-row.dragging { opacity: 0.6; border-color: var(--accent); }
+.hg-rows .hg-row:last-child { border-bottom: 0; }
+.hg-row.dragging { opacity: 0.6; background: var(--surface); border-radius: var(--r-card); }
 
 /* The name takes what the cells leave and ellipsises the rest. Five columns is
    a setting for this reason: at five, "Calisthenics" becomes "Calisth...". */
@@ -506,6 +501,9 @@ input[type="range"] {
   padding: 6px 0;
 }
 .hg-name > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The colour is on the ring and on the marks. On the name as well it made a
+   list of six habits read as six unrelated things. */
+.hg-name b { color: var(--text); font-weight: 600; }
 .hg-row { font-size: var(--f-body); }
 .hg-ring { width: 20px; height: 20px; flex: 0 0 20px; display: block; }
 
@@ -567,7 +565,19 @@ input[type="range"] {
 /* Logged, but short of the target. Legible, and visibly not a win. */
 .hg-cell.num.part { color: var(--muted); }
 
-.hg-group { display: flex; align-items: center; gap: 8px; margin: 14px 0 2px; }
+/* Name, clock and score share one baseline and one type, or the header reads
+   as three unrelated things dropped on a line. */
+.hg-group {
+  display: flex; align-items: baseline; gap: 10px;
+  margin: 22px 0 4px; padding: 0 2px;
+}
+.hg-group i {
+  font-style: normal; font-size: var(--f-fine); color: var(--faint);
+  text-transform: uppercase; letter-spacing: 0.1em;
+}
+.hg-group i + i { margin-left: 0; }
+.hg-group i:last-child { margin-left: auto; }
+.hg-head + .hg-group { margin-top: 12px; }
 .hg-group-btn {
   display: flex; align-items: center; gap: 7px;
   background: none; border: 0; padding: 0; cursor: pointer;
@@ -575,12 +585,9 @@ input[type="range"] {
 }
 .hg-group-btn b { font-weight: 600; }
 .hg-group .ico { color: var(--muted); }
-/* A protocol's clock, beside its group. */
-.hg-days { margin-left: auto; font-style: normal; font-size: var(--f-fine); color: var(--faint); }
-.hg-days + .pill { margin-left: 8px; }
 .type-card:disabled { opacity: 0.5; }
 button.type-card { width: 100%; text-align: left; font: inherit; cursor: pointer; }
-.hg-rows { display: grid; gap: 6px; }
+.hg-rows { display: grid; }
 
 /* ---------- reordering ---------- */
 
@@ -1398,7 +1405,10 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 .gh-text { flex: 1; min-width: 0; }
 .gh-text h1 { font-size: var(--f-title); letter-spacing: -0.02em; line-height: 1.15; }
 .gh-text p { margin: 2px 0 0; font-size: var(--f-fine); color: var(--muted); }
-.grid-head .head-actions { align-self: center; }
+/* Three buttons and a date on a 360px phone: the buttons give up the room. */
+.grid-head .head-actions { align-self: center; gap: 6px; }
+.grid-head .icon-btn { width: 36px; height: 36px; flex: 0 0 36px; }
+.grid-head .icon-btn .ico { width: 18px; height: 18px; }
 
 /* ==========================================================================
    The Cabinet

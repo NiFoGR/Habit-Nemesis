@@ -90,7 +90,7 @@ export function rowHtml(habit, days, s, { reorder = false, groupOptions = () => 
     <a class="hg-name" href="${href}">
       ${miniRing(sum.score, colour)}
       <span class="hg-label">
-        <b style="color:${colour}">${escapeHtml(habit.name)}</b>
+        <b>${escapeHtml(habit.name)}</b>
         ${detailOf(habit) ? `<i>${escapeHtml(detailOf(habit))}</i>` : ''}
       </span>
     </a>

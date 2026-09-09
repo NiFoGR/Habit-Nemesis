@@ -150,15 +150,12 @@ function redraw(mount) {
   const search = list.length > SEARCH_FROM && !reorderMode
     ? `<input type="search" class="hg-search" id="search" placeholder="Search" value="${escapeHtml(query)}" autocomplete="off">`
     : '';
-  // The one control the grid needs, in the day header's empty name slot. It
-  // costs no line of its own.
-  const arrange = `<button class="arrange" id="arrangeBtn">${icon('reorder', 14)}<span>Arrange</span></button>`;
-  const head = `<div class="hg-head"><span class="hg-name">${arrange}</span>${days.map(headCell).join('')}</div>`;
+  const head = `<div class="hg-head"><span class="hg-name"></span>${days.map(headCell).join('')}</div>`;
 
   const groupSections = sections
     .map(({ group, habits: rows }) => {
       if (!rows.length && !group) return '';
-      const score = group ? habits.groupScore(group.id) : null;
+      const score = habits.groupScore(group ? group.id : '');
       const collapsed = group?.collapsed;
       const run = group ? habits.protocolOf(group.id) : null;
       return `
@@ -167,11 +164,12 @@ function redraw(mount) {
               <button class="hg-group-btn" data-toggle="${escapeHtml(group.id)}">
                 ${icon(collapsed ? 'caretDown' : 'caretUp', 14)}<b>${escapeHtml(group.name)}</b>
               </button>
-              ${run ? `<i class="hg-days">${run.days} day${run.days === 1 ? '' : 's'} left</i>` : ''}
-              ${score == null ? '' : `<span class="pill ghost" data-group-score="${escapeHtml(group.id)}">${Math.round(score * 100)}%</span>`}
+              ${run ? `<i>${run.days} day${run.days === 1 ? '' : 's'} left</i>` : ''}
+              ${score == null ? '' : `<i data-group-score="${escapeHtml(group.id)}">${Math.round(score * 100)}%</i>`}
             </div>`
           : sections.length > 1 && rows.length
-            ? '<div class="hg-group"><span class="hg-group-btn"><b>Everything else</b></span></div>'
+            ? `<div class="hg-group"><span class="hg-group-btn"><b>Everything else</b></span>
+                ${score == null ? '' : `<i data-group-score="">${Math.round(score * 100)}%</i>`}</div>`
             : ''}
         ${collapsed ? '' : `<div class="hg-rows">${rows.map((h) => rowHtml(h, days, s, { reorder: reorderMode, groupOptions })).join('')}</div>`}`;
     })
@@ -183,9 +181,10 @@ function redraw(mount) {
         ${headRing(dueHead(due).frac)}
         <div class="gh-text">
           <h1 id="dueLine">${dueHead(due).text}</h1>
-          <p>${escapeHtml(new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }))}</p>
+          <p>${escapeHtml(new Date().toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }))}</p>
         </div>
         <div class="head-actions">
+          ${list.length ? `<button class="icon-btn ${reorderMode ? 'on' : ''}" id="arrangeBtn" aria-label="${reorderMode ? 'Done arranging' : 'Arrange'}">${icon(reorderMode ? 'check' : 'reorder')}</button>` : ''}
           <button class="icon-btn" id="addBtn" aria-label="New habit">${icon('plus')}</button>
           <a class="icon-btn linkbtn" href="#/settings" aria-label="Settings">${icon('settings')}</a>
         </div>
@@ -195,9 +194,7 @@ function redraw(mount) {
       ${search}
 
       <div class="hgrid ${reorderMode ? 'reordering' : ''}" style="--cols:${reorderMode ? 1 : s.columns}">
-        ${reorderMode
-          ? `<div class="hg-arrange"><button class="arrange on" id="arrangeBtn">${icon('check', 14)}<span>Done</span></button></div>`
-          : list.length ? head : ''}
+        ${reorderMode || !list.length ? '' : head}
         ${groupSections}
       </div>
 
