@@ -90,6 +90,8 @@ function blank() {
       backfilled: false, // the one-time sweep that gives the Arena a history
       // Your face, taken on the week that became your best. { src, week, at }
       face: null,
+      // The daily line said today, so a day never gets a second one.
+      line: { day: '', id: '' },
     },
 
     // Ads. Consent itself is held by the UMP SDK, not here.
@@ -269,6 +271,10 @@ function cleanArena(sa, base) {
     placedWeek: /^\d{4}-W\d{2}$/.test(src.placedWeek) ? src.placedWeek : '',
     seenPlacement: /^\d{4}-W\d{2}$/.test(src.seenPlacement) ? src.seenPlacement : '',
     backfilled: bool(src.backfilled),
+    line: {
+      day: /^\d{4}-\d{2}-\d{2}$/.test(src.line?.day) ? src.line.day : '',
+      id: typeof src.line?.id === 'string' && /^[a-zA-Z]{1,20}$/.test(src.line.id) ? src.line.id : '',
+    },
   };
 }
 

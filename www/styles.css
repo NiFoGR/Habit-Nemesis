@@ -976,6 +976,10 @@ input[type="range"] {
    month line under it stays uncoloured. */
 .ar-need { margin: 10px 0 0; font-size: var(--f-small); color: var(--muted); }
 
+/* The daily line: the Nemesis, speaking. Once a day, from the record. */
+.ar-line { display: flex; align-items: center; gap: 10px; margin: 0; font-size: var(--f-small); }
+.ar-line span { font-style: italic; line-height: 1.4; }
+
 /* ---------- this week, as a race ----------
    Two lanes on one scale. Two numbers in two boxes made the reader subtract;
    a shared axis puts the gap on screen as a distance, and the verdict says it
