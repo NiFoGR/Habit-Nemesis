@@ -189,7 +189,8 @@ Everything here is build-time and never ships in `www/`.
 | `tools/art.mjs` | Takes a dropped-in image, makes the WebP the app loads, updates `sw.js`. |
 | `tools/patch-signing.mjs` | Pins the debug signing key into the generated Gradle build. |
 | `tools/patch-backup.mjs` | Turns on Android's own backup, which is what carries the record off the device. |
-| `tools/patch-deeplink.mjs` | Adds the `com.habitnemesis.app://auth` intent filter Google sign-in returns through. |
+| `tools/patch-deeplink.mjs` | Registers `com.habitnemesis.app://auth`, which sign-in returns through, and `://open`, which carries a route. |
+| `tools/patch-shortcuts.mjs` | The launcher shortcuts, Mark today and Arena, with their icons drawn from `icons.js`. |
 | `tools/patch-release-signing.mjs` | Release signing from CI secrets. Refuses the debug key and a debuggable config. |
 | `tools/patch-version.mjs` | Stamps versionCode and versionName from `package.json`. Play rejects a repeat versionCode. |
 | `tools/patch-ads.mjs` | Turns the real ad units live, in the store bundle only, and writes the AdMob app id into the manifest. |

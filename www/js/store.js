@@ -4,6 +4,7 @@
 
 import { toast, setFeedback } from './ui.js';
 import { DIVISIONS } from './arena/ladder.js';
+import { HABIT_ICONS } from './icons.js';
 
 // Closed sets. A colour id lands in a style attribute, free text would be a hole.
 const HABIT_COLOURS = ['teal', 'mint', 'lime', 'amber', 'orange', 'clay', 'rose', 'plum', 'violet', 'indigo', 'sky', 'slate'];
@@ -326,6 +327,7 @@ function cleanHabits(sh, base) {
         question: str(h?.question, 120),
         notes: str(h?.notes, 500),
         colour: oneOf(LEGACY_COLOURS[h?.colour] || h?.colour, HABIT_COLOURS, 'teal'),
+        icon: oneOf(h?.icon, HABIT_ICONS, ''),
         kind: oneOf(h?.kind, HABIT_KINDS, 'yesno'),
         items: arr(h?.items, MAX_ITEMS).map((s) => str(s, 40)).filter(Boolean),
         unit: str(h?.unit, 20),

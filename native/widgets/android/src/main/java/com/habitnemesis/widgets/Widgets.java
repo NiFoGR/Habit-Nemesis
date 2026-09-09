@@ -8,6 +8,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 
 final class Widgets {
 
@@ -18,7 +19,8 @@ final class Widgets {
     static final String ACTION_MARK = "com.habitnemesis.widgets.MARK";
     static final String EXTRA_HABIT = "habitId";
     static final String EXTRA_DAY = "day";
-    static final String EXTRA_ROUTE = "route";
+    // The app's own scheme. tools/patch-deeplink.mjs registers the open host.
+    static final String OPEN = "com.habitnemesis.app://open?route=";
 
     /* ---- palette ---- */
 
@@ -53,12 +55,17 @@ final class Widgets {
         return Math.round(dp * context.getResources().getDisplayMetrics().density);
     }
 
-    /** Opens the app, optionally carrying a route the web layer can read. */
+    /** Opens the app on a route key from the shell's table, or on the grid. */
     static PendingIntent launch(Context context, int requestCode, String route) {
-        Intent intent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
-        if (intent == null) return null;
+        Intent intent;
+        if (route != null) {
+            intent = new Intent(Intent.ACTION_VIEW, Uri.parse(OPEN + route));
+            intent.setPackage(context.getPackageName());
+        } else {
+            intent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
+            if (intent == null) return null;
+        }
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        if (route != null) intent.putExtra(EXTRA_ROUTE, route);
         return PendingIntent.getActivity(context, requestCode, intent, FLAGS);
     }
 

@@ -36,6 +36,8 @@ One JSON string in SharedPreferences file `habitnemesis.widgets`, key
 - `fixture.state` is `ahead`, `behind` or `level`. `fixture` is absent before a match.
 - `crest` names a file at `assets/public/img/<crest>.webp`. Missing hides the image.
 - Every key is optional. A missing key is absence, never a crash.
+- A tap on the fixture opens `com.habitnemesis.app://open?route=arena`. The
+  shell maps the key to a screen; `tools/patch-deeplink.mjs` registers the host.
 
 ## The plugin
 

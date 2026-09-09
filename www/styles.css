@@ -131,6 +131,7 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 }
 .screen-head > :last-child { justify-self: end; }
 .screen-head h1 { text-align: center; font-size: var(--f-head); }
+.screen-head h1 .ico { display: inline-block; vertical-align: -4px; margin-right: 6px; }
 
 .icon-btn {
   width: 40px; height: 40px;
@@ -503,7 +504,10 @@ input[type="range"] {
 }
 .hg-name > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hg-row { font-size: var(--f-body); }
-.hg-ring { width: 20px; height: 20px; flex: 0 0 20px; display: block; }
+.hg-ring-box { position: relative; width: 20px; height: 20px; flex: 0 0 20px; display: block; }
+.hg-ring { width: 20px; height: 20px; display: block; }
+.hg-glyph { position: absolute; inset: 0; display: grid; place-items: center; }
+.hg-glyph .ico { stroke-width: 2.75; }
 
 .hg-cell {
   display: grid; place-items: center;
@@ -652,6 +656,9 @@ button.type-card { width: 100%; text-align: left; font: inherit; cursor: pointer
 .swatch.on { border-color: var(--text); }
 .swatch.big { width: 46px; height: 46px; flex: 0 0 46px; border-radius: 10px; border-color: var(--line); }
 .swatch-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-top: 14px; justify-items: center; }
+/* A glyph swatch: the habit's colour on a neutral ground. */
+.swatch.glyph { background: var(--surface-2); display: grid; place-items: center; }
+.swatch.glyph.none { border-style: dashed; }
 
 .freq-row {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;

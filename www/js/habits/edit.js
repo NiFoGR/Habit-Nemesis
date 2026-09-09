@@ -4,7 +4,7 @@
 
 import * as habits from './program.js';
 import { escapeHtml, toast, openSheet } from '../ui.js';
-import { icon } from '../icons.js';
+import { icon, HABIT_ICONS } from '../icons.js';
 import { navigate, replaceWith } from '../back.js';
 import { askAlarms, hasAlarms } from '../native.js';
 
@@ -127,6 +127,7 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
             <label for="name"><b>Name</b></label>
             <div class="measure-row">
               <input type="text" id="name" maxlength="60" placeholder="e.g. Exercise" value="${escapeHtml(h.name)}">
+              <button class="swatch big glyph ${h.icon ? '' : 'none'}" id="iconBtn" style="color:${habits.hexOf(h.colour)}" aria-label="Icon">${h.icon ? icon(h.icon, 22) : ''}</button>
               <button class="swatch big" id="colour" style="background:${habits.hexOf(h.colour)}" aria-label="Colour"></button>
             </div>
           </div>
@@ -258,6 +259,10 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
       collect();
       openColourSheet(h, draw);
     });
+    mount.querySelector('#iconBtn').addEventListener('click', () => {
+      collect();
+      openIconSheet(h, draw);
+    });
     mount.querySelector('#addItem')?.addEventListener('click', () => {
       collect();
       if (h.items.length < 8) h.items.push('');
@@ -338,6 +343,23 @@ function openColourSheet(h, done) {
   sheet.el.querySelectorAll('[data-colour]').forEach((b) =>
     b.addEventListener('click', () => {
       h.colour = b.dataset.colour;
+      sheet.close();
+      done();
+    })
+  );
+}
+
+function openIconSheet(h, done) {
+  const sheet = openSheet(`
+    <h2>Icon</h2>
+    <div class="swatch-grid">
+      ${HABIT_ICONS.map((id) => `<button class="swatch glyph ${id === h.icon ? 'on' : ''}" data-icon="${id}"
+        style="color:${habits.hexOf(h.colour)}" aria-label="${id}">${icon(id, 20)}</button>`).join('')}
+    </div>
+    <button class="btn ghost wide" data-icon="">No icon</button>`);
+  sheet.el.querySelectorAll('[data-icon]').forEach((b) =>
+    b.addEventListener('click', () => {
+      h.icon = b.dataset.icon;
       sheet.close();
       done();
     })

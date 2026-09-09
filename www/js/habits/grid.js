@@ -30,15 +30,19 @@ function listRing(frac, colour) {
 
 /** The small ring: the score in the habit's own colour. ringSvg is the 168px
  *  one and does not survive being shrunk to 26px. */
-function miniRing(frac, colour) {
+/** The score ring, with the habit's glyph inside when it has one. */
+function miniRing(frac, colour, glyph = '') {
   const r = 9;
   const c = 2 * Math.PI * r;
   const off = c * (1 - Math.max(0, Math.min(frac, 1)));
-  return `<svg class="hg-ring" viewBox="0 0 24 24" aria-hidden="true">
-    <circle cx="12" cy="12" r="${r}" fill="none" stroke="var(--line)" stroke-width="3"/>
-    <circle class="hg-ring-fill" cx="12" cy="12" r="${r}" fill="none" stroke="${colour}" stroke-width="3" stroke-linecap="round"
-      stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 12 12)"/>
-  </svg>`;
+  return `<span class="hg-ring-box">
+    <svg class="hg-ring" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="${r}" fill="none" stroke="var(--line)" stroke-width="3"/>
+      <circle class="hg-ring-fill" cx="12" cy="12" r="${r}" fill="none" stroke="${colour}" stroke-width="3" stroke-linecap="round"
+        stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 12 12)"/>
+    </svg>
+    ${glyph ? `<span class="hg-glyph" style="color:${colour}">${icon(glyph, 11)}</span>` : ''}
+  </span>`;
 }
 
 /** One cell. Four states for a yes/no habit, the measurement for a number. */
@@ -108,7 +112,7 @@ export function rowHtml(habit, days, s, { reorder = false, groupOptions = () => 
   return `<div class="hg-row" data-id="${escapeHtml(habit.id)}">
     ${reorder ? `<button class="hg-drag" aria-label="Reorder ${escapeHtml(habit.name)}">${icon('reorder', 16)}</button>` : ''}
     <a class="hg-name" href="${href}">
-      ${miniRing(sum.score, colour)}
+      ${miniRing(sum.score, colour, habit.icon)}
       <span class="hg-label">
         <b style="color:${colour}">${escapeHtml(habit.name)}</b>
         ${detailOf(habit) ? `<i>${escapeHtml(detailOf(habit))}</i>` : ''}

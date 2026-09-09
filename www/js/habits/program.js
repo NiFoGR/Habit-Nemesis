@@ -108,6 +108,7 @@ function blankHabit() {
     question: '',
     notes: '',
     colour: 'teal',
+    icon: '',
     kind: 'yesno',
     items: [],
     unit: '',
@@ -355,10 +356,10 @@ export const PROTOCOLS = [
     days: 30,
     blurb: 'Four rows, thirty days, nothing optional.',
     rows: [
-      { name: 'Up before 7', colour: 'amber', kind: 'yesno', question: 'Up before seven?' },
-      { name: 'Cold shower', colour: 'sky', kind: 'yesno', question: 'Cold shower?' },
-      { name: 'No phone in bed', colour: 'clay', kind: 'yesno', question: 'Phone out of the bedroom?' },
-      { name: 'Steps', colour: 'mint', kind: 'number', unit: 'steps', target: 10000, question: 'How many steps?' },
+      { name: 'Up before 7', colour: 'amber', icon: 'sun', kind: 'yesno', question: 'Up before seven?' },
+      { name: 'Cold shower', colour: 'sky', icon: 'drop', kind: 'yesno', question: 'Cold shower?' },
+      { name: 'No phone in bed', colour: 'clay', icon: 'phone', kind: 'yesno', question: 'Phone out of the bedroom?' },
+      { name: 'Steps', colour: 'mint', icon: 'steps', kind: 'number', unit: 'steps', target: 10000, question: 'How many steps?' },
     ],
   },
   {
@@ -367,10 +368,10 @@ export const PROTOCOLS = [
     days: 56,
     blurb: 'Push, pull, legs, once a week each, and the protein to build on. Eight weeks.',
     rows: [
-      { name: 'Push', colour: 'orange', kind: 'yesno', freq: { num: 1, den: 7 }, question: 'Push day done?' },
-      { name: 'Pull', colour: 'rose', kind: 'yesno', freq: { num: 1, den: 7 }, question: 'Pull day done?' },
-      { name: 'Legs', colour: 'lime', kind: 'yesno', freq: { num: 1, den: 7 }, question: 'Leg day done?' },
-      { name: 'Protein', colour: 'amber', kind: 'number', unit: 'g', target: 150, question: 'How much protein?' },
+      { name: 'Push', colour: 'orange', icon: 'dumbbell', kind: 'yesno', freq: { num: 1, den: 7 }, question: 'Push day done?' },
+      { name: 'Pull', colour: 'rose', icon: 'dumbbell', kind: 'yesno', freq: { num: 1, den: 7 }, question: 'Pull day done?' },
+      { name: 'Legs', colour: 'lime', icon: 'dumbbell', kind: 'yesno', freq: { num: 1, den: 7 }, question: 'Leg day done?' },
+      { name: 'Protein', colour: 'amber', icon: 'apple', kind: 'number', unit: 'g', target: 150, question: 'How much protein?' },
     ],
   },
   {
@@ -379,10 +380,10 @@ export const PROTOCOLS = [
     days: 28,
     blurb: 'The same night, four weeks running.',
     rows: [
-      { name: 'No caffeine after 2', colour: 'clay', kind: 'yesno', question: 'Last coffee before two?' },
-      { name: 'Screens off by 10', colour: 'violet', kind: 'yesno', question: 'Screens off by ten?' },
-      { name: 'In bed by 11', colour: 'indigo', kind: 'yesno', question: 'In bed by eleven?' },
-      { name: 'Hours slept', colour: 'sky', kind: 'number', unit: 'h', target: 7, question: 'How many hours?' },
+      { name: 'No caffeine after 2', colour: 'clay', icon: 'cup', kind: 'yesno', question: 'Last coffee before two?' },
+      { name: 'Screens off by 10', colour: 'violet', icon: 'phone', kind: 'yesno', question: 'Screens off by ten?' },
+      { name: 'In bed by 11', colour: 'indigo', icon: 'bed', kind: 'yesno', question: 'In bed by eleven?' },
+      { name: 'Hours slept', colour: 'sky', icon: 'moon', kind: 'number', unit: 'h', target: 7, question: 'How many hours?' },
     ],
   },
 ];

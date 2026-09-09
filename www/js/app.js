@@ -194,6 +194,11 @@ window.addEventListener('hashchange', route);
 
 route();
 
+// A launcher shortcut or a widget, landing on its screen.
+native.onOpenRoute((key) => {
+  if (NAV[key]) navigate(NAV[key]);
+});
+
 // Optional, and absent from a build with no project configured.
 account.init().then(() => {
   sync.start();

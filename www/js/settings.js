@@ -174,15 +174,42 @@ const PAGES = [
           <a class="set-link" href="./legal/wellbeing.html"><span>Health and wellbeing</span>${icon('back', 16)}</a>
           <a class="set-link" href="./legal/licences.html"><span>Open source licences</span>${icon('back', 16)}</a>
         </div>
-        ${rows([row('Version', state('version', VERSION))])}
+        ${rows([
+          row('Version', state('version', VERSION)),
+          row('Diagnostics', '<button class="btn small-btn ghost" id="diag">Copy</button>', 'For a bug report. Nothing personal in it.'),
+        ])}
         <div class="set-tail">
           <a class="tail-btn" href="#/intro">Show the introduction again</a>
         </div>`;
+      q(el, 'diag').addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(diagnostics());
+          toast('Copied');
+        } catch {
+          toast('Could not copy here');
+        }
+      });
     },
   },
 ];
 
 export const SETTINGS_PAGES = PAGES.map((p) => p.id);
+
+/** Versions, sync state and counts. Never a name, a note or a mark. */
+function diagnostics() {
+  const st = store.get();
+  const items = st.habits.items;
+  const entries = Object.values(st.habits.entries).reduce((n, days) => n + Object.keys(days).length, 0);
+  return [
+    `Habit Nemesis ${VERSION}, schema ${st.v}`,
+    `platform ${isNative() ? 'android' : 'web'}, theme ${st.settings.theme}`,
+    `sync ${store.syncState()}, last ${store.lastSynced() || 'never'}, changed ${st.settings.changedAt || 'never'}`,
+    `habits ${items.filter((h) => !h.archived).length} live, ${items.filter((h) => h.archived).length} archived, groups ${st.habits.groups.length}`,
+    `entries ${entries}, store ${Math.round(store.exportJson().length / 1024)} KB`,
+    `arena week ${st.arena.seenWeek || 'none'}, notice ${st.arena.notice ? 'on' : 'off'}`,
+    navigator.userAgent,
+  ].join('\n');
+}
 
 /* ---------------- the root ---------------- */
 

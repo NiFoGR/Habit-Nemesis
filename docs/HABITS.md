@@ -126,6 +126,13 @@ streak at all.
 01:00 belongs to the night you were still up for. The Arena scores weeks out of
 the same day keys, so the boundary moves for both together.
 
+## Icons
+
+A habit may carry one of the 24 glyphs in `HABIT_ICONS`, drawn inside its ring
+on the grid and beside its name on its page. The sanitiser drops anything not
+in the list. Twenty-four, not a hundred: a glyph has to read at 11px inside a
+20px ring, and past two dozen nobody finds the one they want.
+
 ## Protocols
 
 A curated block: rows created for you in a group of their own, a fixed span,

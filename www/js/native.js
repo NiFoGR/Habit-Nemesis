@@ -50,6 +50,28 @@ export async function scheduleAlarm(id, at, title, body) {
   }
 }
 
+/* ----------------- a route from outside -----------------
+   A launcher shortcut or a widget opens com.habitnemesis.app://open?route=key.
+   The key is looked up in the shell's table, never used as a hash. */
+
+export function onOpenRoute(fn) {
+  const app = window.Capacitor?.Plugins?.App;
+  if (!isNative() || !app?.addListener) return;
+  const take = (url) => {
+    let u;
+    try {
+      u = new URL(url);
+    } catch {
+      return;
+    }
+    if (u.protocol !== 'com.habitnemesis.app:' || u.host !== 'open') return;
+    const key = u.searchParams.get('route');
+    if (key) fn(key);
+  };
+  app.addListener('appUrlOpen', ({ url }) => take(url));
+  app.getLaunchUrl?.().then((r) => r?.url && take(r.url)).catch(() => {});
+}
+
 export async function cancelAlarm(id) {
   if (!hasAlarms()) return;
   try {

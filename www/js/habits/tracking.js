@@ -87,7 +87,7 @@ export function renderHabitDetail(mount, id) {
       <div class="screen habits" style="--hc:${colour}">
         <header class="screen-head">
           <button class="icon-btn" data-back="habits" aria-label="Back">${icon('back')}</button>
-          <h1 style="color:${colour}">${escapeHtml(habit.name)}</h1>
+          <h1 style="color:${colour}">${habit.icon ? icon(habit.icon, 20) : ''}${escapeHtml(habit.name)}</h1>
           <a class="icon-btn linkbtn" href="#/habits/edit?id=${encodeURIComponent(habit.id)}" aria-label="Edit">${icon('pencil')}</a>
         </header>
 

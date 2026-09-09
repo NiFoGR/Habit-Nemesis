@@ -31,7 +31,7 @@ final class WidgetRenderer {
     static void fixture(Context context, AppWidgetManager manager, int[] ids) {
         Snapshot snap = Snapshot.parse(Widgets.snapshot(context));
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.hnw_widget_fixture);
-        views.setOnClickPendingIntent(R.id.hnw_fixture_root, Widgets.launch(context, RQ_ARENA, "#/arena"));
+        views.setOnClickPendingIntent(R.id.hnw_fixture_root, Widgets.launch(context, RQ_ARENA, "arena"));
 
         Snapshot.Fixture fx = snap.fixture;
         views.setViewVisibility(R.id.hnw_fixture_body, fx == null ? View.GONE : View.VISIBLE);
