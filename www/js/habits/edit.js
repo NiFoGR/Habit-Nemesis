@@ -25,6 +25,14 @@ export function typePickerHtml() {
         <b>Measurable</b>
         <span>How many litres of water? How many pages? How many calories?</span>
       </a>
+      <a class="type-card" href="#/habits/edit?kind=timed">
+        <b>Timed</b>
+        <span>Minutes, run from the cell. Twenty of reading, ten of stretching.</span>
+      </a>
+      <a class="type-card" href="#/habits/edit?kind=checklist">
+        <b>Checklist</b>
+        <span>Up to eight things. The day is done when all of them are.</span>
+      </a>
     </div>`;
 }
 
@@ -72,7 +80,9 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
   }
 
   // Works on a copy. Nothing is written until Save.
-  const h = existing ? { ...existing, freq: { ...existing.freq }, remindDays: [...existing.remindDays] } : habits.draft(kind);
+  const h = existing
+    ? { ...existing, freq: { ...existing.freq }, remindDays: [...existing.remindDays], items: [...(existing.items || [])] }
+    : habits.draft(kind);
 
   const draw = () => {
     mount.innerHTML = `
@@ -96,6 +106,24 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
             <input type="text" id="question" maxlength="120" placeholder="e.g. Did you exercise today?" value="${escapeHtml(h.question)}">
           </div>
         </section>
+
+        ${h.kind === 'timed'
+          ? `<section class="card">
+              <div class="h-row">${icon('chart', 16)}<h2>The time</h2></div>
+              <label class="setting">
+                <span><b>Minutes</b><i>A day counts when the timer reaches this.</i></span>
+                <input type="number" id="target" inputmode="numeric" step="1" min="1" max="1440" value="${h.target}">
+              </label>
+            </section>`
+          : ''}
+
+        ${h.kind === 'checklist'
+          ? `<section class="card">
+              <div class="h-row">${icon('habits', 16)}<h2>The list</h2></div>
+              <div class="grp-list" id="items">${itemRows(h.items)}</div>
+              ${h.items.length < 8 ? `<button class="btn ghost wide" id="addItem">${icon('plus', 16)}<span>Add an item</span></button>` : ''}
+            </section>`
+          : ''}
 
         ${h.kind === 'number'
           ? `<section class="card">
@@ -169,6 +197,13 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
       h.target = Number.isFinite(t) && t > 0 ? t : 0;
       h.targetType = val('#targetType') === 'atmost' ? 'atmost' : 'atleast';
     }
+    if (h.kind === 'timed') {
+      const t = Math.round(Number(val('#target')));
+      h.target = Number.isFinite(t) && t > 0 ? Math.min(t, 1440) : 20;
+    }
+    if (h.kind === 'checklist') {
+      h.items = [...mount.querySelectorAll('[data-item]')].map((i) => i.value.slice(0, 40));
+    }
   };
 
   const wire = () => {
@@ -177,6 +212,10 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
       if (!h.name.trim()) {
         toast('Give it a name first');
         mount.querySelector('#name').focus();
+        return;
+      }
+      if (h.kind === 'checklist' && !h.items.some((s) => s.trim())) {
+        toast('A checklist needs at least one item');
         return;
       }
       habits.save(h);
@@ -189,6 +228,19 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
       collect();
       openColourSheet(h, draw);
     });
+    mount.querySelector('#addItem')?.addEventListener('click', () => {
+      collect();
+      if (h.items.length < 8) h.items.push('');
+      draw();
+      mount.querySelectorAll('[data-item]')[h.items.length - 1]?.focus();
+    });
+    mount.querySelectorAll('[data-del-item]').forEach((b) =>
+      b.addEventListener('click', () => {
+        collect();
+        h.items.splice(Number(b.dataset.delItem), 1);
+        draw();
+      })
+    );
     mount.querySelector('#freq').addEventListener('click', () => {
       collect();
       openFreqSheet(h, draw);
@@ -214,6 +266,16 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
   };
 
   draw();
+}
+
+/** The list's rows in the form: a text box and a way to drop it. */
+function itemRows(items) {
+  return items
+    .map((item, i) => `<div class="grp-row">
+      <input type="text" data-item="${i}" value="${escapeHtml(item)}" maxlength="40" placeholder="Item ${i + 1}" aria-label="Item ${i + 1}">
+      <button class="icon-btn small" data-del-item="${i}" aria-label="Remove">${icon('close', 14)}</button>
+    </div>`)
+    .join('');
 }
 
 function remindDaysLabel(days) {

@@ -477,6 +477,40 @@ function seedWeeks(weeks, hit) {
     a.divisionOf(arena.division).bar <= 0.5, true);
 }
 
+/* ---------------- timed and checklist ----------------
+   Both are quantity habits underneath, so the Arena's scoring has no branch
+   for them. These prove it by scoring them through the same path as a number. */
+group('a timed habit and a checklist score as numbers');
+{
+  const habits = await import('../www/js/habits/program.js');
+  const d = a.weekDays('2026-W20');
+  st.reset();
+  st.update((s) => {
+    s.habits.items = [
+      habit('h_t', 'Read', { kind: 'timed', unit: 'min', target: 20 }),
+      habit('h_c', 'Morning', { kind: 'checklist', unit: 'items', items: ['Water', 'Stretch', 'Plan'], target: 3 }),
+    ];
+    s.habits.entries = {
+      h_t: { [d[0]]: 25, [d[1]]: 10, [d[2]]: 20 },
+      h_c: { [d[0]]: 3, [d[1]]: 2 },
+    };
+  });
+  const w = a.scoreWeek('2026-W20');
+  is('minutes at or past the target are a cell, under it are not', w.rows.find((r) => r.id === 'h_t').done, 2);
+  is('a list fully ticked is a cell, two of three is not', w.rows.find((r) => r.id === 'h_c').done, 1);
+  is('both owe every day like any daily row', w.rows.map((r) => r.due), [7, 7]);
+  const t = habits.summary(st.get().habits.items[0]);
+  is('ten of twenty minutes is half a day, for the score', t.index.get(d[1]).unit, 0.5);
+  habits.setChecks('h_c', d[2], [0, 2]);
+  is('ticking two items writes a count of two', st.get().habits.entries.h_c[d[2]], 2);
+  is('and remembers which two', habits.checksOn(st.get().habits.items[1], d[2]), [0, 2]);
+  habits.setChecks('h_c', d[2], []);
+  is('unticking everything erases the day', st.get().habits.entries.h_c[d[2]], undefined);
+  const saved = habits.save({ ...habits.draft('checklist'), id: 'h_new', name: 'List', items: ['a', '', 'b'] });
+  is('a saved checklist targets every item it kept', saved.habits.items.find((h) => h.id === 'h_new').target, 2);
+  is('and a checklist round-trips through hydrate', (() => { const b = st.exportJson(); st.reset(); st.importJson(b); const h = st.get().habits.items.find((x) => x.id === 'h_c'); return [h.kind, h.items.length, h.target]; })(), ['checklist', 3, 3]);
+}
+
 /* ---------------- On Notice ----------------
    One month below the bar is a notice, two in a row is a drop, and a month at
    the bar or a promotion clears it. Seeded as stored weeks, so the scores are

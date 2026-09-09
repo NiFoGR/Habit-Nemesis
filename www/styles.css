@@ -548,6 +548,23 @@ input[type="range"] {
 /* Logged, but short of the target. Legible, and visibly not a win. */
 .hg-cell.num.part { color: var(--muted); }
 
+/* A checklist cell: a ring that fills as the list does. */
+.hg-cell.list { opacity: 1; }
+.hg-cell.list:not(.on):not(.part) { opacity: 0.45; }
+.hg-list { width: 20px; height: 20px; display: block; }
+
+/* The list itself, in a sheet. */
+.list-items { display: grid; gap: 8px; margin: 14px 0 4px; }
+.list-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: var(--radius);
+  background: var(--surface-2); border: 1px solid var(--line); cursor: pointer;
+  font-size: var(--f-body);
+}
+.list-item input { width: 22px; height: 22px; accent-color: var(--sc); flex: 0 0 auto; margin: 0; }
+.list-item.on { border-color: color-mix(in oklab, var(--sc) 55%, var(--line)); }
+.list-item.on span { color: var(--muted); text-decoration: line-through; }
+
 .hg-group { display: flex; align-items: center; gap: 8px; margin: 14px 0 2px; }
 .hg-group-btn {
   display: flex; align-items: center; gap: 7px;
@@ -685,12 +702,26 @@ input[type="range"] {
 .arch-text i { font-style: normal; color: var(--muted); font-size: var(--f-fine); }
 .arch-row .small-btn { padding: 9px 14px; font-size: var(--f-small); }
 
+/* ---------- the timer ----------
+   One numeral and nothing near it. The only place --f-mega is used. */
+.screen.timer { min-height: 100dvh; display: flex; flex-direction: column; }
+.timer-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 8px; }
+.timer-num { font-size: var(--f-mega); line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; margin: 0; }
+.timer-num.running { color: var(--hc, var(--accent)); }
+.timer-sub { color: var(--muted); font-size: var(--f-small); margin: 0; }
+.timer-ring { width: 220px; height: 220px; display: grid; place-items: center; position: relative; margin-bottom: 8px; }
+.timer-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.timer-ring .timer-fill { transition: stroke-dashoffset 1s linear; }
+.timer-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
 /* ---------- one habit's own screen ---------- */
 
 .habit-hero { margin-bottom: 16px; }
 .habit-hero h2 { font-size: var(--f-title); margin-bottom: 6px; }
 .habit-hero p { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 .habit-hero .ico { width: 14px; height: 14px; }
+/* Why the number moved. One sentence, under the score. */
+.why { margin: 12px 0 0; font-size: var(--f-small); color: var(--muted); }
 
 .btn.small-btn { width: auto; padding: 10px 15px; font-size: var(--f-small); margin-top: 0; }
 

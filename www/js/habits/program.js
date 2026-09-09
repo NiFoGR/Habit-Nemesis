@@ -1,11 +1,14 @@
 // Habits domain. The general-purpose room: name, question, colour, unit,
 // target, frequency, group, reminder, order and any past day are all editable.
 //
-// Three things to know first:
+// Four things to know first:
 //   Entries are the record. Streaks and scores compute on every read, because
 //   the past is editable here.
 //   A day is a key, and `dayStartHour` moves the boundary. This section only.
 //   Frequency is a fraction, n in d. Daily is 1/1, three a week is 3/7.
+//   Four kinds, two shapes. A timed habit is a number of minutes with a floor,
+//   a checklist a number of items ticked with a floor of all of them. Nothing
+//   downstream branches on the two new kinds.
 
 import * as store from '../store.js';
 import { WEEKDAYS } from '../ui.js';
@@ -106,6 +109,7 @@ function blankHabit() {
     notes: '',
     colour: 'teal',
     kind: 'yesno',
+    items: [],
     unit: '',
     target: 0,
     targetType: 'atleast',
@@ -132,8 +136,11 @@ export const STARTERS = [
   { name: 'No sugar', colour: 'rose', kind: 'yesno', freq: { num: 6, den: 7 }, question: 'Stayed off sugar?' },
 ];
 
+/** Anything answered with a number: measurable, timed, checklist. */
+export const measurable = (h) => h.kind !== 'yesno';
+
 /** The line under a starter's name: what it will ask of you. */
-export const starterMeta = (h) => (h.kind === 'number' ? `${h.target} ${h.unit} a day` : freqLabel(h.freq));
+export const starterMeta = (h) => (measurable(h) ? `${h.target} ${h.unit} a day` : freqLabel(h.freq));
 
 export function addStarter(i) {
   const pick = STARTERS[i];
@@ -143,7 +150,21 @@ export function addStarter(i) {
 }
 
 export function draft(kind = 'yesno') {
-  return { ...blankHabit(), kind, target: kind === 'number' ? 1 : 0 };
+  const h = { ...blankHabit(), kind };
+  if (kind === 'number') h.target = 1;
+  if (kind === 'timed') Object.assign(h, { unit: 'min', target: 20 });
+  if (kind === 'checklist') Object.assign(h, { unit: 'items', items: ['', ''], target: 2 });
+  return h;
+}
+
+/** The two fixed kinds keep their shape whatever the form sent. */
+function normalise(h) {
+  if (h.kind === 'timed') Object.assign(h, { unit: 'min', targetType: 'atleast' });
+  if (h.kind === 'checklist') {
+    h.items = (h.items || []).map((s) => String(s).trim()).filter(Boolean).slice(0, 8);
+    Object.assign(h, { unit: 'items', target: h.items.length, targetType: 'atleast' });
+  }
+  return h;
 }
 
 /** Every write stamps updatedAt, so two copies of one habit can be told apart.
@@ -158,12 +179,12 @@ export function save(habit) {
   return store.update((st) => {
     const i = st.habits.items.findIndex((h) => h.id === habit.id);
     if (i >= 0) {
-      st.habits.items[i] = stamp({ ...st.habits.items[i], ...habit });
+      st.habits.items[i] = stamp(normalise({ ...st.habits.items[i], ...habit }));
       return;
     }
     if (st.habits.items.length >= MAX_HABITS) return;
     const max = st.habits.items.reduce((a, h) => Math.max(a, h.order), -1);
-    st.habits.items.push(stamp({ ...habit, order: max + 1 }));
+    st.habits.items.push(stamp(normalise({ ...habit, order: max + 1 })));
   });
 }
 
@@ -171,6 +192,7 @@ export function remove(id) {
   return store.update((st) => {
     st.habits.items = st.habits.items.filter((h) => h.id !== id);
     delete st.habits.entries[id];
+    delete st.habits.checks[id];
   });
 }
 
@@ -272,6 +294,30 @@ export function setValue(habitId, key, value) {
   });
 }
 
+/* ---------------- checklists ---------------- */
+// Which items were ticked is kept beside the count, so the count stays a
+// plain number the score and the Arena can read.
+
+/** Indices ticked on `key`. */
+export function checksOn(habit, key) {
+  return store.get().habits.checks[habit.id]?.[key] || [];
+}
+
+/** Write the ticks, and the count as the day's value. None ticked erases the day. */
+export function setChecks(habitId, key, indices) {
+  const idx = [...new Set(indices)].filter((i) => Number.isInteger(i) && i >= 0 && i < 8).sort((a, b) => a - b);
+  return store.update((st) => {
+    const map = st.habits.checks[habitId] || (st.habits.checks[habitId] = {});
+    if (idx.length) map[key] = idx;
+    else delete map[key];
+    if (!Object.keys(map).length) delete st.habits.checks[habitId];
+    const days = st.habits.entries[habitId] || (st.habits.entries[habitId] = {});
+    if (idx.length) days[key] = idx.length;
+    else delete days[key];
+    if (!Object.keys(days).length) delete st.habits.entries[habitId];
+  });
+}
+
 /** The tap cycle:
  *    off              nothing -> done -> nothing
  *    + question marks nothing -> done -> lapse -> nothing
@@ -320,7 +366,7 @@ function rawOf(habit, key) {
 /** A day's worth, 0 to 1, before frequency. A ceiling habit scores 1 at or
  *  under target and 0 at twice it. Nothing recorded scores 0 either way. */
 function unitValue(habit, raw) {
-  if (habit.kind === 'number') {
+  if (measurable(habit)) {
     const t = habit.target;
     if (raw == null) return 0;
     if (!t) return raw > 0 ? 1 : 0;
@@ -414,7 +460,7 @@ export function summary(habit) {
 
   const total = days.reduce((a, d) => {
     if (d.skipped) return a;
-    if (habit.kind === 'number') return a + (typeof d.raw === 'number' && d.raw > 0 ? d.raw : 0);
+    if (measurable(habit)) return a + (typeof d.raw === 'number' && d.raw > 0 ? d.raw : 0);
     return a + (d.raw === YES ? 1 : 0);
   }, 0);
 
@@ -463,6 +509,31 @@ export function scoreAgo(sum, back) {
   return sum.days.length && key < sum.days[0].key ? 0 : sum.score;
 }
 
+/* ---------------- why the number moved ---------------- */
+
+/** The half-life in days: how long a miss takes to fade to half. */
+export const halfLife = (habit) => Math.round(13 / Math.sqrt(habit.freq.num / habit.freq.den));
+
+/** The last seven days against the seven before: the score's move in points,
+ *  the days that cost it, the days that held. Computed, never stored. */
+export function movement(sum) {
+  const end = today();
+  const week = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = sum.index.get(store.addDays(end, -i));
+    if (d) week.push(d);
+  }
+  const misses = week.filter((d) => !d.skipped && !d.satisfied && d.key !== end).map((d) => d.key);
+  const kept = week.filter((d) => d.satisfied).length;
+  return {
+    days: week.length,
+    delta: Math.round((sum.score - scoreAgo(sum, 7)) * 100),
+    misses,
+    kept,
+    halfLife: halfLife(sum.habit),
+  };
+}
+
 /* ---------------- charts ---------------- */
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
@@ -500,7 +571,7 @@ export function history(sum, period = 'week', buckets = 14) {
   for (const d of sum.days) {
     if (d.skipped) continue;
     const b = bucketOf(parse(d.key));
-    const add = sum.habit.kind === 'number' ? (typeof d.raw === 'number' && d.raw > 0 ? d.raw : 0) : d.hit ? 1 : 0;
+    const add = measurable(sum.habit) ? (typeof d.raw === 'number' && d.raw > 0 ? d.raw : 0) : d.hit ? 1 : 0;
     map.set(b, (map.get(b) || 0) + add);
   }
   const keys = [...map.keys()].sort().slice(-buckets);

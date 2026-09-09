@@ -27,6 +27,24 @@ is editable from the calendar on purpose. The cost is one pass over the habit's
 history per render, memoised until the next write, which for a decade of daily
 entries is a few thousand additions.
 
+## Four kinds, two shapes
+
+| Kind | Stored | Done when |
+|---|---|---|
+| Yes or no | `1` | you marked it |
+| Measurable | the number | at or past the target, or under a ceiling |
+| Timed | minutes | the minutes reach the target |
+| Checklist | items ticked | every item is ticked |
+
+Timed and checklist are measurable habits underneath. A timed habit is a
+number of minutes with a floor, run from today's cell on a full-screen timer
+that writes the minutes on every pause, every finish and every whole minute.
+A checklist is a number of items ticked with a floor of all of them; which
+items were ticked is kept beside the count in `checks[habitId][dayKey]`, so
+the count stays a plain number the score and the Arena read like any other.
+Nothing downstream branches on the two new kinds, which is the point of
+modelling them this way.
+
 ## Frequency is a fraction
 
 Every one of the five rows in the picker is the same pair of numbers, `n` times

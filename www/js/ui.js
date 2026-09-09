@@ -147,6 +147,9 @@ const CUES = {
   unmark: { notes: [[N.A, 0, 0.06, { peak: 0.05 }], [N.E, 0.04, 0.12, { peak: 0.05 }]] },
   skip: { notes: [[N.d, 0, 0.1, { peak: 0.05, type: 'triangle', bright: 2 }]] },
   complete: { notes: [[N.c, 0, 0.14, { peak: 0.11 }], [N.e, 0.08, 0.14, { peak: 0.11 }], [N.G, 0.16, 0.4, { peak: 0.12 }]] },
+  // A timed habit: a whisper on each of its last ten seconds, a strike at the end.
+  'timer-tick': { notes: [[N.A, 0, 0.03, { peak: 0.02, bright: 3 }]] },
+  'timer-done': { strike: [0, 0.14, { peak: 0.16, tone: 1600 }], notes: [[N.C, 0.02, 0.2, { peak: 0.12 }], [N.G, 0.12, 0.45, { peak: 0.12 }]] },
   // Every row owed today answered: complete, with one note left ringing above it.
   perfect: { notes: [[N.c, 0, 0.14, { peak: 0.11 }], [N.e, 0.08, 0.14, { peak: 0.11 }], [N.G, 0.16, 0.4, { peak: 0.12 }], [N.C2, 0.5, 0.5, { peak: 0.1, bright: 6 }]] },
   // the Arena

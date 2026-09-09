@@ -4,6 +4,7 @@ import * as store from './store.js';
 import { renderHome, renderArchive } from './habits/home.js';
 import { renderHabitEdit } from './habits/edit.js';
 import { renderHabitDetail } from './habits/tracking.js';
+import { renderTimer, leaveTimer } from './habits/timer.js';
 import * as habitsProgram from './habits/program.js';
 import { renderArena } from './arena/home.js';
 import { renderFeats } from './arena/feats-screen.js';
@@ -44,6 +45,7 @@ const ROUTES = {
   '#/habits/habit': (params) => renderHabitDetail(app, params.get('id')),
   '#/habits/edit': (params) => renderHabitEdit(app, { id: params.get('id'), kind: params.get('kind') }),
   '#/habits/archive': () => renderArchive(app),
+  '#/habits/timer': (params) => renderTimer(app, params.get('id')),
   '#/arena': () => renderArena(app),
   '#/arena/result': () => renderResult(app),
   '#/arena/moment': () => renderMoment(app),
@@ -75,6 +77,8 @@ function route() {
   if (lastHash.startsWith('#/arena/result') && !location.hash.startsWith('#/arena/result')) leaveResult();
   if (lastHash.startsWith('#/arena/moment') && !location.hash.startsWith('#/arena/moment')) leaveMoment();
   if (lastHash.startsWith('#/arena/rank') && !location.hash.startsWith('#/arena/rank')) leaveRank();
+  // Leaving a running timer pauses it and keeps the minutes.
+  if (lastHash.startsWith('#/habits/timer') && !location.hash.startsWith('#/habits/timer')) leaveTimer();
   lastHash = location.hash;
 
   if (lockActive()) return renderLock(app, route);

@@ -4,9 +4,10 @@
 
 import * as store from '../store.js';
 import * as habits from './program.js';
-import { escapeHtml, barChart, lineChart, openSheet, haptic, fmtDate } from '../ui.js';
+import { escapeHtml, barChart, lineChart, openSheet, haptic, fmtDate, WEEKDAYS_LONG } from '../ui.js';
 import { icon } from '../icons.js';
 import { announce } from '../arena/result.js';
+import { openChecklistSheet } from './marking.js';
 
 const SCORE_PERIODS = {
   day: { label: 'Day', buckets: 30 },
@@ -109,6 +110,7 @@ export function renderHabitDetail(mount, id) {
             
             <div class="stat"><b>${fmtTotal(habit, sum)}</b><span>total</span></div>
           </div>
+          <p class="why">${escapeHtml(whyLine(sum))}</p>
         </section>
 
         <section class="card">
@@ -167,9 +169,24 @@ export function renderHabitDetail(mount, id) {
 }
 
 function fmtTotal(habit, sum) {
-  if (habit.kind !== 'number') return String(sum.total);
+  if (!habits.measurable(habit)) return String(sum.total);
+  // Minutes read as hours past two of them.
+  if (habit.kind === 'timed' && sum.total >= 120) return `${(sum.total / 60).toFixed(1)}h`;
   const v = Math.round(sum.total * 100) / 100;
   return v >= 10000 ? `${Math.round(v / 1000)}k` : String(v);
+}
+
+/** One sentence on why the score moved this week. Computed, never stored. */
+function whyLine(sum) {
+  const m = habits.movement(sum);
+  const hl = `the half-life is ${m.halfLife} days`;
+  if (m.days < 7) return `${m.days} day${m.days === 1 ? '' : 's'} on the record, and ${hl}.`;
+  const names = m.misses.map((k) => WEEKDAYS_LONG[new Date(`${k}T00:00:00`).getDay()]);
+  const list = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
+  const count = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven'][m.misses.length] || String(m.misses.length);
+  if (m.delta < 0) return `Down ${-m.delta} points this week. ${count} miss${m.misses.length === 1 ? '' : 'es'}${list ? ` on ${list}` : ''}, and ${hl}.`;
+  if (m.delta > 0) return `Up ${m.delta} points this week. ${m.kept} of 7 days kept, and ${hl}.`;
+  return `Level this week. ${m.kept} of 7 days kept, and ${hl}.`;
 }
 
 function bucketLabel(key) {
@@ -222,7 +239,8 @@ function wireCalendarEdit(mount, habit, refresh) {
     const cell = e.target.closest('.hc-cell');
     if (!cell || cell.disabled) return;
     const key = cell.dataset.day;
-    if (habit.kind === 'number') return openPastValue(habit, key, refresh);
+    if (habit.kind === 'checklist') return openChecklistSheet(mount, habit, key, () => refresh());
+    if (habits.measurable(habit)) return openPastValue(habit, key, refresh);
     haptic('tick');
     habits.setValue(habit.id, key, habits.nextValue(habit, key));
     announce();

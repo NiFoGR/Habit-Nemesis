@@ -9,11 +9,23 @@ export const rowColour = (habit) => (habit.colour ? habits.hexOf(habit.colour) :
 
 /** The line under the name: what a measurable habit counts. */
 function detailOf(habit) {
-  if (habit.kind !== 'number') return '';
+  if (habit.kind === 'checklist') return `${habit.items.length} item${habit.items.length === 1 ? '' : 's'}`;
+  if (!habits.measurable(habit)) return '';
   const unit = habit.unit || '';
   if (!habit.target) return unit;
   const aim = `${habit.targetType === 'atmost' ? 'under' : 'at least'} ${fmtNumber(habit.target)}`;
   return unit ? `${aim} ${unit}` : aim;
+}
+
+/** A checklist cell: how much of the list is ticked, a tick once all of it is. */
+function listRing(frac, colour) {
+  const r = 7;
+  const c = 2 * Math.PI * r;
+  return `<svg class="hg-list" viewBox="0 0 20 20" aria-hidden="true">
+    <circle cx="10" cy="10" r="${r}" fill="none" stroke="var(--line)" stroke-width="2.5"/>
+    <circle cx="10" cy="10" r="${r}" fill="none" stroke="${colour}" stroke-width="2.5" stroke-linecap="round"
+      stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - frac)).toFixed(1)}" transform="rotate(-90 10 10)"/>
+  </svg>`;
 }
 
 /** The small ring: the score in the habit's own colour. ringSvg is the 168px
@@ -42,7 +54,15 @@ export function cellHtml(habit, key, sum, s) {
   if (raw === habits.SKIP) {
     return `<button class="hg-cell skip" data-day="${key}" aria-label="${escapeHtml(label)}: skipped">${icon('skip', 15)}</button>`;
   }
-  if (habit.kind === 'number') {
+  if (habit.kind === 'checklist') {
+    const n = typeof raw === 'number' ? raw : 0;
+    const met = !!d?.hit;
+    const total = Math.max(1, habit.items.length);
+    return `<button class="hg-cell list ${met ? 'on' : n ? 'part' : ''}" data-day="${key}"
+      style="${met ? `color:${colour}` : ''}" aria-label="${escapeHtml(label)}: ${n} of ${total}">
+      ${met ? icon('check', 18) : listRing(n / total, colour)}</button>`;
+  }
+  if (habits.measurable(habit)) {
     const has = typeof raw === 'number';
     const met = !!d?.hit;
     // No unit here. It is said once, under the name.

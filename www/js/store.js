@@ -9,7 +9,10 @@ import { DIVISIONS } from './arena/ladder.js';
 const HABIT_COLOURS = ['teal', 'mint', 'lime', 'amber', 'orange', 'clay', 'rose', 'plum', 'violet', 'indigo', 'sky', 'slate'];
 // v1 had a red. The accent is red now, so those rows wear the nearest colour.
 const LEGACY_COLOURS = { red: 'rose' };
-const HABIT_KINDS = ['yesno', 'number'];
+// Timed and checklist are quantity habits underneath: minutes with a floor,
+// items ticked with a floor of all of them. The Arena reads them as numbers.
+const HABIT_KINDS = ['yesno', 'number', 'timed', 'checklist'];
+const MAX_ITEMS = 8;
 const HABIT_TARGET_TYPES = ['atleast', 'atmost'];
 const SOUND_LEVELS = ['off', 'subtle', 'full'];
 const THEMES = ['dark', 'black'];
@@ -60,6 +63,7 @@ function blank() {
       groups: [], // { id, name, order, collapsed, updatedAt }
       items: [], // the habits themselves, each stamped updatedAt
       entries: {}, // habitId -> { dayKey: value }, -1 skip, 0 lapse, else done
+      checks: {}, // habitId -> { dayKey: [item indices ticked] }, checklists only
     },
 
     // Arena. The one slice that stores what it could derive: a closed week is a
@@ -307,6 +311,7 @@ function cleanHabits(sh, base) {
         notes: str(h?.notes, 500),
         colour: oneOf(LEGACY_COLOURS[h?.colour] || h?.colour, HABIT_COLOURS, 'teal'),
         kind: oneOf(h?.kind, HABIT_KINDS, 'yesno'),
+        items: arr(h?.items, MAX_ITEMS).map((s) => str(s, 40)).filter(Boolean),
         unit: str(h?.unit, 20),
         target: num(h?.target, 0, 1e9) ?? 0,
         targetType: oneOf(h?.targetType, HABIT_TARGET_TYPES, 'atleast'),
@@ -342,6 +347,19 @@ function cleanHabits(sh, base) {
     if (Object.keys(kept).length) entries[hid] = kept;
   }
 
+  const checks = {};
+  const rawChecks = src.checks && typeof src.checks === 'object' ? src.checks : {};
+  for (const [hid, days] of Object.entries(rawChecks).slice(0, 100)) {
+    if (!itemIds.has(hid) || !days || typeof days !== 'object') continue;
+    const kept = {};
+    for (const [k, v] of Object.entries(days).slice(0, 20000)) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(k)) continue;
+      const idx = [...new Set(arr(v, MAX_ITEMS).map((i) => int(i, 0, MAX_ITEMS - 1, null)).filter((i) => i !== null))];
+      if (idx.length) kept[k] = idx;
+    }
+    if (Object.keys(kept).length) checks[hid] = kept;
+  }
+
   return {
     settings: {
       firstDay: int(hs.firstDay, 0, 6, base.settings.firstDay),
@@ -356,6 +374,7 @@ function cleanHabits(sh, base) {
     groups,
     items,
     entries,
+    checks,
   };
 }
 

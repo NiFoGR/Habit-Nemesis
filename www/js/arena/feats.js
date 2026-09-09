@@ -105,7 +105,7 @@ function cameBack(gap = 14, back = 7) {
 }
 
 /** The biggest lifetime total on any measurable habit, in its own unit. */
-const countedMost = () => summaries().filter((s) => s.habit.kind === 'number').reduce((a, s) => Math.max(a, s.total || 0), 0);
+const countedMost = () => summaries().filter((s) => habits.measurable(s.habit)).reduce((a, s) => Math.max(a, s.total || 0), 0);
 
 const bestScore = () => summaries().reduce((a, s) => Math.max(a, s.score || 0), 0);
 
