@@ -150,14 +150,14 @@ function fmtTotal(habit, sum) {
 /** One sentence on why the score moved this week. Computed, never stored. */
 function whyLine(sum) {
   const m = habits.movement(sum);
-  const hl = `the half-life is ${m.halfLife} days`;
-  if (m.days < 7) return `${m.days} day${m.days === 1 ? '' : 's'} on the record, and ${hl}.`;
+  const points = (n) => `${n} point${n === 1 ? '' : 's'}`;
+  if (m.days < 7) return `${m.days} day${m.days === 1 ? '' : 's'} on the record.`;
   const names = m.misses.map((k) => WEEKDAYS_LONG[new Date(`${k}T00:00:00`).getDay()]);
   const list = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
   const count = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven'][m.misses.length] || String(m.misses.length);
-  if (m.delta < 0) return `Down ${-m.delta} points this week. ${count} miss${m.misses.length === 1 ? '' : 'es'}${list ? ` on ${list}` : ''}, and ${hl}.`;
-  if (m.delta > 0) return `Up ${m.delta} points this week. ${m.kept} of 7 days kept, and ${hl}.`;
-  return `Level this week. ${m.kept} of 7 days kept, and ${hl}.`;
+  if (m.delta < 0) return `Down ${points(-m.delta)} this week. ${count} miss${m.misses.length === 1 ? '' : 'es'}${list ? `, on ${list}` : ''}.`;
+  if (m.delta > 0) return `Up ${points(m.delta)} this week. ${m.kept} of 7 days kept.`;
+  return `Level this week. ${m.kept} of 7 days kept.`;
 }
 
 function bucketLabel(key) {

@@ -118,7 +118,7 @@ const PAGES = [
   {
     title: 'Mark the day',
     line: 'One row per thing you keep, one column per day.',
-    done: 'That is the whole of it. The days behind are the record, and they can be edited too.',
+    done: 'The days behind are the record, and they can be edited too.',
     art: miniGrid,
     cta: 'Tap the cell',
     // Nothing here can be got wrong, and nothing can trap you: the button
@@ -127,7 +127,7 @@ const PAGES = [
   },
   {
     title: 'A row is anything',
-    line: 'A yes, a number with a target, or a few days a week. Four in seven wants any four of them.',
+    line: 'A yes, a number with a target, or a few days a week.',
     art: kinds,
   },
   {
@@ -150,7 +150,7 @@ const PAGES = [
   },
   {
     title: 'Start with these',
-    line: 'Tap the ones you want. Everything about them can change later.',
+    line: 'Tap the ones you want.',
     art: null,
     cta: 'Start',
     tall: true,
@@ -159,7 +159,7 @@ const PAGES = [
   // Last, so signing in has something to carry. Skipped with no service.
   {
     title: 'Keep the record',
-    line: 'Your account holds the grid, the ladder and the cabinet. New phone, same record.',
+    line: 'Your account holds the grid, the ladder and the cabinet.',
     art: null,
     account: true,
     only: configured,

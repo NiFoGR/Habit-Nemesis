@@ -166,7 +166,7 @@ function alarmPlan() {
         slot: 1,
         at: at(weekStart(qfWeek), 9),
         title: `${st.arc.name}: the group stage is over`,
-        body: 'Top three go through. Open the Arena to see whether you are one of them.',
+        body: 'Top three go through.',
       });
     }
   }

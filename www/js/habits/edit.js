@@ -136,7 +136,7 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
           ? `<section class="card">
               <div class="h-row"><h2>The time</h2></div>
               <label class="setting">
-                <span><b>Minutes</b><i>A day counts when the timer reaches this.</i></span>
+                <span><b>Minutes</b></span>
                 <input type="number" id="target" inputmode="numeric" step="1" min="1" max="1440" value="${h.target}">
               </label>
             </section>`
@@ -146,11 +146,11 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
           ? `<section class="card">
               <div class="h-row"><h2>The measurement</h2></div>
               <label class="setting">
-                <span><b>Unit</b><i>What you count.</i></span>
+                <span><b>Unit</b></span>
                 <input type="text" id="unit" maxlength="20" placeholder="litres" value="${escapeHtml(h.unit)}">
               </label>
               <label class="setting">
-                <span><b>Target</b><i>A day counts when it reaches this.</i></span>
+                <span><b>Target</b></span>
                 <input type="number" id="target" inputmode="decimal" step="any" min="0" value="${h.target}">
               </label>
               <label class="setting">
@@ -190,7 +190,7 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
         ${existing
           ? `<section class="card danger">
               <div class="h-row"><h2>This habit</h2></div>
-              <p class="small muted">Archiving takes it out of the grid and keeps every day you ever marked. Deleting takes the record with it.</p>
+              <p class="small muted">Archiving keeps every day you marked. Deleting does not.</p>
               <div class="btn-row">
                 <button class="btn" id="duplicate">Duplicate</button>
                 <button class="btn" id="archive">${h.archived ? 'Restore' : 'Archive'}</button>

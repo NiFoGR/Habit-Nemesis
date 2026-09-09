@@ -48,7 +48,7 @@ function opening(mount, st) {
 
       <div class="mo-deal">
         ${g.table.length <= 1
-          ? '<p class="muted small centre">Your group fills up as you play weeks. Every rival in it will be a week you actually had.</p>'
+          ? '<p class="muted small centre">Your group fills up as you play weeks.</p>'
           : g.table
               .map((r, i) => `<div class="mo-card ${r.you ? 'you' : ''} ${i < 3 ? 'q' : 'nq'}" style="--i:${i}">
                 <span class="mo-seed">${i + 1}</span>

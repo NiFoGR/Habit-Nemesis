@@ -658,9 +658,6 @@ export function scoreAgo(sum, back) {
 
 /* ---------------- why the number moved ---------------- */
 
-/** The half-life in days: how long a miss takes to fade to half. */
-export const halfLife = (habit) => Math.round(13 / Math.sqrt(habit.freq.num / habit.freq.den));
-
 /** The last seven days against the seven before: the score's move in points,
  *  the days that cost it, the days that held. Computed, never stored. */
 export function movement(sum) {
@@ -677,7 +674,6 @@ export function movement(sum) {
     delta: Math.round((sum.score - scoreAgo(sum, 7)) * 100),
     misses,
     kept,
-    halfLife: halfLife(sum.habit),
   };
 }
 

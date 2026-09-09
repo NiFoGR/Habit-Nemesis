@@ -68,7 +68,7 @@ const PAGES = [
         ${rows([
           row('Week starts', select('firstDay', WEEKDAYS_LONG.map((d, i) => [i, d]), hs.firstDay)),
           row('A new day begins at', select('dayStartHour', [0, 1, 2, 3, 4, 5, 6].map((h) => [h, h === 0 ? 'Midnight' : `${String(h).padStart(2, '0')}:00`]), hs.dayStartHour),
-            'Set it past midnight and a late night still counts as the day before.'),
+            'A late night still counts as the day before.'),
           row('Days on screen', select('columns', [3, 4, 5, 6, 7].map((n) => [n, n]), hs.columns)),
           row('Oldest first', toggle('reverseDays', hs.reverseDays)),
         ])}
@@ -77,7 +77,7 @@ const PAGES = [
           ${rows([
             row('Toggle with a short press', toggle('shortPress', hs.shortPress)),
             row('Skip days', toggle('skipDays', hs.skipDays), 'A skip holds the score and the streak where they are.'),
-            row('Question marks for missing data', toggle('unknownMarks', hs.unknownMarks), 'Tells a day you never answered apart from a day you answered no.'),
+            row('Question marks for missing data', toggle('unknownMarks', hs.unknownMarks), 'Tells a day you never answered from one you answered no.'),
           ])}
         </details>`;
       ['firstDay', 'dayStartHour', 'columns'].forEach((id) => bindGrid(el, id, (e) => Number(e.value)));
@@ -93,7 +93,7 @@ const PAGES = [
         ${rows([
           isNative()
             ? row('Notifications', state('notifState', 'checking'), 'Every habit reminder and every Arena alarm needs this.')
-            : row('Notifications', state('notifState', 'Android app only'), 'A browser cannot ring an alarm. The grid is the reminder here.'),
+            : row('Notifications', state('notifState', 'Android app only'), 'A browser cannot ring an alarm.'),
           isNative() ? '<div class="set-actions" id="notifAsk" hidden><button class="btn" id="askNotif">Allow notifications</button></div>' : '',
           row('Full time', toggle('fullTime', s.fullTime), 'One notification when the day closes, with the day\'s score.'),
           row('Sound', select('sound', [['off', 'Off'], ['subtle', 'Subtle'], ['full', 'Full']], s.sound), 'Subtle keeps the grid and mutes the ceremonies.'),
@@ -176,7 +176,7 @@ const PAGES = [
         </div>
         ${rows([
           row('Version', state('version', VERSION)),
-          row('Diagnostics', '<button class="btn small-btn ghost" id="diag">Copy</button>', 'For a bug report. Nothing personal in it.'),
+          row('Diagnostics', '<button class="btn small-btn ghost" id="diag">Copy</button>', 'Versions and counts, for a bug report.'),
         ])}
         <div class="set-tail">
           <a class="tail-btn" href="#/intro">Show the introduction again</a>
