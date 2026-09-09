@@ -41,6 +41,9 @@ const PATTERNS = {
   feat: [0, 25, 40, 25, 40, 60], trophy: [0, 60, 60, 60, 60, 60, 60, 200],
   // The month settles On Notice: two long beats, a warning rather than a blow.
   notice: [0, 90, 60, 90],
+  // Sound and vibration are one language: every cue has both.
+  kickoff: [0, 25, 40, 25], fulltime: 20, overtake: [0, 30, 40, 30, 40, 60], behind: [0, 80],
+  perfect: [0, 40, 60, 40, 60, 80], 'timer-tick': 6, 'timer-done': [0, 30, 40, 120],
 };
 
 export function haptic(kind) {
@@ -154,6 +157,14 @@ const CUES = {
   perfect: { notes: [[N.c, 0, 0.14, { peak: 0.11 }], [N.e, 0.08, 0.14, { peak: 0.11 }], [N.G, 0.16, 0.4, { peak: 0.12 }], [N.C2, 0.5, 0.5, { peak: 0.1, bright: 6 }]] },
   // the Arena
   phase: { notes: [[N.G, 0, 0.12, { peak: 0.09 }]] },
+  // The week's first mark, on its first day.
+  kickoff: { notes: [[N.g, 0, 0.08, { peak: 0.1 }], [N.C, 0.06, 0.16, { peak: 0.1 }]] },
+  // The day closes. One note, no strike.
+  fulltime: { notes: [[N.c, 0, 0.3, { peak: 0.08 }]] },
+  // You pass the Nemesis mid-week. Once a week.
+  overtake: { notes: [[N.e, 0, 0.1, { peak: 0.13, bright: 6 }], [N.G, 0.08, 0.12, { peak: 0.13, bright: 6 }], [N.C2, 0.16, 0.4, { peak: 0.13, bright: 6 }]] },
+  // The Nemesis passes you. Once a day.
+  behind: { notes: [[N.d, 0, 0.35, { peak: 0.08, glide: 0.94 }]] },
   win: { notes: [[N.g, 0, 0.16, { peak: 0.13 }], [N.C, 0.09, 0.34, { peak: 0.14 }]] },
   loss: { notes: [[N.e, 0, 0.2, { peak: 0.1, bright: 2.5 }], [N.c, 0.1, 0.4, { peak: 0.1, bright: 2 }]] },
   feat: { notes: [[N.C, 0, 0.12, { peak: 0.1 }], [N.E, 0.06, 0.12, { peak: 0.11 }], [N.G, 0.12, 0.12, { peak: 0.12 }], [N.C2, 0.18, 0.42, { peak: 0.13 }]] },

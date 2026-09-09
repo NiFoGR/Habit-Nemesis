@@ -28,6 +28,7 @@ import { initTabs, syncTabs } from './tabs.js';
 import * as native from './native.js';
 import * as ads from './ads/program.js';
 import { initWidgets } from './widgets.js';
+import { chime, haptic } from './ui.js';
 
 // js/webview.js has already said why. Drawing over it would hide the reason.
 if (window.__hnUnsupported) throw new Error('Habit Nemesis needs a newer WebView');
@@ -164,6 +165,11 @@ function dayTurned() {
   store.snapshot();
   collect();
   route();
+  // The day closed with the app open: full time, and the lead may have moved.
+  chime('fulltime');
+  haptic('fulltime');
+  const cue = arenaProgram.watchGap();
+  if (cue) setTimeout(() => { chime(cue); haptic(cue); }, 400);
   return true;
 }
 

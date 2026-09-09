@@ -274,6 +274,33 @@ export async function syncAlarms() {
 /** What would be scheduled. An APK-only alarm is otherwise unverifiable. */
 export const plannedAlarms = () => alarmPlan();
 
+/* ---------------- the lead changing hands ---------------- */
+// Called after every mark and every day turn. Compares the match's sign with
+// the one last seen: crossing up is an overtake, once a week; crossing down
+// is the Nemesis passing you, once a day.
+
+export function watchGap() {
+  const key = currentWeek();
+  const live = scoreWeek(key);
+  const a = store.get().arena;
+  if (live.void && !live.due) return '';
+  const opp = fixtureFor(key);
+  // Level is a win, so the line that matters is behind against not behind.
+  // 0 is never seen: the first look only records which side you are on.
+  const sign = Math.round(live.score * 100) >= Math.round(opp.score * 100) ? 1 : -1;
+  const was = a.gapSign;
+  let cue = '';
+  if (was === -1 && sign === 1 && a.overtook !== key) cue = 'overtake';
+  if (was === 1 && sign === -1 && a.behindDay !== habits.today()) cue = 'behind';
+  if (sign === was) return '';
+  store.update((st) => {
+    st.arena.gapSign = sign;
+    if (cue === 'overtake') st.arena.overtook = key;
+    if (cue === 'behind') st.arena.behindDay = habits.today();
+  }, { local: true });
+  return cue;
+}
+
 /** The match, as one clause a reminder can carry. */
 export function matchLine() {
   const key = currentWeek();

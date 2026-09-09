@@ -92,6 +92,10 @@ function blank() {
       face: null,
       // The daily line said today, so a day never gets a second one.
       line: { day: '', id: '' },
+      // The match's last known sign, and when the two crossing cues last played.
+      gapSign: 0,
+      overtook: '', // 'YYYY-Www'. Once a week
+      behindDay: '', // 'YYYY-MM-DD'. Once a day
     },
 
     // Ads. Consent itself is held by the UMP SDK, not here.
@@ -275,6 +279,9 @@ function cleanArena(sa, base) {
       day: /^\d{4}-\d{2}-\d{2}$/.test(src.line?.day) ? src.line.day : '',
       id: typeof src.line?.id === 'string' && /^[a-zA-Z]{1,20}$/.test(src.line.id) ? src.line.id : '',
     },
+    gapSign: oneOf(src.gapSign, [-1, 0, 1], 0),
+    overtook: weekKeyOf(src.overtook),
+    behindDay: /^\d{4}-\d{2}-\d{2}$/.test(src.behindDay) ? src.behindDay : '',
   };
 }
 

@@ -4,6 +4,7 @@
 import * as habits from './program.js';
 import { escapeHtml, openSheet, haptic, chime, celebrate } from '../ui.js';
 import { announce } from '../arena/result.js';
+import { watchGap, currentWeek, weekDays, scoreWeek } from '../arena/program.js';
 import { syncTabs } from '../tabs.js';
 import { navigate } from '../back.js';
 import { rowColour, cellHtml, fmtNumber, dueHead, nodeFrom, ringLen, patchRowRing } from './grid.js';
@@ -59,7 +60,8 @@ function markCell(mount, habit, key, cell) {
   const nowOn = !!habits.summary(habit).index.get(key)?.hit;
   const skipped = !!habits.summary(habit).index.get(key)?.skipped;
   haptic(nowOn ? 'hit' : 'tick');
-  chime(nowOn ? 'mark' : skipped ? 'skip' : 'unmark');
+  chime(nowOn ? (kickoff(key) ? 'kickoff' : 'mark') : skipped ? 'skip' : 'unmark');
+  crossing();
   if (nowOn && !wasOn) {
     next.classList.add('just-on');
     celebrate(next, { count: 8, spread: 26, colour: rowColour(habit) });
@@ -126,6 +128,22 @@ export function wireCells(grid, mount, s, redraw) {
   grid.addEventListener('scroll', cancel, true);
 }
 
+/** The week's first mark, on its first day. */
+function kickoff(key) {
+  const week = currentWeek();
+  return key === weekDays(week)[0] && key === habits.today() && scoreWeek(week).done === 1;
+}
+
+/** The lead changing hands, said once. */
+function crossing() {
+  const cue = watchGap();
+  if (!cue) return;
+  setTimeout(() => {
+    chime(cue);
+    haptic(cue);
+  }, 260);
+}
+
 /** Swap one cell for its fresh markup and nudge everything that reads it. */
 function patchCell(mount, habit, key, wasDone, wasOn, redraw) {
   const cell = mount.querySelector(`.hg-row[data-id="${CSS.escape(habit.id)}"] .hg-cell[data-day="${key}"]`);
@@ -140,6 +158,7 @@ function patchCell(mount, habit, key, wasDone, wasOn, redraw) {
     celebrate(next, { count: 8, spread: 26, colour: rowColour(habit) });
     next.addEventListener('animationend', () => next.classList.remove('just-on'), { once: true });
   }
+  crossing();
 }
 
 /** The list, one tick per item. The count is the day's value. */
