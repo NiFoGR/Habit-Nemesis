@@ -50,7 +50,7 @@ jobs:
         run: npm install
 
       - name: Generate the Android project
-        # android/ is not committed — Capacitor regenerates it from www/ each build.
+        # android/ is not committed. Capacitor regenerates it from www/ each build.
         run: |
           npx cap add android
           node tools/gen-icons.mjs --android

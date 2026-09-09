@@ -59,7 +59,7 @@ in `d` days:
 | 3 times in 14 days | 3 | 14 |
 
 A day is **satisfied** when the window of `d` days ending on it holds at least
-`n` ticks — or when you ticked it, which is the case the window alone gets
+`n` ticks, or when you ticked it, which is the case the window alone gets
 wrong. Mark one day of a habit that asks for four a week and the window still
 holds one; a window-only rule would score that day zero and break the streak on
 the day you actually did the thing. So doing it always counts, and the window is
@@ -86,7 +86,7 @@ score(t)   = score(t-1) × multiplier + value(t) × (1 − multiplier)
 For a daily habit the multiplier is `0.5^(1/13) ≈ 0.9481`: a **thirteen-day
 half-life**. Thirteen consecutive days scores exactly 50%, twenty-six exactly
 75%, and a week off decays the score rather than resetting it. A percentage of
-days kept cannot do any of that — it treats a lapse in March as it treats one
+days kept cannot do any of that: it treats a lapse in March as it treats one
 this morning, and it cannot be moved once there is a year of data behind it.
 
 Rarer habits get a multiplier closer to 1, so they rise and fall more slowly.
@@ -95,14 +95,14 @@ takes proportionally longer to build.
 
 `value(t)` is:
 
-- **yes/no** — 1 if the day is satisfied, 0 otherwise.
-- **measurable, at least** — `min(value / target, 1)`, so 1.4 of a 2-litre
+- **yes/no**: 1 if the day is satisfied, 0 otherwise.
+- **measurable, at least**: `min(value / target, 1)`, so 1.4 of a 2-litre
   target is worth 0.7. Partial credit exists only for daily habits; a
   non-daily one is satisfied or it is not.
-- **measurable, at most** — 1 at or under the target, falling away above it and
+- **measurable, at most**: 1 at or under the target, falling away above it and
   reaching 0 at twice the target. This is the shape of a calorie cap, and of
   anything you are trying to do less of.
-- **skipped** — the day leaves the series entirely rather than scoring zero.
+- **skipped**: the day leaves the series entirely rather than scoring zero.
 
 A day with nothing recorded scores zero under both target types, including a
 ceiling. Not logging is not evidence of having stayed under, and the skip is

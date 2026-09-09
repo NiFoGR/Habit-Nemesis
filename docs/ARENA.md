@@ -5,7 +5,7 @@ a permanent record of things you actually did.
 
 Everything in it is computed from data the app already has. **There are no
 invented opponents.** Every rival is a real week out of your own history, which
-is the only reason beating one means anything — and the reason you can tap any
+is the only reason beating one means anything, and the reason you can tap any
 of them and look at the actual grid they played.
 
 ## Three rhythms, one ladder
@@ -36,7 +36,7 @@ place the order and the bars are written down; everything else derives from it.
 | NPC | 30% |
 | Bottom G | 20% |
 
-The crests are artwork — one file per division in `www/img/`, drawn by hand and
+The crests are artwork: one file per division in `www/img/`, drawn by hand and
 cropped, rather than something `crest.js` builds. There was a version that
 built them out of chevrons, laurels and a crown in the app's single accent, so
 that rank read as *shape* and the app kept one theme. It looked correct and it
@@ -70,14 +70,14 @@ also broken: the moment you have one perfect week your Nemesis is a perfect
 week, and every fixture against him is unwinnable for ever. You cannot do
 better than everything, so doing everything has to be enough.
 
-Your first completed month is a **placement season** — it sets your division
+Your first completed month is a **placement season**: it sets your division
 and cannot relegate you, because there is nothing to relegate you from.
 
 ### A cup needs a record to run
 
 The group table is you against five past selves, and both halves have to exist
 for third place to mean anything. With an empty record there were no past
-selves, so the table was one row — you — and you came first and qualified on a
+selves, so the table was one row, you, and you came first and qualified on a
 score of nought. `played` also counted group weeks that had merely *elapsed*,
 so the calendar could walk an untouched app through a whole group stage and
 tell it that it was through.
@@ -97,14 +97,14 @@ played for the Summer Arc", not "out at the group stage".
 > **A week scores the percentage of what was due that you did.**
 
 A **daily** row owes one cell per day. A row asking for **n days in d** owes
-`n × elapsed ÷ d` cells over the week, floored — five in seven owes five, and
+`n × elapsed ÷ d` cells over the week, floored: five in seven owes five, and
 does not care which five. A skipped day leaves both halves of the fraction, as
 it does everywhere else in this app.
 
 That second rule is not what shipped first, and the difference is worth
 keeping. The first version asked the habits engine whether each day was
 *satisfied*, which for a 3-in-7 habit is true on the days it does not ask for.
-But that engine's window is **trailing** — a Monday can only be carried by the
+But that engine's window is **trailing**: a Monday can only be carried by the
 seven days before it, which belong to last week. So the same five days scored
 100% done Monday to Friday and 71% done Wednesday to Sunday, a brand new habit
 was marked down for its first week whatever you did, and a genuine weekend
@@ -125,14 +125,14 @@ rather than a blend of two different bars. It also makes the record and the
 score the same object.
 
 **A week is only a fixture if at least `VOID_CELLS` cells were due across at
-least `VOID_DAYS` days** — four, and three. Otherwise it is void: no result,
+least `VOID_DAYS` days**, four and three. Otherwise it is void: no result,
 like a rained-off match.
 
 Both floors are needed. Cells alone was set at seven, which a single daily
 habit hits exactly and loses the moment you skip a day, so somebody keeping one
 thing could never play. Days alone would let a fortnight of one habit through.
 Together they are the honest reading of *was this a week*, and a week you
-skipped your way through fails the second floor however many rows you keep —
+skipped your way through fails the second floor however many rows you keep,
 which is the case the rule exists for.
 
 ## The roster, and the days a row owes
@@ -219,28 +219,28 @@ it, so the quarter-final after summer still plays the best week of Spring.
 So a thirteen-week quarter is eight group weeks, three knockout weeks and a
 fortnight of nothing.
 
-**Group stage** — the season, less its last three weeks. A table of you and five
+**Group stage**: the season, less its last three weeks. A table of you and five
 past selves whose scores are already fixed, so the whole table is visible from
 day one and you can see exactly what qualifying costs. **Top three go through.**
 
-**Knockout** — the last three weeks, and the opponents escalate:
+**Knockout**: the last three weeks, and the opponents escalate:
 
 | Round | Opponent |
 |---|---|
 | Quarter-final | your best week of the previous Arc |
 | Semi-final | your best week of this year |
-| **Final** | **your Nemesis — your best week ever** |
+| **Final** | **your Nemesis, your best week ever** |
 
 So winning an Arc requires the best week of your life, in the last week of the
 season, with everything on it. The boss is your own ceiling, and you only meet
 him if you earn the tie.
 
-Trophies are permanent, and so are the defeats: *Winter Arc 2026 — lost in the
+Trophies are permanent, and so are the defeats: *Winter Arc 2026, lost in the
 semi, 81% to 84%* is kept, because a cabinet with only wins in it is a
 participation trophy.
 
 Being knocked out is not dead time. The league never stops, so there is still a
-match every week — and the moment you are out, the Arc section becomes the
+match every week, and the moment you are out, the Arc section becomes the
 countdown to the next one, which is the same thing it shows during the break.
 
 ### What is on screen, and when
@@ -255,7 +255,7 @@ countdown to the next one, which is the same thing it shows during the break.
 
 Three of those get a full-screen moment the first time you see them, and each
 fires once: **opening night**, **qualification night**, and **the ceremony**.
-What is stored is that you have seen it — the record already says it happened.
+What is stored is that you have seen it. The record already says it happened.
 
 ### Shouting through the door
 
@@ -278,7 +278,7 @@ were knocked out of is worse than a phone that says nothing.
 
 ## A line for whoever has to beat it
 
-Set a new best week and you are offered one sentence — capped at 140
+Set a new best week and you are offered one sentence, capped at 140
 characters, the only free text anywhere in the Arena. It is stored on that
 week, and it comes back at you when that week turns up as your Nemesis.
 
@@ -319,7 +319,7 @@ the first time the list is checked.
 
 Feats are **predicates over the record**, not flags handed out by whatever
 screen happened to be open. Only the date each was first seen is stored, so
-they can be announced once — and if that is ever lost the feats themselves
+they can be announced once, and if that is ever lost the feats themselves
 recompute from the data.
 
 ## What is stored, and the one rule this breaks
@@ -354,7 +354,7 @@ for eight months.
 ## Correcting the record
 
 The stored scores carry a `scoring` version. Bumping it re-scores every week
-that was **never played** — the ones the Arena computed out of older data — and
+that was **never played**, the ones the Arena computed out of older data, and
 re-derives any standing that rested on nothing else, the division included.
 
 Weeks that were actually played are left alone, even when the rule that
@@ -373,7 +373,7 @@ The result is behind one tap, and that is not ceremony for its own sake: a
 screen reached by the app opening has had no gesture on it, so the phone
 refuses to vibrate and an `AudioContext` refuses to start. Played on arrival
 the whole thing would be silent and still. The tap is what makes the sound
-legal — and a week you won is worth a moment of not knowing anyway.
+legal, and a week you won is worth a moment of not knowing anyway.
 
 A feat earned mid-tap gets one line instead, sliding in and going away again,
 because interrupting the grid to hand you a certificate would make you stop
