@@ -39,6 +39,8 @@ const PATTERNS = {
   // Arena: two beats for a win, three rising for a promotion.
   win: [0, 35, 50, 90], loss: [0, 120], promote: [0, 40, 50, 40, 50, 120], relegate: [0, 160, 80, 160],
   feat: [0, 25, 40, 25, 40, 60], trophy: [0, 60, 60, 60, 60, 60, 60, 200],
+  // The month settles On Notice: two long beats, a warning rather than a blow.
+  notice: [0, 90, 60, 90],
 };
 
 export function haptic(kind) {
@@ -162,6 +164,8 @@ const CUES = {
   relegate: {
     notes: [[N.G, 0, 0.3, { peak: 0.1, bright: 3 }], [N.e, 0.12, 0.34, { peak: 0.1, bright: 2.5 }], [N.c, 0.26, 0.8, { peak: 0.11, bright: 2, glide: 0.94 }]],
   },
+  // On Notice: one note falling, no strike. A warning, not a verdict.
+  notice: { notes: [[N.g, 0, 0.5, { peak: 0.1, bright: 2.5, glide: 0.9 }]] },
   trophy: {
     strike: [0, 0.2, { peak: 0.2, tone: 2200 }],
     notes: [[N.c, 0.02, 0.2, { peak: 0.13 }], [N.g, 0.12, 0.2, { peak: 0.13 }], [N.C, 0.22, 0.2, { peak: 0.14 }], [N.E, 0.32, 0.2, { peak: 0.14 }], [N.G, 0.42, 0.9, { peak: 0.15 }], [N.C2, 0.42, 0.9, { peak: 0.08, bright: 6 }]],

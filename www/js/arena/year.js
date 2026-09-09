@@ -154,7 +154,7 @@ function monthChart(year) {
         const score = rec ? rec.score : live && !live.empty ? live.score : null;
         const cls = score == null ? 'none'
           : rec?.move === 'up' || rec?.move === 'placed' ? 'up'
-            : rec?.move === 'down' ? 'down'
+            : rec?.move === 'down' || rec?.move === 'notice' ? 'down'
               : live ? 'live' : 'held';
         return `<div class="yr-col ${cls}" title="${escapeHtml(key)}${score == null ? '' : `: ${pct(score)}`}">
           <span class="yr-fill" style="height:${score == null ? 0 : (score * 100).toFixed(1)}%"></span>
@@ -172,8 +172,8 @@ function ladderTrack(year) {
   if (!seen.length) return '<p class="muted small">No month of this year closed.</p>';
   return `<div class="yr-track">
     ${seen
-      .map((m) => `<span class="yr-step ${m.move}" title="${escapeHtml(`${m.m}: ${m.move}`)}">
-        ${icon(m.move === 'up' || m.move === 'placed' ? 'arrowUp' : m.move === 'down' ? 'arrowDown' : 'check', 13)}
+      .map((m) => `<span class="yr-step ${m.move}" title="${escapeHtml(`${m.m}: ${m.move === 'notice' ? 'on notice' : m.cleared ? 'cleared' : m.move}`)}">
+        ${icon(m.move === 'up' || m.move === 'placed' ? 'arrowUp' : m.move === 'down' ? 'arrowDown' : m.move === 'notice' ? 'warn' : 'check', 13)}
         <i>${escapeHtml(arena.divisionOf(m.to).name)}</i>
       </span>`)
       .join('')}

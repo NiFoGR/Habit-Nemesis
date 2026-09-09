@@ -822,7 +822,13 @@ input[type="range"] {
 .ar-standing.unranked { --lift: 0; }
 .ar-standing.unranked ~ .ar-ladder-link i { opacity: 0.3; }
 
-.ar-crest { flex: 0 0 auto; display: block; }
+.ar-crest { flex: 0 0 auto; display: block; position: relative; }
+/* On Notice, on the crest: one amber dot. The rung line names it. */
+.ar-crest.notice::after {
+  content: ''; position: absolute; right: 4px; bottom: 8px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--warn); box-shadow: 0 0 0 2px var(--bg);
+}
 .crest { display: block; object-fit: contain; -webkit-user-select: none; user-select: none; }
 /* Same rules as a crest: artwork, drawn at the size it is asked for. */
 .cup-img { display: block; object-fit: contain; -webkit-user-select: none; user-select: none; }
@@ -1248,7 +1254,7 @@ button.ar-lane:active { opacity: 0.7; }
   border-radius: var(--radius-pill); border: 1px solid var(--line); background: var(--surface-2); color: var(--muted); }
 .yr-step i { font-style: normal; font-size: var(--f-micro); }
 .yr-step.up, .yr-step.placed { border-color: color-mix(in srgb, var(--good) 40%, transparent); color: var(--good); }
-.yr-step.down { border-color: color-mix(in srgb, var(--warn) 36%, transparent); color: var(--warn); }
+.yr-step.down, .yr-step.notice { border-color: color-mix(in srgb, var(--warn) 36%, transparent); color: var(--warn); }
 
 .yr-arcs { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
 /* Name over label: side by side they shared 140px and both ellipsised. */
@@ -1718,6 +1724,8 @@ html.reduce-motion .hg-cell.intro-tap { animation: none; }
 .rank-moment[data-beat='2'] .rk-word { opacity: 1; transform: none; }
 .rank-moment.up .rk-word { color: var(--good); }
 .rank-moment.down .rk-word { color: var(--text); }
+.rank-moment.notice .rk-word { color: var(--warn); }
+.rank-moment.cleared .rk-word { color: var(--good); }
 
 .rk-line {
   text-align: center;
@@ -1777,6 +1785,8 @@ html.reduce-motion .hg-cell.intro-tap { animation: none; }
 .rank-moment.down .rk-rung.here .rk-need { color: var(--text); }
 .rank-moment.up .rk-rung.here .rk-bar i { background: var(--good); box-shadow: 0 0 10px color-mix(in srgb, var(--good) 45%, transparent); }
 .rank-moment.down .rk-rung.here .rk-bar i { background: var(--accent); }
+.rank-moment.notice .rk-rung.here .rk-bar i { background: var(--warn); }
+.rank-moment.cleared .rk-rung.here .rk-bar i { background: var(--good); }
 .rk-rung.here { position: relative; }
 
 /* The rung you lost. Dashed and marked with what it wants, because it is where

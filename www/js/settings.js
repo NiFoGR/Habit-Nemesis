@@ -95,6 +95,7 @@ const PAGES = [
             ? row('Notifications', state('notifState', 'checking'), 'Every habit reminder and every Arena alarm needs this.')
             : row('Notifications', state('notifState', 'Android app only'), 'A browser cannot ring an alarm. The grid is the reminder here.'),
           isNative() ? '<div class="set-actions" id="notifAsk" hidden><button class="btn" id="askNotif">Allow notifications</button></div>' : '',
+          row('Full time', toggle('fullTime', s.fullTime), 'One notification when the day closes, with the day\'s score.'),
           row('Sound', select('sound', [['off', 'Off'], ['subtle', 'Subtle'], ['full', 'Full']], s.sound), 'Subtle keeps the grid and mutes the ceremonies.'),
           row('Vibration', toggle('haptics', s.haptics)),
         ])}
@@ -105,6 +106,7 @@ const PAGES = [
           row('To', time('quietTo', s.quietTo)),
         ])}`;
       bind(el, 'sound');
+      bind(el, 'fullTime', 'fullTime', (e) => e.checked);
       bind(el, 'haptics', 'haptics', (e) => e.checked);
       bind(el, 'quiet', 'quiet', (e) => e.checked);
       bind(el, 'quietFrom', 'quietFrom');

@@ -4,6 +4,7 @@
 import * as habits from './program.js';
 import { escapeHtml, openSheet, haptic, chime, celebrate } from '../ui.js';
 import { announce } from '../arena/result.js';
+import { syncTabs } from '../tabs.js';
 import { rowColour, cellHtml, fmtNumber, dueHead, nodeFrom, ringLen, patchRowRing } from './grid.js';
 
 const LONG_PRESS_MS = 420;
@@ -25,6 +26,8 @@ function patchTotals(mount, wasDone) {
     const score = habits.groupScore(el.dataset.groupScore);
     el.textContent = score == null ? '' : `${Math.round(score * 100)}%`;
   });
+  // The bar's badge counts the same thing.
+  syncTabs(location.hash.split('?')[0]);
 
   // Once a day, on the tap that earns it, never on the way back down.
   const done = due.total > 0 && due.pending.length === 0;

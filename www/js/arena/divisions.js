@@ -26,8 +26,8 @@ export function renderDivisions(mount) {
       </header>
 
       <p class="muted small centre dv-rule">${st.unranked
-        ? 'Your first scored week places you outright. After that, a month at the bar or better moves you up one, and one below yours moves you down one.'
-        : 'A month averaging the bar or better moves you up one division. One move a month, up or down.'}</p>
+        ? 'Your first scored week places you outright. After that, a month at the next bar moves you up one. A month below yours puts you On Notice, and a second in a row moves you down one.'
+        : 'A month averaging the next bar moves you up one division. A month below yours puts you On Notice. A second in a row moves you down one, and a month at the bar clears it.'}</p>
 
       <ol class="dv-list">
         ${rows.map(({ d, i }) => row(d, i, at, st, goingIn)).join('')}

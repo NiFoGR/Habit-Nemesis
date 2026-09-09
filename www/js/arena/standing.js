@@ -56,9 +56,11 @@ function needLine(st) {
     return `<p class="ar-need up">${pct(up.need)} ${escapeHtml(weeks)} takes you to ${escapeHtml(st.next.name)}.</p>`;
   }
   if (up && up.need <= 0) return '';
-  if (hold.need <= 0) return `<p class="ar-need safe">${escapeHtml(st.division.name)} is safe whatever happens.</p>`;
-  if (hold.need > 1) return `<p class="ar-need down">${escapeHtml(st.division.name)} is out of reach this month.</p>`;
-  return `<p class="ar-need">${pct(hold.need)} ${escapeHtml(weeks)} holds ${escapeHtml(st.division.name)}.</p>`;
+  // On Notice, the bar is the notice: clearing it and holding are one thing.
+  const what = st.notice ? 'clears the notice' : `holds ${escapeHtml(st.division.name)}`;
+  if (hold.need <= 0) return `<p class="ar-need safe">${st.notice ? 'The notice clears at the end of the month.' : `${escapeHtml(st.division.name)} is safe whatever happens.`}</p>`;
+  if (hold.need > 1) return `<p class="ar-need down">${st.notice ? `Below the bar again. ${escapeHtml(st.below?.name || 'The floor')} next month.` : `${escapeHtml(st.division.name)} is out of reach this month.`}</p>`;
+  return `<p class="ar-need">${pct(hold.need)} ${escapeHtml(weeks)} ${what}.</p>`;
 }
 
 /** No record yet: no division, no opponent, no cup. A countdown instead, and
@@ -86,12 +88,13 @@ export function standingHtml() {
   if (st.unranked) return unranked();
 
   const at = arena.divisionIndex(st.division.id);
+  // On Notice is on the crest and in the rung line: visible, and named.
   return `<div class="ar-standing">
-    <span class="ar-crest">${crest(at, 92).replace('alt="" aria-hidden="true"', `alt="${escapeHtml(st.division.name)}"`)}</span>
+    <span class="ar-crest ${st.notice ? 'notice' : ''}">${crest(at, 92).replace('alt="" aria-hidden="true"', `alt="${escapeHtml(st.division.name)}"`)}</span>
     <div class="ar-titles">
       <h1>${escapeHtml(st.division.name)}</h1>
       <p class="ar-rung">${ORDINAL[at] || at + 1} of ${arena.DIVISIONS.length} · ${
-        st.placed ? 'holding' : 'placement month'
+        st.notice ? 'On Notice' : st.placed ? 'holding' : 'placement month'
       }</p>
     </div>
   </div>

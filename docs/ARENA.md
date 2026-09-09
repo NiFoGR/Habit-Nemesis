@@ -52,7 +52,17 @@ screen was a joke about Mike Mentzer aimed at someone who had not yet had the
 chance to do anything.
 
 At the end of a month: **at or above the next division's bar** promotes you,
-**at or above your own** holds you, **below it** relegates you one step.
+**at or above your own** holds you, **below it** puts you **On Notice**. A
+second month below the bar, straight after, relegates you one step. A month
+at or above the bar clears the notice, and so does a promotion.
+
+On Notice is the mercy rule, and it is not softness. Relegation after one
+bad month was the app's churn cliff: a state people escape by uninstalling.
+The notice is visible, named on the rung line and marked on the crest, and it
+raises the tension of the second month rather than removing the stake. It
+also creates the best comeback the ladder can offer, which is a feat:
+**Cleared** for a month at the bar after a notice, **Comeback** for a
+promotion straight out of one. A relegation starts the lower division clean.
 
 A fixture is won by **matching** the opponent, not only by beating them. A draw
 went to the opponent in the first version, which was harsh and unambiguous and
@@ -249,13 +259,18 @@ What is stored is that you have seen it — the record already says it happened.
 
 ### Shouting through the door
 
-Three real Android alarms, on the same machinery as the habit reminders,
-re-armed on every launch because a launch is exactly when what is true about
-them has changed:
+Four real Android alarms, on the same machinery as the habit reminders,
+re-armed on every launch and on every change because that is exactly when
+what is true about them has changed:
 
 - the morning a cup opens
 - the morning its group stage ends
 - the evening before a round you are actually in finishes
+- **full time**, when the day closes at the day-start hour: `You took the day
+  5-4.`, or who took it and how many days are left, and on the last day of the
+  week the week's result instead. Off until switched on in Alerts. One a day,
+  and anything else the Arena owes that day rides in the same notification.
+  Inside quiet hours it waits for them to end rather than ringing at midnight.
 
 The temptation was to schedule the whole bracket in advance. It is the wrong
 call: those rounds depend on winning, and a phone that announces a final you
@@ -367,7 +382,7 @@ ticking things.
 ## Checking it
 
 `npm run check:arena` runs `tools/check-arena.mjs` in bare node. It asserts the
-things that cannot be read off a screen — ISO weeks across a new year and a
+things that cannot be read off a screen: ISO weeks across a new year and a
 clock change, the month a week belongs to, the season a month is in, what came
-before it, the Monday lock and the void floors. Every check in it is one that
-was wrong once.
+before it, the Monday lock, the void floors, and the notice rule in all three
+of its endings. Every check in it is one that was wrong once.

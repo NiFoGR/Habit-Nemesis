@@ -32,6 +32,7 @@ function blank() {
       quietTo: '07:00',
       theme: 'dark', // dark | black
       reduceMotion: false,
+      fullTime: false, // one notification when the day closes
       appLock: false, // ask for the PIN on open
       lock: null, // { salt, iv, check } once a PIN is set. See lock.js.
       onboarded: false, // the introduction has been seen at least once
@@ -66,10 +67,11 @@ function blank() {
     arena: {
       division: 'npc', // where you currently sit on the ladder
       placed: false, // the first completed month places you and cannot relegate
+      notice: false, // a month below the bar. A second in a row relegates
       // 'YYYY-Www' -> { score, done, due, opponent, oppName, oppScore, result, arc }
       // result: won | lost | void | record | null. 'record' predates the Arena.
       weeks: {},
-      months: {}, // 'YYYY-MM' -> { score, w, l, from, to, move }
+      months: {}, // 'YYYY-MM' -> { score, w, l, from, to, move, cleared }
       arcs: {}, // 'YYYY-season' -> { qualified, qf, sf, final, won }
       feats: {}, // featId -> the timestamp it was first earned
       // Fixed. A year is 365 days from here, so it must not drift.
@@ -146,6 +148,7 @@ function hydrate(saved) {
       quietTo: timeStr(ss.quietTo, '07:00'),
       theme: oneOf(ss.theme, THEMES, 'dark'),
       reduceMotion: bool(ss.reduceMotion),
+      fullTime: bool(ss.fullTime),
       appLock: bool(ss.appLock),
       // Right-shaped base64, or no PIN.
       lock: lk && b64(lk.salt) && b64(lk.iv) && b64(lk.check)
@@ -202,7 +205,9 @@ function cleanArena(sa, base) {
       l: int(v.l, 0, 10, 0),
       from: oneOf(v.from, ARENA_DIVISIONS, base.division),
       to: oneOf(v.to, ARENA_DIVISIONS, base.division),
-      move: oneOf(v.move, ['up', 'down', 'held', 'placed'], 'held'),
+      move: oneOf(v.move, ['up', 'down', 'held', 'placed', 'notice'], 'held'),
+      // This month took a notice off.
+      cleared: bool(v.cleared),
     };
   }
 
@@ -246,6 +251,7 @@ function cleanArena(sa, base) {
   return {
     division: oneOf(src.division, ARENA_DIVISIONS, base.division),
     placed: bool(src.placed),
+    notice: bool(src.notice),
     weeks,
     months,
     arcs,

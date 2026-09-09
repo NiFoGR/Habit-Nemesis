@@ -14,15 +14,16 @@
 import * as store from '../store.js';
 import * as habits from '../habits/program.js';
 import * as native from '../native.js';
+import { inQuietHours } from '../ui.js';
 import { DIVISIONS, UNRANKED, divisionOf, divisionIndex, divisionForScore } from './ladder.js';
 import {
   currentWeek, prevWeek, weekStart, weekEnd, weekDays, weeksOfMonth, currentMonth,
-  arcOfMonth, arcKey, arcLabel, arcWeeks, arcSeason, arcGroupWeeks, arcStage, nextArc, daysUntil,
+  arcOfMonth, arcKey, arcLabel, arcWeeks, arcSeason, arcGroupWeeks, arcStage, nextArc, daysUntil, daysLeftInWeek,
 } from './calendar.js';
 import {
-  VOID_CELLS, hasRecord, scoreWeek, weekScore, storedWeeks, playedWeeks, monthScore, firstRecordDay,
+  VOID_CELLS, hasRecord, scoreWeek, weekScore, weekShape, storedWeeks, playedWeeks, monthScore, firstRecordDay,
 } from './scoring.js';
-import { blankArc, KNOCKOUT, arcFixture, groupTable } from './fixtures.js';
+import { blankArc, KNOCKOUT, arcFixture, groupTable, fixtureFor } from './fixtures.js';
 
 export * from './ladder.js';
 export * from './calendar.js';
@@ -110,7 +111,8 @@ export function rankMoment() {
     return { move: 'placed', week: st.placedWeek, to, from: to, score: w ? w.score : 0 };
   }
   const months = Object.keys(st.months).sort();
-  const pending = months.filter((m) => m > st.seenMonth && st.months[m].move !== 'held');
+  // A held month is not an event, unless it took a notice off.
+  const pending = months.filter((m) => m > st.seenMonth && (st.months[m].move !== 'held' || st.months[m].cleared));
   const month = pending[pending.length - 1];
   return month ? { month, ...st.months[month] } : null;
 }
@@ -180,7 +182,70 @@ function alarmPlan() {
     });
   }
 
-  return out;
+  const ft = fullTime();
+  if (!ft) return out;
+  // One Arena notification a day: anything else due that day rides in its body.
+  const day = store.dayKey(new Date(ft.at));
+  const kept = [];
+  for (const a of out) {
+    if (store.dayKey(new Date(a.at)) === day) ft.body += ` ${a.title}.`;
+    else kept.push(a);
+  }
+  kept.push(ft);
+  return kept;
+}
+
+/* ---------------- full time ---------------- */
+// The day closes at the day-start hour and the result lands as one push. The
+// text is fixed when it is armed, so it is re-armed on every change.
+
+const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six'];
+
+/** Today's cells against the opponent's on the same weekday. */
+function dayMatch() {
+  const key = currentWeek();
+  const opp = fixtureFor(key);
+  const today = habits.today();
+  const i = weekDays(key).indexOf(today);
+  const mine = weekShape(key)[i]?.done || 0;
+  if (opp.week) return { mine, theirs: weekShape(opp.week)[i]?.done || 0, opp };
+  // The Standard has no days. Its bar over what was owed today stands in.
+  const owed = habits.dueToday().total;
+  return { mine, theirs: Math.round(opp.score * owed), opp };
+}
+
+function fullTime() {
+  const s = store.get().settings;
+  if (!s.fullTime) return null;
+  const live = scoreWeek(currentWeek());
+  if (!live.due) return null;
+
+  // Fires when tomorrow begins. Inside quiet hours it waits for them to end.
+  const shift = habits.settings().dayStartHour;
+  const tomorrow = store.addDays(habits.today(), 1);
+  let [hour, minute] = [shift, 0];
+  if (inQuietHours(`${String(hour).padStart(2, '0')}:00`)) [hour, minute] = s.quietTo.split(':').map(Number);
+  const [y, m, d] = tomorrow.split('-').map(Number);
+  const at = new Date(y, m - 1, d, hour, minute, 0, 0).getTime();
+
+  const last = habits.today() === weekEnd(currentWeek());
+  let body;
+  if (last) {
+    const opp = fixtureFor(currentWeek());
+    const won = live.score >= opp.score;
+    body = `Full time. Week ${won ? 'won' : 'lost'}, ${Math.round(live.score * 100)}% to ${Math.round(opp.score * 100)}%.`;
+  } else {
+    const { mine, theirs, opp } = dayMatch();
+    const who = opp.id === 'nemesis' || opp.knockout === 'final' ? 'The Nemesis' : opp.name;
+    const left = Math.max(0, daysLeftInWeek() - 1);
+    const days = `${WORDS[left] ? WORDS[left][0].toUpperCase() + WORDS[left].slice(1) : left} day${left === 1 ? '' : 's'} left.`;
+    body = mine > theirs
+      ? `Full time. You took the day ${mine}-${theirs}.`
+      : mine < theirs
+        ? `Full time. ${who} took it ${theirs}-${mine}. ${days}`
+        : `Full time. Level at ${mine}-${theirs}. ${days}`;
+  }
+  return { slot: 3, at, title: 'Habit Nemesis', body };
 }
 
 export async function syncAlarms() {
@@ -331,6 +396,7 @@ export function standing() {
     next,
     below,
     placed: a.placed,
+    notice: a.notice,
     month,
     safe: month.score >= div.bar,
   };

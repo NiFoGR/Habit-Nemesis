@@ -189,8 +189,19 @@ account.init().then(() => {
 listenForReturn();
 
 habitsProgram.syncAlarms();
-// Arc alarms: opens, group ends, round ends.
+// Arc alarms: opens, group ends, round ends, full time.
 arenaProgram.syncAlarms();
+
+// Every alarm's text is fixed when it is armed, so a change re-arms them all.
+let alarmTimer = null;
+store.subscribe(() => {
+  if (!native.hasAlarms()) return;
+  clearTimeout(alarmTimer);
+  alarmTimer = setTimeout(() => {
+    habitsProgram.syncAlarms();
+    arenaProgram.syncAlarms();
+  }, 2000);
+});
 
 // Consent first, then the SDK. Absent from a build with no AdMob account.
 ads.init().then(() => ads.onRoute(location.hash.split('?')[0]));
