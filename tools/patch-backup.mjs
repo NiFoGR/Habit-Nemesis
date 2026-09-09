@@ -39,7 +39,9 @@ const FULL_BACKUP = `<?xml version="1.0" encoding="utf-8"?>
     <!-- No caches: they are rebuilt on first launch and would only make the
          backup bigger and slower to restore. -->
     <exclude domain="file" path="cache" />
-    <exclude domain="external" path="." />
+    <!-- Nothing excludes external storage. Naming any include makes this file
+         include-only, so it is already out, and an exclude whose domain has no
+         include is what lintVitalRelease fails the build over. -->
 </full-backup-content>
 `;
 
