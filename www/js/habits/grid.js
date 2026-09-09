@@ -34,8 +34,9 @@ export function cellHtml(habit, key, sum, s) {
   const d = sum.index.get(key);
   const raw = d?.raw;
   const colour = rowColour(habit);
-  const future = key > habits.today();
-  if (future) return `<button class="hg-cell future" data-day="${key}" disabled aria-hidden="true"></button>`;
+  if (key > habits.today()) return `<button class="hg-cell future" data-day="${key}" disabled aria-hidden="true"></button>`;
+  // Before the habit existed. Not a day it missed, so not a cross.
+  if (key < sum.from) return `<button class="hg-cell void" data-day="${key}" disabled aria-hidden="true"></button>`;
 
   const label = `${habit.name}, ${key}`;
   if (raw === habits.SKIP) {

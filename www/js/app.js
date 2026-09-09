@@ -26,6 +26,9 @@ import { initTabs, syncTabs } from './tabs.js';
 import * as native from './native.js';
 import * as ads from './ads/program.js';
 
+// js/webview.js has already said why. Drawing over it would hide the reason.
+if (window.__hnUnsupported) throw new Error('Habit Nemesis needs a newer WebView');
+
 const app = document.getElementById('app');
 
 /* ---------------- router ---------------- */

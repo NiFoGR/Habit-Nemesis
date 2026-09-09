@@ -35,6 +35,8 @@
        every navigation cannot animate. js/tabs.js fills it once. -->
   <nav id="tabs" class="tabbar" hidden></nav>
   <noscript>Habit Nemesis needs JavaScript enabled.</noscript>
+  <!-- First, and not a module: it has to parse on a WebView too old to run one. -->
+  <script src="./js/webview.js"></script>
   <!-- Not a module: the vendored UMD bundle defines window.supabase, and it has
        to be there before the first module that reads it. -->
   <script src="./js/vendor/supabase.js"></script>
