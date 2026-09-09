@@ -43,9 +43,10 @@ One theme. One accent, one sans, one set of state colours, so colour answers
 on". Two deliberate exceptions: a habit's own colour, which you chose, and the
 nine division crests, which are artwork rather than something the app draws.
 
-The app mark is a placeholder on purpose. It is a dashed square, in
-www/js/icons.js and tools/gen-icons.mjs, and it is deliberately unfinished so
-nobody mistakes it for a decision. See docs/ART.md.
+The app mark is an N cut through the diagonal, red on black. The app on
+screen wears the same two colours: the accent is the mark's red, a missed day
+is grey, and red never means wrong. art/source/mark.png is the artwork and
+MARK in www/js/icons.js is the polygon that stands in for it. See docs/ART.md.
 
 --------------------------------------------------------------------------------
 2. THE GRID

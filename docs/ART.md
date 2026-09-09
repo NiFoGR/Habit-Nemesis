@@ -26,12 +26,16 @@ inside. Three or more details inside a badge turn to mud.
 told apart.
 
 ```
-bg      #0a0c10      surface #141821      line   #262c38
-text    #e6eaf0      muted   #97a1b0
-accent  #22d3c5      violet  #a78bfa      good   #4ade80
-warn    #fbbf24      danger  #f87171      calm   #38bdf8
+bg      #0a0c10      surface #171d28      line   #3a4459
+text    #e6eaf0      muted   #97a1b0      ash    #5b6472
+accent  #e62429      ink     #ff5257      deep   #8f1417
+good    #46d17f      warn    #f5a524      calm   #3aa8f0
 bronze  #b06a3a      silver  #c3ccd8      gold   #e8b23a
 ```
+
+The accent is the mark's own red, so a badge must not lean on red to say
+"important": the app already owns it. Red inside a crest reads as the app's
+colour, not the rank's.
 
 **One silhouette per family.** The six metal ranks share an outline. All four
 cups share an outline. All feat medals share an outline. The tier is told by

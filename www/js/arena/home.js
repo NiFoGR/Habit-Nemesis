@@ -37,6 +37,7 @@ export function renderArena(mount) {
   mount.innerHTML = `
     <div class="screen arena" style="--lift:${rungOf()}">
       <header class="ar-head">${standingHtml()}</header>
+      <hr class="cut">
       ${fixtureHtml()}
       ${formHtml(store.get().arena.weeks)}
       ${nemesisLine()}

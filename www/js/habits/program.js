@@ -13,17 +13,19 @@ import { cancelAlarms, scheduleMany, ALARM_HABIT_BASE, ALARM_HABIT_SLOTS } from 
 
 /* -------------------- the palette -------------------- */
 
+// Every one clears 7:1 on the ground, and none sits within thirty degrees of
+// the accent's hue. A habit's colour must never be mistaken for the app's.
 export const COLOURS = [
-  { id: 'teal', hex: '#22d3c5', name: 'Teal' },
+  { id: 'teal', hex: '#2fd4c4', name: 'Teal' },
   { id: 'mint', hex: '#4ade80', name: 'Mint' },
   { id: 'lime', hex: '#a3e635', name: 'Lime' },
   { id: 'amber', hex: '#fbbf24', name: 'Amber' },
   { id: 'orange', hex: '#fb923c', name: 'Orange' },
-  { id: 'clay', hex: '#d08a6a', name: 'Clay' },
+  { id: 'clay', hex: '#d9a08a', name: 'Clay' },
   { id: 'rose', hex: '#f472b6', name: 'Rose' },
-  { id: 'red', hex: '#f87171', name: 'Red' },
+  { id: 'plum', hex: '#e879f9', name: 'Plum' },
   { id: 'violet', hex: '#a78bfa', name: 'Violet' },
-  { id: 'indigo', hex: '#8aa4e8', name: 'Indigo' },
+  { id: 'indigo', hex: '#93a5f0', name: 'Indigo' },
   { id: 'sky', hex: '#38bdf8', name: 'Sky' },
   { id: 'slate', hex: '#94a3b8', name: 'Slate' },
 ];

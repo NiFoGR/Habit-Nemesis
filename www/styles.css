@@ -3,9 +3,7 @@
    The one exception is a habit's own colour, which you chose. */
 :root {
   /* ---- ground ---- */
-  /* Steps you can see. surface against surface-2 used to be 1.08:1, which is
-     why an inset track, a bar's groove and a pressed state all vanished into
-     the card they sat on. The ramp is now 1.16, 1.35, 1.73 against surface. */
+  /* The launcher icon's own black. The ramp above it is 1.16, 1.35, 1.73. */
   --bg: #0a0c10;
   --bg-2: #101419;
   --surface: #171d28;
@@ -17,16 +15,19 @@
   --faint: #6b7686;
 
   /* ---- meaning ---- */
-  --accent: #22d3c5;   /* the app, and anything you can act on */
-  --mark: #e62429;     /* the app mark only. Never a state, never a surface */
-  --violet: #a78bfa;   /* the far end of the brand ramp, for the mark only */
-  --good: #4ade80;     /* done */
-  --warn: #fbbf24;     /* careful */
-  --danger: #f87171;   /* wrong, or gone */
-  --calm: #38bdf8;     /* skipped, rested, deliberately not counted */
-  --brand: linear-gradient(120deg, #22d3c5, #a78bfa);
-  /* Ink on an accent fill. Never used on the ground. */
-  --on-accent: #04121a;
+  /* The mark's red. The app, the Nemesis, and anything you can act on. */
+  --accent: #e62429;
+  /* The same red where it has to be read as words. 6.0:1 on the ground. */
+  --accent-ink: #ff5257;
+  /* A pressed fill, and the groove under a red bar. */
+  --accent-deep: #8f1417;
+  --on-accent: #ffffff;
+  --good: #46d17f;   /* done, ahead of the bar */
+  --warn: #f5a524;   /* at risk */
+  --ash: #5b6472;    /* missed. A miss is absence, not an alarm */
+  --calm: #3aa8f0;   /* skipped, deliberately not counted */
+  --danger: #ff5257; /* destructive. The one place the brand red warns */
+  --brand: linear-gradient(120deg, #e62429, #8f1417);
 
   /* ---- type ----
      Ten sizes, and every size in the app is one of them. A raw rem in a
@@ -61,6 +62,8 @@
      legible, so it is short enough not to be waited on. */
   --t-fast: 0.12s;
   --t-base: 0.2s;
+  /* A bar filling. The one thing worth waiting on. */
+  --t-slow: 0.5s;
   --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
 
   /* Native controls follow this. Without it a checkbox is a white platform
@@ -139,7 +142,7 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 .pill {
   font-size: var(--f-fine); padding: 4px 9px; border-radius: var(--radius-pill);
   background: none;
-  color: var(--accent);
+  color: var(--accent-ink);
   border: 1px solid var(--line);
 }
 .pill.done { color: var(--good); }
@@ -154,7 +157,7 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
   padding: 16px;
   margin-bottom: 14px;
 }
-.card.danger { border-color: rgba(248, 113, 113, 0.32); }
+.card.danger { border-color: color-mix(in srgb, var(--danger) 32%, transparent); }
 .warn-inline { color: var(--warn); font-size: var(--f-small); }
 
 /* ---------- buttons ---------- */
@@ -177,12 +180,13 @@ a.btn { text-decoration: none; }
 .btn:active { transform: scale(0.99); }
 .btn:has(.ico) { display: flex; align-items: center; justify-content: center; gap: 9px; }
 .btn.primary { background: var(--accent); color: var(--on-accent); border: 0; font-weight: 700; }
+.btn.primary:active { background: var(--accent-deep); }
 .btn.big { padding: 17px; font-size: var(--f-head); }
 .btn.ghost { background: none; color: var(--muted); }
 /* Bottom margin too: a card has margin-bottom and no margin-top, so a
    full-width button above one sat flush against it. */
 .btn.wide, .btn.big { margin: 14px 0; }
-.btn.danger { background: rgba(248, 113, 113, 0.14); color: var(--danger); border-color: rgba(248, 113, 113, 0.4); }
+.btn.danger { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, transparent); }
 
 /* ---------- stats ---------- */
 
@@ -203,7 +207,7 @@ a.btn { text-decoration: none; }
 .kv:last-child { border-bottom: 0; }
 .kv span { color: var(--muted); }
 .kv b { text-align: right; font-weight: 600; }
-.kv b em { font-style: normal; color: var(--accent); font-weight: 500; font-size: var(--f-small); }
+.kv b em { font-style: normal; color: var(--accent-ink); font-weight: 500; font-size: var(--f-small); }
 
 .chart { width: 100%; height: 110px; overflow: visible; }
 .chart .ct { fill: var(--muted); font-size: var(--f-micro); }
@@ -269,9 +273,17 @@ input[type="range"] {
 
 .ico { display: block; flex: 0 0 auto; }
 .icon-btn .ico { width: 20px; height: 20px; }
-/* The mark carries its own colour. It is identity, not state, and it is the
-   only red in the app that does not mean something is wrong. */
-.logo-mark { display: block; color: var(--mark); }
+/* The mark is the accent. */
+.logo-mark { display: block; color: var(--accent); }
+
+/* The mark's diagonal, as a rule. One per screen, never two. */
+.cut {
+  height: 2px;
+  border: 0;
+  margin: 18px 0;
+  background: linear-gradient(90deg, var(--accent), transparent 70%);
+  transform: skewX(-12deg);
+}
 
 /* section headings with an icon */
 .h-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
@@ -413,7 +425,7 @@ input[type="range"] {
 }
 .arrange .ico { width: 14px; height: 14px; }
 .arrange:active { color: var(--text); }
-.arrange.on { color: var(--accent); }
+.arrange.on { color: var(--accent-ink); }
 /* Reorder mode drops the day columns, so the way out needs its own line. */
 .hg-arrange { padding: 0 10px 10px; }
 
@@ -423,7 +435,7 @@ input[type="range"] {
   border-radius: 999px; padding: 7px 13px; font-size: var(--f-small); cursor: pointer;
 }
 .chipbtn:active { background: var(--surface-2); }
-.chipbtn.on { color: var(--accent); border-color: var(--accent); }
+.chipbtn.on { color: var(--accent-ink); border-color: var(--accent); }
 .chipbtn .ico { width: 15px; height: 15px; }
 .h-row .chipbtn { margin-left: auto; }
 
@@ -478,7 +490,8 @@ input[type="range"] {
   color: var(--muted); opacity: 0.45; cursor: pointer;
 }
 .hg-cell.on { opacity: 1; }
-.hg-cell.no { opacity: 1; color: var(--danger); }
+/* A miss is absence. Ash, never red. */
+.hg-cell.no { opacity: 1; color: var(--ash); }
 .hg-cell.skip { opacity: 0.8; color: var(--calm); }
 /* Carried: inside the window but not done today. Not a tick and not nothing,
    so a ring rather than a fill. */
@@ -552,7 +565,7 @@ input[type="range"] {
 }
 .icon-btn.small { width: 32px; height: 32px; flex: 0 0 32px; }
 .icon-btn.small .ico { width: 15px; height: 15px; }
-.icon-btn.small.danger { color: var(--danger); border-color: rgba(248, 113, 113, 0.35); }
+.icon-btn.small.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 35%, transparent); }
 
 /* ---------- the sheet ----------
    Bottom-anchored on a phone, where your thumb is; centred from tablet width up. */
@@ -612,14 +625,14 @@ input[type="range"] {
   padding: 11px 0; border-radius: 9px; border: 1px solid var(--line);
   background: var(--surface-2); color: var(--muted); font-size: var(--f-small); cursor: pointer;
 }
-.day-chip.on { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); color: var(--accent); border-color: var(--accent); }
+.day-chip.on { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); color: var(--accent-ink); border-color: var(--accent); }
 
 .pickrow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 14px 0; }
 .pick {
   padding: 13px 0; border-radius: 9px; border: 1px solid var(--line);
   background: var(--surface-2); color: var(--text); font-size: var(--f-body); cursor: pointer;
 }
-.pick.on { border-color: var(--accent); color: var(--accent); }
+.pick.on { border-color: var(--accent); color: var(--accent-ink); }
 
 /* These stand on their own, where every other input sits in a .measure-row. */
 .screen.habits .field input[type="text"],
@@ -722,7 +735,8 @@ input[type="range"] {
 .hc-cell.on { background: var(--hc, var(--accent)); color: var(--bg); font-weight: 600; }
 .hc-cell.carried { background: color-mix(in srgb, var(--hc, var(--accent)) 38%, var(--line)); color: var(--text); }
 .hc-cell.skip { background: var(--line); color: var(--calm); box-shadow: inset 0 0 0 1px var(--calm); }
-.hc-cell.lapse { color: var(--danger); box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.4); }
+/* A recorded miss. A darker block, not a red one. */
+.hc-cell.lapse { background: var(--ash); color: var(--text); }
 /* Inset: an outline sits outside the box and overlapped its neighbour. */
 .hc-cell.now { box-shadow: inset 0 0 0 1.5px var(--text); }
 .hc-cell.on.now { box-shadow: inset 0 0 0 1.5px var(--bg); }
@@ -793,7 +807,8 @@ input[type="range"] {
 .ar-head::before {
   content: ''; position: absolute; left: 46px; top: -34px; transform: translateX(-50%);
   width: 240px; height: 200px; pointer-events: none; z-index: -1;
-  background: radial-gradient(50% 50% at 50% 50%, rgba(34, 211, 197, calc(0.04 + var(--lift, 0) * 0.035)), transparent 70%);
+  background: radial-gradient(50% 50% at 50% 50%, var(--accent), transparent 70%);
+  opacity: calc(0.04 + var(--lift, 0) * 0.035);
 }
 
 .ar-standing { display: flex; align-items: center; gap: 14px; }
@@ -822,7 +837,7 @@ input[type="range"] {
 .ar-pips { display: flex; gap: 4px; }
 .ar-pips i { flex: 1 1 0; height: 5px; border-radius: 3px; background: var(--line); }
 .ar-pips i.on { background: var(--accent); opacity: 0.42; }
-.ar-pips i.here { opacity: 1; box-shadow: 0 0 10px rgba(34, 211, 197, 0.5); }
+.ar-pips i.here { opacity: 1; box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 50%, transparent); }
 .ar-ladder-link span {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: var(--f-fine); color: var(--muted);
@@ -885,7 +900,7 @@ input[type="range"] {
 
 /* Unranked, mid-week: the rung today's marking would place you at. */
 .dv-row.entering { opacity: 1; }
-.dv-row.entering .dv-body i { color: var(--accent); }
+.dv-row.entering .dv-body i { color: var(--accent-ink); }
 .dv-row.entering .dv-node .crest { filter: none; opacity: 1; }
 .dv-row.here .dv-body b { font-size: var(--f-title); }
 .dv-row.here .dv-body i { color: var(--text); }
@@ -924,12 +939,12 @@ input[type="range"] {
 
 /* The one elevated surface here, so it reads as the thing that is happening. */
 .card.ar-fixture {
-  border-color: rgba(34, 211, 197, 0.22);
-  box-shadow: 0 14px 40px -20px rgba(34, 211, 197, 0.5);
+  border-color: color-mix(in srgb, var(--accent) 22%, transparent);
+  box-shadow: 0 14px 40px -20px color-mix(in srgb, var(--accent) 50%, transparent);
   padding: 18px 16px 16px;
 }
-.card.ar-fixture.ahead { border-color: rgba(74, 222, 128, 0.3); box-shadow: 0 14px 40px -20px rgba(74, 222, 128, 0.55); }
-.card.ar-fixture.behind { border-color: rgba(251, 191, 36, 0.3); box-shadow: 0 14px 40px -20px rgba(251, 191, 36, 0.45); }
+.card.ar-fixture.ahead { border-color: color-mix(in srgb, var(--good) 30%, transparent); box-shadow: 0 14px 40px -20px color-mix(in srgb, var(--good) 55%, transparent); }
+.card.ar-fixture.behind { border-color: color-mix(in srgb, var(--warn) 30%, transparent); box-shadow: 0 14px 40px -20px color-mix(in srgb, var(--warn) 45%, transparent); }
 .card.ar-fixture.waiting { border-color: var(--line); box-shadow: none; }
 
 .ar-fx-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
@@ -968,7 +983,7 @@ button.ar-lane:active { opacity: 0.7; }
 }
 .ar-lane.me .ar-lane-bar i { background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 55%, transparent), var(--accent)); }
 .ar-fixture.ahead .ar-lane.me .ar-lane-bar i { background: linear-gradient(90deg, color-mix(in srgb, var(--good) 55%, transparent), var(--good)); }
-.ar-lane.them .ar-lane-bar i { background: color-mix(in srgb, var(--muted) 45%, transparent); }
+.ar-lane.them .ar-lane-bar i { background: var(--ash); }
 
 .ar-lane b {
   grid-column: 1; grid-row: 2; justify-self: end; align-self: center;
@@ -1008,8 +1023,8 @@ button.ar-lane:active { opacity: 0.7; }
   color: var(--muted); cursor: pointer;
 }
 .ar-chip b { display: block; font-size: var(--f-small); font-variant-numeric: tabular-nums; }
-.ar-chip.won { border-color: rgba(74, 222, 128, 0.42); color: var(--good); }
-.ar-chip.lost { border-color: rgba(248, 113, 113, 0.36); color: var(--danger); }
+.ar-chip.won { border-color: color-mix(in srgb, var(--good) 42%, transparent); color: var(--good); }
+.ar-chip.lost { border-color: var(--ash); color: var(--muted); }
 .ar-chip:active { transform: scale(0.95); }
 
 .ar-nemesis {
@@ -1040,8 +1055,8 @@ button.ar-lane:active { opacity: 0.7; }
    the rest are dimmed. */
 .ar-tr { border-radius: 9px; transition: background var(--t-base) var(--ease), box-shadow var(--t-base) var(--ease); }
 .ar-tr.q {
-  background: rgba(74, 222, 128, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(74, 222, 128, 0.22), 0 0 20px -8px rgba(74, 222, 128, 0.55);
+  background: color-mix(in srgb, var(--good) 8%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--good) 22%, transparent), 0 0 20px -8px color-mix(in srgb, var(--good) 55%, transparent);
 }
 .ar-tr.q .ar-pos { color: var(--good); font-weight: 700; }
 .ar-tr.q b { color: var(--good); }
@@ -1064,11 +1079,11 @@ button.ar-lane:active { opacity: 0.7; }
 .ar-round b { display: block; font-size: var(--f-small); }
 .ar-round span { display: block; font-size: var(--f-fine); color: var(--muted); }
 .ar-round i { display: block; font-style: normal; font-size: var(--f-micro); color: var(--faint); margin-top: 3px; }
-.ar-round.won { border-color: rgba(74, 222, 128, 0.4); }
+.ar-round.won { border-color: color-mix(in srgb, var(--good) 40%, transparent); }
 .ar-round.won span { color: var(--good); }
-.ar-round.lost span { color: var(--danger); }
-.ar-round.here { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(34, 211, 197, 0.25); }
-.ar-round.here span { color: var(--accent); }
+.ar-round.lost span { color: var(--muted); }
+.ar-round.here { border-color: var(--accent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent); }
+.ar-round.here span { color: var(--accent-ink); }
 
 /* Three across, two on a narrow phone, with neither number written down. */
 .ft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(98px, 1fr)); gap: 8px; }
@@ -1088,7 +1103,7 @@ button.ar-lane:active { opacity: 0.7; }
 .ft .ft-ico { margin: 0 auto; }
 .rs-feat > span:last-child { flex: 1; min-width: 0; }
 .ft-ico.on, .ft.on .ft-ico { color: var(--on-accent); background: var(--accent); }
-.ft.on { border-color: rgba(34, 211, 197, 0.4); color: var(--text); }
+.ft.on { border-color: color-mix(in srgb, var(--accent) 40%, transparent); color: var(--text); }
 .ft:active { transform: scale(0.97); }
 /* What the feat costs. Every tile carries it, so a tile you have and a tile you
    do not are still comparable. */
@@ -1100,13 +1115,13 @@ button.ar-lane:active { opacity: 0.7; }
 .ft-big { display: grid; place-items: center; width: 60px; height: 60px; margin: 4px auto 12px;
   border-radius: 18px; background: var(--surface-2); color: var(--faint); }
 .ft-big.on { background: var(--accent); color: var(--on-accent); }
-.ft-when { color: var(--accent); font-size: var(--f-small); }
+.ft-when { color: var(--accent-ink); font-size: var(--f-small); }
 .ar-sub { font-size: var(--f-small); color: var(--muted); margin: 16px 0 0; font-weight: 600; }
 .ar-sheet-score { text-align: center; margin: 14px 0 4px; }
 .ar-sheet-score b { display: block; font-size: var(--f-display); letter-spacing: -0.03em; }
 .ar-sheet-score span { font-size: var(--f-fine); color: var(--muted); }
 .ar-sheet-score.won b { color: var(--good); }
-.ar-sheet-score.lost b { color: var(--danger); }
+.ar-sheet-score.lost b { color: var(--muted); }
 
 /* ---------- the result screen ----------
    No header and no back arrow: one moment, one way out. The extra top padding
@@ -1115,8 +1130,8 @@ button.ar-lane:active { opacity: 0.7; }
 .screen.result { padding-top: calc(var(--safe-t) + 30px); }
 .rs-hero { position: relative; text-align: center; padding: 26px 12px 22px; margin-bottom: 14px;
   border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); }
-.rs-hero.won { border-color: rgba(74, 222, 128, 0.42); }
-.rs-hero.lost { border-color: rgba(248, 113, 113, 0.3); }
+.rs-hero.won { border-color: color-mix(in srgb, var(--good) 42%, transparent); }
+.rs-hero.lost { border-color: var(--ash); }
 /* The moment before. One line, one button, and nothing that gives it away. */
 /* Short enough to leave half the viewport empty, so it sits in the middle.
    Taller than the viewport and it scrolls as usual. */
@@ -1133,14 +1148,14 @@ button.ar-lane:active { opacity: 0.7; }
 .rs-hero.pending .btn { margin-top: 22px; }
 .rs-word { font-size: var(--f-display); letter-spacing: -0.03em; margin: 0 0 16px; }
 .rs-hero.won .rs-word { color: var(--good); }
-.rs-hero.lost .rs-word { color: var(--danger); }
+.rs-hero.lost .rs-word { color: var(--muted); }
 .rs-score { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 12px; }
 .rs-score span { display: block; min-width: 0; }
 .rs-score b { display: block; font-size: var(--f-hero); letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
 .rs-score i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); margin-top: 5px; }
-.rs-score .me b { color: var(--accent); }
+.rs-score .me b { color: var(--accent-ink); }
 .rs-hero.won .rs-score .me b { color: var(--good); }
-.rs-hero.lost .rs-score .me b { color: var(--danger); }
+.rs-hero.lost .rs-score .me b { color: var(--muted); }
 .rs-score .them b { color: var(--muted); }
 .rs-score .vs { color: var(--faint); }
 
@@ -1153,8 +1168,8 @@ button.ar-lane:active { opacity: 0.7; }
 .rs-arc i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); }
 .rs-cup { display: grid; place-items: center; width: 48px; height: 48px; flex: 0 0 48px;
   border-radius: 14px; background: var(--surface-2); color: var(--faint); }
-.rs-arc.won { border-color: rgba(251, 191, 36, 0.42); }
-.rs-arc.won .rs-cup { background: var(--warn); color: var(--on-accent); }
+.rs-arc.won { border-color: color-mix(in srgb, var(--warn) 42%, transparent); }
+.rs-arc.won .rs-cup { background: var(--warn); color: var(--bg); }
 .rs-feat { display: flex; align-items: center; gap: 11px; padding: 8px 0; }
 .rs-feat b { display: block; font-size: var(--f-small); }
 .rs-feat i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); }
@@ -1175,7 +1190,7 @@ button.ar-lane:active { opacity: 0.7; }
 .fp-ico { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px;
   border-radius: var(--radius-pill); background: var(--accent); color: var(--on-accent); }
 .fp-text { min-width: 0; }
-.fp-text i { display: block; font-style: normal; font-size: var(--f-micro); color: var(--accent);
+.fp-text i { display: block; font-style: normal; font-size: var(--f-micro); color: var(--accent-ink);
   text-transform: uppercase; letter-spacing: 0.1em; }
 .fp-text b { display: block; font-size: var(--f-small); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -1225,8 +1240,8 @@ button.ar-lane:active { opacity: 0.7; }
 .yr-step { display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px;
   border-radius: var(--radius-pill); border: 1px solid var(--line); background: var(--surface-2); color: var(--muted); }
 .yr-step i { font-style: normal; font-size: var(--f-micro); }
-.yr-step.up, .yr-step.placed { border-color: rgba(74, 222, 128, 0.4); color: var(--good); }
-.yr-step.down { border-color: rgba(248, 113, 113, 0.36); color: var(--danger); }
+.yr-step.up, .yr-step.placed { border-color: color-mix(in srgb, var(--good) 40%, transparent); color: var(--good); }
+.yr-step.down { border-color: color-mix(in srgb, var(--warn) 36%, transparent); color: var(--warn); }
 
 .yr-arcs { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
 /* Name over label: side by side they shared 140px and both ellipsised. */
@@ -1236,8 +1251,8 @@ button.ar-lane:active { opacity: 0.7; }
 .yr-arc > span:first-child { grid-row: span 2; display: grid; place-items: center; }
 .yr-arc b { min-width: 0; font-size: var(--f-fine); color: var(--text); }
 .yr-arc i { font-style: normal; font-size: var(--f-micro); }
-.yr-arc.won { border-color: rgba(251, 191, 36, 0.42); color: var(--warn); }
-.yr-arc.final { border-color: rgba(251, 191, 36, 0.2); }
+.yr-arc.won { border-color: color-mix(in srgb, var(--warn) 42%, transparent); color: var(--warn); }
+.yr-arc.final { border-color: color-mix(in srgb, var(--warn) 20%, transparent); }
 
 /* ==========================================================================
    The bottom bar
@@ -1278,8 +1293,8 @@ button.ar-lane:active { opacity: 0.7; }
   transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
 }
 .tab-label { font-style: normal; font-size: var(--f-micro); letter-spacing: 0.04em; }
-.tab.on { color: var(--accent); }
-.tab.on .tab-ico { background: rgba(34, 211, 197, 0.13); }
+.tab.on { color: var(--accent-ink); }
+.tab.on .tab-ico { background: color-mix(in srgb, var(--accent) 13%, transparent); }
 .tab:active .tab-ico { transform: scale(0.9); }
 
 /* The one you came for. Raised, on the brand ramp, with the only real shadow
@@ -1288,7 +1303,7 @@ button.ar-lane:active { opacity: 0.7; }
 .tab.main .tab-ico {
   width: 58px; height: 58px; border-radius: 20px;
   background: var(--brand); color: var(--on-accent);
-  box-shadow: 0 10px 26px rgba(34, 211, 197, 0.3), 0 2px 0 rgba(255, 255, 255, 0.12) inset;
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--accent) 30%, transparent), 0 2px 0 color-mix(in srgb, var(--text) 12%, transparent) inset;
 }
 .tab.main.on { color: var(--text); }
 .tab.main.on .tab-ico { background: var(--brand); }
@@ -1427,9 +1442,9 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 .arc-wait-text { min-width: 0; }
 .arc-wait-text > b { display: block; font-size: var(--f-small); }
 .arc-wait-text i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); }
-.arc-wait-text i b { color: var(--accent); font-variant-numeric: tabular-nums; }
+.arc-wait-text i b { color: var(--accent-ink); font-variant-numeric: tabular-nums; }
 
-.ar-won { display: flex; align-items: center; gap: 14px; border-color: rgba(251, 191, 36, 0.42); }
+.ar-won { display: flex; align-items: center; gap: 14px; border-color: color-mix(in srgb, var(--warn) 42%, transparent); }
 .ar-won b { display: block; font-size: var(--f-head); }
 .ar-won i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); }
 .ar-won .cup-art { flex: 0 0 54px; margin: 0; }
@@ -1468,7 +1483,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 .mo-title { font-size: var(--f-hero); line-height: 1.05; letter-spacing: -0.04em; margin: 6px 0 10px; }
 .mo-sub { color: var(--muted); font-size: var(--f-small); margin: 0; }
 .mo-head.won .mo-title { color: var(--good); }
-.mo-head.lost .mo-title { color: var(--danger); }
+.mo-head.lost .mo-title { color: var(--muted); }
 .mo-head.cup .mo-title { color: var(--warn); }
 .mo-cup { display: grid; place-items: center; color: var(--warn); margin-bottom: 10px; }
 /* The cup draws itself. Four times a year at most, so it may take a second. */
@@ -1490,17 +1505,17 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 .mo-card b { font-variant-numeric: tabular-nums; font-size: var(--f-small); }
 /* Same rule as the group table: the three going through are lit. */
 .mo-card.q {
-  border-color: rgba(74, 222, 128, 0.32);
-  background: rgba(74, 222, 128, 0.08);
-  box-shadow: 0 0 22px -8px rgba(74, 222, 128, 0.6);
+  border-color: color-mix(in srgb, var(--good) 32%, transparent);
+  background: color-mix(in srgb, var(--good) 8%, transparent);
+  box-shadow: 0 0 22px -8px color-mix(in srgb, var(--good) 60%, transparent);
 }
 .mo-card.q .mo-seed, .mo-card.q b { color: var(--good); }
 .mo-card.nq { opacity: 0.5; }
 .mo-card.you .mo-who { color: var(--text); font-weight: 700; }
 .mo-card.you { border-width: 1.5px; }
 .mo-card.you.q { border-color: var(--good); }
-.mo-card.you.nq { opacity: 0.9; border-color: rgba(248, 113, 113, 0.4); background: rgba(248, 113, 113, 0.07); }
-.mo-card.you.nq .mo-seed, .mo-card.you.nq b { color: var(--danger); }
+.mo-card.you.nq { opacity: 0.9; border-color: var(--ash); }
+.mo-card.you.nq .mo-seed, .mo-card.you.nq b { color: var(--muted); }
 
 /* Reduced motion kills the stagger globally, which would leave the dealt rows
    at opacity 0. */
@@ -1527,8 +1542,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 .intro-title { font-size: var(--f-hero); line-height: 1.05; letter-spacing: -0.035em; margin: 0 0 10px; }
 .intro-line { max-width: 30ch; color: var(--muted); font-size: var(--f-body); margin: 0; }
 
-/* The glow is the mark's own colour, not the accent's. */
-.intro-logo { filter: drop-shadow(0 0 26px rgba(230, 36, 41, 0.3)); }
+.intro-logo { filter: drop-shadow(0 0 26px color-mix(in srgb, var(--accent) 30%, transparent)); }
 
 /* Built from the grid's own classes, so what you are told to tap looks like the
    thing you then tap. */
@@ -1540,7 +1554,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 /* Today's cell on the top row: the one the sentence is about. */
 .hg-cell.intro-tap {
   opacity: 1; color: var(--accent);
-  background: rgba(34, 211, 197, 0.14);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
   animation: intro-tap 1.9s var(--ease) infinite;
 }
 @keyframes intro-tap {
@@ -1620,7 +1634,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
   overflow: hidden;
   background: var(--surface-2);
   border: 2px solid var(--accent);
-  box-shadow: 0 0 0 3px rgb(34 211 197 / 0.12);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 .nem-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .nem-face.empty { color: var(--faint); border-color: var(--line); box-shadow: none; }
@@ -1644,7 +1658,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 /* The one number that says whether you are beating him right now. */
 .nem-gap { font-size: var(--f-small); font-weight: var(--w-medium); margin: 10px 0 0; }
 .nem-gap.ahead { color: var(--good); }
-.nem-gap.behind { color: var(--danger); }
+.nem-gap.behind { color: var(--warn); }
 
 /* ---------- the month settles ----------
    The whole ladder, every rung named with what it costs, and the badge moving
@@ -1724,17 +1738,17 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 /* Where you are: named in full, lit, and carrying the score that got you here. */
 .rk-rung.here .rk-name { color: var(--text); font-size: var(--f-head); font-weight: var(--w-bold); }
 .rk-rung.here .rk-need { color: var(--good); font-weight: var(--w-bold); }
-/* Red is the division you lost, not the one you are on. */
+/* Amber is the division you lost, not the one you are on. */
 .rank-moment.down .rk-rung.here .rk-need { color: var(--text); }
-.rank-moment.up .rk-rung.here .rk-bar i { background: var(--good); box-shadow: 0 0 10px rgb(74 222 128 / 0.45); }
+.rank-moment.up .rk-rung.here .rk-bar i { background: var(--good); box-shadow: 0 0 10px color-mix(in srgb, var(--good) 45%, transparent); }
 .rank-moment.down .rk-rung.here .rk-bar i { background: var(--accent); }
 .rk-rung.here { position: relative; }
 
 /* The rung you lost. Dashed and marked with what it wants, because it is where
    you are going back to rather than something that was taken off you. */
-.rk-rung.lost .rk-name { color: var(--danger); }
-.rk-rung.lost .rk-need { color: var(--danger); }
-.rk-rung.lost .rk-bar { background: transparent; border-top: 1px dashed color-mix(in oklab, var(--danger) 55%, transparent); height: 0; margin-top: 7px; }
+.rk-rung.lost .rk-name { color: var(--warn); }
+.rk-rung.lost .rk-need { color: var(--warn); }
+.rk-rung.lost .rk-bar { background: transparent; border-top: 1px dashed color-mix(in oklab, var(--warn) 55%, transparent); height: 0; margin-top: 7px; }
 .rank-moment[data-beat='2'] .rk-rung.lost .rk-bar i { width: 0; }
 
 .rank-moment #go { margin-top: 18px; }
@@ -1795,7 +1809,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 .acc-providers { display: grid; gap: 8px; }
 
 /* No global anchor rule in this app: every other link is a button or a row. */
-.fineprint a, .muted a { color: var(--accent); text-underline-offset: 2px; }
+.fineprint a, .muted a { color: var(--accent-ink); text-underline-offset: 2px; }
 
 /* ---------- restore points ----------
    Under the backup buttons, because it is the same question: what happens to
@@ -1869,7 +1883,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 .rv-day.future { opacity: 0.35; }
 .rv-day em { font-size: var(--f-micro); color: var(--muted); font-style: normal; height: 10px; }
 .rv-day u { position: relative; font-size: var(--f-micro); color: var(--faint); text-decoration: none; }
-.rv-day.top em { color: var(--accent); font-weight: var(--w-bold); }
+.rv-day.top em { color: var(--accent-ink); font-weight: var(--w-bold); }
 /* A dot under today: the day is not over, which is why its bar is short.
    Called "now": .today is the hub card and a column wearing it took a border. */
 .rv-day.now u::after { content: ''; position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); width: 3px; height: 3px; border-radius: 50%; background: var(--accent); }
@@ -1981,7 +1995,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 .intro-fix-side b { font-size: var(--f-display); font-variant-numeric: tabular-nums; }
 .intro-fix-side i { font-size: var(--f-fine); color: var(--muted); font-style: normal; }
 .intro-fix-vs { color: var(--faint); }
-.intro-race { grid-column: 1 / -1; height: 6px; border-radius: var(--radius-pill); background: var(--danger); overflow: hidden; }
+.intro-race { grid-column: 1 / -1; height: 6px; border-radius: var(--radius-pill); background: var(--ash); overflow: hidden; }
 .intro-race u { display: block; height: 100%; background: var(--accent); text-decoration: none; }
 
 /* Every rung and what it costs. */

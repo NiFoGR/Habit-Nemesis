@@ -6,7 +6,9 @@ import { toast, setFeedback } from './ui.js';
 import { DIVISIONS } from './arena/ladder.js';
 
 // Closed sets. A colour id lands in a style attribute, free text would be a hole.
-const HABIT_COLOURS = ['teal', 'mint', 'lime', 'amber', 'orange', 'clay', 'rose', 'red', 'violet', 'indigo', 'sky', 'slate'];
+const HABIT_COLOURS = ['teal', 'mint', 'lime', 'amber', 'orange', 'clay', 'rose', 'plum', 'violet', 'indigo', 'sky', 'slate'];
+// v1 had a red. The accent is red now, so those rows wear the nearest colour.
+const LEGACY_COLOURS = { red: 'rose' };
 const HABIT_KINDS = ['yesno', 'number'];
 const HABIT_TARGET_TYPES = ['atleast', 'atmost'];
 
@@ -277,7 +279,7 @@ function cleanHabits(sh, base) {
         name: str(h?.name, 60),
         question: str(h?.question, 120),
         notes: str(h?.notes, 500),
-        colour: oneOf(h?.colour, HABIT_COLOURS, 'teal'),
+        colour: oneOf(LEGACY_COLOURS[h?.colour] || h?.colour, HABIT_COLOURS, 'teal'),
         kind: oneOf(h?.kind, HABIT_KINDS, 'yesno'),
         unit: str(h?.unit, 20),
         target: num(h?.target, 0, 1e9) ?? 0,

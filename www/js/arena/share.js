@@ -33,11 +33,11 @@ function palette() {
     text: t('--text', '#e6eaf0'),
     muted: t('--muted', '#97a1b0'),
     faint: t('--faint', '#6b7686'),
-    accent: t('--accent', '#22d3c5'),
-    violet: t('--violet', '#a78bfa'),
-    good: t('--good', '#4ade80'),
-    danger: t('--danger', '#f87171'),
-    surface: t('--surface', '#141821'),
+    accent: t('--accent', '#e62429'),
+    deep: t('--accent-deep', '#8f1417'),
+    good: t('--good', '#46d17f'),
+    ash: t('--ash', '#5b6472'),
+    surface: t('--surface', '#171d28'),
   };
 }
 
@@ -174,10 +174,10 @@ function confetti(ctx, rand, colours) {
 function background(ctx, p, rung, banner, state, key) {
   const rand = seeded(key);
 
-  // A bold diagonal, the state colour into the ground.
+  // A bold diagonal, the state colour into the ground. Black stays black.
   const base = ctx.createLinearGradient(0, 0, W, H);
-  base.addColorStop(0, mix(state, p.bg, 0.5));
-  base.addColorStop(0.5, mix(p.violet, p.bg, 0.82));
+  base.addColorStop(0, mix(state, p.bg, 0.55));
+  base.addColorStop(0.5, mix(p.deep, p.bg, 0.88));
   base.addColorStop(1, p.bg);
   ctx.fillStyle = base;
   ctx.fillRect(0, 0, W, H);
@@ -187,7 +187,7 @@ function background(ctx, p, rung, banner, state, key) {
   } else {
     sunburst(ctx, W / 2, 400, state);
     // Two soft orbs for depth, opposite corners.
-    for (const [x, y, r, c] of [[120, 180, 620, state], [W - 80, H - 220, 700, p.violet]]) {
+    for (const [x, y, r, c] of [[120, 180, 620, state], [W - 80, H - 220, 700, p.deep]]) {
       const orb = ctx.createRadialGradient(x, y, 0, x, y, r);
       orb.addColorStop(0, fade(c, 0.3));
       orb.addColorStop(1, fade(c, 0));
@@ -204,7 +204,7 @@ function background(ctx, p, rung, banner, state, key) {
   ctx.fillStyle = veil;
   ctx.fillRect(0, 0, W, H);
 
-  confetti(ctx, rand, [state, p.violet, p.accent, p.text]);
+  confetti(ctx, rand, [state, p.accent, p.text]);
   grain(ctx);
 
   // A hairline inset, so the card reads as an object rather than a screenshot.
@@ -292,7 +292,8 @@ async function render(key) {
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext('2d');
-  const state = f.result === 'won' ? p.good : f.result === 'lost' ? p.danger : p.accent;
+  // Red is the app, not the loss: a lost week goes to ash.
+  const state = f.result === 'won' ? p.good : f.result === 'lost' ? p.ash : p.accent;
   background(ctx, p, f.rung, banner, state, f.key);
 
   // Header.
@@ -335,9 +336,17 @@ async function render(key) {
   ctx.stroke();
 
   const word = f.best ? 'BEST WEEK YET' : f.result === 'won' ? 'WEEK WON' : f.result === 'lost' ? 'WEEK LOST' : f.live ? 'IN PLAY' : 'ON THE RECORD';
-  pill(ctx, word, W / 2, 1056, { colour: f.best ? p.violet : state });
+  pill(ctx, word, W / 2, 1056, { colour: f.best ? p.accent : state });
+  // The opponent, in ash: present, and never the loudest thing on the card.
   if (f.oppName && f.oppScore != null) {
-    text(ctx, `against ${f.oppName} · ${pct(f.oppScore)}`, W / 2, 1160, { size: 30, weight: 400, colour: p.muted });
+    ctx.font = `400 30px ${FACE}`;
+    const line = `against ${f.oppName} · ${pct(f.oppScore)}`;
+    const w = ctx.measureText(line).width + 56;
+    ctx.beginPath();
+    ctx.roundRect(W / 2 - w / 2, 1126, w, 52, 26);
+    ctx.fillStyle = fade(p.ash, 0.35);
+    ctx.fill();
+    text(ctx, line, W / 2, 1161, { size: 30, weight: 400, colour: p.muted });
   }
 
   // Three rows, best first. Any more and the card is a spreadsheet again.

@@ -42,6 +42,7 @@ export function renderCabinet(mount) {
         </div>
       </header>
 
+      <hr class="cut">
       <div class="cab-shelf">${shelf(cups)}</div>
 
       ${bands(feats.bySection().flatMap((s) => s.items))}

@@ -111,33 +111,51 @@ Without that file the icons fall back to a polygon drawn in
 
 ## 5. The listing
 
-**Text.** Two fields, both required.
+This section is the source. The Play Console is a copy of it, never the other
+way round. HabitNow is the app to out-rank, and its short description is four
+keyword phrases in one line, so the title carries the keyword and the short
+description carries the one line the app is sold on.
 
-- **Short description**, 80 characters. Lead with the Arena, not the grid.
-  Something like: `Your week plays your best week. Win, and climb the ladder.`
-- **Full description**, 4000 characters. First two lines are what shows before
-  "read more", so put the Arena there too.
+**Title.** 30 characters, keyword in the searchable half.
+
+    Habit Nemesis: Habit Tracker
+
+**Short description.** Under 80 characters. Trim from the end to fit, and keep
+the first clause whole.
+
+    Your only opponent is the best week you have ever had. Habit tracker, no subscription.
+
+**Full description.** 4000 characters. The first two lines show before "read
+more", so the Arena goes there. Say `No subscription, ever.` once, near the
+price. Name the checklist type: HabitNow charges for it.
 
 **Graphics.** All required before Play will let you publish.
 
 | Asset | Size | Notes |
 |---|---|---|
-| App icon | 512 x 512 PNG | 32-bit, opaque, square corners |
-| Feature graphic | 1024 x 500 PNG or JPEG | 24-bit, no transparency. Play crops the edges and overlays your icon, so keep everything important in the middle |
+| App icon | 512 x 512 PNG | 32-bit, opaque, square corners. `npm run icons` writes it to `store/` |
+| Feature graphic | 1024 x 500 PNG or JPEG | The mark, the cut, black ground, the one line. Play crops the edges and overlays the icon, so nothing important near them |
 | Phone screenshots | 2 minimum, 8 maximum | JPEG or 24-bit PNG, no alpha. 16:9 or 9:16, each side between 320px and 3840px |
 
-Take the screenshots from the app itself, not a mockup tool. Six is the number
-worth having, and the order decides whether anyone installs:
+Take the screenshots from the app itself, not a mockup tool. Seven, in this
+order. The first two are the only ones most people see.
 
-1. The fixture card. Your week against your best week.
-2. The ladder.
-3. The grid.
-4. The week's result.
-5. The Cabinet.
-6. The Year.
+| | Screen | Caption |
+|---|---|---|
+| 1 | The Arena fixture. You versus your Nemesis, two numbers, the crest | The week is a match. You play your own best week. |
+| 2 | The grid, filled, red on black | Every commitment, one screen, one tap. |
+| 3 | The ladder | Nine divisions. Promotion, relegation, and a cup every quarter. |
+| 4 | The Cabinet | Cups, feats and the years behind you. |
+| 5 | A habit in full | Score, streaks and a calendar you can correct. |
+| 6 | The widgets | The match, on your home screen. |
+| 7 | The price | Free. One payment to remove ads. No subscription, ever. |
 
 Every habit app leads with a grid. Leading with the fixture is the only reason
 anyone picks this one.
+
+**The one line.** `Your only opponent is the best week you have ever had.` It
+goes on the first onboarding page, in the short description, and on the first
+screenshot. Nowhere else. It stops working if it is everywhere.
 
 **Category:** Health & Fitness. **Tags:** habit tracker, self improvement.
 

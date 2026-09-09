@@ -250,20 +250,25 @@ most users to decline the second and price the model on non-personalised rates.
 Free has to be a real app or nobody stays long enough to pay. Paywall depth and
 convenience, never the core loop.
 
-| Free | Pro |
+| Never gated | Behind the one payment |
 |---|---|
-| Unlimited habits, the whole grid | Sync and a second device |
-| The Arena: weeks, fixtures, divisions | The full year and full history |
-| Feats, cups, the Cabinet | Themes, icon colours, widgets |
-| Export and CSV | The share card without a watermark |
-| The PIN | No ads |
+| Unlimited habits, the whole grid | No ads |
+| The Arena: every week, fixture and division | The widgets |
+| Feats, cups, the Cabinet, the whole history | Extra themes |
+| Export and CSV, the account and sync | The share card without a watermark |
+| The PIN | |
 
 The Arena stays free. It is the reason to choose this app over the twenty
-others, and hiding it means nobody ever finds out it is there.
+others, and hiding it means nobody ever finds out it is there. The history
+stays free too: a tracker that ransoms your own record is the thing this app
+exists to not be.
 
-Price it at about £2.99 a month, £19.99 a year, £29.99 once. Annual is the one
-to push; lifetime is the one that converts the people who would otherwise never
-pay.
+**One payment, no subscription.** HabitNow's most praised attribute across
+every source is a one-off $11.99 unlock; Finch's most attacked is its billing.
+Habitica charges $4.99 a month. So: one payment of about £6.99, undercutting
+the incumbent, and `No subscription, ever.` on the listing and in the paywall.
+Against three competitors who all charge monthly that sentence is worth more
+than the feature list above it.
 
 ### What the stores take
 
@@ -438,8 +443,9 @@ the listing rather than on one file. Kept knowingly. Blocker 3.
 
 **The icon is a red N on black**, which is Netflix's mark, and an icon is the
 asset a store looks at hardest. The letterform is not the problem, the colour
-pairing is, and the colour is one token: `--mark` in `www/styles.css` and `INK`
-in `tools/gen-icons.mjs`. Kept knowingly. If review does flag it, that is a
+pairing is, and the colour is one token: `--accent` in `www/styles.css` and
+`INK` in `tools/gen-icons.mjs`. Since v2 the app on screen wears the same red,
+so the icon and the app are one product. Kept knowingly. If review does flag it, that is a
 rejection and a resubmission, not a ban.
 
 **The 12 testers are real people** who have to keep the app installed for a
