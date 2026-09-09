@@ -74,6 +74,12 @@ jobs:
         # is the only thing that carries it off the device without a server.
         run: node tools/patch-backup.mjs
 
+      - name: Write the AdMob app id
+        # Not about ads: the SDK is linked in either way and its own
+        # ContentProvider kills the process at startup without this. Debug
+        # builds never had it, so none of them could open.
+        run: node tools/patch-ads.mjs
+
       - name: Build the debug APK
         run: |
           chmod +x android/gradlew
