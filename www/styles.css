@@ -131,7 +131,6 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 }
 .screen-head > :last-child { justify-self: end; }
 .screen-head h1 { text-align: center; font-size: var(--f-head); }
-.screen-head h1 .ico { display: inline-block; vertical-align: -4px; margin-right: 6px; }
 
 .icon-btn {
   width: 40px; height: 40px;
@@ -504,10 +503,7 @@ input[type="range"] {
 }
 .hg-name > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hg-row { font-size: var(--f-body); }
-.hg-ring-box { position: relative; width: 20px; height: 20px; flex: 0 0 20px; display: block; }
-.hg-ring { width: 20px; height: 20px; display: block; }
-.hg-glyph { position: absolute; inset: 0; display: grid; place-items: center; }
-.hg-glyph .ico { stroke-width: 2.75; }
+.hg-ring { width: 20px; height: 20px; flex: 0 0 20px; display: block; }
 
 .hg-cell {
   display: grid; place-items: center;
@@ -566,23 +562,6 @@ input[type="range"] {
 .hg-cell.num:not(.on):not(.part) { color: var(--muted); opacity: 0.45; }
 /* Logged, but short of the target. Legible, and visibly not a win. */
 .hg-cell.num.part { color: var(--muted); }
-
-/* A checklist cell: a ring that fills as the list does. */
-.hg-cell.list { opacity: 1; }
-.hg-cell.list:not(.on):not(.part) { opacity: 0.45; }
-.hg-list { width: 20px; height: 20px; display: block; }
-
-/* The list itself, in a sheet. */
-.list-items { display: grid; gap: 8px; margin: 14px 0 4px; }
-.list-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px 14px; border-radius: var(--radius);
-  background: var(--surface-2); border: 1px solid var(--line); cursor: pointer;
-  font-size: var(--f-body);
-}
-.list-item input { width: 22px; height: 22px; accent-color: var(--sc); flex: 0 0 auto; margin: 0; }
-.list-item.on { border-color: color-mix(in oklab, var(--sc) 55%, var(--line)); }
-.list-item.on span { color: var(--muted); text-decoration: line-through; }
 
 .hg-group { display: flex; align-items: center; gap: 8px; margin: 14px 0 2px; }
 .hg-group-btn {
@@ -656,9 +635,6 @@ button.type-card { width: 100%; text-align: left; font: inherit; cursor: pointer
 .swatch.on { border-color: var(--text); }
 .swatch.big { width: 46px; height: 46px; flex: 0 0 46px; border-radius: 10px; border-color: var(--line); }
 .swatch-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-top: 14px; justify-items: center; }
-/* A glyph swatch: the habit's colour on a neutral ground. */
-.swatch.glyph { background: var(--surface-2); display: grid; place-items: center; }
-.swatch.glyph.none { border-style: dashed; }
 
 .freq-row {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;

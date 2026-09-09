@@ -9,7 +9,6 @@ export const rowColour = (habit) => (habit.colour ? habits.hexOf(habit.colour) :
 
 /** The line under the name: what a measurable habit counts. */
 function detailOf(habit) {
-  if (habit.kind === 'checklist') return `${habit.items.length} item${habit.items.length === 1 ? '' : 's'}`;
   if (!habits.measurable(habit)) return '';
   const unit = habit.unit || '';
   if (!habit.target) return unit;
@@ -17,32 +16,17 @@ function detailOf(habit) {
   return unit ? `${aim} ${unit}` : aim;
 }
 
-/** A checklist cell: how much of the list is ticked, a tick once all of it is. */
-function listRing(frac, colour) {
-  const r = 7;
-  const c = 2 * Math.PI * r;
-  return `<svg class="hg-list" viewBox="0 0 20 20" aria-hidden="true">
-    <circle cx="10" cy="10" r="${r}" fill="none" stroke="var(--line)" stroke-width="2.5"/>
-    <circle cx="10" cy="10" r="${r}" fill="none" stroke="${colour}" stroke-width="2.5" stroke-linecap="round"
-      stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - frac)).toFixed(1)}" transform="rotate(-90 10 10)"/>
-  </svg>`;
-}
-
 /** The small ring: the score in the habit's own colour. ringSvg is the 168px
  *  one and does not survive being shrunk to 26px. */
-/** The score ring, with the habit's glyph inside when it has one. */
-function miniRing(frac, colour, glyph = '') {
+function miniRing(frac, colour) {
   const r = 9;
   const c = 2 * Math.PI * r;
   const off = c * (1 - Math.max(0, Math.min(frac, 1)));
-  return `<span class="hg-ring-box">
-    <svg class="hg-ring" viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="${r}" fill="none" stroke="var(--line)" stroke-width="3"/>
-      <circle class="hg-ring-fill" cx="12" cy="12" r="${r}" fill="none" stroke="${colour}" stroke-width="3" stroke-linecap="round"
-        stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 12 12)"/>
-    </svg>
-    ${glyph ? `<span class="hg-glyph" style="color:${colour}">${icon(glyph, 11)}</span>` : ''}
-  </span>`;
+  return `<svg class="hg-ring" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="${r}" fill="none" stroke="var(--line)" stroke-width="3"/>
+    <circle class="hg-ring-fill" cx="12" cy="12" r="${r}" fill="none" stroke="${colour}" stroke-width="3" stroke-linecap="round"
+      stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 12 12)"/>
+  </svg>`;
 }
 
 /** One cell. Four states for a yes/no habit, the measurement for a number. */
@@ -57,14 +41,6 @@ export function cellHtml(habit, key, sum, s) {
   const label = `${habit.name}, ${key}`;
   if (raw === habits.SKIP) {
     return `<button class="hg-cell skip" data-day="${key}" aria-label="${escapeHtml(label)}: skipped">${icon('skip', 15)}</button>`;
-  }
-  if (habit.kind === 'checklist') {
-    const n = typeof raw === 'number' ? raw : 0;
-    const met = !!d?.hit;
-    const total = Math.max(1, habit.items.length);
-    return `<button class="hg-cell list ${met ? 'on' : n ? 'part' : ''}" data-day="${key}"
-      style="${met ? `color:${colour}` : ''}" aria-label="${escapeHtml(label)}: ${n} of ${total}">
-      ${met ? icon('check', 18) : listRing(n / total, colour)}</button>`;
   }
   if (habits.measurable(habit)) {
     const has = typeof raw === 'number';
@@ -112,7 +88,7 @@ export function rowHtml(habit, days, s, { reorder = false, groupOptions = () => 
   return `<div class="hg-row" data-id="${escapeHtml(habit.id)}">
     ${reorder ? `<button class="hg-drag" aria-label="Reorder ${escapeHtml(habit.name)}">${icon('reorder', 16)}</button>` : ''}
     <a class="hg-name" href="${href}">
-      ${miniRing(sum.score, colour, habit.icon)}
+      ${miniRing(sum.score, colour)}
       <span class="hg-label">
         <b style="color:${colour}">${escapeHtml(habit.name)}</b>
         ${detailOf(habit) ? `<i>${escapeHtml(detailOf(habit))}</i>` : ''}

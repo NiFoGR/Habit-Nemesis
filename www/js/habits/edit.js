@@ -4,7 +4,7 @@
 
 import * as habits from './program.js';
 import { escapeHtml, toast, openSheet } from '../ui.js';
-import { icon, HABIT_ICONS } from '../icons.js';
+import { icon } from '../icons.js';
 import { navigate, replaceWith } from '../back.js';
 import { askAlarms, hasAlarms } from '../native.js';
 
@@ -28,10 +28,6 @@ export function typePickerHtml() {
       <a class="type-card" href="#/habits/edit?kind=timed">
         <b>Timed</b>
         <span>Minutes, run from the cell. Twenty of reading, ten of stretching.</span>
-      </a>
-      <a class="type-card" href="#/habits/edit?kind=checklist">
-        <b>Checklist</b>
-        <span>Up to eight things. The day is done when all of them are.</span>
       </a>
     </div>`;
 }
@@ -110,7 +106,7 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
 
   // Works on a copy. Nothing is written until Save.
   const h = existing
-    ? { ...existing, freq: { ...existing.freq }, remindDays: [...existing.remindDays], items: [...(existing.items || [])] }
+    ? { ...existing, freq: { ...existing.freq }, remindDays: [...existing.remindDays] }
     : habits.draft(kind);
 
   const draw = () => {
@@ -127,7 +123,6 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
             <label for="name"><b>Name</b></label>
             <div class="measure-row">
               <input type="text" id="name" maxlength="60" placeholder="e.g. Exercise" value="${escapeHtml(h.name)}">
-              <button class="swatch big glyph ${h.icon ? '' : 'none'}" id="iconBtn" style="color:${habits.hexOf(h.colour)}" aria-label="Icon">${h.icon ? icon(h.icon, 22) : ''}</button>
               <button class="swatch big" id="colour" style="background:${habits.hexOf(h.colour)}" aria-label="Colour"></button>
             </div>
           </div>
@@ -144,14 +139,6 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
                 <span><b>Minutes</b><i>A day counts when the timer reaches this.</i></span>
                 <input type="number" id="target" inputmode="numeric" step="1" min="1" max="1440" value="${h.target}">
               </label>
-            </section>`
-          : ''}
-
-        ${h.kind === 'checklist'
-          ? `<section class="card">
-              <div class="h-row">${icon('habits', 16)}<h2>The list</h2></div>
-              <div class="grp-list" id="items">${itemRows(h.items)}</div>
-              ${h.items.length < 8 ? `<button class="btn ghost wide" id="addItem">${icon('plus', 16)}<span>Add an item</span></button>` : ''}
             </section>`
           : ''}
 
@@ -232,9 +219,6 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
       const t = Math.round(Number(val('#target')));
       h.target = Number.isFinite(t) && t > 0 ? Math.min(t, 1440) : 20;
     }
-    if (h.kind === 'checklist') {
-      h.items = [...mount.querySelectorAll('[data-item]')].map((i) => i.value.slice(0, 40));
-    }
   };
 
   const wire = () => {
@@ -243,10 +227,6 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
       if (!h.name.trim()) {
         toast('Give it a name first');
         mount.querySelector('#name').focus();
-        return;
-      }
-      if (h.kind === 'checklist' && !h.items.some((s) => s.trim())) {
-        toast('A checklist needs at least one item');
         return;
       }
       habits.save(h);
@@ -259,23 +239,6 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
       collect();
       openColourSheet(h, draw);
     });
-    mount.querySelector('#iconBtn').addEventListener('click', () => {
-      collect();
-      openIconSheet(h, draw);
-    });
-    mount.querySelector('#addItem')?.addEventListener('click', () => {
-      collect();
-      if (h.items.length < 8) h.items.push('');
-      draw();
-      mount.querySelectorAll('[data-item]')[h.items.length - 1]?.focus();
-    });
-    mount.querySelectorAll('[data-del-item]').forEach((b) =>
-      b.addEventListener('click', () => {
-        collect();
-        h.items.splice(Number(b.dataset.delItem), 1);
-        draw();
-      })
-    );
     mount.querySelector('#freq').addEventListener('click', () => {
       collect();
       openFreqSheet(h, draw);
@@ -309,16 +272,6 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
   draw();
 }
 
-/** The list's rows in the form: a text box and a way to drop it. */
-function itemRows(items) {
-  return items
-    .map((item, i) => `<div class="grp-row">
-      <input type="text" data-item="${i}" value="${escapeHtml(item)}" maxlength="40" placeholder="Item ${i + 1}" aria-label="Item ${i + 1}">
-      <button class="icon-btn small" data-del-item="${i}" aria-label="Remove">${icon('close', 14)}</button>
-    </div>`)
-    .join('');
-}
-
 function remindDaysLabel(days) {
   if (!days.length || days.length === 7) return 'every day';
   if (days.length === 5 && [1, 2, 3, 4, 5].every((d) => days.includes(d))) return 'weekdays';
@@ -343,23 +296,6 @@ function openColourSheet(h, done) {
   sheet.el.querySelectorAll('[data-colour]').forEach((b) =>
     b.addEventListener('click', () => {
       h.colour = b.dataset.colour;
-      sheet.close();
-      done();
-    })
-  );
-}
-
-function openIconSheet(h, done) {
-  const sheet = openSheet(`
-    <h2>Icon</h2>
-    <div class="swatch-grid">
-      ${HABIT_ICONS.map((id) => `<button class="swatch glyph ${id === h.icon ? 'on' : ''}" data-icon="${id}"
-        style="color:${habits.hexOf(h.colour)}" aria-label="${id}">${icon(id, 20)}</button>`).join('')}
-    </div>
-    <button class="btn ghost wide" data-icon="">No icon</button>`);
-  sheet.el.querySelectorAll('[data-icon]').forEach((b) =>
-    b.addEventListener('click', () => {
-      h.icon = b.dataset.icon;
       sheet.close();
       done();
     })

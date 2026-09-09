@@ -27,23 +27,22 @@ is editable from the calendar on purpose. The cost is one pass over the habit's
 history per render, memoised until the next write, which for a decade of daily
 entries is a few thousand additions.
 
-## Four kinds, two shapes
+## Three kinds, two shapes
 
 | Kind | Stored | Done when |
 |---|---|---|
 | Yes or no | `1` | you marked it |
 | Measurable | the number | at or past the target, or under a ceiling |
 | Timed | minutes | the minutes reach the target |
-| Checklist | items ticked | every item is ticked |
 
-Timed and checklist are measurable habits underneath. A timed habit is a
-number of minutes with a floor, run from today's cell on a full-screen timer
-that writes the minutes on every pause, every finish and every whole minute.
-A checklist is a number of items ticked with a floor of all of them; which
-items were ticked is kept beside the count in `checks[habitId][dayKey]`, so
-the count stays a plain number the score and the Arena read like any other.
-Nothing downstream branches on the two new kinds, which is the point of
-modelling them this way.
+Timed is a measurable habit underneath: a number of minutes with a floor, run
+from today's cell on a full-screen timer that writes the minutes on every
+pause, every finish and every whole minute. Nothing downstream branches on it,
+which is the point of modelling it that way.
+
+v2.0 also had a checklist kind. It stored a count of items ticked, so
+`hydrate()` reads a saved one back as a measurable habit and the record
+survives.
 
 ## Frequency is a fraction
 
@@ -125,13 +124,6 @@ streak at all.
 `dayStartHour` moves when a day begins, up to 06:00, so something ticked at
 01:00 belongs to the night you were still up for. The Arena scores weeks out of
 the same day keys, so the boundary moves for both together.
-
-## Icons
-
-A habit may carry one of the 24 glyphs in `HABIT_ICONS`, drawn inside its ring
-on the grid and beside its name on its page. The sanitiser drops anything not
-in the list. Twenty-four, not a hundred: a glyph has to read at 11px inside a
-20px ring, and past two dozen nobody finds the one they want.
 
 ## Protocols
 

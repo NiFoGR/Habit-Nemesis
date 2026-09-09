@@ -82,7 +82,6 @@ export function wireCells(grid, mount, s, redraw) {
     if (!habit) return;
     const key = cell.dataset.day;
     if (!key || key > habits.today()) return;
-    if (habit.kind === 'checklist') return openChecklistSheet(mount, habit, key, redraw);
     // Today's cell of a timed habit runs it. A past one is typed.
     if (habit.kind === 'timed' && key === habits.today()) return navigate(`#/habits/timer?id=${encodeURIComponent(habit.id)}`);
     if (habits.measurable(habit)) return openValueSheet(mount, habit, key, redraw);
@@ -186,38 +185,6 @@ function patchCell(mount, habit, key, wasDone, wasOn, redraw) {
     next.addEventListener('animationend', () => next.classList.remove('just-on'), { once: true });
   }
   crossing();
-}
-
-/** The list, one tick per item. The count is the day's value. */
-export function openChecklistSheet(mount, habit, key, redraw) {
-  const before = habits.dueToday();
-  const wasDone = before.total > 0 && before.pending.length === 0;
-  const wasOn = !!habits.summary(habit).index.get(key)?.hit;
-  const ticked = new Set(habits.checksOn(habit, key));
-  const sheet = openSheet(`
-    <h2>${escapeHtml(habit.name)}</h2>
-    <p class="muted small" id="listCount">${ticked.size} of ${habit.items.length} · ${escapeHtml(key)}</p>
-    <div class="list-items">${habit.items
-      .map((item, i) => `<label class="list-item ${ticked.has(i) ? 'on' : ''}" style="--sc:${rowColour(habit)}">
-        <input type="checkbox" data-item="${i}" ${ticked.has(i) ? 'checked' : ''}>
-        <span>${escapeHtml(item)}</span>
-      </label>`)
-      .join('')}</div>
-    <button class="btn wide" data-close>Done</button>`, {
-    onClose: () => patchCell(mount, habit, key, wasDone, wasOn, redraw),
-  });
-  sheet.el.querySelectorAll('[data-item]').forEach((box) =>
-    box.addEventListener('change', () => {
-      const i = Number(box.dataset.item);
-      if (box.checked) ticked.add(i);
-      else ticked.delete(i);
-      box.closest('.list-item').classList.toggle('on', box.checked);
-      habits.setChecks(habit.id, key, [...ticked]);
-      announce();
-      sheet.el.querySelector('#listCount').textContent = `${ticked.size} of ${habit.items.length} · ${key}`;
-      haptic(box.checked ? 'hit' : 'tick');
-      chime(box.checked ? (ticked.size === habit.items.length ? 'complete' : 'mark') : 'unmark');
-    }));
 }
 
 /** Keypad for a measurable habit, plus a button for each of the other states. */

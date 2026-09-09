@@ -7,7 +7,6 @@ import * as habits from './program.js';
 import { escapeHtml, barChart, lineChart, openSheet, haptic, fmtDate, WEEKDAYS_LONG } from '../ui.js';
 import { icon } from '../icons.js';
 import { announce } from '../arena/result.js';
-import { openChecklistSheet } from './marking.js';
 
 const SCORE_PERIODS = {
   day: { label: 'Day', buckets: 30 },
@@ -87,7 +86,7 @@ export function renderHabitDetail(mount, id) {
       <div class="screen habits" style="--hc:${colour}">
         <header class="screen-head">
           <button class="icon-btn" data-back="habits" aria-label="Back">${icon('back')}</button>
-          <h1 style="color:${colour}">${habit.icon ? icon(habit.icon, 20) : ''}${escapeHtml(habit.name)}</h1>
+          <h1 style="color:${colour}">${escapeHtml(habit.name)}</h1>
           <a class="icon-btn linkbtn" href="#/habits/edit?id=${encodeURIComponent(habit.id)}" aria-label="Edit">${icon('pencil')}</a>
         </header>
 
@@ -239,7 +238,6 @@ function wireCalendarEdit(mount, habit, refresh) {
     const cell = e.target.closest('.hc-cell');
     if (!cell || cell.disabled) return;
     const key = cell.dataset.day;
-    if (habit.kind === 'checklist') return openChecklistSheet(mount, habit, key, () => refresh());
     if (habits.measurable(habit)) return openPastValue(habit, key, refresh);
     haptic('tick');
     habits.setValue(habit.id, key, habits.nextValue(habit, key));

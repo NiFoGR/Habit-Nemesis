@@ -127,7 +127,7 @@ the first clause whole.
 
 **Full description.** 4000 characters. The first two lines show before "read
 more", so the Arena goes there. Say `No subscription, ever.` once, near the
-price. Name the checklist type: HabitNow charges for it.
+price. Name the timer: HabitNow charges for its equivalent.
 
 **Graphics.** All required before Play will let you publish.
 

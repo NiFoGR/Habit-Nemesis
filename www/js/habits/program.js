@@ -6,9 +6,8 @@
 //   the past is editable here.
 //   A day is a key, and `dayStartHour` moves the boundary. This section only.
 //   Frequency is a fraction, n in d. Daily is 1/1, three a week is 3/7.
-//   Four kinds, two shapes. A timed habit is a number of minutes with a floor,
-//   a checklist a number of items ticked with a floor of all of them. Nothing
-//   downstream branches on the two new kinds.
+//   Three kinds, two shapes. A timed habit is a number of minutes with a
+//   floor, so nothing downstream branches on it.
 
 import * as store from '../store.js';
 import { WEEKDAYS } from '../ui.js';
@@ -108,7 +107,6 @@ function blankHabit() {
     question: '',
     notes: '',
     colour: 'teal',
-    icon: '',
     kind: 'yesno',
     items: [],
     unit: '',
@@ -137,7 +135,7 @@ export const STARTERS = [
   { name: 'No sugar', colour: 'rose', kind: 'yesno', freq: { num: 6, den: 7 }, question: 'Stayed off sugar?' },
 ];
 
-/** Anything answered with a number: measurable, timed, checklist. */
+/** Anything answered with a number, so measurable or timed. */
 export const measurable = (h) => h.kind !== 'yesno';
 
 /** The line under a starter's name: what it will ask of you. */
@@ -154,17 +152,12 @@ export function draft(kind = 'yesno') {
   const h = { ...blankHabit(), kind };
   if (kind === 'number') h.target = 1;
   if (kind === 'timed') Object.assign(h, { unit: 'min', target: 20 });
-  if (kind === 'checklist') Object.assign(h, { unit: 'items', items: ['', ''], target: 2 });
   return h;
 }
 
-/** The two fixed kinds keep their shape whatever the form sent. */
+/** A timed habit keeps its shape whatever the form sent. */
 function normalise(h) {
   if (h.kind === 'timed') Object.assign(h, { unit: 'min', targetType: 'atleast' });
-  if (h.kind === 'checklist') {
-    h.items = (h.items || []).map((s) => String(s).trim()).filter(Boolean).slice(0, 8);
-    Object.assign(h, { unit: 'items', target: h.items.length, targetType: 'atleast' });
-  }
   return h;
 }
 
@@ -193,7 +186,6 @@ export function remove(id) {
   return store.update((st) => {
     st.habits.items = st.habits.items.filter((h) => h.id !== id);
     delete st.habits.entries[id];
-    delete st.habits.checks[id];
   });
 }
 
@@ -206,7 +198,7 @@ export function snapshotOf(id) {
   const st = store.get().habits;
   const habit = st.items.find((h) => h.id === id);
   if (!habit) return null;
-  return { habit: { ...habit }, entries: { ...(st.entries[id] || {}) }, checks: { ...(st.checks[id] || {}) } };
+  return { habit: { ...habit }, entries: { ...(st.entries[id] || {}) } };
 }
 
 export function reinstate(snap) {
@@ -215,7 +207,6 @@ export function reinstate(snap) {
     if (st.habits.items.some((h) => h.id === snap.habit.id)) return;
     st.habits.items.push({ ...snap.habit });
     if (Object.keys(snap.entries).length) st.habits.entries[snap.habit.id] = { ...snap.entries };
-    if (Object.keys(snap.checks).length) st.habits.checks[snap.habit.id] = { ...snap.checks };
   });
 }
 
@@ -356,10 +347,10 @@ export const PROTOCOLS = [
     days: 30,
     blurb: 'Four rows, thirty days, nothing optional.',
     rows: [
-      { name: 'Up before 7', colour: 'amber', icon: 'sun', kind: 'yesno', question: 'Up before seven?' },
-      { name: 'Cold shower', colour: 'sky', icon: 'drop', kind: 'yesno', question: 'Cold shower?' },
-      { name: 'No phone in bed', colour: 'clay', icon: 'phone', kind: 'yesno', question: 'Phone out of the bedroom?' },
-      { name: 'Steps', colour: 'mint', icon: 'steps', kind: 'number', unit: 'steps', target: 10000, question: 'How many steps?' },
+      { name: 'Up before 7', colour: 'amber', kind: 'yesno', question: 'Up before seven?' },
+      { name: 'Cold shower', colour: 'sky', kind: 'yesno', question: 'Cold shower?' },
+      { name: 'No phone in bed', colour: 'clay', kind: 'yesno', question: 'Phone out of the bedroom?' },
+      { name: 'Steps', colour: 'mint', kind: 'number', unit: 'steps', target: 10000, question: 'How many steps?' },
     ],
   },
   {
@@ -368,10 +359,10 @@ export const PROTOCOLS = [
     days: 56,
     blurb: 'Push, pull, legs, once a week each, and the protein to build on. Eight weeks.',
     rows: [
-      { name: 'Push', colour: 'orange', icon: 'dumbbell', kind: 'yesno', freq: { num: 1, den: 7 }, question: 'Push day done?' },
-      { name: 'Pull', colour: 'rose', icon: 'dumbbell', kind: 'yesno', freq: { num: 1, den: 7 }, question: 'Pull day done?' },
-      { name: 'Legs', colour: 'lime', icon: 'dumbbell', kind: 'yesno', freq: { num: 1, den: 7 }, question: 'Leg day done?' },
-      { name: 'Protein', colour: 'amber', icon: 'apple', kind: 'number', unit: 'g', target: 150, question: 'How much protein?' },
+      { name: 'Push', colour: 'orange', kind: 'yesno', freq: { num: 1, den: 7 }, question: 'Push day done?' },
+      { name: 'Pull', colour: 'rose', kind: 'yesno', freq: { num: 1, den: 7 }, question: 'Pull day done?' },
+      { name: 'Legs', colour: 'lime', kind: 'yesno', freq: { num: 1, den: 7 }, question: 'Leg day done?' },
+      { name: 'Protein', colour: 'amber', kind: 'number', unit: 'g', target: 150, question: 'How much protein?' },
     ],
   },
   {
@@ -380,10 +371,10 @@ export const PROTOCOLS = [
     days: 28,
     blurb: 'The same night, four weeks running.',
     rows: [
-      { name: 'No caffeine after 2', colour: 'clay', icon: 'cup', kind: 'yesno', question: 'Last coffee before two?' },
-      { name: 'Screens off by 10', colour: 'violet', icon: 'phone', kind: 'yesno', question: 'Screens off by ten?' },
-      { name: 'In bed by 11', colour: 'indigo', icon: 'bed', kind: 'yesno', question: 'In bed by eleven?' },
-      { name: 'Hours slept', colour: 'sky', icon: 'moon', kind: 'number', unit: 'h', target: 7, question: 'How many hours?' },
+      { name: 'No caffeine after 2', colour: 'clay', kind: 'yesno', question: 'Last coffee before two?' },
+      { name: 'Screens off by 10', colour: 'violet', kind: 'yesno', question: 'Screens off by ten?' },
+      { name: 'In bed by 11', colour: 'indigo', kind: 'yesno', question: 'In bed by eleven?' },
+      { name: 'Hours slept', colour: 'sky', kind: 'number', unit: 'h', target: 7, question: 'How many hours?' },
     ],
   },
 ];
@@ -472,30 +463,6 @@ export function notesIn(from, to) {
     .filter(([k]) => k >= from && k <= to)
     .sort((a, b) => (a[0] < b[0] ? -1 : 1))
     .map(([key, text]) => ({ key, text }));
-}
-
-/* ---------------- checklists ---------------- */
-// Which items were ticked is kept beside the count, so the count stays a
-// plain number the score and the Arena can read.
-
-/** Indices ticked on `key`. */
-export function checksOn(habit, key) {
-  return store.get().habits.checks[habit.id]?.[key] || [];
-}
-
-/** Write the ticks, and the count as the day's value. None ticked erases the day. */
-export function setChecks(habitId, key, indices) {
-  const idx = [...new Set(indices)].filter((i) => Number.isInteger(i) && i >= 0 && i < 8).sort((a, b) => a - b);
-  return store.update((st) => {
-    const map = st.habits.checks[habitId] || (st.habits.checks[habitId] = {});
-    if (idx.length) map[key] = idx;
-    else delete map[key];
-    if (!Object.keys(map).length) delete st.habits.checks[habitId];
-    const days = st.habits.entries[habitId] || (st.habits.entries[habitId] = {});
-    if (idx.length) days[key] = idx.length;
-    else delete days[key];
-    if (!Object.keys(days).length) delete st.habits.entries[habitId];
-  });
 }
 
 /** The tap cycle:
