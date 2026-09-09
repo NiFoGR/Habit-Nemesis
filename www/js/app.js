@@ -15,7 +15,7 @@ import { renderResult, collect, hasResults, leaveResult } from './arena/result.j
 import { renderMoment, hasMoment, leaveMoment } from './arena/moment.js';
 import { renderRank, hasRank, leaveRank } from './arena/rank.js';
 import { renderWeekReview } from './arena/review.js';
-import { renderSettings } from './settings.js';
+import { renderSettings, SETTINGS_PAGES, applyAppearance } from './settings.js';
 import { render as renderAccount } from './account/screen.js';
 import * as account from './account/session.js';
 import { listenForReturn } from './account/oauth.js';
@@ -36,6 +36,7 @@ const app = document.getElementById('app');
 const ROUTES = {
   '#/hub': () => renderHome(app),
   '#/settings': () => renderSettings(app),
+  ...Object.fromEntries(SETTINGS_PAGES.map((p) => [`#/settings/${p}`, () => renderSettings(app, p)])),
   '#/account': () => renderAccount(app),
   // Aliases. A pinned link must not land on a dead route.
   '#/habits': () => renderHome(app),
@@ -59,6 +60,7 @@ const ROUTES = {
 
 const NAV = {
   hub: '#/hub', settings: '#/settings', account: '#/account',
+  ...Object.fromEntries(SETTINGS_PAGES.map((p) => [`settings-${p}`, `#/settings/${p}`])),
   habits: '#/habits', 'habits-archive': '#/habits/archive',
   arena: '#/arena', cabinet: '#/cabinet',
   'cabinet-feats': '#/cabinet/feats', 'cabinet-year': '#/cabinet/year',
@@ -110,6 +112,9 @@ document.addEventListener('click', (e) => {
 
 // Never left on the back stack: these start on arrival.
 const EPHEMERAL = ['#/habits/edit', '#/arena/result', '#/arena/rank', '#/arena/moment', '#/arena/review', '#/intro'];
+
+// Theme and motion, before the first paint of anything.
+applyAppearance();
 
 // One restore point a day, before anything can write over the day's record.
 store.snapshot();

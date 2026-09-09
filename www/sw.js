@@ -1,6 +1,6 @@
 // Offline-first service worker. Bump CACHE to drop everything stored.
 // Code is revalidated against the network; the cache is the offline answer.
-const CACHE = 'habit-nemesis-v7';
+const CACHE = 'habit-nemesis-v8';
 
 const SHELL = [
   './',
@@ -21,6 +21,7 @@ const SHELL = [
   './js/native.js',
   './js/tabs.js',
   './js/intro.js',
+  './js/version.js',
 
   // habits
   './js/habits/program.js',

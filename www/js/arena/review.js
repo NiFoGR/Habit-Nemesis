@@ -10,14 +10,13 @@ import * as store from '../store.js';
 import * as habits from '../habits/program.js';
 import * as arena from './program.js';
 import * as feats from './feats.js';
-import { escapeHtml, chime, celebrate, haptic, WEEKDAYS_LONG } from '../ui.js';
+import { escapeHtml, chime, celebrate, haptic, reducedMotion, WEEKDAYS_LONG } from '../ui.js';
 import { icon } from '../icons.js';
 import { navigate } from '../back.js';
 import { shareWeek } from './share.js';
 
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 const points = (v) => Math.round(v * 100);
-const still = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const signed = (n) => `${n >= 0 ? '+' : ''}${n}`;
 
 /* ---------------- the week, as numbers ---------------- */
@@ -238,7 +237,7 @@ function draw(mount, w) {
 /** The score arrives rather than appearing. The one number worth waiting on. */
 function countUp(el, to) {
   if (!el) return;
-  if (still()) {
+  if (reducedMotion()) {
     el.textContent = pct(to);
     return;
   }

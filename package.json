@@ -1,6 +1,6 @@
 {
   "name": "habit-nemesis",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "license": "UNLICENSED",
   "description": "Habit Nemesis. A habit grid, and a week that plays your own best week.",
@@ -15,7 +15,8 @@
     "check:arena": "node tools/check-arena.mjs",
     "art": "node tools/art.mjs",
     "check:ui": "node tools/check-ui.mjs",
-    "check": "npm run check:arena && npm run check:ui"
+    "check": "npm run check:arena && npm run check:ui && npm run check:version",
+    "check:version": "node tools/check-version.mjs"
   },
   "dependencies": {
     "@capacitor-community/admob": "^8.1.0",

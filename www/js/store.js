@@ -11,6 +11,8 @@ const HABIT_COLOURS = ['teal', 'mint', 'lime', 'amber', 'orange', 'clay', 'rose'
 const LEGACY_COLOURS = { red: 'rose' };
 const HABIT_KINDS = ['yesno', 'number'];
 const HABIT_TARGET_TYPES = ['atleast', 'atmost'];
+const SOUND_LEVELS = ['off', 'subtle', 'full'];
+const THEMES = ['dark', 'black'];
 
 // ladder.js imports nothing, so the sanitiser can read the one list.
 const ARENA_DIVISIONS = DIVISIONS.map((d) => d.id);
@@ -24,7 +26,12 @@ function blank() {
     createdAt: Date.now(),
     settings: {
       haptics: true,
-      sound: true,
+      sound: 'full', // off | subtle | full
+      quiet: true, // quiet hours on
+      quietFrom: '22:00',
+      quietTo: '07:00',
+      theme: 'dark', // dark | black
+      reduceMotion: false,
       appLock: false, // ask for the PIN on open
       lock: null, // { salt, iv, check } once a PIN is set. See lock.js.
       onboarded: false, // the introduction has been seen at least once
@@ -127,7 +134,13 @@ function hydrate(saved) {
     settings: {
       // !== false: a state saved before this key keeps the new default.
       haptics: ss.haptics !== false,
-      sound: ss.sound !== false,
+      // v1 stored a boolean. true was the only sound there was, so it is full.
+      sound: typeof ss.sound === 'string' ? oneOf(ss.sound, SOUND_LEVELS, 'full') : ss.sound === false ? 'off' : 'full',
+      quiet: ss.quiet !== false,
+      quietFrom: timeStr(ss.quietFrom, '22:00'),
+      quietTo: timeStr(ss.quietTo, '07:00'),
+      theme: oneOf(ss.theme, THEMES, 'dark'),
+      reduceMotion: bool(ss.reduceMotion),
       appLock: bool(ss.appLock),
       // Right-shaped base64, or no PIN.
       lock: lk && b64(lk.salt) && b64(lk.iv) && b64(lk.check)
@@ -399,6 +412,26 @@ export function markSynced() {
 }
 
 export const lastSynced = () => state.settings.syncedAt || '';
+
+/* ---------------- sync state ---------------- */
+// This launch's word on the account: idle, pending, synced, offline, error.
+// Ephemeral, so it is never saved and never travels.
+
+let sync = 'idle';
+const syncListeners = new Set();
+
+export const syncState = () => sync;
+
+export function setSyncState(next) {
+  if (sync === next) return;
+  sync = next;
+  syncListeners.forEach((fn) => fn(sync));
+}
+
+export function onSyncState(fn) {
+  syncListeners.add(fn);
+  return () => syncListeners.delete(fn);
+}
 
 export function setSetting(key, value) {
   return update((s) => {

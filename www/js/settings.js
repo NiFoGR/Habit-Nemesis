@@ -1,7 +1,9 @@
-// App-wide settings. A setting lives where the thing it affects lives.
+// App-wide settings. Six rows and a card on the root, one page per row.
+// A setting lives with the thing it affects: the grid's rows write
+// habits.settings, everything else writes store.settings.
 
 import * as store from './store.js';
-import { escapeHtml, toast, openSheet, saveFile, haptic, relDay, WEEKDAYS_LONG } from './ui.js';
+import { escapeHtml, toast, openSheet, saveFile, haptic, relDay, relTime, WEEKDAYS_LONG } from './ui.js';
 import * as habits from './habits/program.js';
 import { icon } from './icons.js';
 import * as lock from './lock.js';
@@ -9,142 +11,219 @@ import * as account from './account/session.js';
 import { configured } from './account/config.js';
 import { isNative, alarmPermission, askAlarms } from './native.js';
 import * as ads from './ads/program.js';
+import { VERSION } from './version.js';
 
-/** One line that says where the record lives, which is the question the row
- *  is actually answering. The row is only drawn when there is a service behind
- *  it: a build with no project offers no account, rather than a dead end. */
-function accountRow() {
-  return account.signedIn() ? account.emailOf() : 'Sign in to keep a copy';
+/* ---------------- the pieces ---------------- */
+
+const row = (label, control, note) => `<div class="set-row">
+  <span class="set-label">${label}${note ? `<i>${note}</i>` : ''}</span>
+  ${control}
+</div>`;
+const select = (id, options, value) =>
+  `<select id="${id}">${options.map(([v, t]) => `<option value="${v}" ${String(v) === String(value) ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
+const toggle = (id, on, extra = '') => `<input type="checkbox" id="${id}" ${on ? 'checked' : ''} ${extra}>`;
+const time = (id, value) => `<input type="time" id="${id}" value="${escapeHtml(value)}">`;
+const rows = (list) => `<div class="set-rows">${list.filter(Boolean).join('')}</div>`;
+const state = (id, text) => `<span class="set-state" id="${id}">${escapeHtml(text)}</span>`;
+
+const q = (mount, id) => mount.querySelector('#' + id);
+
+/** Writes an app setting on change. `get` reads the control. */
+function bind(mount, id, key, get = (e) => e.value) {
+  q(mount, id)?.addEventListener('change', (e) => {
+    store.setSetting(key, get(e.target));
+    applyAppearance();
+  });
 }
 
-export function renderSettings(mount) {
+/** Writes a grid setting on change. */
+function bindGrid(mount, id, get = (e) => e.value) {
+  q(mount, id)?.addEventListener('change', (e) => {
+    const value = get(e.target);
+    store.update((st) => {
+      st.habits.settings[id] = value;
+    });
+  });
+}
+
+/** Theme and motion are classes on <html>, applied at boot and on change. */
+export function applyAppearance() {
   const s = store.get().settings;
-  const hs = habits.settings();
+  const root = document.documentElement;
+  root.classList.toggle('black', s.theme === 'black');
+  root.classList.toggle('reduce-motion', !!s.reduceMotion);
+  const bg = getComputedStyle(root).getPropertyValue('--bg').trim();
+  if (bg) document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bg);
+}
 
-  // Label left, value right. No explanation under it.
-  const row = (label, control, note) => `<div class="set-row">
-    <span class="set-label">${label}${note ? `<i>${note}</i>` : ''}</span>
-    ${control}
-  </div>`;
-  const select = (id, options, value) =>
-    `<select id="${id}">${options.map(([v, t]) => `<option value="${v}" ${String(v) === String(value) ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
-  const toggle = (id, on, extra = '') => `<input type="checkbox" id="${id}" ${on ? 'checked' : ''} ${extra}>`;
-  const group = (name, rows) => `<h3 class="set-group">${name}</h3><div class="set-rows">${rows}</div>`;
+/* ---------------- the pages ---------------- */
 
+const PAGES = [
+  {
+    id: 'grid',
+    title: 'Grid',
+    render(el) {
+      const hs = habits.settings();
+      el.innerHTML = `
+        ${rows([
+          row('Week starts', select('firstDay', WEEKDAYS_LONG.map((d, i) => [i, d]), hs.firstDay)),
+          row('A new day begins at', select('dayStartHour', [0, 1, 2, 3, 4, 5, 6].map((h) => [h, h === 0 ? 'Midnight' : `${String(h).padStart(2, '0')}:00`]), hs.dayStartHour),
+            'Set it past midnight and a late night still counts as the day before.'),
+          row('Days on screen', select('columns', [3, 4, 5, 6, 7].map((n) => [n, n]), hs.columns)),
+          row('Oldest first', toggle('reverseDays', hs.reverseDays)),
+        ])}
+        <details class="set-more">
+          <summary>Advanced</summary>
+          ${rows([
+            row('Toggle with a short press', toggle('shortPress', hs.shortPress)),
+            row('Skip days', toggle('skipDays', hs.skipDays), 'A skip holds the score and the streak where they are.'),
+            row('Question marks for missing data', toggle('unknownMarks', hs.unknownMarks), 'Tells a day you never answered apart from a day you answered no.'),
+          ])}
+        </details>`;
+      ['firstDay', 'dayStartHour', 'columns'].forEach((id) => bindGrid(el, id, (e) => Number(e.value)));
+      ['reverseDays', 'shortPress', 'skipDays', 'unknownMarks'].forEach((id) => bindGrid(el, id, (e) => e.checked));
+    },
+  },
+  {
+    id: 'alerts',
+    title: 'Alerts',
+    render(el) {
+      const s = store.get().settings;
+      el.innerHTML = `
+        ${rows([
+          isNative()
+            ? row('Notifications', state('notifState', 'checking'), 'Every habit reminder and every Arena alarm needs this.')
+            : row('Notifications', state('notifState', 'Android app only'), 'A browser cannot ring an alarm. The grid is the reminder here.'),
+          isNative() ? '<div class="set-actions" id="notifAsk" hidden><button class="btn" id="askNotif">Allow notifications</button></div>' : '',
+          row('Sound', select('sound', [['off', 'Off'], ['subtle', 'Subtle'], ['full', 'Full']], s.sound), 'Subtle keeps the grid and mutes the ceremonies.'),
+          row('Vibration', toggle('haptics', s.haptics)),
+        ])}
+        <h3 class="set-group">Quiet hours</h3>
+        ${rows([
+          row('Quiet hours', toggle('quiet', s.quiet), 'Nothing louder than Subtle, and no Arena alarm, between these.'),
+          row('From', time('quietFrom', s.quietFrom)),
+          row('To', time('quietTo', s.quietTo)),
+        ])}`;
+      bind(el, 'sound');
+      bind(el, 'haptics', 'haptics', (e) => e.checked);
+      bind(el, 'quiet', 'quiet', (e) => e.checked);
+      bind(el, 'quietFrom', 'quietFrom');
+      bind(el, 'quietTo', 'quietTo');
+      showNotifications(el);
+    },
+  },
+  {
+    id: 'appearance',
+    title: 'Appearance',
+    render(el) {
+      const s = store.get().settings;
+      el.innerHTML = rows([
+        row('Theme', select('theme', [['dark', 'Dark'], ['black', 'Pure black']], s.theme)),
+        row('Reduce motion', toggle('reduceMotion', s.reduceMotion), 'No sparks, no sweeps, no dealt cards.'),
+      ]);
+      bind(el, 'theme');
+      bind(el, 'reduceMotion', 'reduceMotion', (e) => e.checked);
+    },
+  },
+  {
+    id: 'privacy',
+    title: 'Privacy and lock',
+    render(el) {
+      const s = store.get().settings;
+      el.innerHTML = rows([
+        row('Lock the app', toggle('appLock', s.appLock, lock.isAvailable() ? '' : 'disabled'),
+          lock.isSet() ? 'Asks for your PIN when you open the app.' : 'Sets a PIN. Forgetting it means erasing the app.'),
+        lock.isSet() ? '<div class="set-actions"><button class="btn" id="changePin">Change PIN</button></div>' : '',
+        // Hidden outside the EEA and the UK, where there is no answer to change.
+        '<div class="set-actions" id="consentRow" hidden><button class="btn" id="adConsent">Ad privacy choices</button></div>',
+      ]);
+      wireLock(el);
+      showAdConsent(el);
+    },
+  },
+  {
+    id: 'data',
+    title: 'Your data',
+    render(el) {
+      el.innerHTML = `
+        <div class="set-actions">
+          <a class="btn linkbtn" href="#/habits/archive">Archived habits</a>
+          <button class="btn" id="csv">Habits as CSV</button>
+          <button class="btn" id="exportBtn">Export backup</button>
+          <button class="btn" id="importBtn">Import backup</button>
+        </div>
+        <input type="file" id="importFile" accept="application/json" hidden>
+        ${restorePoints()}
+        <button class="btn danger wide" id="reset">Erase all data</button>
+        <p class="fineprint">Every habit, every day you have marked, and everything the Arena has recorded. No undo.</p>`;
+      q(el, 'csv').addEventListener('click', exportCsv);
+      wireBackup(el);
+      q(el, 'reset').addEventListener('click', () => askErase(el));
+    },
+  },
+  {
+    id: 'about',
+    title: 'About',
+    render(el) {
+      el.innerHTML = `
+        <div class="set-links">
+          <a class="set-link" href="./legal/privacy.html"><span>Privacy policy</span>${icon('back', 16)}</a>
+          <a class="set-link" href="./legal/terms.html"><span>Terms of service</span>${icon('back', 16)}</a>
+          <a class="set-link" href="./legal/wellbeing.html"><span>Health and wellbeing</span>${icon('back', 16)}</a>
+          <a class="set-link" href="./legal/licences.html"><span>Open source licences</span>${icon('back', 16)}</a>
+        </div>
+        ${rows([row('Version', state('version', VERSION))])}
+        <div class="set-tail">
+          <a class="tail-btn" href="#/intro">Show the introduction again</a>
+        </div>`;
+    },
+  },
+];
+
+export const SETTINGS_PAGES = PAGES.map((p) => p.id);
+
+/* ---------------- the root ---------------- */
+
+/** State, not a label: whether the record is anywhere but this phone. */
+function accountCard() {
+  if (!configured()) return '';
+  if (!account.signedIn()) {
+    return `<div class="card acc-card">
+      <b>Not backed up</b>
+      <span class="muted">This record lives on this phone only.</span>
+      <a class="btn primary" href="#/account">Sign in</a>
+    </div>`;
+  }
+  return `<a class="card acc-card" href="#/account">
+    <b>Backed up</b>
+    <span class="muted">${escapeHtml(account.emailOf())}</span>
+    <i>${escapeHtml(syncLine())}</i>
+  </a>`;
+}
+
+function syncLine() {
+  const at = store.lastSynced();
+  return {
+    pending: 'Syncing',
+    offline: 'Offline. Syncs when you are back.',
+    error: 'Could not sync',
+  }[store.syncState()] || (at ? `Synced ${relTime(at)}` : 'Not synced yet');
+}
+
+/** The root, or one page. Sub-pages go back to the root, the root to the grid. */
+export function renderSettings(mount, page) {
+  const p = PAGES.find((x) => x.id === page);
   mount.innerHTML = `
     <div class="screen settings">
       <header class="screen-head">
-        <button class="icon-btn" data-back="hub" aria-label="Back">${icon('back')}</button>
-        <h1>Settings</h1>
+        <button class="icon-btn" data-back="${p ? 'settings' : 'hub'}" aria-label="Back">${icon('back')}</button>
+        <h1>${escapeHtml(p ? p.title : 'Settings')}</h1>
         <span class="icon-btn ghost"></span>
       </header>
-
-      <!-- The one loud thing on the page, and the only claim the app makes
-           about itself that is worth making twice. -->
-      <section class="set-hero">
-        <b id="usage">checking</b>
-        <span>on this phone. Your record never leaves it.</span>
-      </section>
-
-      ${group('The grid', [
-        row('Week starts', select('firstDay', WEEKDAYS_LONG.map((d, i) => [i, d]), hs.firstDay)),
-        row('A new day begins at', select('dayStart', [0, 1, 2, 3, 4, 5, 6].map((h) => [h, h === 0 ? 'Midnight' : `${String(h).padStart(2, '0')}:00`]), hs.dayStartHour),
-          'Set it past midnight and a late night still counts as the day before.'),
-        row('Days on screen', select('columns', [3, 4, 5, 6, 7].map((n) => [n, n]), hs.columns)),
-        row('Oldest first', toggle('reverseDays', hs.reverseDays)),
-      ].join(''))}
-
-      ${group('Marking', [
-        row('Toggle with a short press', toggle('shortPress', hs.shortPress)),
-        row('Skip days', toggle('skipDays', hs.skipDays), 'A skip holds the score and the streak where they are.'),
-        row('Question marks for missing data', toggle('unknownMarks', hs.unknownMarks), 'Tells a day you never answered apart from a day you answered no.'),
-      ].join(''))}
-
-      ${group('Feedback', [
-        row('Vibration', toggle('haptics', s.haptics)),
-        row('Sound', toggle('sound', s.sound)),
-      ].join(''))}
-
-      ${isNative() ? group('Reminders', [
-        row('Notifications', '<span class="set-state" id="notifState">checking</span>',
-          'Every habit reminder and every Arena alarm needs this.'),
-        '<div class="set-actions" id="notifAsk" hidden><button class="btn" id="askNotif">Allow notifications</button></div>',
-      ].join('')) : ''}
-
-      ${configured() ? `<h3 class="set-group">Account</h3>
-      <div class="set-nav"><a href="#/account">${icon('user', 16)}<span>${escapeHtml(accountRow())}</span></a></div>` : ''}
-
-      ${group('Privacy', [
-        row('Lock the app', toggle('appLock', s.appLock, lock.isAvailable() ? '' : 'disabled'),
-          lock.isSet() ? 'Asks for your PIN when you open the app.' : 'Sets a PIN. Forgetting it means erasing the app.'),
-        lock.isSet() ? `<div class="set-actions"><button class="btn" id="changePin">Change PIN</button></div>` : '',
-        // Hidden outside the EEA and the UK, where there is no answer to change.
-        '<div class="set-actions" id="consentRow" hidden><button class="btn" id="adConsent">Ad privacy choices</button></div>',
-      ].join(''))}
-
-      <h3 class="set-group">Your data</h3>
-      <div class="set-actions">
-        <a class="btn linkbtn" href="#/habits/archive">Archived habits</a>
-        <button class="btn" id="csv">Habits as CSV</button>
-        <button class="btn" id="exportBtn">Export backup</button>
-        <button class="btn" id="importBtn">Import backup</button>
-      </div>
-      <input type="file" id="importFile" accept="application/json" hidden>
-
-      ${restorePoints()}
-
-      <button class="btn danger wide" id="reset">Erase all data</button>
-      <p class="fineprint">Every habit, every day you have marked, and everything the Arena has recorded. No undo.</p>
-
-      <h3 class="set-group">About</h3>
-      <div class="set-nav">
-        <a href="./legal/privacy.html">${icon('shield', 16)}<span>Privacy policy</span></a>
-        <a href="./legal/terms.html">${icon('book', 16)}<span>Terms of service</span></a>
-        <a href="./legal/wellbeing.html">${icon('flash', 16)}<span>Health and wellbeing</span></a>
-        <a href="./legal/licences.html">${icon('external', 16)}<span>Open source licences</span></a>
-      </div>
-
-      <div class="set-tail">
-        <a class="tail-btn" href="#/intro">Show the introduction again</a>
-      </div>
+      ${p ? '<div id="page"></div>' : `${accountCard()}<div class="set-links">${PAGES.map((x) =>
+        `<a class="set-link" href="#/settings/${x.id}"><span>${escapeHtml(x.title)}</span>${icon('back', 16)}</a>`).join('')}</div>`}
     </div>`;
-
-  const bind = (id, key, get = (e) => e.value) =>
-    mount.querySelector('#' + id).addEventListener('change', (e) => {
-      store.setSetting(key, get(e.target));
-      toast('Saved');
-    });
-  const setGrid = (key, value) =>
-    store.update((st) => {
-      st.habits.settings[key] = value;
-    });
-  mount.querySelector('#firstDay').addEventListener('change', (e) => setGrid('firstDay', Number(e.target.value)));
-  mount.querySelector('#dayStart').addEventListener('change', (e) => {
-    setGrid('dayStartHour', Number(e.target.value));
-    toast('Saved');
-  });
-  mount.querySelector('#columns').addEventListener('change', (e) => setGrid('columns', Number(e.target.value)));
-  ['reverseDays', 'shortPress', 'skipDays', 'unknownMarks'].forEach((id) =>
-    mount.querySelector(`#${id}`).addEventListener('change', (e) => setGrid(id, e.target.checked))
-  );
-  mount.querySelector('#csv').addEventListener('click', exportCsv);
-
-  bind('haptics', 'haptics', (e) => e.checked);
-  bind('sound', 'sound', (e) => e.checked);
-
-  wireLock(mount);
-  showUsage(mount);
-  showNotifications(mount);
-  showAdConsent(mount);
-  wireBackup(mount);
-
-  mount.querySelector('#reset').addEventListener('click', () => {
-    if (confirm('Erase everything and start from scratch? This cannot be undone.')) {
-      store.reset();
-      toast('All data erased');
-      location.hash = '#/hub';
-    }
-  });
+  if (p) p.render(mount.querySelector('#page'));
 }
 
 /** What is kept, and what each thing actually protects against. Every change
@@ -170,14 +249,14 @@ function restorePoints() {
 // One switch. Turning it on asks for a PIN, because a lock with no PIN is a
 // setting that does nothing.
 
-function wireLock(mount) {
-  mount.querySelector('#changePin')?.addEventListener('click', () => askPin({ change: true }));
+function wireLock(el) {
+  q(el, 'changePin')?.addEventListener('click', () => askPin({ change: true }));
 
-  mount.querySelector('#appLock').addEventListener('change', (e) => {
+  q(el, 'appLock').addEventListener('change', (e) => {
     if (!e.target.checked) {
       lock.clearPin();
       toast('App lock off');
-      return renderSettings(mount);
+      return renderSettings(document.getElementById('app'), 'privacy');
     }
     e.target.checked = false;
     if (!lock.isAvailable()) return toast('This browser cannot store a PIN. Open the app over HTTPS.');
@@ -223,37 +302,24 @@ function askPin({ change }) {
     sheet.close();
     haptic('done');
     toast(change ? 'PIN changed' : 'The app will ask for your PIN next time');
-    renderSettings(document.getElementById('app'));
+    renderSettings(document.getElementById('app'), 'privacy');
   });
 
   (change ? el('pinOld') : el('pinA')).focus();
 }
 
-/** Storage: the thing that fills up, and a backup is the only defence. */
-async function showUsage(mount) {
-  const el = mount.querySelector('#usage');
-  if (!el) return;
-  try {
-    const est = await navigator.storage?.estimate?.();
-    const mb = est?.usage ? est.usage / 1048576 : null;
-    el.textContent = mb == null ? 'unknown' : mb < 1 ? 'under 1 MB' : `${mb.toFixed(1)} MB`;
-  } catch {
-    el.textContent = 'unknown';
-  }
-}
-
 /** Android denies notifications until asked, and there is no way back from a
  *  refusal except the system settings, so the state is worth showing. */
-async function showNotifications(mount) {
-  const el = mount.querySelector('#notifState');
-  if (!el) return;
-  const ask = mount.querySelector('#notifAsk');
-  const draw = (state) => {
-    el.textContent = { granted: 'On', denied: 'Off, blocked in Android', prompt: 'Not asked yet' }[state];
-    ask.hidden = state !== 'prompt';
+async function showNotifications(el) {
+  if (!isNative()) return;
+  const out = q(el, 'notifState');
+  const ask = q(el, 'notifAsk');
+  const draw = (perm) => {
+    out.textContent = { granted: 'On', denied: 'Off, blocked in Android', prompt: 'Not asked yet' }[perm];
+    ask.hidden = perm !== 'prompt';
   };
   draw(await alarmPermission());
-  mount.querySelector('#askNotif').addEventListener('click', async () => {
+  q(el, 'askNotif').addEventListener('click', async () => {
     await askAlarms();
     draw(await alarmPermission());
   });
@@ -261,22 +327,24 @@ async function showNotifications(mount) {
 
 /** Google requires a way back into the consent form for anyone who was asked,
  *  and shows nothing to anyone who was not. */
-async function showAdConsent(mount) {
-  const row = mount.querySelector('#consentRow');
-  if (!row || !(await ads.consentChangeable())) return;
-  row.hidden = false;
-  mount.querySelector('#adConsent').addEventListener('click', () => ads.openConsentForm());
+async function showAdConsent(el) {
+  const box = q(el, 'consentRow');
+  if (!box || !(await ads.consentChangeable())) return;
+  box.hidden = false;
+  q(el, 'adConsent').addEventListener('click', () => ads.openConsentForm());
 }
 
-function wireBackup(mount) {
-  mount.querySelector('#exportBtn').addEventListener('click', () => {
+/* ---------------- your data ---------------- */
+
+function wireBackup(el) {
+  q(el, 'exportBtn').addEventListener('click', () => {
     saveFile(`habit-nemesis-backup-${store.dayKey()}.json`, store.exportJson());
   });
 
-  const file = mount.querySelector('#importFile');
-  mount.querySelector('#importBtn').addEventListener('click', () => file.click());
+  const file = q(el, 'importFile');
+  q(el, 'importBtn').addEventListener('click', () => file.click());
 
-  mount.querySelectorAll('[data-restore]').forEach((b) =>
+  el.querySelectorAll('[data-restore]').forEach((b) =>
     b.addEventListener('click', () => {
       const day = b.dataset.restore;
       if (!confirm(`Roll everything back to ${relDay(day)}? Anything recorded since is lost.`)) return;
@@ -284,7 +352,7 @@ function wireBackup(mount) {
         store.restoreSnapshot(day);
         haptic('done');
         toast(`Rolled back to ${relDay(day)}`);
-        renderSettings(document.getElementById('app'));
+        renderSettings(document.getElementById('app'), 'data');
       } catch (e) {
         toast(e.message);
       }
@@ -296,10 +364,30 @@ function wireBackup(mount) {
     try {
       store.importJson(await f.text());
       toast('Backup restored');
-      renderSettings(mount);
+      renderSettings(document.getElementById('app'), 'data');
     } catch (err) {
       toast(`Could not read that file: ${err.message}`);
     }
+  });
+}
+
+/** The one destructive act with no undo, so it is typed rather than tapped. */
+function askErase() {
+  const sheet = openSheet(`
+    <h2>Erase all data</h2>
+    <p class="warn-inline">This cannot be undone.</p>
+    <p class="muted small">Every habit, every day you marked, and everything the Arena has recorded. Type <b>erase</b> to confirm.</p>
+    <input type="text" id="word" autocomplete="off" class="pin-input" placeholder="erase">
+    <div class="btn-row">
+      <button class="btn ghost" data-close>Keep it</button>
+      <button class="btn danger" id="go">Erase</button>
+    </div>`);
+  sheet.el.querySelector('#go').addEventListener('click', () => {
+    if (sheet.el.querySelector('#word').value.trim().toLowerCase() !== 'erase') return haptic('miss');
+    store.reset();
+    sheet.close();
+    toast('All data erased');
+    location.hash = '#/hub';
   });
 }
 
@@ -307,12 +395,12 @@ function wireBackup(mount) {
 function exportCsv() {
   const list = habits.active().concat(habits.archived());
   if (!list.length) return toast('No habits to export');
-  const q = (v) => `"${String(v).replace(/"/g, '""')}"`;
+  const quote = (v) => `"${String(v).replace(/"/g, '""')}"`;
   const sums = list.map((h) => habits.summary(h));
   const first = sums.reduce((a, s) => (s.days.length && (!a || s.days[0].key < a) ? s.days[0].key : a), null);
-  const rows = [['date', ...list.map((h) => h.name)].map(q).join(',')];
+  const lines = [['date', ...list.map((h) => h.name)].map(quote).join(',')];
   for (let key = habits.today(); first && key >= first; key = store.addDays(key, -1)) {
-    rows.push(
+    lines.push(
       [
         key,
         ...sums.map((s) => {
@@ -322,9 +410,9 @@ function exportCsv() {
           return d.raw;
         }),
       ]
-        .map(q)
+        .map(quote)
         .join(',')
     );
   }
-  saveFile(`habit-nemesis-${store.dayKey()}.csv`, rows.join('\n'), 'text/csv');
+  saveFile(`habit-nemesis-${store.dayKey()}.csv`, lines.join('\n'), 'text/csv');
 }

@@ -2,16 +2,37 @@
 
 import { isNative } from './native.js';
 
-let feedback = { haptics: true, sound: true };
+let feedback = { haptics: true, sound: 'full', quiet: true, quietFrom: '22:00', quietTo: '07:00' };
 
 /* ---------------- feedback switches ---------------- */
 // Held here, not read here: store.js imports this module and cannot be imported
-// back, so it pushes the pair in on every save.
+// back, so it pushes the switches in on every save.
 
 /** Called by store.js only. */
 export function setFeedback(s) {
-  feedback = { haptics: s?.haptics !== false, sound: s?.sound !== false };
+  feedback = {
+    haptics: s?.haptics !== false,
+    sound: ['off', 'subtle', 'full'].includes(s?.sound) ? s.sound : s?.sound === false ? 'off' : 'full',
+    quiet: s?.quiet !== false,
+    quietFrom: s?.quietFrom || '22:00',
+    quietTo: s?.quietTo || '07:00',
+  };
 }
+
+/** HH:MM now, on the wall clock. */
+const clock = (d = new Date()) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+
+/** Inside quiet hours. A span that crosses midnight wraps. */
+export function inQuietHours(at = clock()) {
+  if (!feedback.quiet) return false;
+  const { quietFrom: from, quietTo: to } = feedback;
+  if (from === to) return false;
+  return from < to ? at >= from && at < to : at >= from || at < to;
+}
+
+/** The setting, or the media query, or the switch in Appearance. */
+export const reducedMotion = () =>
+  !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('reduce-motion');
 
 const PATTERNS = {
   tick: 12, press: 18, hit: [0, 30, 60, 30], done: 22, miss: [0, 40, 40, 40], level: [0, 40, 60, 40, 60, 80],
@@ -54,7 +75,7 @@ function audio() {
   master = ctx.createGain();
   // Everyday cues land around -15 dBFS and the ceremonies around -7, which is
   // audible on a phone speaker without being the loudest thing in the room.
-  master.gain.value = 1.7;
+  master.gain.value = GAIN.full;
   master.connect(comp).connect(ctx.destination);
   return ctx;
 }
@@ -145,13 +166,26 @@ const CUES = {
   },
 };
 
+/* Off, Subtle, Full. Subtle is the grid's own cues at everyday level; quiet
+   hours cap everything at Subtle whatever the setting says. */
+const GAIN = { subtle: 1.0, full: 1.7 };
+const SUBTLE = new Set(['tick', 'mark', 'unmark', 'skip']);
+
+function soundLevel() {
+  if (feedback.sound === 'off') return 'off';
+  return inQuietHours() ? 'subtle' : feedback.sound;
+}
+
 /** Play a cue by name. Unknown names are silent rather than an error, so a
  *  screen naming a cue that does not exist yet is not a crash. */
 export function chime(kind) {
   const cue = CUES[kind];
-  if (!cue || !feedback.sound) return;
+  const level = soundLevel();
+  if (!cue || level === 'off') return;
+  if (level === 'subtle' && !SUBTLE.has(kind)) return;
   try {
     if (!audio()) return;
+    master.gain.value = GAIN[level];
     if (ctx.state === 'suspended') ctx.resume();
     if (cue.strike) strike(cue.strike[0], cue.strike[1], cue.strike[2]);
     for (const [freq, at, dur, opts] of cue.notes) voice(freq, at, dur, opts);
@@ -162,7 +196,7 @@ export function chime(kind) {
 
 /** Sparks from the centre of an element. Self-removing, and off under reduced motion. */
 export function celebrate(el, { colour = 'var(--accent)', count = 14, spread = 90 } = {}) {
-  if (!el || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  if (!el || reducedMotion()) return;
   const wrap = document.createElement('div');
   wrap.className = 'sparks';
   for (let i = 0; i < count; i++) {
@@ -223,6 +257,21 @@ export function relDay(key) {
   if (diff === 0) return 'Today';
   if (diff === -1) return 'Yesterday';
   return fmtDate(key);
+}
+
+/** An instant, as distance: just now, 4 minutes ago, yesterday, then a date. */
+export function relTime(iso) {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return '';
+  const s = Math.max(0, (Date.now() - t) / 1000);
+  if (s < 60) return 'just now';
+  const m = Math.round(s / 60);
+  if (m < 60) return `${m} minute${m === 1 ? '' : 's'} ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h} hour${h === 1 ? '' : 's'} ago`;
+  const d = new Date(t);
+  const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return relDay(key).toLowerCase();
 }
 
 let toastTimer = null;

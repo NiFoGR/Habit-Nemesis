@@ -71,10 +71,17 @@
   color-scheme: dark;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
+  /* Pure black, for AMOLED. Appearance swaps the ground for it. */
+  --black: #000000;
 }
 
+html.black { --bg: var(--black); --bg-2: var(--black); }
+
 @media (prefers-reduced-motion: reduce) {
-  :root { --t-fast: 0.001s; --t-base: 0.001s; }}
+  :root { --t-fast: 0.001s; --t-base: 0.001s; --t-slow: 0.001s; }}
+/* The switch in Appearance, for phones with no system setting. */
+html.reduce-motion { --t-fast: 0.001s; --t-base: 0.001s; --t-slow: 0.001s; }
+html.reduce-motion * { animation: none !important; transition: none !important; }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -222,7 +229,7 @@ a.btn { text-decoration: none; }
 .setting span { flex: 1; }
 .setting b { display: block; font-size: var(--f-body); font-weight: 600; }
 .setting i { display: block; font-style: normal; color: var(--muted); font-size: var(--f-fine); margin-top: 2px; }
-.setting select, .setting input[type="time"], .set-row select {
+.setting select, .setting input[type="time"], .set-row select, .set-row input[type="time"] {
   background: var(--surface-2); color: var(--text); border: 1px solid var(--line);
   border-radius: 10px; padding: 9px 10px; font-size: var(--f-body); min-width: 96px;
 }
@@ -352,7 +359,7 @@ input[type="range"] {
 /* Capped, or one long <option> squeezes the label into a two-word column. One
    width for every control in a settings list: a ragged right edge is what a
    column of selects sized to their own text looks like. */
-.setting select, .setting input[type="time"], .set-row select { flex: 0 0 auto; min-width: 47%; max-width: 62%; }
+.setting select, .setting input[type="time"], .set-row select, .set-row input[type="time"] { flex: 0 0 auto; min-width: 47%; max-width: 62%; }
 .setting input[type="range"] { flex: 0 1 46%; min-width: 120px; accent-color: var(--accent); }
 .card .h-row + .setting { border-top: 0; }
 .card.danger .h-row .ico { color: var(--danger); }
@@ -1521,6 +1528,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
    at opacity 0. */
 @media (prefers-reduced-motion: reduce) {
   .mo-card { opacity: 1; }}
+html.reduce-motion .mo-card { opacity: 1; }
 
 /* ---------- the introduction ----------
    One idea per page, mostly a picture. The art box has a floor under its height
@@ -1564,6 +1572,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .hg-cell.intro-tap { animation: none; }}
+html.reduce-motion .hg-cell.intro-tap { animation: none; }
 
 /* ---------- the quiet row at the foot of Settings ----------
    The smallest text on the page: it says what it is, it just does not ask to
@@ -1580,18 +1589,39 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 .tail-btn:active { color: var(--muted); }
 
 /* ---------- settings ----------
-   A dense index: name on the left, what it is set to on the right, and no
-   explanation unless the behaviour is genuinely surprising. */
+   Six rows and a card on the root. Each row is a page: name on the left, what
+   it is set to on the right, and no explanation unless the behaviour is
+   genuinely surprising. */
 
-.settings .set-hero {
-  padding: 4px 2px 22px; margin-bottom: 6px;
+.set-links { display: grid; }
+.set-link {
+  display: flex; align-items: center; gap: 12px;
+  min-height: 54px; padding: 0 2px;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--text); text-decoration: none; font-size: var(--f-body); font-weight: var(--w-medium);
 }
-.set-hero b {
-  display: block; font-size: var(--f-title); line-height: 1;
-  letter-spacing: -0.035em; margin-bottom: 8px;
-  background: var(--brand); -webkit-background-clip: text; background-clip: text; color: transparent;
+.set-link:last-child { border-bottom: 0; }
+.set-link span { flex: 1; }
+.set-link .ico { color: var(--faint); transform: rotate(180deg); }
+.set-link:active { color: var(--muted); }
+
+/* The account, as state rather than a label. */
+.acc-card { display: grid; gap: 3px; text-decoration: none; color: inherit; }
+.acc-card b { font-size: var(--f-head); }
+.acc-card span { font-size: var(--f-small); }
+.acc-card i { font-style: normal; font-size: var(--f-fine); color: var(--faint); }
+.acc-card .btn { margin: 10px 0 0; }
+
+/* A disclosure for the rows almost nobody changes. */
+.set-more { margin-top: 18px; }
+.set-more summary {
+  cursor: pointer; list-style: none; padding: 8px 2px;
+  font-size: var(--f-micro); text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--faint); font-weight: 600;
 }
-.set-hero span { color: var(--muted); font-size: var(--f-small); }
+.set-more summary::-webkit-details-marker { display: none; }
+.set-more summary::after { content: ' +'; }
+.set-more[open] summary::after { content: ' \2212'; }
 
 .set-group {
   font-size: var(--f-micro); text-transform: uppercase; letter-spacing: 0.12em;
@@ -1619,6 +1649,8 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 .set-state { flex: 0 0 auto; font-size: var(--f-small); color: var(--muted); }
 
 .set-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+/* A display of its own beats the hidden attribute. */
+.set-actions[hidden] { display: none; }
 .settings .btn.danger.wide { margin-top: 22px; }
 .settings .fineprint { margin-top: 8px; }
 
