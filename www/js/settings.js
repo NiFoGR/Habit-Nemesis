@@ -197,8 +197,17 @@ function accountCard() {
   return `<a class="card acc-card" href="#/account">
     <b>Backed up</b>
     <span class="muted">${escapeHtml(account.emailOf())}</span>
-    <i>${escapeHtml(syncLine())}</i>
+    <i id="syncLine">${escapeHtml(syncLine())}</i>
   </a>`;
+}
+
+/** The card's last line follows the sync. Unhooks itself once the card is gone. */
+function followSync() {
+  const off = store.onSyncState(() => {
+    const el = document.getElementById('syncLine');
+    if (!el) return off();
+    el.textContent = syncLine();
+  });
 }
 
 function syncLine() {
@@ -224,6 +233,7 @@ export function renderSettings(mount, page) {
         `<a class="set-link" href="#/settings/${x.id}"><span>${escapeHtml(x.title)}</span>${icon('back', 16)}</a>`).join('')}</div>`}
     </div>`;
   if (p) p.render(mount.querySelector('#page'));
+  else if (account.signedIn()) followSync();
 }
 
 /** What is kept, and what each thing actually protects against. Every change
@@ -295,7 +305,7 @@ function askPin({ change }) {
 
     await lock.setPin(a);
     if (!change) {
-      store.setSetting('appLock', true);
+      store.setSetting('appLock', true, { local: true });
       // Takes effect next launch, so turning it on cannot lock you out here.
       lock.markUnlocked();
     }

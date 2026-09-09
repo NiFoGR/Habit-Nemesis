@@ -17,6 +17,8 @@ import { openTypePicker } from './edit.js';
 import * as arena from '../arena/program.js';
 import { headCell, rowHtml, dueHead, headRing } from './grid.js';
 import { wireCells } from './marking.js';
+import { configured } from '../account/config.js';
+import { signedIn } from '../account/session.js';
 
 /* ---------------- the grid ---------------- */
 
@@ -62,6 +64,16 @@ function reviewCta() {
     </span>
     <span class="rv-cta-go">${icon('back', 15)}</span>
   </a>`;
+}
+
+/** One card, for anyone who chose Not now. Gone for good once dismissed twice. */
+function accountNudge() {
+  if (!configured() || signedIn() || store.get().settings.nudges >= 2 || !habits.active().length) return '';
+  return `<div class="card nudge" id="nudge">
+    <div class="nudge-text"><b>No account</b><i>Lose the phone, lose the record.</i></div>
+    <a class="btn small-btn primary" href="#/account">Sign in</a>
+    <button class="icon-btn small" id="nudgeOff" aria-label="Dismiss">${icon('close', 14)}</button>
+  </div>`;
 }
 
 /** The router calls this, and it always arrives in the normal state: reorder
@@ -134,6 +146,8 @@ function redraw(mount) {
 
       ${habits.active().length ? '' : starterPack()}
 
+      ${accountNudge()}
+
       <button class="btn ghost wide" id="addBtn2">${icon('plus', 16)}<span>New habit</span></button>
 
       <div id="installSlot"></div>
@@ -142,6 +156,12 @@ function redraw(mount) {
   mount.querySelectorAll('#addBtn, #addBtn2').forEach((b) => b.addEventListener('click', openTypePicker));
   mount.querySelectorAll('[data-starter]').forEach((b) =>
     b.addEventListener('click', () => addStarter(mount, Number(b.dataset.starter))));
+  mount.querySelector('#nudgeOff')?.addEventListener('click', () => {
+    store.update((st) => {
+      st.settings.nudges += 1;
+    });
+    mount.querySelector('#nudge')?.remove();
+  });
   mountInstall();
   wireGrid(mount, days);
 }

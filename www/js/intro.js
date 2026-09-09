@@ -1,7 +1,8 @@
-// The introduction. Seven pages on a new install, replayable from Settings.
+// The introduction. Eight pages on a new install, replayable from Settings.
 //
 // Two of them are done rather than read: page 2 makes you mark a cell, page 7
-// builds the grid you leave on. Everything else is one picture and one line.
+// builds the grid you leave on. Page 8 offers the account, and only where a
+// service is configured. Everything else is one picture and one line.
 
 import * as store from './store.js';
 import * as habits from './habits/program.js';
@@ -10,9 +11,11 @@ import { icon, logoMark } from './icons.js';
 import { crest } from './arena/crest.js';
 import { counts } from './arena/feats.js';
 import { cup } from './arena/cup.js';
-import { escapeHtml, chime, haptic, celebrate } from './ui.js';
+import { escapeHtml, chime, haptic, celebrate, toast } from './ui.js';
 import { navigate } from './back.js';
 import { configured } from './account/config.js';
+import { signInWith } from './account/oauth.js';
+import { askOnNextSignIn } from './account/sync.js';
 
 /** True until it has been finished or skipped once. */
 export const introDue = () => !store.get().settings.onboarded;
@@ -108,7 +111,7 @@ function starters(picked) {
 const PAGES = [
   {
     title: 'Habit Nemesis',
-    line: `Everything you are keeping, on one screen. It lives on your phone${configured() ? ', and an account is optional' : ''}.`,
+    line: 'You do not play other people. You play the best week you have ever had.',
     art: () => `<span class="intro-logo">${logoMark(76)}</span>`,
     next: 'Show me',
   },
@@ -151,8 +154,19 @@ const PAGES = [
     art: null,
     cta: 'Start',
     tall: true,
+    starters: true,
+  },
+  // Last, so signing in has something to carry. Skipped with no service.
+  {
+    title: 'Keep the record',
+    line: 'Your account holds the grid, the ladder and the cabinet. New phone, same record.',
+    art: null,
+    account: true,
+    only: configured,
   },
 ];
+
+const pages = () => PAGES.filter((p) => !p.only || p.only());
 
 /* ---------------- the screen ---------------- */
 
@@ -168,6 +182,9 @@ export function renderIntro(mount) {
   const picked = new Set();
   let opener = null;
 
+  const list = pages();
+
+  /** Onboarded, starters on the grid, and off to it. */
   const finish = () => {
     clearTimeout(opener);
     for (const n of [...picked].sort()) habits.addStarter(n);
@@ -179,10 +196,10 @@ export function renderIntro(mount) {
 
   function draw() {
     clearTimeout(opener);
-    const page = PAGES[i];
-    const last = i === PAGES.length - 1;
+    const page = list[i];
+    const last = i === list.length - 1;
     const locked = page.gate && !marked;
-    const cta = last
+    const cta = page.starters
       ? picked.size
         ? `Start with ${picked.size}`
         : 'Start'
@@ -204,18 +221,28 @@ export function renderIntro(mount) {
           <button class="icon-btn text-btn" id="skip">Skip</button>
         </header>
 
-        <div class="step-bar">${PAGES.map((_, n) => `<i class="${n < i ? 'done' : n === i ? 'on' : ''}"></i>`).join('')}</div>
+        <div class="step-bar">${list.map((_, n) => `<i class="${n < i ? 'done' : n === i ? 'on' : ''}"></i>`).join('')}</div>
 
         <div class="intro-body ${page.tall ? 'tall' : ''}">
           ${page.tall ? head + art : art + head}
-          ${last ? starters(picked) : ''}
+          ${page.starters ? starters(picked) : ''}
         </div>
 
-        <button class="btn primary big" id="next" ${locked ? 'disabled' : ''}>${escapeHtml(cta)}</button>
+        ${page.account ? accountChoice() : `<button class="btn primary big" id="next" ${locked ? 'disabled' : ''}>${escapeHtml(cta)}</button>`}
       </div>`;
 
     if (locked) opener = setTimeout(open, 4000);
     wire(page, last);
+  }
+
+  /** Three ways off the last page. Not now is a link because it is the third
+   *  choice, and it is never disabled: a wall here costs more than the sync. */
+  function accountChoice() {
+    return `<div class="intro-account">
+      <button class="btn primary big" id="google">Continue with Google</button>
+      <button class="btn big" id="email">Continue with email</button>
+      <button class="tail-btn" id="later">Not now</button>
+    </div>`;
   }
 
   /** The gate opening, whether it was tapped or waited out. */
@@ -227,13 +254,33 @@ export function renderIntro(mount) {
   }
 
   function wire(page, last) {
-    mount.querySelector('#next').addEventListener('click', () => {
+    mount.querySelector('#next')?.addEventListener('click', () => {
       haptic('press');
       if (last) return finish();
       i++;
       marked = false;
       draw();
     });
+
+    // The grid first, then the provider: the session lands on a screen that
+    // exists, and the account's record is offered there rather than imported here.
+    mount.querySelector('#google')?.addEventListener('click', async () => {
+      haptic('press');
+      askOnNextSignIn();
+      finish();
+      try {
+        await signInWith('google');
+      } catch (e) {
+        toast(e.message);
+      }
+    });
+    mount.querySelector('#email')?.addEventListener('click', () => {
+      haptic('press');
+      askOnNextSignIn();
+      finish();
+      navigate('#/account');
+    });
+    mount.querySelector('#later')?.addEventListener('click', finish);
     // Back steps a page. On the first it means Skip.
     mount.querySelector('#back').addEventListener('click', () => {
       if (i === 0) return finish();

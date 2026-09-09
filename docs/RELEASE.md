@@ -128,17 +128,20 @@ What is missing is a Supabase project. `SUPABASE_URL` and `SUPABASE_KEY` in
 `www/js/account/config.js` are empty, so the app runs local-only and the account
 row is hidden rather than offered as a dead end. Two strings turn it on.
 
-V1 ships without it. The simplest launch has no server to run, no password
-resets at midnight and no Data Safety answers about a database. Turn it on when
-there is a reason to.
+V2 ships with it: the introduction offers the account on its last page and
+sync runs on its own. Two strings in `www/js/account/config.js` turn it on,
+and until they land every account screen is absent rather than dead.
+`docs/ACCOUNTS.md` is the runbook.
 
-### Keep local-first
+### Keep the grid free of the wall
 
-The app's claim is that your record never leaves the phone, and that is a
-feature, not an accident. Do not trade it for sync. **The account stays
-optional.** The app works forever without one; signing in adds a copy in the
-cloud and a second device. Say exactly that on the sign-in screen, and the
-people who came for the privacy stay.
+The account is the default path in v2 and the sync is automatic, but **the
+account stays optional**. The grid must work on first launch with no network,
+Not now is a link that always works, and the one nudge on the grid dies after
+two dismissals. Play's own guidance expects an account to be optional when the
+app functions without one, and a wall costs more installs than the sync is
+worth. The privacy policy names the processor, the region and the deletion
+route, because once the account is offered that is a store requirement.
 
 ### The shape of it
 

@@ -1,11 +1,12 @@
 // The account screen: signed out it is the way in, signed in it is the record
 // and the way out. One screen, because two would be a menu in front of a form.
 
+import * as store from '../store.js';
 import * as session from './session.js';
 import { signInWith } from './oauth.js';
 import * as sync from './sync.js';
 import { configured } from './config.js';
-import { escapeHtml, toast, haptic, openSheet, relDay } from '../ui.js';
+import { escapeHtml, toast, haptic, openSheet, relDay, relTime } from '../ui.js';
 import { icon } from '../icons.js';
 import { navigate } from '../back.js';
 
@@ -22,7 +23,7 @@ function unconfigured(mount) {
       <h2>Not in this build</h2>
       <p class="muted small">This copy of the app has no account service configured, so there is nothing to sign in to. Everything works exactly as it does now, on this device.</p>
     </section>
-    <p class="fineprint">Your record is on this phone either way. Settings has the backup.</p>
+    <p class="fineprint">Your record is on this phone. Your data, in Settings, has the backup.</p>
   </div>`;
 }
 
@@ -31,8 +32,8 @@ function unconfigured(mount) {
 function signedOut(mount) {
   mount.innerHTML = `<div class="screen">${head}
     <section class="card">
-      <h2>Keep your record</h2>
-      <p class="muted small">An account is optional. The app works the same without one. Signing in puts a copy of your record in your account, so a new phone starts where the old one stopped.</p>
+      <h2>Keep the record</h2>
+      <p class="muted small">Your account holds the grid, the ladder and the cabinet. New phone, same record. Optional: the app works the same without one.</p>
     </section>
 
     <form class="card acc-form" id="form">
@@ -135,12 +136,12 @@ function signedIn(mount) {
 
     <section class="card">
       <h2>Your record</h2>
-      <p class="muted small" id="state">Checking your account.</p>
+      <p class="muted small" id="state">${escapeHtml(stateLine())}</p>
       <div class="set-actions">
-        <button class="btn" id="push">Back up now</button>
+        <button class="btn" id="push">Sync now</button>
         <button class="btn" id="pull">Restore from account</button>
       </div>
-      <p class="fineprint">A backup, not a live sync. Restoring replaces what is on this phone, so it asks first.</p>
+      <p class="fineprint">Every change goes up on its own. Restoring replaces what is on this phone, so it asks first.</p>
     </section>
 
     <div class="set-actions">
@@ -155,19 +156,16 @@ function signedIn(mount) {
   const say = (msg) => {
     state.textContent = msg;
   };
-
-  sync
-    .peek()
-    .then((r) => say(r ? `Backed up ${relDay(r.updated_at.slice(0, 10))}.` : 'Nothing backed up yet.'))
-    .catch(() => say('Could not reach your account.'));
+  const off = store.onSyncState(() => (state.isConnected ? say(stateLine()) : off()));
 
   mount.querySelector('#push').addEventListener('click', async (e) => {
     e.target.disabled = true;
     try {
       await sync.push();
+      store.setSyncState('synced');
       haptic('done');
-      toast('Backed up');
-      say('Backed up just now.');
+      toast('Synced');
+      say(stateLine());
     } catch (err) {
       toast(err.message);
     }
@@ -228,20 +226,22 @@ function confirmDelete(mount) {
   });
 }
 
+/** What the account holds, as one line. */
+function stateLine() {
+  const at = store.lastSynced();
+  return {
+    pending: 'Syncing.',
+    offline: 'Offline. Syncs when you are back.',
+    error: 'Could not reach your account.',
+  }[store.syncState()] || (at ? `Synced ${relTime(at)}.` : 'Nothing synced yet.');
+}
+
+/** The two copies settle themselves. A record already in the account comes
+ *  down on its own when this phone is clean, and asks when it is not. */
 async function afterSignIn(mount) {
-  // A record already in the account is the reason most people sign in on a new
-  // phone, so it is offered at once rather than hidden behind a button.
-  try {
-    const ahead = await sync.remoteIsAhead();
-    if (ahead && confirm(`Your account holds a record backed up ${relDay(ahead.updated_at.slice(0, 10))}. Restore it onto this phone? What is here now is replaced.`)) {
-      await sync.pull();
-      toast('Restored');
-      return navigate('#/hub');
-    }
-  } catch {
-    /* offline, or nothing there. The screen below says which. */
-  }
   render(mount);
+  await sync.reconcile();
+  if (store.syncState() === 'synced') navigate('#/hub');
 }
 
 export function render(mount) {

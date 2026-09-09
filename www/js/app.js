@@ -18,6 +18,7 @@ import { renderWeekReview } from './arena/review.js';
 import { renderSettings, SETTINGS_PAGES, applyAppearance } from './settings.js';
 import { render as renderAccount } from './account/screen.js';
 import * as account from './account/session.js';
+import * as sync from './account/sync.js';
 import { listenForReturn } from './account/oauth.js';
 import { lockActive, renderLock, relock } from './lock.js';
 import { renderIntro, introDue } from './intro.js';
@@ -182,6 +183,7 @@ route();
 
 // Optional, and absent from a build with no project configured.
 account.init().then(() => {
+  sync.start();
   if (location.hash.startsWith('#/account')) route();
 });
 listenForReturn();

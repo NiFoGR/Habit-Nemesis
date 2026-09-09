@@ -33,7 +33,8 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 | `js/lock.js` | 123 | The optional PIN gate. Owns whether the app is unlocked. |
 | `js/intro.js` | 274 | The introduction, shown once on a new install. |
 | `js/native.js` | 115 | Capacitor bridge: Android alarms and the notification permission. |
-| `js/settings.js` | 330 | App-wide settings: the grid, marking, feedback, privacy, data, reset. |
+| `js/settings.js` | 400 | App-wide settings: six pages from one table, and the account card. |
+| `js/version.js` | 3 | The version string About shows. Checked against package.json. |
 | `js/tabs.js` | 59 | The bottom bar: Cabinet, Grid, Arena. Drawn once, never rebuilt. |
 | `js/store.js` | 492 | localStorage persistence and the input sanitiser. |
 | `js/ui.js` | 354 | Shared helpers: formatting, haptics, SVG charts, the sheet. |
@@ -123,15 +124,15 @@ the parts that cannot be read off a screen.
 | `js/account/config.js` | 23 | The Supabase project values. Empty until a project exists; see `docs/ACCOUNTS.md`. |
 | `js/account/session.js` | 121 | The client, sign up, sign in, reset, sign out, delete. |
 | `js/account/oauth.js` | 59 | Google sign-in: a Custom Tab out, a deep link back. |
-| `js/account/sync.js` | 63 | Backup and restore, whole-record. Not a merge. |
+| `js/account/sync.js` | 230 | Automatic: push on change, pull on launch, ask on a real conflict. Whole-record, not a merge. |
 | `js/account/screen.js` | 251 | The Account screen in its three states: unconfigured, signed out, signed in. |
 
 The account is a copy of the record, never the record. Everything pulled from
 it goes through `store.js`'s sanitiser like any other untrusted file.
 `SECURITY.md` is the model; `docs/ACCOUNTS.md` is the setup.
 
-With no project configured the Settings row is absent rather than a dead end,
-which is how v1 ships.
+With no project configured the account card, the intro's last page and the
+grid's nudge are all absent rather than dead ends.
 
 ## Ads, which are optional too
 
@@ -173,6 +174,7 @@ Everything here is build-time and never ships in `www/`.
 | `tools/serve.mjs` | The dev server. `npm run dev`. |
 | `tools/check-arena.mjs` | The Arena's calendar maths, asserted. `npm run check:arena`. |
 | `tools/check-ui.mjs` | The stylesheet's own rules: one type scale, one palette. `npm run check:ui`. |
+| `tools/check-version.mjs` | package.json and version.js agree. `npm run check:version`. |
 | `tools/png.mjs` | PNG in, PNG out, and the box filter between. Shared, so art and icons cannot drift. |
 | `tools/gen-icons.mjs` | PWA, launcher and store icons. Uses `art/source/mark.png` when it exists, `MARK` otherwise. |
 | `tools/art.mjs` | Takes a dropped-in image, makes the WebP the app loads, updates `sw.js`. |

@@ -3,10 +3,11 @@ Habit Nemesis
 A habit grid, and a week that plays the best week you ever had.
 ================================================================================
 
-No analytics. The record lives on the phone, and an account is optional. Two
-things do carry it off the device and the app says so rather than pretending
-otherwise: Android's own backup, and an account if you sign in. The full
-account of where it goes is www/legal/privacy.html.
+No analytics. The record lives on the phone, and an account keeps a copy of
+it: sign in and every change goes up on its own, and a new phone signed into
+the same account starts where the old one stopped. The account is optional,
+and Not now is never a wall. Android's own backup carries the record off the
+device too. The full account of where it goes is www/legal/privacy.html.
 
 There is no build step, no bundler and no framework: www/ is the app, plain ES
 modules, open the folder and refresh the page.
@@ -283,17 +284,22 @@ than for you.
 7. YOUR DATA
 --------------------------------------------------------------------------------
 
-Everything is in the device's local storage. Nothing is uploaded anywhere, so
-nothing can be recovered from anywhere: reinstalling, clearing browser data or
-moving phones wipes it.
+Everything is in the device's local storage. Signed in, a copy of it is in
+your account as well: www/js/account/sync.js pushes every change within
+thirty seconds, pulls the account's copy onto a clean new phone on launch, and
+asks once when both copies moved. Signed out, nothing is uploaded anywhere,
+so reinstalling, clearing browser data or moving phones wipes it.
 
-  Settings -> Export backup    writes a JSON file, through the share sheet on
-                               a phone, to downloads in a browser
-  Settings -> Import backup    restores it
-  Settings -> Habits as CSV    every habit by day, for a spreadsheet
+  Settings -> Your data -> Export backup    writes a JSON file, through the
+                                            share sheet on a phone, to
+                                            downloads in a browser
+  Settings -> Your data -> Import backup    restores it
+  Settings -> Your data -> Habits as CSV    every habit by day, for a
+                                            spreadsheet
 
-Do it occasionally. Accounts and sync are milestone 1 of docs/RELEASE.md and
-exist mostly to make this section shorter.
+The account needs a Supabase project: docs/ACCOUNTS.md is the runbook, and
+until the two values in www/js/account/config.js are filled every account
+screen is absent rather than dead.
 
 Saved state is never trusted. It comes back through hydrate() in store.js,
 which coerces every value to the type and range it is supposed to be - habit

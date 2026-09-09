@@ -212,15 +212,26 @@ themselves when the field is filled.
 actually ships.
 
 - **Does your app collect or share any required user data?** Yes.
-- **Data types:** under **Device or other IDs**, tick **Device or other IDs**.
-  That is the advertising identifier, and AdMob uses it. Tick nothing else. The
-  habits, the marked days and the Arena's history never leave the phone.
-- **Collected or shared:** shared.
-- **Purpose:** Advertising or marketing.
-- **Is it required?** No, optional. Users can decline consent.
+- **Data types**, three:
+  - **Personal info > Email address.** Collected, not shared. Purpose: account
+    management. Optional: the app works without an account.
+  - **App activity > Other user-generated content.** Collected, not shared.
+    Purpose: app functionality. That is the record, one JSON document, held in
+    the user's account so a new phone can receive it. Optional.
+  - **Device or other IDs.** Shared. Purpose: advertising or marketing. That is
+    the advertising identifier, and AdMob uses it. Optional: users can decline
+    consent.
+- **Photos:** no. The face photo is part of the record document above and is
+  never processed as a photo; declare it under app activity, not photos.
 - **Is data encrypted in transit?** Yes.
-- **Can users request deletion?** Yes, and link the privacy policy.
-- **Location, personal info, photos, health, messages, contacts:** all no.
+- **Can users request deletion?** Yes. In the app under Settings, Account,
+  Delete account, which runs `delete_own_account()` and removes the row and
+  the auth user together. Link the privacy policy, section 11.
+- **Location, health, messages, contacts:** all no.
+
+The email address and the record are only collected in a build with
+`www/js/account/config.js` filled. A build with it empty has no account and
+declares the advertising identifier alone.
 
 Then **App content** > **Ads** > "Yes, my app contains ads". Forgetting this is
 a common rejection.

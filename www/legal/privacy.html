@@ -17,15 +17,15 @@
   <p class="stamp">Effective <span data-publisher="effective">[NOT SET: effective]</span>. Published by <span data-publisher="name">[NOT SET: name]</span>, <span data-publisher="country">United Kingdom</span>.</p>
 </header>
 
-<p>This policy says what Habit Nemesis does with your information. It describes the app as it is built today, including the advertising in the free version, and it describes the accounts, sync and paid tier that are planned. Anything not yet switched on is marked <span class="tag soon">Not yet active</span> so you can tell the two apart.</p>
+<p>This policy says what Habit Nemesis does with your information. It describes the app as it is built today: the record on your device, the advertising in the free version, and the optional account that keeps a copy of the record. The paid tier is planned and is marked <span class="tag soon">Not yet active</span> so you can tell the two apart.</p>
 
 <nav class="toc">
   <p>Contents</p>
   <ol>
     <li><a href="#controller">Who is responsible</a></li>
     <li><a href="#today">What the app holds today</a></li>
-    <li><a href="#later">What accounts, sync and ads will add</a></li>
-    <li><a href="#honest">The claim that nothing leaves your phone</a></li>
+    <li><a href="#later">Advertising, and the account</a></li>
+    <li><a href="#honest">Where the record goes</a></li>
     <li><a href="#basis">Lawful basis for each purpose</a></li>
     <li><a href="#retention">How long each thing is kept</a></li>
     <li><a href="#backup">Android Auto Backup</a></li>
@@ -64,7 +64,7 @@
 
 <span class="tag now">Active now</span>
 
-<p>Everything below is written by the app into your device's own storage, under two keys: <code>habitnemesis.state.v1</code> for the record, and <code>habitnemesis.snap.YYYY-MM-DD</code> for the daily restore points. Nothing is sent anywhere. The list is taken from the code that defines the record, not from a template.</p>
+<p>Everything below is written by the app into your device's own storage, under two keys: <code>habitnemesis.state.v1</code> for the record, and <code>habitnemesis.snap.YYYY-MM-DD</code> for the daily restore points. Without an account nothing is sent anywhere. With one, the record is copied to your account as section 3 describes. The list is taken from the code that defines the record, not from a template.</p>
 
 <h3>Your habits</h3>
 <ul>
@@ -88,7 +88,7 @@
 </ul>
 
 <h3>Your settings</h3>
-<p>Haptics, sound, first day of the week, the hour a day starts, tap or press-and-hold to mark, whether skip days and unknown days are shown, day order, the number of grid columns, and whether you have seen the introduction. Also the date this device last wrote to or read from an account, which stays on this device and never travels with the record.</p>
+<p>Haptics, sound level, quiet hours, theme, reduced motion, first day of the week, the hour a day starts, tap or press-and-hold to mark, whether skip days and unknown days are shown, day order, the number of grid columns, and whether you have seen the introduction. Also the dates this device last changed the record and last agreed with an account, which stay on this device and never travel with the record.</p>
 
 <h3>The PIN's check blob</h3>
 <p>If you set an app PIN, the app stores three values: a random salt, a random initialisation vector, and one short encrypted block. Your PIN is <strong>not</strong> stored, not in plain form and not as a hash of its own. See section 12.</p>
@@ -101,9 +101,9 @@
 </div>
 
 <h3>What is not collected</h3>
-<p>No name, no email, no phone number, no contacts, no precise location, no analytics, no crash reports, no usage statistics. The app has no account today and asks you for nothing about yourself. The advertising in section 3 is the one exception, and it never sees your record.</p>
+<p>No name, no phone number, no contacts, no precise location, no analytics, no crash reports, no usage statistics. Without an account the app asks you for nothing about yourself. With one it holds your email address and a copy of the record, and section 3 says exactly that. The advertising in section 3 never sees your record.</p>
 
-<h2 id="later"><span class="n">3</span>Advertising, and what accounts will add</h2>
+<h2 id="later"><span class="n">3</span>Advertising, and the account</h2>
 
 <h3>Advertising</h3>
 
@@ -115,29 +115,44 @@
 
 <p>Google receives what the ad request carries: a device advertising identifier, an approximate location derived from your IP address, and which ads were shown. It never receives your habits, your marked days, the Arena's history or your face photo. Those are never sent anywhere by the app.</p>
 
-<h3>An optional account <span class="tag soon">Not yet active</span></h3>
-<p>Signing in will be optional and the app will keep working fully without one. If you choose to create an account you will be able to use an email address and a password, or sign in with Google, or sign in with Apple. The account will hold your email address, an account identifier, and the dates the account was created and last used. Passwords will be stored only as a salted hash by the authentication provider, never in readable form and never by the app.</p>
+<h3>An optional account</h3>
 
-<h3>Sync <span class="tag soon">Not yet active</span></h3>
-<p>If you sign in and switch sync on, your record is copied to your account so it survives a new phone. The copy is the same record described in section 2, including your habits, your marked days, the Arena's history and the face photo if you have set one. The PIN and its settings stay on the device and are never copied.</p>
+<span class="tag now">Active now</span>
+
+<p>Signing in is optional and the app works fully without it. The introduction offers an account once, with a Not now that finishes the setup exactly as if it had never been asked. If you create one, you can use an email address and a password, or sign in with Google. Sign in with Apple arrives with the iPhone build. The account holds your email address, an account identifier, and the dates the account was created and last used. Passwords are stored only as a salted hash by the authentication provider, Supabase, never in readable form and never by the app.</p>
+
+<h3>Sync</h3>
+
+<span class="tag now">Active now</span>
+
+<p>Signed in, the app keeps a copy of your record in your account, automatically. Every change is sent within about thirty seconds of you making it, and a phone signed into the same account receives the record when it opens. If two phones changed the record apart, the app asks you which copy to keep rather than choosing for you.</p>
+
+<p>The copy is the same record described in section 2: your habits, your marked days, the Arena's history, your settings and the face photo if you have set one. It is one row in a database, holding that record as one document, your account identifier, and the time it was last written. The PIN, the lock setting and the two sync dates stay on the device and are never copied. The row is held by Supabase in the European Union, and every transfer to and from it is encrypted in transit.</p>
 
 <h3>A paid tier <span class="tag soon">Not yet active</span></h3>
 <p>Payment will go through the App Store and Google Play, most likely with RevenueCat holding the record of what you have bought. The app will receive whether you are entitled to the paid features and nothing more. Your card details never reach the app or the publisher: Apple and Google take the payment, and they are the seller.</p>
 
-<h2 id="honest"><span class="n">4</span>The claim that nothing leaves your phone</h2>
+<h2 id="honest"><span class="n">4</span>Where the record goes</h2>
 
-<p>The claim is about your record: your habits, the days you marked, the Arena's history and your face photo. That never leaves your phone. Other things do, and this section is the exact list of them.</p>
+<p>Your record is your habits, the days you marked, the Arena's history and your face photo. This section is the exact list of where it can go.</p>
 
-<h3>Where it holds</h3>
+<h3>Without an account</h3>
 <ul>
-  <li>The app never sends your record anywhere. There is no server to send it to and no account configured in this build.</li>
+  <li>The app never sends your record anywhere. There is nothing signed in to send it to.</li>
   <li>The offline cache stores only the app's own files, from the app itself.</li>
   <li>There is no analytics, no tracker and no crash reporting.</li>
   <li>Reminders are scheduled by your phone's own alarm clock. They never reach the internet.</li>
   <li>The publisher cannot see your record. There is nowhere for it to be seen.</li>
 </ul>
 
-<h3>Where it does not hold</h3>
+<h3>With an account</h3>
+
+<div class="card warn">
+  <h3>Your account</h3>
+  <p>The record is copied to your account, held by Supabase in the European Union, with every change you make. The publisher administers that database and can technically open a row in it. The publisher does not read records, and opens one only to answer a request you have made yourself. Section 3 has the detail, and section 11 says how to delete it.</p>
+</div>
+
+<h3>Either way</h3>
 
 <div class="card warn">
   <h3>Android backup</h3>
@@ -154,8 +169,6 @@
   <li><strong>The share card.</strong> If you make one and hand it to the share sheet, it goes wherever you send it. It never includes your face photo.</li>
   <li><strong>Your export.</strong> The JSON backup and the CSV are files you save. Once saved they are ordinary files on your device and are as private as wherever you put them.</li>
 </ul>
-
-<p>When accounts and sync arrive, more will leave. Section 3 says exactly what.</p>
 
 <h2 id="basis"><span class="n">5</span>Lawful basis for each purpose</h2>
 
@@ -184,17 +197,17 @@
   <tr>
     <td>Running your account and syncing your record</td>
     <td>Contract, UK GDPR Article 6(1)(b). You asked for the account and sync is what it does.</td>
-    <td>Not yet active</td>
+    <td>Active, if you sign in</td>
   </tr>
   <tr>
     <td>Keeping the service secure and stopping abuse</td>
     <td>Legitimate interests, Article 6(1)(f). The interest is a working service that is not being attacked, and it does not override your rights.</td>
-    <td>Not yet active</td>
+    <td>Active, if you sign in</td>
   </tr>
   <tr>
     <td>Sign-up and password reset emails</td>
     <td>Contract, Article 6(1)(b). You cannot have an account without them.</td>
-    <td>Not yet active</td>
+    <td>Active, if you sign in</td>
   </tr>
   <tr>
     <td>Personalised advertising, and any storage on your device that ads need</td>
@@ -247,8 +260,8 @@
     <td>Google decides, not the publisher. Google removes backups for apps you have uninstalled and for devices you stop using. You can delete it yourself at any time in your Google account.</td>
   </tr>
   <tr>
-    <td>Your account and synced record <span class="muted">(not yet active)</span></td>
-    <td>While the account exists. Deleting the account deletes them, and copies in the database provider's own backups age out within 30 days.</td>
+    <td>Your account and synced record</td>
+    <td>While the account exists. Deleting the account deletes them at once, and copies in the database provider's own backups age out within 30 days.</td>
   </tr>
   <tr>
     <td>Ad identifiers and ad data <span class="muted">(not yet active)</span></td>
@@ -285,25 +298,25 @@
 
 <h2 id="processors"><span class="n">8</span>Who else handles the data</h2>
 
-<p><strong>Today: Google, twice.</strong> Google AdMob serves the ads described in section 3, and Android's own backup copies your record to your Google account as described in section 7. The backup is Google's arrangement with you rather than with the publisher. Nobody else receives anything from this app, and nobody receives your record.</p>
+<p><strong>Without an account: Google, twice.</strong> Google AdMob serves the ads described in section 3, and Android's own backup copies your record to your Google account as described in section 7. The backup is Google's arrangement with you rather than with the publisher. Nobody else receives anything from this app, and nobody receives your record.</p>
 
-<p>The rows below marked not yet active are the companies that will be involved when the rest of section 3 arrives. Each is bound by a written contract that limits what they may do with your data.</p>
+<p><strong>With an account: Supabase</strong>, which holds the database and the sign-in, and its email sender. Google too if you sign in with Google. Each is bound by a written contract that limits what they may do with your data. The rows marked not yet active are the companies that will be involved when the paid tier and the iPhone build arrive.</p>
 
 <div class="scroll">
 <table>
   <tr><th>Who</th><th>What they do</th><th>What they see</th></tr>
   <tr>
-    <td>Supabase <span class="tag soon">Not yet active</span></td>
+    <td>Supabase</td>
     <td>Database and sign-in, hosted in the European Union</td>
     <td>Your email address, your password hash, your account id, and your synced record</td>
   </tr>
   <tr>
-    <td>Supabase's email sender <span class="tag soon">Not yet active</span></td>
+    <td>Supabase's email sender</td>
     <td>Sends the sign-up confirmation and password reset emails</td>
     <td>Your email address and the contents of those messages</td>
   </tr>
   <tr>
-    <td>Google, for Sign in with Google <span class="tag soon">Not yet active</span></td>
+    <td>Google, for Sign in with Google</td>
     <td>Confirms it is you, if you choose that route</td>
     <td>That you signed in to this app, plus the email address they return</td>
   </tr>
@@ -339,9 +352,9 @@
 
 <h2 id="transfers"><span class="n">9</span>International transfers</h2>
 
-<p><strong>Your record makes none.</strong> It does not leave your device except through your own Google backup, and that is Google's arrangement with you. The ad requests in section 3 reach Google, which operates globally and handles them under its own transfer safeguards.</p>
+<p><strong>Without an account your record makes none.</strong> It does not leave your device except through your own Google backup, and that is Google's arrangement with you. The ad requests in section 3 reach Google, which operates globally and handles them under its own transfer safeguards.</p>
 
-<p><span class="tag soon">Not yet active</span> Once accounts exist, the database and sign-in will be hosted in the European Union. The UK government has ruled that the EU protects personal data adequately, so a transfer from the UK to the EU needs nothing further.</p>
+<p><strong>With an account</strong> the database and sign-in are hosted in the European Union. The UK government has ruled that the EU protects personal data adequately, so a transfer from the UK to the EU needs nothing further.</p>
 
 <p>Some of the companies in section 8 are based in the United States and their staff may access data from there for support. Where that happens, the transfer is covered by the UK International Data Transfer Addendum to the European Commission's standard contractual clauses, or by the UK Extension to the EU-US Data Privacy Framework where the company is certified under it. You can ask for a copy of the safeguards used by writing to <span data-publisher="email">[NOT SET: email]</span>.</p>
 
@@ -354,7 +367,7 @@
   <tr><th>Right</th><th>How to use it</th></tr>
   <tr>
     <td><strong>Access.</strong> A copy of what is held about you</td>
-    <td>Settings, then Export. You get the whole record as a JSON file, and your habits as a CSV. Once accounts exist, email the address below for anything held in an account.</td>
+    <td>Settings, Your data, then Export. You get the whole record as a JSON file, and your habits as a CSV. The copy in an account is that same file, so the export is the copy. Email the address below for the account details themselves.</td>
   </tr>
   <tr>
     <td><strong>Rectification.</strong> Correcting what is wrong</td>
@@ -362,11 +375,11 @@
   </tr>
   <tr>
     <td><strong>Erasure.</strong> Having it deleted</td>
-    <td>Delete a habit, use Reset in Settings, or uninstall the app. Once accounts exist, Settings has Delete account. See section 11.</td>
+    <td>Delete a habit, erase all data in Settings, or uninstall the app. Settings, Account has Delete account. See section 11.</td>
   </tr>
   <tr>
     <td><strong>Restriction.</strong> Pausing what is done with it</td>
-    <td>Email the address below. Once sync exists you can also just switch sync off.</td>
+    <td>Email the address below. Signing out stops every further copy to the account.</td>
   </tr>
   <tr>
     <td><strong>Portability.</strong> Taking it elsewhere</td>
@@ -393,15 +406,15 @@
 
 <p>To make a request, email <span data-publisher="email">[NOT SET: email]</span>. It is free, and it is answered within one month. If the request is unusually complex the deadline can be extended by two further months, and you will be told why within the first month.</p>
 
-<p>Identity is checked only where it is needed. If you write from the email address on the account, that is enough. If there is no account, there is nothing to look up, because the publisher holds nothing about you.</p>
+<p>Identity is checked only where it is needed. If you write from the email address on the account, that is enough. If you have no account, there is nothing to look up, because the publisher holds nothing about you.</p>
 
 <h2 id="deletion"><span class="n">11</span>Deleting your account and your data</h2>
 
-<h3>Today</h3>
-<p>There is no account, so there is nothing to delete anywhere but your own phone. Settings has a reset that clears the record, and uninstalling removes it with the app. Your Android backup is separate: delete it in your Google account settings, as section 7 explains.</p>
+<h3>On the phone</h3>
+<p>Settings, Your data has Erase all data, which clears the record, and uninstalling removes it with the app. Your Android backup is separate: delete it in your Google account settings, as section 7 explains.</p>
 
-<h3>Once accounts exist <span class="tag soon">Not yet active</span></h3>
-<p>Deletion will be available inside the app, in Settings, and from a page on the web so you can do it without installing anything.</p>
+<h3>The account</h3>
+<p>Settings, Account, Delete account. It asks you to type the word and then it is gone, in one step, from inside the app. If you no longer have the app, email <span data-publisher="email">[NOT SET: email]</span> from the address on the account and it is deleted within 30 days.</p>
 
 <p><strong>Deleting your account deletes:</strong></p>
 <ul>
@@ -437,9 +450,9 @@
 
 <p>Habit Nemesis is not designed for or aimed at children. It is a habit tracker for adults.</p>
 
-<p>Today the app collects nothing and sends nothing, so a younger user is in the same position as anyone else: their record is on their own device and nobody else can see it.</p>
+<p>Without an account the app collects nothing and sends nothing, so a younger user is in the same position as anyone else: their record is on their own device and nobody else can see it.</p>
 
-<p>Once accounts exist, you must be <strong>13 or over</strong> to create one. That is the age set by section 9 of the Data Protection Act 2018 for consenting to an online service in the UK. If you are under 13, do not create an account. If the publisher learns that an account belongs to someone under 13, it is deleted along with the data in it.</p>
+<p>You must be <strong>13 or over</strong> to create an account. That is the age set by section 9 of the Data Protection Act 2018 for consenting to an online service in the UK. If you are under 13, do not create an account. If the publisher learns that an account belongs to someone under 13, it is deleted along with the data in it.</p>
 
 <p>If you are a parent or guardian and you believe a child has created an account, email <span data-publisher="email">[NOT SET: email]</span> and it will be removed.</p>
 
@@ -459,7 +472,7 @@
 
 <p>This policy changes when the app does. The date at the top is the version in force.</p>
 
-<p>Small corrections are made quietly. Anything that changes what happens to your data, and in particular the arrival of accounts, sync or advertising, is announced in the app before it takes effect, and you are not opted into anything new without being asked.</p>
+<p>Small corrections are made quietly. Anything that changes what happens to your data, and in particular the arrival of the paid tier, is announced in the app before it takes effect, and you are not opted into anything new without being asked.</p>
 
 <p>Past versions are available on request from <span data-publisher="email">[NOT SET: email]</span>.</p>
 

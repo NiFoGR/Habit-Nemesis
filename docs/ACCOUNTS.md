@@ -129,15 +129,22 @@ Two ways out:
 
 ## What sync does, and what it does not
 
-It is a **backup**, not a live merge, and that is on purpose.
+It is **automatic**, and it is still a whole-record copy rather than a merge.
+
+- **Push on change.** Any change while signed in and online schedules a push
+  five seconds out. Changes coalesce, and there is never more than one push in
+  thirty seconds. Backgrounding the app flushes whatever is waiting.
+- **Pull on launch.** After sign-in the app compares the account's `updated_at`
+  with the last time this device agreed with it. Server ahead and this device
+  clean is the new-phone case, and it is invisible: the record comes down.
+- **Ask only on a real conflict.** Both sides changed since they last agreed:
+  one sheet, once, naming both timestamps, and the choice is yours.
+- **Offline is a state.** The change waits and goes up when the network is
+  back. Nothing toasts a network failure during normal use.
 
 The failure people actually have is a new phone, not two phones edited at the
-same minute. A background merge that silently picks a winner can lose a day
-nobody notices for weeks. So the app offers the newer copy and lets you choose,
-once, instead of deciding for you every time.
-
-Signing in on a device that has a record already asks before it replaces
-anything. Restoring asks. Nothing is overwritten quietly.
+same minute, which is why a merge that silently picks a winner is still not
+built: it can lose a day nobody notices for weeks.
 
 A true per-cell merge needs a timestamp on every cell. `store.js` now stamps
 every habit and group, which is the half that cannot be reconstructed after the

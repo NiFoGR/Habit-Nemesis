@@ -1963,6 +1963,13 @@ html.reduce-motion .hg-cell.intro-tap { animation: none; }
 
 .screen.rv .btn.primary { margin-top: 20px; }
 
+/* No account. One card under the rows, and it never comes back once dismissed twice. */
+.nudge { display: flex; align-items: center; gap: 10px; padding: 12px 14px; margin-top: 14px; }
+.nudge-text { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.nudge-text b { font-size: var(--f-small); }
+.nudge-text i { font-style: normal; font-size: var(--f-fine); color: var(--muted); }
+.nudge .btn { margin: 0; }
+
 /* The way in, on the grid. */
 .rv-cta {
   display: flex; align-items: center; gap: 11px;
@@ -2028,7 +2035,12 @@ html.reduce-motion .hg-cell.intro-tap { animation: none; }
 .intro-fix-side i { font-size: var(--f-fine); color: var(--muted); font-style: normal; }
 .intro-fix-vs { color: var(--faint); }
 .intro-race { grid-column: 1 / -1; height: 6px; border-radius: var(--radius-pill); background: var(--ash); overflow: hidden; }
-.intro-race u { display: block; height: 100%; background: var(--accent); text-decoration: none; }
+.intro-race u { display: block; height: 100%; background: var(--accent); text-decoration: none; animation: rv-fill 0.4s var(--ease) both; }
+
+/* The last page: three ways out, the third a link because it is the third. */
+.intro-account { display: grid; gap: 4px; }
+.intro-account .btn { margin: 4px 0 0; }
+.intro-account .tail-btn { justify-self: center; margin-top: 8px; }
 
 /* Every rung and what it costs. */
 .intro-ladder { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; gap: 2px; }

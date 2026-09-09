@@ -35,9 +35,13 @@ function blank() {
       appLock: false, // ask for the PIN on open
       lock: null, // { salt, iv, check } once a PIN is set. See lock.js.
       onboarded: false, // the introduction has been seen at least once
-      // ISO time of the last write to or from the account. Device-local: it
-      // describes this copy, so it never travels with the record.
+      // The account nudge on the grid, dismissed this many times. Two ends it.
+      nudges: 0,
+      // ISO times, device-local: they describe this copy, so they never travel.
+      // syncedAt is the last write to or from the account, changedAt the last
+      // change to the record here. changedAt past syncedAt means unsynced work.
       syncedAt: '',
+      changedAt: '',
     },
     // Habits. `entries` is habit id, then day. Streaks and scores are computed on
     // read, never stored: the past is editable here.
@@ -149,7 +153,9 @@ function hydrate(saved) {
       // Defaults the opposite way to blank(): reaching hydrate means a saved
       // state exists, so this install is already in use.
       onboarded: ss.onboarded !== false,
+      nudges: int(ss.nudges, 0, 9, 0),
       syncedAt: isoStr(ss.syncedAt),
+      changedAt: isoStr(ss.changedAt),
     },
     habits: cleanHabits(saved.habits, base.habits),
     arena: cleanArena(saved.arena, base.arena),
@@ -347,6 +353,8 @@ function cleanHabits(sh, base) {
 
 let state = load();
 const listeners = new Set();
+// The text last written, so an update that changed nothing is not a change.
+let lastText = JSON.stringify(state);
 
 // Also at boot: a launch that never saves would leave ui.js on defaults.
 setFeedback(state.settings);
@@ -376,11 +384,12 @@ export function get() {
 
 let saveFailed = false;
 
-export function save() {
+export function save(text = JSON.stringify(state)) {
   // ui.js cannot import this module, so the feedback switches are pushed to it.
   setFeedback(state.settings);
+  lastText = text;
   try {
-    localStorage.setItem(KEY, JSON.stringify(state));
+    localStorage.setItem(KEY, text);
     saveFailed = false;
   } catch (err) {
     // Surfaced, not logged: losing a session is the worst failure a tracker has.
@@ -398,8 +407,13 @@ export function subscribe(fn) {
   return () => listeners.delete(fn);
 }
 
-export function update(fn) {
+/** A change to the record. `local` is for a fact about this device, which
+ *  must not read as unsynced work. */
+export function update(fn, { local = false } = {}) {
   fn(state);
+  // A launch-time settle that wrote nothing must not read as unsynced work.
+  if (JSON.stringify(state) === lastText) return state;
+  if (!local) state.settings.changedAt = new Date().toISOString();
   save();
   return state;
 }
@@ -408,7 +422,7 @@ export function update(fn) {
 export function markSynced() {
   return update((s) => {
     s.settings.syncedAt = new Date().toISOString();
-  });
+  }, { local: true });
 }
 
 export const lastSynced = () => state.settings.syncedAt || '';
@@ -433,10 +447,10 @@ export function onSyncState(fn) {
   return () => syncListeners.delete(fn);
 }
 
-export function setSetting(key, value) {
+export function setSetting(key, value, opts) {
   return update((s) => {
     s.settings[key] = value;
-  });
+  }, opts);
 }
 
 export function reset() {
@@ -492,8 +506,14 @@ export function restoreSnapshot(day) {
   return importJson(text);
 }
 
+// The PIN, the lock and the two sync times describe this device, not the
+// record, so neither a backup file nor the account ever carries them.
+const DEVICE_ONLY = ['lock', 'appLock', 'syncedAt', 'changedAt'];
+
 export function exportJson() {
-  return JSON.stringify(state, null, 2);
+  const settings = { ...state.settings };
+  for (const k of DEVICE_ONLY) delete settings[k];
+  return JSON.stringify({ ...state, settings }, null, 2);
 }
 
 /** Restore. The PIN is this device's, so a backup never carries one in. */
@@ -503,12 +523,11 @@ export function importJson(text) {
   if (!parsed || typeof parsed !== 'object' || !parsed.habits) {
     throw new Error('Not a Habit Nemesis backup file');
   }
-  const { lock, appLock, syncedAt } = state.settings;
+  const kept = Object.fromEntries(DEVICE_ONLY.map((k) => [k, state.settings[k]]));
   state = hydrate(parsed);
-  // All three describe this device, not the record, so they stay behind.
-  state.settings.lock = lock;
-  state.settings.appLock = appLock;
-  state.settings.syncedAt = syncedAt;
+  Object.assign(state.settings, kept);
+  // A file is a change to the record. A pull marks itself synced right after.
+  state.settings.changedAt = new Date().toISOString();
   save();
 }
 
