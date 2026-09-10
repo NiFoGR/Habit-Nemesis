@@ -10,8 +10,8 @@
 // rows from another, which is why supabase/schema.sql turns it on for every
 // table. Never put the secret key in www/.
 
-export const SUPABASE_URL = '';
-export const SUPABASE_KEY = '';
+export const SUPABASE_URL = 'https://ejsjzssrsbchyvnrrbun.supabase.co';
+export const SUPABASE_KEY = 'sb_publishable_oRyizMfx43KU0-7JgAC85Q_H6svYlhh';
 
 /** Nothing account-shaped is offered until a project is configured. */
 export const configured = () => !!SUPABASE_URL && !!SUPABASE_KEY;
