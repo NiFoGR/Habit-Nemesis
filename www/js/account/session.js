@@ -68,7 +68,8 @@ export function subscribe(fn) {
 
 export async function signUp(email, password) {
   const sb = need();
-  const { data, error } = await sb.auth.signUp({ email, password });
+  // Without a redirect, Supabase sends the link back to the Referer's bare origin.
+  const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo() } });
   if (error) throw error;
   // No session back means the project asks for a confirmed address first.
   return { needsConfirmation: !data.session };
