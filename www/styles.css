@@ -701,28 +701,51 @@ span.hg-group-btn { cursor: default; }
 
 /* A protocol is a row, like everything else that is a list in this app. Seven
    bordered cards in a sheet was a wall. */
-.proto-list { display: grid; margin: 12px 0 6px; }
-.proto {
-  display: flex; align-items: baseline; gap: 12px; width: 100%;
-  min-height: 48px; padding: 9px 0;
-  background: none; border: 0; border-bottom: 1px solid var(--line-soft);
-  color: var(--text); text-align: left; font: inherit; cursor: pointer;
+/* ---------- the protocol shelf ----------
+   A block is a thing you take on as one unit, so each one keeps a surface.
+   The icon is the only thing that tells them apart at a glance. */
+
+.shelf-lead { margin: 0 0 var(--s-4); }
+.shelf { display: grid; gap: 10px; margin-bottom: 10px; }
+.shelf-card {
+  display: flex; align-items: flex-start; gap: 14px; width: 100%;
+  padding: 14px; text-align: left; font: inherit; color: var(--text);
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-card); cursor: pointer;
 }
-.proto-list .proto:last-child { border-bottom: 0; }
-.proto-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
-.proto-text b { font-size: var(--f-body); font-weight: var(--w-medium); }
-/* Two lines, then an ellipsis: a five-row protocol otherwise ran to three. */
-.proto-text i {
+.shelf-card:active { background: var(--surface-2); }
+.shelf-ico {
+  display: grid; place-items: center; flex: 0 0 40px;
+  width: 40px; height: 40px; border-radius: var(--r-ctrl);
+  background: var(--surface-2); color: var(--muted);
+}
+.shelf-body { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.shelf-body b { font-size: var(--f-head); }
+/* Two lines, then an ellipsis: at 320 a long blurb otherwise ran to four. */
+.shelf-body i {
   font-style: normal; font-size: var(--f-fine); color: var(--muted); line-height: 1.35;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
 }
-.proto-span { flex: 0 0 auto; font-size: var(--f-fine); color: var(--faint); }
-.proto:active { color: var(--muted); }
-.proto:disabled { cursor: default; }
-.proto:disabled .proto-span { color: var(--accent-ink); }
-/* Not built yet, and it does not pretend otherwise: a state, not a span. */
-.proto.soon { cursor: default; border-bottom: 0; }
-.proto.soon .proto-text b, .proto.soon .proto-text i { color: var(--faint); }
+/* One line: the rows are a taste of the block, not its table of contents. */
+.shelf-rows {
+  font-size: var(--f-fine); color: var(--faint);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.shelf-meta { flex: 0 0 auto; display: grid; gap: 3px; justify-items: end; text-align: right; }
+.shelf-span { font-size: var(--f-fine); color: var(--muted); }
+.shelf-count { font-size: var(--f-micro); color: var(--faint); }
+
+/* Running is the one lit card on the shelf. */
+.shelf-card.running { border-color: var(--accent); cursor: default; }
+.shelf-card.running .shelf-ico { background: var(--accent); color: var(--on-accent); }
+.shelf-card.running .shelf-span { color: var(--accent-ink); }
+.shelf-card.kept .shelf-ico { color: var(--warn); }
+.shelf-card.kept .shelf-span { color: var(--warn); }
+
+/* Not built yet, and it does not pretend otherwise. */
+.shelf-card.soon { cursor: default; background: none; border-style: dashed; }
+.shelf-card.soon .shelf-ico { background: none; color: var(--faint); }
+.shelf-card.soon b, .shelf-card.soon i, .shelf-card.soon .shelf-span { color: var(--faint); }
 .proto-soon { font-size: var(--f-micro); text-transform: uppercase; letter-spacing: 0.12em; }
 
 /* Picking a kind is picking from a list, the same one the protocols are in. */
@@ -2129,7 +2152,17 @@ html.reduce-motion .intro-grid .intro-tap { animation: none; }
    rather than steps. One rhythm: the grid gap sets every gap, so no control
    carries a margin of its own. */
 
+/* Two ways in, one form. A tab, not two screens. */
+.acc-tabs { display: flex; gap: 6px; margin-bottom: var(--s-4); }
+.acc-tab {
+  flex: 1; min-height: var(--h-ctrl); padding: 0 var(--s-3);
+  background: none; border: 1px solid var(--line); border-radius: var(--r-ctrl);
+  color: var(--muted); font: inherit; font-size: var(--f-small); cursor: pointer;
+}
+.acc-tab.on { border-color: var(--accent); color: var(--text); background: var(--surface); }
+
 .acc-form { display: grid; gap: var(--s-4); }
+.acc-form > div { display: grid; gap: var(--s-4); }
 /* The label is the .field, so the caption inside it needs its own rule. */
 .acc-form .field { display: grid; gap: 6px; }
 .acc-form .field > span { font-size: var(--f-small); color: var(--muted); }

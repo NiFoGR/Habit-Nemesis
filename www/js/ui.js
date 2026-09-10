@@ -414,7 +414,7 @@ export async function saveFile(name, text, mime = 'application/json') {
       /* same message */
     }
   }
-  toast('Could not save that here. Open the app in a browser and save from there.');
+  toast('Could not save that file.');
   return 'failed';
 }
 

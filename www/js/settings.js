@@ -226,18 +226,6 @@ function diagnostics() {
 
 /** What a page is set to, read down the right edge. A row with no value is a
  *  row you cannot tell apart from the next one. */
-function pageState(id) {
-  const s = store.get().settings;
-  const hs = habits.settings();
-  return {
-    grid: `${WEEKDAYS[hs.firstDay]}, ${hs.columns} days`,
-    alerts: { off: 'Silent', subtle: 'Subtle', full: 'Full' }[s.sound] || '',
-    appearance: s.theme === 'black' ? 'Pure black' : 'Dark',
-    privacy: lock.isSet() ? 'PIN set' : 'No PIN',
-    data: `${Math.max(1, Math.round(store.exportJson().length / 1024))} KB`,
-    about: VERSION,
-  }[id] || '';
-}
 
 /** State, not a label: whether the record is anywhere but this phone. */
 function accountCard() {
@@ -288,7 +276,7 @@ export function renderSettings(mount, page) {
         <span class="icon-btn ghost"></span>
       </header>
       ${p ? '<div id="page"></div>' : `${accountCard()}${rows(PAGES.map((x) =>
-        link(escapeHtml(x.title), `href="#/settings/${x.id}"`, pageState(x.id))))}`}
+        link(escapeHtml(x.title), `href="#/settings/${x.id}"`)))}`}
     </div>`;
   if (p) p.render(mount.querySelector('#page'));
   else if (account.signedIn()) followSync();
@@ -306,7 +294,7 @@ function restorePoints() {
       : '<p class="fineprint">The first one is written the next time you open the app.</p>'}
     <p class="fineprint">${isNative()
       ? 'This phone also backs the record up to your Google account, so reinstalling brings it back.'
-      : 'Nothing here survives clearing your browser data.'}</p>`;
+      : 'Nothing here survives the app being removed.'}</p>`;
 }
 
 /* ---------------- the PIN ---------------- */
@@ -323,7 +311,7 @@ function wireLock(el) {
       return renderSettings(document.getElementById('app'), 'privacy');
     }
     e.target.checked = false;
-    if (!lock.isAvailable()) return toast('This browser cannot store a PIN. Open the app over HTTPS.');
+    if (!lock.isAvailable()) return toast('This device cannot store a PIN.');
     askPin({ change: false });
   });
 }

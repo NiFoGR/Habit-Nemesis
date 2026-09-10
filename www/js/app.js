@@ -2,7 +2,7 @@
 
 import * as store from './store.js';
 import { renderHome, renderArchive } from './habits/home.js';
-import { renderHabitEdit } from './habits/edit.js';
+import { renderHabitEdit, renderProtocols } from './habits/edit.js';
 import { renderHabitDetail } from './habits/tracking.js';
 import { renderTimer, leaveTimer } from './habits/timer.js';
 import * as habitsProgram from './habits/program.js';
@@ -42,11 +42,12 @@ const ROUTES = {
   '#/hub': () => renderHome(app),
   '#/settings': () => renderSettings(app),
   ...Object.fromEntries(SETTINGS_PAGES.map((p) => [`#/settings/${p}`, () => renderSettings(app, p)])),
-  '#/account': () => renderAccount(app),
+  '#/account': (params) => renderAccount(app, { by: params.get('by') }),
   // Aliases. A pinned link must not land on a dead route.
   '#/habits': () => renderHome(app),
   '#/habits/habit': (params) => renderHabitDetail(app, params.get('id')),
   '#/habits/edit': (params) => renderHabitEdit(app, { id: params.get('id'), kind: params.get('kind') }),
+  '#/habits/protocols': () => renderProtocols(app),
   '#/habits/archive': () => renderArchive(app),
   '#/habits/timer': (params) => renderTimer(app, params.get('id')),
   '#/arena': () => renderArena(app),

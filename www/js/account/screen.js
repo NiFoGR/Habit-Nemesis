@@ -31,15 +31,28 @@ function unconfigured(mount) {
 
 /* ---------------- signed out ---------------- */
 
-function signedOut(mount) {
+function signedOut(mount, by) {
   mount.innerHTML = `<div class="screen">${head}
     <p class="acc-lead">One account, every phone. The app works the same without one.</p>
 
+    <div class="acc-tabs" role="tablist">
+      <button class="acc-tab on" id="tabEmail" role="tab" aria-selected="true">Email</button>
+      <button class="acc-tab" id="tabPhone" role="tab" aria-selected="false">Phone</button>
+    </div>
+
     <form class="acc-form" id="form">
-      <label class="field"><span>Email</span>
-        <input type="email" id="email" autocomplete="email" inputmode="email" required></label>
-      <label class="field"><span>Password</span>
-        <input type="password" id="password" autocomplete="current-password" minlength="8" required></label>
+      <div id="byEmail">
+        <label class="field"><span>Email</span>
+          <input type="email" id="email" autocomplete="email" inputmode="email"></label>
+        <label class="field"><span>Password</span>
+          <input type="password" id="password" autocomplete="current-password" minlength="8"></label>
+      </div>
+      <div id="byPhone" hidden>
+        <label class="field"><span>Phone</span>
+          <input type="tel" id="phone" autocomplete="tel" inputmode="tel" placeholder="+44 7700 900000"></label>
+        <label class="field" id="codeField" hidden><span>Code</span>
+          <input type="text" id="code" autocomplete="one-time-code" inputmode="numeric" maxlength="8"></label>
+      </div>
       <p class="warn-inline" id="err" hidden></p>
       <button class="btn primary wide" id="go" type="submit">Sign in</button>
       <div class="acc-alt">
@@ -67,6 +80,28 @@ function signedOut(mount) {
     haptic('miss');
   };
 
+  let byPhone = false;
+  let codeSent = false;
+  const setTab = (phone) => {
+    byPhone = phone;
+    codeSent = false;
+    err.hidden = true;
+    el('byEmail').hidden = phone;
+    el('byPhone').hidden = !phone;
+    el('codeField').hidden = true;
+    el('tabEmail').classList.toggle('on', !phone);
+    el('tabPhone').classList.toggle('on', phone);
+    el('tabEmail').setAttribute('aria-selected', String(!phone));
+    el('tabPhone').setAttribute('aria-selected', String(phone));
+    // A number has no password to make or reset, so neither tail applies.
+    el('toggle').hidden = phone;
+    el('forgot').hidden = phone;
+    el('go').textContent = phone ? 'Send code' : creating ? 'Create account' : 'Sign in';
+  };
+  el('tabEmail').addEventListener('click', () => setTab(false));
+  el('tabPhone').addEventListener('click', () => setTab(true));
+  if (by === 'phone') setTab(true);
+
   el('toggle').addEventListener('click', () => {
     creating = !creating;
     err.hidden = true;
@@ -89,6 +124,7 @@ function signedOut(mount) {
   el('form').addEventListener('submit', async (e) => {
     e.preventDefault();
     err.hidden = true;
+    if (byPhone) return submitPhone();
     const email = el('email').value.trim();
     const password = el('password').value;
     if (password.length < 8) return fail('Passwords need at least eight characters.');
@@ -116,6 +152,34 @@ function signedOut(mount) {
       fail(e2.message);
     }
   });
+
+  async function submitPhone() {
+    const phone = el('phone').value.trim();
+    if (!phone) return fail('Put your number in first.');
+    const go = el('go');
+    const said = go.textContent;
+    go.disabled = true;
+    try {
+      if (!codeSent) {
+        go.textContent = 'Sending';
+        await session.sendCode(phone);
+        codeSent = true;
+        el('codeField').hidden = false;
+        el('code').focus();
+        go.disabled = false;
+        go.textContent = 'Sign in';
+        return;
+      }
+      go.textContent = 'Signing in';
+      await session.verifyCode(phone, el('code').value.trim());
+      haptic('done');
+      await afterSignIn(mount);
+    } catch (e2) {
+      go.disabled = false;
+      go.textContent = said;
+      fail(e2.message);
+    }
+  }
 
   mount.querySelectorAll('[data-provider]').forEach((b) =>
     b.addEventListener('click', async () => {
@@ -256,8 +320,8 @@ async function afterSignIn(mount) {
   if (store.syncState() === 'synced') navigate('#/hub');
 }
 
-export function render(mount) {
+export function render(mount, { by } = {}) {
   if (!configured()) return unconfigured(mount);
   if (!session.available()) return unconfigured(mount);
-  return session.signedIn() ? signedIn(mount) : signedOut(mount);
+  return session.signedIn() ? signedIn(mount) : signedOut(mount, by);
 }

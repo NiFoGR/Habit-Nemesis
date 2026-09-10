@@ -49,48 +49,59 @@ export function openTypePicker() {
     <button class="btn ghost wide" data-close>Cancel</button>`);
   sheet.el.querySelector('#protocols').addEventListener('click', () => {
     sheet.close();
-    openProtocolSheet();
+    location.hash = '#/habits/protocols';
   });
 }
 
-/** Curated blocks. Starting one builds its rows and starts its clock. */
-function openProtocolSheet() {
+/** The shelf. A block is a name, what it costs you in time, and its rows. */
+export function renderProtocols(mount) {
   const runs = habits.protocolRuns();
   const span = (d) => (d % 7 === 0 && d > 30 ? `${d / 7} weeks` : `${d} days`);
-  const sheet = openSheet(`
-    <h2>Protocols</h2>
-    <p class="muted small">Four marks in five puts it in the Cabinet.</p>
-    <div class="proto-list">${habits.PROTOCOLS.map((p) => {
-      const run = runs[p.id];
-      const running = run && !run.settled;
-      // A live run is described by the rows on the grid, not by the table: the
-      // table can change under a run and then the sheet names rows you do not have.
-      const names = running
-        ? run.rows.map((id) => habits.byId(id)?.name).filter(Boolean)
-        : p.rows.map((r) => r.name);
-      return `<button class="proto" data-protocol="${p.id}" ${running ? 'disabled' : ''}>
-        <span class="proto-text">
-          <b>${escapeHtml(p.name)}</b>
-          <i>${escapeHtml((names.length ? names : p.rows.map((r) => r.name)).join(' · '))}</i>
-        </span>
-        <span class="proto-span">${escapeHtml(running ? 'Running' : run?.completed ? 'Kept' : span(p.days))}</span>
-      </button>`;
-    }).join('')}
-      <div class="proto soon">
-        <span class="proto-text">
+  const card = (p) => {
+    const run = runs[p.id];
+    const running = run && !run.settled;
+    // A live run is described by the rows on the grid, not by the table: the
+    // table can change under a run and then the card names rows you do not have.
+    const names = running
+      ? run.rows.map((id) => habits.byId(id)?.name).filter(Boolean)
+      : p.rows.map((r) => r.name);
+    const state = running ? 'running' : run?.completed ? 'kept' : '';
+    return `<button class="shelf-card ${state}" data-protocol="${p.id}" ${running ? 'disabled' : ''}>
+      <span class="shelf-ico">${icon(p.icon, 20)}</span>
+      <span class="shelf-body">
+        <b>${escapeHtml(p.name)}</b>
+        <i>${escapeHtml(p.blurb)}</i>
+        <span class="shelf-rows">${escapeHtml(names.join(' · '))}</span>
+      </span>
+      <span class="shelf-meta">
+        <span class="shelf-span">${escapeHtml(running ? 'Running' : run?.completed ? 'Kept' : span(p.days))}</span>
+        <span class="shelf-count">${p.rows.length} rows</span>
+      </span>
+    </button>`;
+  };
+  mount.innerHTML = `
+    <div class="screen habits">
+      <header class="screen-head">
+        <button class="icon-btn" data-back="habits" aria-label="Back">${icon('back')}</button>
+        <h1>Protocols</h1>
+        <span class="icon-btn ghost"></span>
+      </header>
+      <p class="muted small shelf-lead">Four marks in five puts it in the Cabinet.</p>
+      <div class="shelf">${habits.PROTOCOLS.map(card).join('')}</div>
+      <div class="shelf-card soon">
+        <span class="shelf-ico">${icon('user', 20)}</span>
+        <span class="shelf-body">
           <b>Community protocols</b>
           <i>Write your own and run someone else's.</i>
         </span>
-        <span class="proto-span proto-soon">Being built</span>
+        <span class="shelf-meta"><span class="shelf-span">Being built</span></span>
       </div>
-    </div>
-    <button class="btn ghost wide" data-close>Cancel</button>`);
-  sheet.el.querySelectorAll('[data-protocol]').forEach((b) =>
+    </div>`;
+  mount.querySelectorAll('[data-protocol]').forEach((b) =>
     b.addEventListener('click', () => {
       if (!habits.startProtocol(b.dataset.protocol)) return;
-      sheet.close();
       toast('Rows on the grid. The clock is running.');
-      window.dispatchEvent(new Event('hashchange'));
+      location.hash = '#/habits';
     }));
 }
 
@@ -408,7 +419,6 @@ function openFreqSheet(h, done) {
 function openRemindSheet(h, done) {
   const sheet = openSheet(`
     <h2>Reminder</h2>
-    <p class="muted small">A real alarm in the Android app. In a browser the grid is the reminder.</p>
     <label class="setting">
       <span><b>At</b></span>
       <input type="time" id="at" value="${escapeHtml(h.remindAt)}">
