@@ -11,7 +11,7 @@ const HABIT_COLOURS = ['teal', 'mint', 'lime', 'amber', 'orange', 'clay', 'rose'
 const LEGACY_COLOURS = { red: 'rose' };
 // Timed is a quantity habit underneath: minutes with a floor.
 const HABIT_KINDS = ['yesno', 'number', 'timed'];
-// v2.0 had a checklist. Its entries were counts, so those rows become numbers.
+// An earlier build had a checklist. Its entries were counts, so those rows become numbers.
 const LEGACY_KINDS = { checklist: 'number' };
 const HABIT_TARGET_TYPES = ['atleast', 'atmost'];
 const SOUND_LEVELS = ['off', 'subtle', 'full'];

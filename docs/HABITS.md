@@ -40,7 +40,7 @@ from today's cell on a full-screen timer that writes the minutes on every
 pause, every finish and every whole minute. Nothing downstream branches on it,
 which is the point of modelling it that way.
 
-v2.0 also had a checklist kind. It stored a count of items ticked, so
+An earlier build had a checklist kind. It stored a count of items ticked, so
 `hydrate()` reads a saved one back as a measurable habit and the record
 survives.
 
