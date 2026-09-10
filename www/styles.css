@@ -1328,7 +1328,7 @@ button.ar-lane:active { opacity: 0.7; }
    A tier of feats: a heading, a count, a bar and its cells. One size, one
    radius, one gap and three states, wherever tierGrid is called. */
 
-.tier { margin: 22px 0; }
+.tier { margin: var(--s-6) 0; }
 .tier-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
 .tier-head h2 { margin: 0; }
 .tier-bar { height: 6px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; margin-bottom: 10px; }
@@ -1639,7 +1639,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 /* ---------- what is within reach ----------
    An empty case: the five nearest, under the tiers that hold them. */
 
-.cab-near { margin: 26px 0 0; }
+.cab-near { margin: var(--s-6) 0 0; }
 
 .cab-feat {
   display: flex; align-items: baseline; gap: 12px; width: 100%; text-align: left;
