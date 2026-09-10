@@ -2421,11 +2421,6 @@ html.reduce-motion .intro-cup::after { animation: none; opacity: 1; }
 .arc-cup { text-align: center; padding: 4px 8px 24px; margin-bottom: 6px; }
 /* Relative: the sparks hang off this. */
 .arc-cup-art { position: relative; display: grid; place-items: center; margin-bottom: 10px; color: var(--warn); }
-@keyframes cup-fill {
-  from { clip-path: inset(100% 0 0 0); opacity: 0.2; }
-  to { clip-path: inset(0 0 0 0); opacity: 1; }
-}
-
 .arc-cup .eyebrow { margin-bottom: 3px; }
 .arc-cup-name { font-size: var(--f-display); letter-spacing: -0.03em; margin: 0 0 6px; }
 .arc-cup-line { margin: 0; font-size: var(--f-small); color: var(--muted); }
@@ -2440,9 +2435,6 @@ html.reduce-motion .intro-cup::after { animation: none; opacity: 1; }
    `.deal` is set once per state per session, never under reduced motion, so the
    second visit is instant and nothing is left at zero opacity. Over in 0.7s. */
 
-.arc.deal .arc-cup-art .cup-img { animation: cup-fill 0.55s var(--ease) both; }
-/* No artwork file: the glyph draws, exactly as .mo-cup does. */
-.arc.deal .arc-cup-art .ico path { stroke-dasharray: 240; animation: cup-draw 0.9s var(--ease) forwards; }
 .arc.deal .arc-cup .eyebrow,
 .arc.deal .arc-cup-name,
 .arc.deal .arc-cup-line { opacity: 0; animation: deal 0.36s var(--ease) 0.12s forwards; }
