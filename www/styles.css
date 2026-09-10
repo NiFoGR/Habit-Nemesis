@@ -2503,7 +2503,7 @@ html.reduce-motion .intro-cup::after { animation: none; opacity: 1; }
 
 .arc-btn {
   display: flex; align-items: center; gap: 11px; width: 100%;
-  margin: 0; padding: 10px 12px;
+  margin: var(--s-5) 0 0; padding: 10px 12px;
   background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-ctrl);
   color: inherit; font: inherit; text-align: left; cursor: pointer;
 }
