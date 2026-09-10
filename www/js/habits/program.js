@@ -734,7 +734,7 @@ export function movement(sum) {
 
 /* ---------------- charts ---------------- */
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 /** Weeks as columns, weekdays as rows, with the dates written in. */
 export function calendar(sum, weeks = 17) {
