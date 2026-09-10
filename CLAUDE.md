@@ -129,6 +129,9 @@ and a repetition, and the repetition is what makes a screen feel bloated.
   No analytics. `docs/ACCOUNTS.md` is the runbook, `account/sync.js` the rule.
 - Schema additive: `hydrate()` merges saved state over `blank()`.
 - Sanitise on read. A saved file is untrusted input.
+- Never put a secret in `www/`. It ships in the APK, and an APK is public.
+  `npm run check:release` decodes every JWT it finds there and fails on any role
+  but `anon`. `docs/TAMPER.md` is what the app defends and what it does not.
 
 ## The mark
 
