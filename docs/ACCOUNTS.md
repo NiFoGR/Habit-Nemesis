@@ -172,6 +172,91 @@ Two ways out:
   scheduled workflows in a repo with no commits for 60 days, so this is a
   backstop, not a guarantee.
 
+## 7. The settings that are the actual security
+
+The app's sign-in screen counts wrong passwords and makes you wait. **That is a
+courtesy, not a defence.** The key that talks to Supabase ships inside the APK,
+so anyone who cares calls the auth endpoint directly and never sees the screen.
+Everything that actually holds is on this list, and all of it is dashboard work.
+
+### Confirm the address
+
+**Authentication > Providers > Email > Confirm email: on.** Off, anybody can
+create an account against anybody's address, and the first thing they get is a
+password reset route into it. It is on by default. Leave it.
+
+### The rate limits
+
+**Authentication > Rate Limits.** These are the brute-force control.
+
+| | why |
+|---|---|
+| Sign-ins per hour per IP | the one that stops guessing at a password |
+| Sign-ups per hour per IP | stops a script filling the user table |
+| Password reset emails per hour | a reset button is an email cannon pointed at whoever owns that address |
+| SMS per hour | section 4, and the only one with a bill attached |
+| Token refreshes per hour | leave it alone unless something breaks |
+
+Raise one deliberately, never by reflex, and never because a test you ran
+yourself hit it.
+
+### Passwords worth having
+
+**Authentication > Policies.**
+
+- **Minimum length.** The app asks for eight and will not send a shorter one.
+  Set the same number here, because the app's copy of the rule is advice and
+  this one is the rule.
+- **Leaked password protection.** Supabase checks a new password against Have I
+  Been Pwned's list of ones already in a breach, without sending the password.
+  It is off by default and it is the single most valuable switch on this page:
+  the passwords that get accounts taken are almost never guessed, they are
+  reused.
+
+### A captcha on the way in
+
+**Authentication > Attack Protection > Enable Captcha.** hCaptcha or Turnstile.
+Worth turning on the day the app is public rather than the day the user table
+fills with rubbish. Note that the app's own form does not render a captcha
+widget, so switching this on will break email sign-up until that is built: it is
+a decision, not a checkbox.
+
+### The redirect allow list
+
+Section 1 step 5 is the list, and it is the one that has been applied. Two
+rules stand over it, because a reset link and a provider return both carry a
+token and Supabase will send it to anything on this list.
+
+- **Never a domain you do not control.** `nifogr.github.io` is yours and every
+  path under it is yours, so the wildcard on it costs nothing. A wildcard on a
+  domain somebody else can publish to is how a token ends up on their page.
+- **Take `http://localhost:8080/**` out before the store build.** It is there so
+  `npm run dev` can sign in, and it means any process on a machine that opens a
+  reset link can receive that token. On your own laptop that is nothing. On a
+  project serving other people it is a door left open for no one's benefit.
+
+### What cannot be fixed from a dashboard
+
+`com.habitnemesis.app://auth` is a custom scheme, and on Android **any other
+app can register the same one** and be handed the callback. This is why the
+flow uses PKCE: the code that travels through the link is useless without the
+verifier, which never leaves this app. The exposure is real and the damage is
+none. The proper fix is an App Link on a domain you own, which is a milestone
+rather than a setting.
+
+### What the app does, so you know what it does not
+
+| in the app | in the dashboard |
+|---|---|
+| Five wrong passwords, then a wait that doubles to fifteen minutes | the rate limit that holds when the screen is skipped |
+| A second count across every address, so typing a new one does not reset it | the same |
+| The same answer whether or not an address already has an account | Supabase hides it too, when confirmations are on |
+| Eight characters minimum | the minimum, and the breach list |
+| A minute between resend taps | the reset email limit |
+
+The app's half is in `www/js/account/gate.js`, and `npm run check:account`
+covers the arithmetic and the ways round it that were thought of.
+
 ---
 
 ## What sync does, and what it does not

@@ -128,6 +128,7 @@ the parts that cannot be read off a screen.
 | `js/account/session.js` | 121 | The client, sign up, sign in, reset, sign out, delete. |
 | `js/account/oauth.js` | 59 | Google sign-in: a Custom Tab out, a deep link back. |
 | `js/account/sync.js` | 230 | Automatic: push on change, pull on launch, ask on a real conflict. Whole-record, not a merge. |
+| `js/account/gate.js` | 176 | Five tries then a wait, per account and per device. A courtesy, not a defence. |
 | `js/account/screen.js` | 251 | The Account screen in its three states: unconfigured, signed out, signed in. |
 
 The account is a copy of the record, never the record. Everything pulled from

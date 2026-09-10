@@ -62,28 +62,66 @@ export function subscribe(fn) {
   return () => listeners.delete(fn);
 }
 
+/* ---------------- arriving ---------------- */
+// Set where a sign-in actually happens rather than read off the auth state,
+// because onAuthStateChange also fires for the session a cold launch restored,
+// and being greeted every time you open the app is not a greeting.
+
+let arrived = false;
+export const markArrived = () => { arrived = true; };
+/** True once, then false. Reading it is taking it. */
+export const justArrived = () => {
+  const v = arrived;
+  arrived = false;
+  return v;
+};
+
 /* ---------------- email ---------------- */
 // Password, not a magic link. A link emails on every sign-in and the project's
 // mail allowance is small; a password emails once, at sign-up.
 
+/** Addresses are compared as written by whoever typed them, so they are folded
+ *  once here rather than at four call sites. */
+export const cleanEmail = (v) => String(v || '').trim().toLowerCase();
+
+/** Signing up never says whether the address was already taken.
+ *
+ *  Two different answers turn this form into a way of asking the app which of a
+ *  list of addresses has an account here, which is worth having for anyone
+ *  writing a phishing mail. Supabase hides it too when confirmations are on,
+ *  and returns "already registered" when they are off, so this holds either
+ *  way round: the screen says an email is on its way, whatever happened. */
 export async function signUp(email, password) {
   const sb = need();
   // Without a redirect, Supabase sends the link back to the Referer's bare origin.
-  const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo() } });
-  if (error) throw error;
+  const { data, error } = await sb.auth.signUp({
+    email: cleanEmail(email),
+    password,
+    options: { emailRedirectTo: redirectTo() },
+  });
+  if (error) {
+    if (/already registered|already exists|user_already_exists/i.test(error.message)) {
+      return { needsConfirmation: true };
+    }
+    throw error;
+  }
   // No session back means the project asks for a confirmed address first.
+  if (data.session) markArrived();
   return { needsConfirmation: !data.session };
 }
 
 export async function signIn(email, password) {
   const sb = need();
-  const { error } = await sb.auth.signInWithPassword({ email, password });
+  const { error } = await sb.auth.signInWithPassword({ email: cleanEmail(email), password });
   if (error) throw error;
+  markArrived();
 }
 
+/** Also silent about whether the address exists, which is Supabase's own
+ *  behaviour and the reason the screen says the same thing either way. */
 export async function sendReset(email) {
   const sb = need();
-  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: redirectTo() });
+  const { error } = await sb.auth.resetPasswordForEmail(cleanEmail(email), { redirectTo: redirectTo() });
   if (error) throw error;
 }
 
@@ -101,6 +139,7 @@ export async function verifyCode(phone, token) {
   const sb = need();
   const { error } = await sb.auth.verifyOtp({ phone, token, type: 'sms' });
   if (error) throw error;
+  markArrived();
 }
 
 /** A signed-in user is named by whichever one they used. */

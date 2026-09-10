@@ -6,8 +6,9 @@ import * as session from './session.js';
 import { signInWith } from './oauth.js';
 import * as sync from './sync.js';
 import { configured } from './config.js';
+import * as gate from './gate.js';
 import { escapeHtml, toast, haptic, openSheet, relDay, relTime } from '../ui.js';
-import { icon } from '../icons.js';
+import { icon, logoMark } from '../icons.js';
 import { navigate } from '../back.js';
 
 const head = `<header class="screen-head">
@@ -31,33 +32,99 @@ function unconfigured(mount) {
 
 /* ---------------- signed out ---------------- */
 
+/** Long enough that the gate has something to protect. The rule that actually
+ *  holds is Supabase's own minimum, which docs/ACCOUNTS.md section 7 sets. */
+const MIN_PASSWORD = 8;
+
+/** Three steps. Length does most of the work, a second and third kind of
+ *  character do the rest. No words: the rail is the whole of it. */
+function strength(pw) {
+  if (pw.length < MIN_PASSWORD) return 0;
+  const kinds = [/[a-z]/, /[A-Z]/, /\d/, /[^A-Za-z0-9]/].filter((re) => re.test(pw)).length;
+  if (pw.length >= 14 || kinds >= 3) return 3;
+  if (pw.length >= 10 || kinds >= 2) return 2;
+  return 1;
+}
+
+/** Shown whether or not the address already had an account. Two answers would
+ *  make this form a way of asking which addresses do. */
+function checkYourEmail(address, again) {
+  const sheet = openSheet(`
+    <div class="acc-sent">
+      <span class="acc-sent-mark">${icon('mail', 26)}</span>
+      <h2>Check your email</h2>
+      <p class="muted small">${escapeHtml(address)}</p>
+    </div>
+    <button class="btn ghost wide" id="again">Send it again</button>
+    <button class="btn wide" data-close>Done</button>`);
+
+  const btn = sheet.el.querySelector('#again');
+  let timer = 0;
+  let left = 0;
+  const tick = () => {
+    if (!btn.isConnected) return clearInterval(timer);
+    left -= 1;
+    btn.textContent = left > 0 ? `Send it again in ${left}s` : 'Send it again';
+    btn.disabled = left > 0;
+  };
+  // A minute between sends, so a resend button is not an email cannon pointed
+  // at whoever owns that address.
+  const cool = () => {
+    clearInterval(timer);
+    left = 61;
+    tick();
+    timer = setInterval(tick, 1000);
+  };
+  cool();
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    try {
+      await again();
+      cool();
+    } catch (e) {
+      toast(readable(e.message));
+      btn.disabled = false;
+    }
+  });
+  return sheet;
+}
+
 function signedOut(mount, by) {
   mount.innerHTML = `<div class="screen">${head}
-    <div class="acc-tabs" role="tablist">
-      <button class="acc-tab on" id="tabEmail" role="tab" aria-selected="true">Email</button>
-      <button class="acc-tab" id="tabPhone" role="tab" aria-selected="false">Phone</button>
+    <div class="acc-seg" id="seg" role="tablist">
+      <button class="acc-seg-b on" type="button" id="modeIn" role="tab" aria-selected="true">Sign in</button>
+      <button class="acc-seg-b" type="button" id="modeUp" role="tab" aria-selected="false">Create account</button>
     </div>
 
-    <form class="acc-form" id="form">
+    <form class="acc-form" id="form" novalidate>
       <div id="byEmail">
         <label class="field"><span>Email</span>
-          <input type="email" id="email" autocomplete="email" inputmode="email"></label>
+          <input type="email" id="email" autocomplete="email" inputmode="email"
+            autocapitalize="off" autocorrect="off" spellcheck="false"
+            value="${escapeHtml(gate.remembered())}"></label>
         <label class="field"><span>Password</span>
-          <input type="password" id="password" autocomplete="current-password" minlength="8"></label>
+          <span class="pw">
+            <input type="password" id="password" autocomplete="current-password">
+            <button type="button" class="pw-show" id="eye" aria-label="Show password">Show</button>
+          </span></label>
+        <span class="pw-rail" id="rail" hidden data-at="0"><i></i><i></i><i></i></span>
       </div>
+
       <div id="byPhone" hidden>
         <label class="field"><span>Phone</span>
           <input type="tel" id="phone" autocomplete="tel" inputmode="tel" placeholder="+44 7700 900000"></label>
         <label class="field" id="codeField" hidden><span>Code</span>
           <input type="text" id="code" autocomplete="one-time-code" inputmode="numeric" maxlength="8"></label>
       </div>
+
       <p class="warn-inline" id="err" hidden></p>
       <button class="btn primary wide" id="go" type="submit">Sign in</button>
-      <div class="acc-alt">
-        <button class="tail-btn" type="button" id="toggle">Create an account</button>
-        <button class="tail-btn" type="button" id="forgot">Forgot password</button>
-      </div>
     </form>
+
+    <div class="acc-alt">
+      <button class="tail-btn" type="button" id="forgot">Forgot password</button>
+      <button class="tail-btn" type="button" id="swap">Use a phone number</button>
+    </div>
 
     <div class="acc-or"><span>or</span></div>
 
@@ -69,113 +136,211 @@ function signedOut(mount, by) {
     <p class="fineprint">By continuing you agree to the <a href="./legal/terms.html">terms</a> and the <a href="./legal/privacy.html">privacy&nbsp;policy</a>.</p>
   </div>`;
 
-  let creating = false;
   const el = (id) => mount.querySelector('#' + id);
   const err = el('err');
-  const fail = (msg) => {
-    err.textContent = readable(msg);
-    err.hidden = false;
-    haptic('miss');
-  };
-
+  const go = el('go');
+  let creating = false;
   let byPhone = false;
   let codeSent = false;
-  const setTab = (phone) => {
-    byPhone = phone;
-    codeSent = false;
-    err.hidden = true;
-    el('byEmail').hidden = phone;
-    el('byPhone').hidden = !phone;
-    el('codeField').hidden = true;
-    el('tabEmail').classList.toggle('on', !phone);
-    el('tabPhone').classList.toggle('on', phone);
-    el('tabEmail').setAttribute('aria-selected', String(!phone));
-    el('tabPhone').setAttribute('aria-selected', String(phone));
-    // A number has no password to make or reset, so neither tail applies.
-    el('toggle').hidden = phone;
-    el('forgot').hidden = phone;
-    el('go').textContent = phone ? 'Send code' : creating ? 'Create account' : 'Sign in';
-  };
-  el('tabEmail').addEventListener('click', () => setTab(false));
-  el('tabPhone').addEventListener('click', () => setTab(true));
-  if (by === 'phone') setTab(true);
+  let timer = 0;
 
-  el('toggle').addEventListener('click', () => {
-    creating = !creating;
-    err.hidden = true;
-    el('go').textContent = creating ? 'Create account' : 'Sign in';
-    el('toggle').textContent = creating ? 'I already have one' : 'Create an account';
-    el('password').setAttribute('autocomplete', creating ? 'new-password' : 'current-password');
+  const label = () => (byPhone ? (codeSent ? 'Sign in' : 'Send code') : creating ? 'Create account' : 'Sign in');
+  const say = (msg) => {
+    err.textContent = msg;
+    err.hidden = !msg;
+  };
+  const fail = (msg) => {
+    say(readable(msg));
+    haptic('miss');
+  };
+  const who = () => (byPhone ? el('phone').value.trim() : session.cleanEmail(el('email').value));
+
+  /* ---- the wait ---- */
+
+  /** The button counts the wait down rather than a line of text doing it: the
+   *  thing you cannot press is the thing that should say why. */
+  function hold(ms) {
+    clearInterval(timer);
+    const until = Date.now() + ms;
+    const tick = () => {
+      if (!go.isConnected) return clearInterval(timer);
+      const left = until - Date.now();
+      if (left <= 0) {
+        clearInterval(timer);
+        go.disabled = false;
+        go.textContent = label();
+        return;
+      }
+      go.disabled = true;
+      go.textContent = `Try again in ${gate.saySoon(left)}`;
+    };
+    tick();
+    timer = setInterval(tick, 1000);
+  }
+
+  const owed = () => {
+    const ms = gate.waitLeft(who());
+    if (ms > 0) hold(ms);
+    return ms > 0;
+  };
+
+  /* ---- which form ---- */
+
+  const setMode = (create) => {
+    creating = create;
+    say('');
+    el('modeIn').classList.toggle('on', !create);
+    el('modeUp').classList.toggle('on', create);
+    el('modeIn').setAttribute('aria-selected', String(!create));
+    el('modeUp').setAttribute('aria-selected', String(create));
+    el('password').setAttribute('autocomplete', create ? 'new-password' : 'current-password');
+    el('forgot').hidden = create;
+    el('rail').hidden = !create;
+    go.textContent = label();
+    rail();
+  };
+
+  const setPhone = (on) => {
+    byPhone = on;
+    codeSent = false;
+    say('');
+    el('byEmail').hidden = on;
+    el('byPhone').hidden = !on;
+    el('codeField').hidden = true;
+    el('seg').hidden = on;
+    el('forgot').hidden = on || creating;
+    el('swap').textContent = on ? 'Use an email address' : 'Use a phone number';
+    go.textContent = label();
+  };
+
+  /** The rail, and nothing else: a password that is only just long enough gets
+   *  one bar rather than a sentence about entropy. */
+  function rail() {
+    const bar = el('rail');
+    if (bar.hidden) return;
+    bar.dataset.at = String(strength(el('password').value));
+  }
+
+  el('modeIn').addEventListener('click', () => setMode(false));
+  el('modeUp').addEventListener('click', () => setMode(true));
+  el('swap').addEventListener('click', () => setPhone(!byPhone));
+  el('password').addEventListener('input', rail);
+
+  el('eye').addEventListener('click', () => {
+    const field = el('password');
+    const show = field.type === 'password';
+    field.type = show ? 'text' : 'password';
+    el('eye').textContent = show ? 'Hide' : 'Show';
+    el('eye').setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    field.focus();
   });
 
+  if (by === 'phone') setPhone(true);
+  else if (by === 'create') setMode(true);
+  // A remembered address means the password is the only thing left to type.
+  if (!byPhone && el('email').value) el('password').focus();
+
+  /* ---- forgotten ---- */
+
   el('forgot').addEventListener('click', async () => {
-    const email = el('email').value.trim();
-    if (!email) return fail('Put your email in first.');
+    const address = session.cleanEmail(el('email').value);
+    if (!address) return fail('Put your email in first.');
+    if (owed()) return;
+    const btn = el('forgot');
+    btn.disabled = true;
     try {
-      await session.sendReset(email);
-      toast('Check your email for a reset link');
+      await session.sendReset(address);
+      checkYourEmail(address, () => session.sendReset(address));
     } catch (e) {
       fail(e.message);
     }
+    btn.disabled = false;
   });
+
+  /* ---- in ---- */
 
   el('form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    err.hidden = true;
+    say('');
     if (byPhone) return submitPhone();
-    const email = el('email').value.trim();
+
+    const address = session.cleanEmail(el('email').value);
     const password = el('password').value;
-    if (password.length < 8) return fail('Passwords need at least eight characters.');
-    const go = el('go');
-    const said = go.textContent;
+    if (!address) return fail('Put your email in first.');
+    if (password.length < MIN_PASSWORD) {
+      return fail(`Passwords are at least ${MIN_PASSWORD} characters.`);
+    }
+    if (owed()) return;
+
     go.disabled = true;
     go.textContent = creating ? 'Creating' : 'Signing in';
     try {
       if (creating) {
-        const { needsConfirmation } = await session.signUp(email, password);
+        const { needsConfirmation } = await session.signUp(address, password);
+        gate.pass(address);
+        gate.remember(address);
         if (needsConfirmation) {
-          toast('Check your email to confirm the account');
           go.disabled = false;
-          go.textContent = said;
+          go.textContent = label();
+          el('password').value = '';
+          rail();
+          checkYourEmail(address, () => session.signUp(address, password));
           return;
         }
       } else {
-        await session.signIn(email, password);
+        await session.signIn(address, password);
+        gate.pass(address);
+        gate.remember(address);
       }
       haptic('done');
-      await afterSignIn(mount);
+      render(mount);
     } catch (e2) {
+      // The address stays, the password goes: retyping the one you got right is
+      // the thing that makes a wrong password twice as annoying as it is.
+      el('password').value = '';
+      rail();
+      el('password').focus();
       go.disabled = false;
-      go.textContent = said;
+      go.textContent = label();
       fail(e2.message);
+      const wait = gate.fail(address);
+      if (wait > 0) hold(wait);
+      else if (gate.triesLeft(address) <= 2) {
+        say(`${readable(e2.message)} ${gate.triesLeft(address)} tries left.`);
+      }
     }
   });
 
   async function submitPhone() {
-    const phone = el('phone').value.trim();
-    if (!phone) return fail('Put your number in first.');
-    const go = el('go');
-    const said = go.textContent;
+    const number = el('phone').value.trim();
+    if (!number) return fail('Put your number in first.');
+    if (owed()) return;
     go.disabled = true;
     try {
       if (!codeSent) {
         go.textContent = 'Sending';
-        await session.sendCode(phone);
+        await session.sendCode(number);
         codeSent = true;
         el('codeField').hidden = false;
         el('code').focus();
         go.disabled = false;
-        go.textContent = 'Sign in';
+        go.textContent = label();
         return;
       }
       go.textContent = 'Signing in';
-      await session.verifyCode(phone, el('code').value.trim());
+      await session.verifyCode(number, el('code').value.trim());
+      gate.pass(number);
       haptic('done');
-      await afterSignIn(mount);
+      render(mount);
     } catch (e2) {
       go.disabled = false;
-      go.textContent = said;
+      go.textContent = label();
       fail(e2.message);
+      // A code is six digits, so this is the one worth counting hardest.
+      if (codeSent) {
+        const wait = gate.fail(number);
+        if (wait > 0) hold(wait);
+      }
     }
   }
 
@@ -189,6 +354,38 @@ function signedOut(mount, by) {
       }
     })
   );
+}
+
+/* ---------------- arriving ---------------- */
+
+/** A moment on the way in, while the two copies settle themselves behind it.
+ *  Shown once per sign-in, never on a launch that merely restored a session. */
+function welcome(mount) {
+  const name = session.emailOf();
+  mount.innerHTML = `<div class="screen acc-hello">
+    <span class="acc-hello-mark">${logoMark(52)}</span>
+    <h1>Welcome back</h1>
+    <p class="muted small">${escapeHtml(name)}</p>
+  </div>`;
+
+  // Long enough to be read. Reconciling an empty account takes no time at all,
+  // and a greeting that flashes for eleven milliseconds is a flicker, not a
+  // moment.
+  const DWELL = 1200;
+  const from = Date.now();
+
+  (async () => {
+    try {
+      await sync.reconcile();
+    } catch {
+      /* the sheet or the next launch will settle it */
+    }
+    const rest = DWELL - (Date.now() - from);
+    if (rest > 0) await new Promise((r) => setTimeout(r, rest));
+    if (!mount.isConnected || !mount.querySelector('.acc-hello')) return;
+    if (store.syncState() === 'synced') return navigate('#/hub');
+    signedIn(mount);
+  })();
 }
 
 /* ---------------- signed in ---------------- */
@@ -310,16 +507,10 @@ function stateLine() {
 // The dot's colour, not the words: good, waiting, or failed.
 const dotState = () => ({ pending: 'wait', offline: 'wait', error: 'bad' }[store.syncState()] || 'good');
 
-/** The two copies settle themselves. A record already in the account comes
- *  down on its own when this phone is clean, and asks when it is not. */
-async function afterSignIn(mount) {
-  render(mount);
-  await sync.reconcile();
-  if (store.syncState() === 'synced') navigate('#/hub');
-}
-
 export function render(mount, { by } = {}) {
   if (!configured()) return unconfigured(mount);
   if (!session.available()) return unconfigured(mount);
-  return session.signedIn() ? signedIn(mount) : signedOut(mount, by);
+  if (!session.signedIn()) return signedOut(mount, by);
+  // Taking the flag is what clears it, so a greeting cannot repeat itself.
+  return session.justArrived() ? welcome(mount) : signedIn(mount);
 }

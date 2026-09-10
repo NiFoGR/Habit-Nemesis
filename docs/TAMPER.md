@@ -112,6 +112,20 @@ comes from this phone, the phone stops being trusted.
 
 None of that is worth building before there is something to defend.
 
+## The sign-in screen
+
+Same shape of answer, in `docs/ACCOUNTS.md` section 7. The gate on the form
+counts five wrong passwords and then makes you wait, per account and per device
+so changing the address does not reset it, and it survives a reload. It is a
+courtesy: the publishable key ships in the APK, so the auth endpoint can be
+called without ever loading the screen. Supabase's own rate limits are the
+control, and its leaked-password check is worth more than everything on the
+form put together.
+
+One thing there is a defence rather than a courtesy: **sign-up says the same
+thing whether or not the address already had an account.** Two answers would
+make the form a way of asking which of a list of addresses has one here.
+
 ## What is checked
 
 `npm run check:release`, on every push:

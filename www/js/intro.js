@@ -310,7 +310,10 @@ export function renderIntro(mount) {
       haptic('press');
       askOnNextSignIn();
       finish();
-      navigate('#/account');
+      // Opening the introduction and choosing email is somebody making an
+      // account, not somebody returning to one. The segment says so, and it
+      // switches in one tap for whoever is.
+      navigate('#/account?by=create');
     });
     mount.querySelector('#later')?.addEventListener('click', finish);
     // Back steps a page. On the first it means Skip.
