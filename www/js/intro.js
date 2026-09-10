@@ -9,7 +9,7 @@ import * as habits from './habits/program.js';
 import { miniRing } from './habits/grid.js';
 import * as arena from './arena/program.js';
 import { icon, logoMark } from './icons.js';
-import { crest } from './arena/crest.js';
+import { crestHue } from './arena/crest.js';
 import { counts } from './arena/feats.js';
 import { cup } from './arena/cup.js';
 import { escapeHtml, chime, haptic, celebrate, toast } from './ui.js';
@@ -74,16 +74,15 @@ function fixture() {
   </div>`;
 }
 
-/** Every rung and what it costs. The one screen that answers "how do I get
- *  there", so it is the whole ladder rather than the next step. */
+/** Every rung and what it costs. The whole ladder rather than the next step,
+ *  and the Arena's rail rather than its crests: a crest is a smudge at this
+ *  size, and it lands harder met full size on the Arena. */
 function ladder() {
   return `<ol class="intro-ladder">
-    ${arena.DIVISIONS.map((d, i) => `<li>
-      <span class="intro-rung">
-        <span class="intro-rung-crest">${crest(i, 26)}</span>
-        <span class="intro-rung-name">${escapeHtml(d.name)}</span>
-        <span class="intro-rung-need">${pct(d.bar)}</span>
-      </span>
+    ${arena.DIVISIONS.map((d, i) => `<li class="intro-rung" style="--dc:${crestHue(i)}">
+      <span class="intro-rung-node"></span>
+      <span class="intro-rung-name">${escapeHtml(d.name)}</span>
+      <span class="intro-rung-need">${pct(d.bar)}</span>
     </li>`).reverse().join('')}
   </ol>`;
 }
@@ -229,11 +228,16 @@ export function renderIntro(mount) {
     const page = list[i];
     const last = i === list.length - 1;
     const locked = page.gate && !marked;
+    // Nothing is behind page 1, so the arrow there would be a second Skip. The
+    // slot stays for the header's shape, and Android back still lands on it.
+    const back = i === 0
+      ? '<span class="icon-btn ghost" data-back id="back" aria-hidden="true"></span>'
+      : `<button class="icon-btn" data-back id="back" aria-label="Back">${icon('back')}</button>`;
 
     mount.innerHTML = `
       <div class="screen intro">
         <header class="screen-head">
-          <button class="icon-btn" data-back id="back" aria-label="Back">${icon('back')}</button>
+          ${back}
           <span></span>
           <button class="icon-btn text-btn" id="skip">Skip</button>
         </header>

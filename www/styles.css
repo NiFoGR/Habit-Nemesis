@@ -2133,15 +2133,32 @@ html.reduce-motion .intro-grid .intro-tap { animation: none; }
 .intro-account .btn { margin: 4px 0 0; }
 .intro-account .tail-btn { justify-self: center; margin-top: 8px; padding: 13px 18px; }
 
-/* Every rung and what it costs. Nine of them, so the row is the crest's height
-   and nothing else. */
-.intro-ladder { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; }
-.intro-rung {
-  display: grid; grid-template-columns: 20px 1fr auto; align-items: center; gap: 10px;
-  width: 100%; min-height: 28px; padding: 0 2px; text-align: left;
+/* Every rung and what it costs, on the Arena's rail. Nine rows share the stage,
+   so the ladder is never taller than the picture it is drawn in. */
+.intro-ladder {
+  list-style: none; margin: 0; padding: 0; width: 100%;
+  align-self: stretch; display: grid; grid-auto-rows: 1fr;
 }
-.intro-rung-crest { display: grid; place-items: center; }
-.intro-rung-name { font-size: var(--f-small); }
+.intro-rung {
+  position: relative;
+  display: grid; grid-template-columns: 20px 1fr auto; align-items: center; gap: 10px;
+  padding: 0 2px; text-align: left;
+}
+/* Full height, so the segments meet with no seam. Coloured the whole way up:
+   on a new install there is no rung climbed to grey out. */
+.intro-rung::before {
+  content: ''; position: absolute; left: 12px; top: 0; bottom: 0;
+  width: 3px; margin-left: -1.5px; background: var(--dc); opacity: 0.55;
+}
+.intro-rung:first-child::before { top: 50%; border-radius: var(--r-chip) var(--r-chip) 0 0; }
+.intro-rung:last-child::before { bottom: 50%; border-radius: 0 0 var(--r-chip) var(--r-chip); }
+/* The plate keeps the rail off the node. */
+.intro-rung-node {
+  position: relative; justify-self: center;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--dc); box-shadow: 0 0 0 3px var(--bg);
+}
+.intro-rung-name { font-size: var(--f-body); font-weight: var(--w-medium); }
 .intro-rung-need { font-size: var(--f-fine); color: var(--faint); font-variant-numeric: tabular-nums; }
 
 /* Cups and feats. */
