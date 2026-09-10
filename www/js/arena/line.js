@@ -2,13 +2,15 @@
 // record. A predicate table in the shape of feats.js: each entry says when it
 // holds and what it says from the same numbers, so it is never false. When
 // none holds, nothing is said.
+//
+// He is the one speaking. Every line is his, and every number in one is a week
+// you actually played.
 
 import * as store from '../store.js';
 import * as habits from '../habits/program.js';
 import * as arena from './program.js';
 import { WEEKDAYS_LONG } from '../ui.js';
 
-const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
 const word = (n) => WORDS[n] || String(n);
 const cap = (s) => s[0].toUpperCase() + s.slice(1);
@@ -55,41 +57,6 @@ function perfectOn(key) {
   return due > 0;
 }
 
-/** Played weeks, oldest first. */
-const played = () =>
-  Object.entries(store.get().arena.weeks)
-    .filter(([, w]) => w.result === 'won' || w.result === 'lost')
-    .sort((a, b) => (a[0] < b[0] ? -1 : 1))
-    .map(([key, w]) => ({ key, ...w }));
-
-/** The run of wins ending with the last week played, and the longest ever. */
-function winRuns() {
-  let run = 0;
-  let best = 0;
-  let current = 0;
-  for (const w of played()) {
-    run = w.result === 'won' ? run + 1 : 0;
-    if (run > best) best = run;
-    current = run;
-  }
-  return { current, best };
-}
-
-/** Weeks since the last win over the Nemesis, or null with none on the record. */
-function weeksSinceNemesis() {
-  const list = played();
-  const last = [...list].reverse().find((w) => w.result === 'won' && (w.opponent === 'nemesis' || w.opponent === 'final'));
-  if (!last) return null;
-  const now = arena.currentWeek();
-  let n = 0;
-  let k = last.key;
-  while (k < now && n < 200) {
-    k = arena.nextWeek(k);
-    n++;
-  }
-  return n;
-}
-
 /** This week against the opponent, live. */
 function live() {
   const key = arena.currentWeek();
@@ -98,50 +65,67 @@ function live() {
   return { key, score: s.score, done: s.done, due: s.due, opp: arena.fixtureFor(key), left: arena.daysLeftInWeek() };
 }
 
+/** He is the fixture, so the duel above already carries the gap. */
+const facing = () => {
+  const l = live();
+  return !!l && (l.opp.id === 'nemesis' || l.opp.knockout === 'final');
+};
+
 /* ---------------- the lines ---------------- */
 
 const LINES = [
   {
-    id: 'weekday',
-    when: () => weekdayRun(new Date().getDay()).run >= 4,
-    say: () => {
-      const day = WEEKDAYS_LONG[new Date().getDay()];
-      return `You have not missed a ${day} since ${monthOf(weekdayRun(new Date().getDay()).since)}.`;
-    },
-  },
-  {
-    // The gap: the one number the cards below do not already carry.
-    id: 'best',
+    id: 'undefeated',
     when: () => {
-      const l = live();
-      const n = arena.nemesisWeek();
-      return !!l && !!n && l.left > 1 && l.due > 0 && Math.round((n.score - l.score) * 100) > 0;
+      const h = arena.headToHead();
+      return h.met >= 2 && h.w === 0;
     },
-    say: () => {
-      const gap = Math.round((arena.nemesisWeek().score - live().score) * 100);
-      return `${cap(word(gap))} off your best.`;
-    },
-  },
-  {
-    id: 'row',
-    when: () => {
-      const r = winRuns();
-      return r.current >= 2 && r.current <= 9 && r.best < r.current + 1;
-    },
-    say: () => {
-      const r = winRuns();
-      return `${cap(word(r.current))} in a row. The Nemesis has never lost ${word(r.current + 1)}.`;
-    },
+    say: () => 'You have never beaten me.',
   },
   {
     id: 'sinceWin',
-    when: () => (weeksSinceNemesis() ?? 0) >= 2,
-    say: () => `${cap(word(weeksSinceNemesis()))} weeks since you beat me.`,
+    when: () => (arena.sinceWin() ?? 0) >= 2,
+    say: () => `${cap(word(arena.sinceWin()))} weeks since you beat me.`,
   },
   {
-    id: 'perfect',
-    when: () => perfectOn(store.addDays(habits.today(), -1)),
-    say: () => 'Yesterday was a perfect day.',
+    id: 'run',
+    when: () => arena.headToHead().run >= 2,
+    say: () => `You have taken ${word(arena.headToHead().run)} off me in a row.`,
+  },
+  {
+    id: 'hisRun',
+    when: () => arena.headToHead().run <= -2,
+    say: () => `I have taken the last ${word(-arena.headToHead().run)}.`,
+  },
+  {
+    id: 'deposed',
+    when: () => arena.deposed() >= 1,
+    say: () => {
+      const n = arena.deposed();
+      if (n === 1) return 'You have replaced me once.';
+      if (n === 2) return 'You have replaced me twice.';
+      return `You have replaced me ${word(n)} times.`;
+    },
+  },
+  {
+    id: 'reign',
+    when: () => arena.holding() >= 4,
+    say: () => `I have held this for ${word(arena.holding())} weeks.`,
+  },
+  {
+    id: 'meeting',
+    when: () => arena.nextMeeting()?.away === 1,
+    say: () => 'We meet next week.',
+  },
+  {
+    // On a week he is not the fixture: the one number no card carries.
+    id: 'gap',
+    when: () => {
+      const l = live();
+      const n = arena.nemesisWeek();
+      return !!l && !!n && !facing() && l.left > 1 && l.due > 0 && Math.round((n.score - l.score) * 100) > 0;
+    },
+    say: () => `${cap(word(Math.round((arena.nemesisWeek().score - live().score) * 100)))} off my best.`,
   },
   {
     id: 'lastDay',
@@ -152,8 +136,21 @@ const LINES = [
     say: () => {
       const l = live();
       const need = Math.max(1, Math.ceil(l.opp.score * l.due) - l.done);
-      return `Last day. ${cap(word(need))} more cell${need === 1 ? '' : 's'} and the week is yours.`;
+      return `Last day. ${cap(word(need))} more cell${need === 1 ? '' : 's'} and you take it.`;
     },
+  },
+  {
+    id: 'weekday',
+    when: () => weekdayRun(new Date().getDay()).run >= 4,
+    say: () => {
+      const day = WEEKDAYS_LONG[new Date().getDay()];
+      return `I have not seen you miss a ${day} since ${monthOf(weekdayRun(new Date().getDay()).since)}.`;
+    },
+  },
+  {
+    id: 'perfect',
+    when: () => perfectOn(store.addDays(habits.today(), -1)),
+    say: () => 'Nothing missed yesterday.',
   },
 ];
 
@@ -189,3 +186,6 @@ export function dailyLine() {
   }, { local: true });
   return pick.say();
 }
+
+/** Every line that holds right now, for the checks. */
+export const openLines = () => LINES.filter((l) => holds(l.id)).map((l) => ({ id: l.id, say: l.say() }));

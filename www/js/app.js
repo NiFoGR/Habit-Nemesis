@@ -9,6 +9,7 @@ import * as habitsProgram from './habits/program.js';
 import { renderArena } from './arena/home.js';
 import { renderArc } from './arena/arc.js';
 import { renderFeats } from './arena/feats-screen.js';
+import { renderNemesis } from './arena/nemesis-screen.js';
 import { renderDivisions } from './arena/divisions.js';
 import { renderCabinet } from './arena/cabinet.js';
 import * as arenaProgram from './arena/program.js';
@@ -52,6 +53,7 @@ const ROUTES = {
   '#/habits/timer': (params) => renderTimer(app, params.get('id')),
   '#/arena': () => renderArena(app),
   '#/arena/arc': () => renderArc(app),
+  '#/arena/nemesis': () => renderNemesis(app),
   '#/arena/result': () => renderResult(app),
   '#/arena/moment': () => renderMoment(app),
   '#/arena/rank': () => renderRank(app),

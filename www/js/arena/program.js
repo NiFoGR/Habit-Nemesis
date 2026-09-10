@@ -30,6 +30,7 @@ export * from './calendar.js';
 export * from './scoring.js';
 export * from './fixtures.js';
 export * from './ledger.js';
+export * from './nemesis.js';
 
 /* ---------------- where the cup is up to ---------------- */
 // One answer for every screen showing the Arc. A stage is where the calendar is,

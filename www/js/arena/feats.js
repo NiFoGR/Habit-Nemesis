@@ -339,6 +339,12 @@ export const FEATS = [
     blurb: 'Out-scored the best week you ever had.',
     // The Arc final is the Nemesis under another name.
     test: () => Object.values(arenaState().weeks).some((w) => w.result === 'won' && (w.opponent === 'nemesis' || w.opponent === 'final')) },
+  { id: 'beatNemesis3', section: 'The Arena', icon: 'flash', days: 90, name: 'Three off the Nemesis',
+    blurb: 'Beat him three meetings running.',
+    now: () => arena.headToHead().best, at: 3 },
+  { id: 'nemesis3', section: 'The Arena', icon: 'crown', days: 21, name: 'Three Nemeses',
+    blurb: 'Set a best week three times over.',
+    now: () => arena.reigns().length, at: 3 },
   { id: 'arcWin', section: 'The Arena', icon: 'trophy', days: 90, name: 'An Arc',
     blurb: 'Won an Arc.', now: arcsWon, at: 1 },
   { id: 'arcThree', section: 'The Arena', icon: 'trophy', days: 270, name: 'Three Arcs',

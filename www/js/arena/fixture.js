@@ -9,6 +9,7 @@ import * as habits from '../habits/program.js';
 import { faceAvatar } from './face.js';
 import { rail } from './standing.js';
 import { escapeHtml, openSheet, haptic, pct } from '../ui.js';
+import { navigate } from '../back.js';
 import { icon } from '../icons.js';
 
 const points = (v) => Math.round(v * 100);
@@ -90,6 +91,8 @@ export function wireFixture(mount) {
   const fixture = arena.fixtureFor(arena.currentWeek());
   btn.addEventListener('click', async () => {
     haptic('press');
+    // Tapping him opens him, not the week that made him.
+    if (fixture.id === 'nemesis' || fixture.knockout === 'final') return navigate('#/arena/nemesis');
     if (fixture.week) {
       const { openWeekSheet } = await import('./week-sheet.js');
       return openWeekSheet(fixture.week);

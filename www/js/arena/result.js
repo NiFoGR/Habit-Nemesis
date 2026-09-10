@@ -193,9 +193,14 @@ function featBlock(fresh) {
 function noteBlock(key) {
   const existing = arena.noteFor(key);
   const has = !!face();
+  // The reign this week just ended.
+  const line = arena.reigns();
+  const gone = line.length >= 2 ? line[line.length - 2] : null;
   return `<section class="card note-ask" id="noteAsk">
     <h2>Your best week</h2>
-    <p class="muted small">This week is your Nemesis now.</p>
+    <p class="muted small">${gone
+      ? `The last one stood ${gone.held} week${gone.held === 1 ? '' : 's'}.`
+      : 'This week is your Nemesis now.'}</p>
 
     <div class="nem-ask">
       ${faceAvatar(64)}

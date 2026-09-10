@@ -1347,9 +1347,9 @@ span.hg-group-btn { cursor: default; }
   box-shadow: 0 0 26px color-mix(in srgb, var(--accent) 7%, transparent);
 }
 .ar-boss-who {
-  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px;
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: var(--h-ctrl);
   padding: 0; border: 0; background: none; color: inherit; font: inherit;
-  text-align: left; cursor: pointer;
+  text-align: left; text-decoration: none; cursor: pointer;
 }
 .ar-boss-who:active { opacity: 0.7; }
 .ar-boss-name { flex: 1; min-width: 0; }
@@ -2040,6 +2040,31 @@ html.reduce-motion .intro-grid .intro-tap { animation: none; }
 .nem-gap { font-size: var(--f-small); font-weight: var(--w-medium); margin: 10px 0 0; }
 .nem-gap.ahead { color: var(--good); }
 .nem-gap.behind { color: var(--warn); }
+
+/* His screen. The face is the heading, so the screen has no second one. */
+.nem-hero {
+  display: grid; place-items: center; gap: var(--s-2); width: 100%;
+  margin: var(--s-2) 0 var(--s-6); padding: 0;
+  border: 0; background: none; color: inherit; font: inherit; cursor: pointer;
+}
+.nem-hero:active { opacity: 0.7; }
+.nem-empty { display: grid; place-items: center; gap: var(--s-4); margin-top: var(--s-8); }
+.nem-empty p { margin: 0; }
+.nem-hero b { font-size: var(--f-hero); letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.nem-hero i { font-style: normal; font-size: var(--f-fine); color: var(--muted); }
+
+/* The ones he replaced: rows on a hairline, not a stack of tiles. */
+.nem-row {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: var(--h-ctrl);
+  padding: 8px 0; border: 0; border-bottom: 1px solid var(--line-soft);
+  background: none; color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.nem-row:last-child { border-bottom: 0; }
+.nem-row:active { opacity: 0.7; }
+.nem-row-who { flex: 1; min-width: 0; }
+.nem-row-who b { display: block; font-size: var(--f-body); }
+.nem-row-who i { display: block; font-style: normal; font-size: var(--f-micro); color: var(--muted); margin-top: 3px; }
+.nem-row-score { color: var(--muted); font-variant-numeric: tabular-nums; }
 
 /* ---------- the month settles ----------
    The whole ladder, every rung named with what it costs, and the badge moving

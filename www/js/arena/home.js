@@ -20,21 +20,30 @@ import { escapeHtml, pct } from '../ui.js';
 export { openWeekSheet } from './week-sheet.js';
 export { renderFeats, wireFeatTiles } from './feats-screen.js';
 
-/** The boss: your best week, with his face on it and his line for the day.
- *  On the weeks he is the fixture the duel already carries him, so the card
- *  would be the same face, the same week and the same score twice. */
+/** The boss: your best week, with his face on it, what has passed between you,
+ *  and when you next meet. On the weeks he is the fixture the duel already
+ *  carries him, so the card would be the same face and score twice. */
 function bossHtml() {
   const said = dailyLine();
   const opp = arena.fixtureFor(arena.currentWeek());
   const playing = opp.id === 'nemesis' || opp.knockout === 'final';
   const n = playing ? null : arena.nemesisWeek();
   if (!n) return said ? `<p class="ar-said lone">${faceAvatar(32)}<span>${escapeHtml(said)}</span></p>` : '';
+
+  // The record, then the countdown. The week he was set is on his own screen.
+  const h = arena.headToHead();
+  const meet = arena.nextMeeting();
+  const sub = [];
+  if (h.met) sub.push(`${h.w} - ${h.l}`);
+  if (meet) sub.push(meet.away === 1 ? 'Next week' : `In ${meet.away} weeks`);
+  if (!sub.length) sub.push(arena.weekLabel(n.key));
+
   return `<div class="ar-boss">
-    <button class="ar-boss-who" data-week="${n.key}">
+    <a class="ar-boss-who" href="#/arena/nemesis">
       ${faceAvatar(48)}
-      <span class="ar-boss-name"><b>Your Nemesis</b><i>${escapeHtml(arena.weekLabel(n.key))}</i></span>
+      <span class="ar-boss-name"><b>Your Nemesis</b><i>${escapeHtml(sub.join(' \u00b7 '))}</i></span>
       <b class="ar-boss-score">${pct(n.score)}</b>
-    </button>
+    </a>
     ${said ? `<p class="ar-said">${escapeHtml(said)}</p>` : ''}
   </div>`;
 }

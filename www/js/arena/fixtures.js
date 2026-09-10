@@ -32,16 +32,25 @@ export function worstWeek(exclude = currentWeek(), within = 13) {
   return pool.sort((a, b) => a.score - b.score)[0] || null;
 }
 
+/** The undercard, counted back from his week so a month of four and a month of
+ *  five both build to the same fight. */
+const UNDERCARD = ['worst', 'standard', 'lastMonth'];
+
+/** Who an ordinary week draws. The month ends with the Nemesis. */
+export function opponentIdFor(key) {
+  const weeks = weeksOfMonth(monthOfWeek(key));
+  const i = Math.max(0, weeks.indexOf(key));
+  const back = weeks.length - 1 - i;
+  return back === 0 ? 'nemesis' : UNDERCARD[(back - 1) % UNDERCARD.length];
+}
+
 /** Who you face, and what they scored. Falls back to The Standard when the
  *  record cannot supply a real week. */
 export function fixtureFor(key = currentWeek()) {
   const arc = arcFixture(key);
   if (arc) return arc;
 
-  const weeksInMonth = weeksOfMonth(monthOfWeek(key));
-  const i = Math.max(0, weeksInMonth.indexOf(key));
-  const order = ['nemesis', 'lastMonth', 'standard', 'worst', 'nemesis'];
-  const want = order[Math.min(i, order.length - 1)];
+  const want = opponentIdFor(key);
 
   const standard = () => ({
     ...OPPONENTS.standard,
