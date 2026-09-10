@@ -13,8 +13,6 @@ const CREST = 68;
 const GOAL_CREST = 34;
 
 const width = (v) => (Math.max(0, Math.min(v, 1)) * 100).toFixed(1);
-const monthName = () =>
-  new Date(`${arena.currentMonth()}-01T00:00:00`).toLocaleDateString(undefined, { month: 'long' });
 
 /* ---- the one bar ---- */
 
@@ -60,17 +58,17 @@ function climbHtml(st) {
   const tone = under ? 'down' : s >= to ? 'up' : '';
   return `<div class="ar-climb">
     <div class="ar-climb-head">
-      ${st.month.empty ? '' : `<p class="ar-now"><b>${pct(s)}</b><i>${escapeHtml(monthName())}</i></p>`}
+      ${st.month.empty ? '' : `<p class="ar-now"><b>${pct(s)}</b></p>`}
       ${goalHtml(rung, tone === 'up')}
     </div>
     ${rail((s - from) / Math.max(0.01, to - from), { tone })}
-    <p class="ar-pace">${st.month.empty ? 'Nothing scored this month yet.' : escapeHtml(paceLine(st, under))}</p>
   </div>`;
 }
 
 /** The one line the bar cannot draw: what the weeks left have to average.
- *  Nobody can work this out for themselves, so it is never cut. */
-function paceLine(st, under) {
+ *  Nobody can work it out for themselves, so it lives on the divisions screen
+ *  rather than on the Arena, where it was explaining a bar that already said it. */
+export function paceLine(st, under = st.month.score < st.division.bar) {
   const hold = arena.needFromHere(st.division.bar);
   const up = st.next ? arena.needFromHere(st.next.bar) : null;
   if (!hold) return '';
@@ -100,11 +98,11 @@ function paceLine(st, under) {
  *  would place you into. */
 function unranked() {
   const left = arena.daysLeftInWeek();
-  const days = `${left} day${left === 1 ? '' : 's'} to your first score`;
+  const days = left === 1 ? 'Last day' : `${left} days`;
   const live = arena.scoreWeek(arena.currentWeek());
   const going = live.void ? null : arena.divisionForScore(live.score);
   return `${badge(crest(UNRANKED, CREST), 'Unranked', escapeHtml(days), `Unranked, ${days}. See every division`)}
-    ${going ? `<p class="ar-pace lone">Stop here and you go in at ${escapeHtml(going.name)}.</p>` : ''}`;
+    ${going ? `<p class="ar-pace lone">${escapeHtml(going.name)} on today's marks</p>` : ''}`;
 }
 
 /* ---- the head of the Arena ---- */
@@ -115,12 +113,12 @@ export function standingHtml() {
 
   const at = arena.divisionIndex(st.division.id);
   const rung = `${ORDINAL[at] || at + 1} of ${arena.DIVISIONS.length}`;
-  const state = st.notice ? 'On Notice' : st.placed ? 'Holding' : 'Placement month';
+  const state = st.notice ? 'On Notice' : st.placed ? '' : 'Placement';
   return badge(
     crest(at, CREST),
     st.division.name,
-    `${rung} · <em class="${st.notice ? 'notice' : ''}">${state}</em>`,
-    `${st.division.name}, ${rung} divisions, ${state}. See every division`
+    state ? `${rung} · <em class="${st.notice ? 'notice' : ''}">${state}</em>` : rung,
+    `${st.division.name}, ${rung} divisions${state ? ', ' + state : ''}. See every division`
   ) + climbHtml(st);
 }
 

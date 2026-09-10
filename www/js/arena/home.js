@@ -32,7 +32,7 @@ function bossHtml() {
   return `<div class="ar-boss">
     <button class="ar-boss-who" data-week="${n.key}">
       ${faceAvatar(48)}
-      <span class="ar-boss-name"><b>Your Nemesis</b><i>${escapeHtml(arena.weekLabel(n.key))} · your best week</i></span>
+      <span class="ar-boss-name"><b>Your Nemesis</b><i>${escapeHtml(arena.weekLabel(n.key))}</i></span>
       <b class="ar-boss-score">${pct(n.score)}</b>
     </button>
     ${said ? `<p class="ar-said">${escapeHtml(said)}</p>` : ''}

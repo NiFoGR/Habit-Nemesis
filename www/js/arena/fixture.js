@@ -22,15 +22,15 @@ function sectionHead(title, aside) {
 /* ---- the duel ---- */
 
 function duelHtml(live, opp, left, gap) {
-  const verdict = gap === 0 ? 'Level' : gap > 0 ? `Ahead by ${gap}` : `Behind by ${-gap}`;
+  const verdict = gap === 0 ? 'Level' : gap > 0 ? `+${gap}` : `\u2212${-gap}`;
   const hasFace = opp.id === 'nemesis' || opp.knockout === 'final';
   return `<div class="ar-duel">
     <p class="ar-you"><b>${pct(live.score)}</b><i>You</i></p>
     <p class="ar-gap"><b>${escapeHtml(verdict)}</b></p>
     ${rail(live.score, { ghost: opp.score })}
     <button class="ar-rival" id="oppBtn" aria-label="${escapeHtml(opp.name)}, ${pct(opp.score)}">
-      ${hasFace ? faceAvatar(24) : '<i class="ar-tick"></i>'}
-      <span>${escapeHtml(opp.name)}</span><b>${pct(opp.score)}</b>
+      ${hasFace ? faceAvatar(20) : '<i class="ar-tick"></i>'}
+      <b>${pct(opp.score)}</b>
     </button>
     <span class="ar-left">${left === 1 ? 'Last day' : `${left} days left`}</span>
   </div>`;
@@ -41,7 +41,7 @@ function duelHtml(live, opp, left, gap) {
 /** The rows behind the score, in the grid's order. The bar carries the habit's
  *  own colour, which is how you find a row without reading it. */
 function scoreboard(rows) {
-  if (!rows.length) return '<p class="ar-none">Nothing is due this week yet.</p>';
+  if (!rows.length) return '';
   return `<div class="ar-sb">${rows
     .map((r) => {
       const frac = r.due ? Math.min(1, r.done / r.due) : 0;
@@ -61,8 +61,7 @@ function scoreboard(rows) {
 function notYet(key) {
   return `<section class="card ar-week">
     ${sectionHead('This week', arena.weekLabel(key))}
-    <p class="ar-none">A row on the grid makes this a fixture.</p>
-    <a class="btn ghost wide" href="#/habits">${icon('plus', 15)}<span>Go to the grid</span></a>
+    <a class="btn ghost wide" href="#/habits">${icon('plus', 15)}<span>Add a habit</span></a>
   </section>`;
 }
 

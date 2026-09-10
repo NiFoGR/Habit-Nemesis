@@ -176,8 +176,8 @@ const PAGES = [
   },
   // Last, so signing in has something to carry. Skipped with no service.
   {
-    title: 'Keep the record',
-    line: 'Your account holds the grid, the ladder and the cabinet.',
+    title: 'Sign in',
+    line: '',
     // The tour opens and closes on the mark.
     art: () => mark(64),
     account: true,

@@ -33,8 +33,6 @@ function unconfigured(mount) {
 
 function signedOut(mount, by) {
   mount.innerHTML = `<div class="screen">${head}
-    <p class="acc-lead">One account, every phone. The app works the same without one.</p>
-
     <div class="acc-tabs" role="tablist">
       <button class="acc-tab on" id="tabEmail" role="tab" aria-selected="true">Email</button>
       <button class="acc-tab" id="tabPhone" role="tab" aria-selected="false">Phone</button>

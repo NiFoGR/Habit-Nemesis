@@ -1297,12 +1297,11 @@ span.hg-group-btn { cursor: default; }
    The rows behind the score, in the grid's order, on a rule. The bar wears the
    habit's own colour, which is how you find a row without reading it. */
 
-.ar-sb { margin-top: var(--s-5); border-top: 1px solid var(--line-soft); }
+.ar-sb { margin-top: var(--s-5); }
 .ar-sb-row {
-  display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 0;
-  border-bottom: 1px solid var(--line-soft); text-decoration: none; color: inherit;
+  display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 2px 0;
+  text-decoration: none; color: inherit;
 }
-.ar-sb-row:last-child { border-bottom: 0; }
 .ar-sb-row:active { opacity: 0.6; }
 .ar-sb-name {
   flex: 1 1 40%; min-width: 0; font-size: var(--f-body);
@@ -2003,7 +2002,6 @@ html.reduce-motion .intro-grid .intro-tap { animation: none; }
   display: block; margin-top: 3px; padding-left: var(--s-5);
   font-size: var(--f-small); color: var(--muted); overflow-wrap: anywhere;
 }
-.acc-lead { color: var(--muted); font-size: var(--f-body); margin-bottom: var(--s-6); }
 
 /* ---------- the Nemesis, with a face ----------
    He is the best week you have ever had, so the picture is you. The frame is

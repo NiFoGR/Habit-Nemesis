@@ -35,6 +35,26 @@ together they are the reason the app sounded written by a machine.
 - No aphorisms. A feat says what you did, once.
 - Say a number once. If a bar shows it, the sentence does not repeat it.
 
+## Less
+
+When the choice is more information or less, less.
+When the choice is explaining or letting the screen say it, the screen.
+When the choice is a sentence or a number, the number.
+When the choice is a generic label or a game one, the game one.
+Never write a word to fill a space.
+
+The app does not narrate itself. `Sign in` beats `Keep the record`.
+`2 / 4 weeks` beats `You have played 2 of the 4 weeks a cup needs`.
+`61%` beats `Needs 61% a week`. `Your best: 60%` beats `Your Nemesis is
+your best previous week`.
+
+The personality comes from ranks, badges, trophies, colour, progression and
+a name like Nemesis. It never comes from more words. A screen that needs a
+paragraph to feel exciting is not exciting.
+
+At the end of a screen the question is "can I remove one more thing", never
+"what else could we show".
+
 ## The app on screen
 
 - Labels, not paragraphs. A screen reads in one glance or it is too long.
