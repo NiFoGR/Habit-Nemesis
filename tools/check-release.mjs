@@ -90,6 +90,21 @@ if (keys.length !== 1 || keys[0] !== 'signing/debug.keystore') {
   problems.push(`signing/: expected only signing/debug.keystore, found ${keys.join(', ') || 'nothing'}.`);
 }
 
+/* ---------------- one URL scheme, written in three places ---------------- */
+// A provider sign-in returns through a custom scheme, and the app, the manifest
+// patcher and Capacitor each name it separately. Drift is silent: sign-in opens
+// the browser, the browser returns to a scheme nothing is listening for, and the
+// user is left on a blank tab.
+const schemeOf = (path, re) => (re.exec(readFileSync(join(root, path), 'utf8')) || [])[1] || '';
+const schemes = {
+  'www/js/account/config.js': schemeOf('www/js/account/config.js', /NATIVE_SCHEME = '([^']+)'/),
+  'tools/patch-deeplink.mjs': schemeOf('tools/patch-deeplink.mjs', /const SCHEME = '([^']+)'/),
+  'capacitor.config.json': schemeOf('capacitor.config.json', /"appId"\s*:\s*"([^"]+)"/),
+};
+if (new Set(Object.values(schemes)).size !== 1) {
+  problems.push(`the URL scheme disagrees: ${Object.entries(schemes).map(([f, v]) => `${f} says "${v}"`).join(', ')}`);
+}
+
 /* ---------------- the privacy page and the store answers agree ---------------- */
 // Play checks one against the other, and a sign-in route added without saying
 // so is the way an app gets pulled rather than warned.
@@ -107,4 +122,5 @@ if (problems.length) {
 }
 console.log(`ok  ${files.length} shipped files, no source maps, no secret, ads on test units`);
 console.log('ok  one keystore and it is the debug one');
+console.log(`ok  one URL scheme in three places, "${schemes['capacitor.config.json']}"`);
 console.log('ok  the privacy page and the store answers name the same sign-in routes');

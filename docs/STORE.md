@@ -61,7 +61,7 @@ file there is nothing else to do in the code.
 
 | Where | What |
 |---|---|
-| Cabinet, Feats, Year, Divisions, Archive, a habit's history | one banner at the foot |
+| The Arena, Cabinet, Feats, Year, Divisions, Archive, a habit's history | one banner at the foot |
 | Leaving the week's result screen | one full-screen ad, once a week |
 | Everywhere else | nothing |
 | First three days after install | nothing at all |
