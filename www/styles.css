@@ -1298,6 +1298,27 @@ button.ar-lane:active { opacity: 0.7; }
 
 /* The rounds stack: three columns at 360px gave each round forty pixels. */
 
+/* ---------- the progression grid ----------
+   A tier of feats: a heading, a count, a bar and its cells. One size, one
+   radius, one gap and three states, wherever tierGrid is called. */
+
+.tier { margin: 22px 0; }
+.tier-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.tier-head h2 { margin: 0; }
+.tier-bar { height: 6px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; margin-bottom: 10px; }
+.tier-bar i { display: block; height: 100%; background: var(--accent); }
+/* 44px is the thumb, so the column count follows the width. */
+.tier-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; }
+.tier-cell {
+  aspect-ratio: 1; display: grid; place-items: center; padding: 0; cursor: pointer;
+  border: 1px solid transparent; border-radius: var(--r-ctrl);
+  background: var(--surface); color: var(--faint);
+}
+.tier-cell.earned { background: var(--accent); color: var(--on-accent); }
+/* The one you are nearest: lit, not filled. */
+.tier-cell.current { background: var(--surface-2); border-color: var(--accent); color: var(--accent-ink); }
+.tier-cell:active { transform: scale(0.94); }
+
 /* Three across, two on a narrow phone, with neither number written down. */
 .ft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(98px, 1fr)); gap: 8px; }
 /* A tile you have is an object. One you have not is an outline. */
@@ -1589,8 +1610,10 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 .plinth i { font-style: normal; font-size: var(--f-micro); color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }
 .plinth u { text-decoration: none; font-size: var(--f-micro); color: var(--faint); font-variant-numeric: tabular-nums; }
 
-/* ---------- what is in the case ----------
-   The last five taken, or the five nearest when nothing has been. */
+/* ---------- what is within reach ----------
+   An empty case: the five nearest, under the tiers that hold them. */
+
+.cab-near { margin: 26px 0 0; }
 
 .cab-feat {
   display: flex; align-items: baseline; gap: 12px; width: 100%; text-align: left;
