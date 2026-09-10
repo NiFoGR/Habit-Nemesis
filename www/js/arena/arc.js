@@ -5,15 +5,15 @@
 
 import * as store from '../store.js';
 import * as arena from './program.js';
-import { escapeHtml, pct, chime, haptic, celebrate } from '../ui.js';
+import { escapeHtml, pct, chime, haptic, celebrate, reducedMotion } from '../ui.js';
 import { icon } from '../icons.js';
 import { cup } from './cup.js';
 import { wireWeeks } from './week-sheet.js';
 
 const ROUNDS = ['qf', 'sf', 'final'];
 
-/* Sounded once per state per session. Opening it four times is not four cups. */
-let sounded = '';
+/* The draw and its noise, once per state per session. */
+let played = '';
 
 /** What the screen shows, as one word. A break after a defeat is still that
  *  defeat; a break before you ever entered is not one. */
@@ -31,6 +31,12 @@ function shown(st) {
 function ended(st) {
   if (st.lostAt) return `Out in the ${arena.KNOCKOUT[st.lostAt].name.toLowerCase()}`;
   return st.eligible ? 'Out at the group stage' : 'Not enough weeks played';
+}
+
+/** The same fact under an eyebrow that already says Out. */
+function endedAt(st) {
+  if (st.lostAt) return arena.KNOCKOUT[st.lostAt].name;
+  return st.eligible ? 'Group stage' : 'Not enough weeks played';
 }
 
 /* ---- the button on the Arena ---- */
@@ -72,9 +78,10 @@ export function renderArc(mount) {
   const arc = state === 'shut' ? st.next : st.arc;
   // Once. It sorts every stored week.
   const g = arena.groupTable(arc);
+  const fresh = played !== `${st.key}:${state}` && !reducedMotion();
 
   mount.innerHTML = `
-    <div class="screen arc" data-state="${state}">
+    <div class="screen arc ${fresh ? 'deal' : ''}" data-state="${state}">
       <header class="screen-head">
         <button class="icon-btn" data-back="arena" aria-label="Back">${icon('back')}</button>
         <h1>The Arc</h1>
@@ -86,7 +93,10 @@ export function renderArc(mount) {
     </div>`;
 
   wireWeeks(mount);
-  perform(mount, st, state);
+  if (played !== `${st.key}:${state}`) {
+    played = `${st.key}:${state}`;
+    perform(mount, state);
+  }
 }
 
 /* ---- the cup ---- */
@@ -110,7 +120,7 @@ function cupSection(st, state, arc) {
 function cupLine(st, state) {
   const days = (n) => `<b>${n}</b> day${n === 1 ? '' : 's'}`;
   if (state === 'shut') return `Opens in ${days(st.opensIn)}`;
-  if (state === 'out') return `${escapeHtml(ended(st))}. Opens again in ${days(st.opensIn)}`;
+  if (state === 'out') return `${escapeHtml(endedAt(st))}. Opens again in ${days(st.opensIn)}`;
   if (state === 'group') return `<b>${st.groupLeft}</b> week${st.groupLeft === 1 ? '' : 's'} to the knockout`;
   if (state === 'knockout') return `${days(arena.daysLeftInWeek())} left`;
   // Champion: the cup, the year and the line you left. Nothing else.
@@ -131,7 +141,7 @@ function groupSection(st, state, g) {
   if (thin) {
     return `<section class="card arc-group">
       <h2>The group</h2>
-      <p class="arc-note">Your group fills up as you play weeks.</p>
+      <p class="arc-note">Fills up as you play weeks.</p>
     </section>`;
   }
 
@@ -146,7 +156,7 @@ function groupSection(st, state, g) {
     </div>
     <p class="arc-note">${preview ? 'The field, fixed the day it opens.' : 'Weeks out of your own record.'}</p>
     <div class="ar-table">
-      ${rows.map((r, i) => `<div class="ar-tr ${r.you ? 'you' : ''} ${!preview && g.eligible && i < 3 ? 'q' : 'nq'}" style="--i:${i}"${
+      ${rows.map((r, i) => `<div class="ar-tr ${r.you ? 'you' : ''} ${!preview && g.eligible && i < 3 ? 'q' : ''}" style="--i:${i}"${
         r.week ? ` data-week="${escapeHtml(r.week)}"` : ''
       }>
         <span class="ar-pos">${i + 1}</span>
@@ -160,14 +170,14 @@ function groupSection(st, state, g) {
 
 /** Why this is not a cup yet. */
 function shortfall(g) {
-  if (g.rivals < arena.ARC_MIN_RIVALS) return 'Not enough weeks on the record to make a field to beat.';
+  if (g.rivals < arena.ARC_MIN_RIVALS) return 'Not enough weeks on the record to make a field.';
   return `${g.played} of the ${g.need} weeks a cup wants.`;
 }
 
 /* ---- the knockout ---- */
 
-/** Three columns at 320px gave each round forty pixels, so the rounds stack on
- *  a rail and step narrower instead: the bracket, read downwards. */
+/** Three columns at 320px gave each round forty pixels, so the rounds run down
+ *  a rail instead: the bracket, read downwards. */
 function knockSection(st, state, arc) {
   // The season's last three weeks are qf, sf and final, which is arcStage's
   // own rule. arcSeason, not st.season: in summer the two are different arcs.
@@ -210,18 +220,15 @@ function tie(st, state, id, i, key, week) {
 
 /** Quiet unless something is on. A defeat makes no sound: a punishing noise is
  *  how you get someone to stop opening the app. */
-function perform(mount, st, state) {
-  const once = `${st.key}:${state}`;
-  if (sounded === once) return;
-  sounded = once;
+function perform(mount, state) {
   if (state === 'won') {
     chime('trophy');
     haptic('trophy');
     setTimeout(() => celebrate(mount.querySelector('.arc-cup-art'), {
       count: 30, spread: 150, colour: 'var(--warn)',
-    }), 900);
+    }), 560);
   } else if (state === 'knockout') {
     // On the bracket landing, so the note names what has just arrived.
-    setTimeout(() => { chime('phase'); haptic('kickoff'); }, 1000);
+    setTimeout(() => { chime('phase'); haptic('kickoff'); }, 620);
   }
 }

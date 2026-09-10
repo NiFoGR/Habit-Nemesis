@@ -25,9 +25,9 @@ export function renderDivisions(mount) {
         <span></span>
       </header>
 
-      <p class="muted small centre dv-rule">${st.unranked
+      <p class="muted small dv-rule">${st.unranked
         ? 'Your first scored week places you outright. After that, a month at the next bar moves you up one. A month below yours puts you On Notice, and a second in a row moves you down one.'
-        : 'A month averaging the next bar moves you up one division. A month below yours puts you On Notice. A second in a row moves you down one, and a month at the bar clears it.'}</p>
+        : 'A month at the next bar moves you up one. A month below yours puts you On Notice, a second in a row moves you down one, and a month at the bar clears it.'}</p>
 
       <ol class="dv-list">
         ${rows.map(({ d, i }) => row(d, i, at, st, goingIn)).join('')}
@@ -37,11 +37,9 @@ export function renderDivisions(mount) {
 
 function row(d, i, at, st, goingIn = -1) {
   const state = i === at ? 'here' : i < at ? 'done' : 'locked';
-  // The rail is painted for the divisions behind you, so the colour on screen is
-  // exactly the ladder you have climbed.
-  const hue = i <= at ? crestHue(i) : 'var(--line)';
   const entering = i === goingIn;
-  return `<li class="dv-row ${state} ${entering ? 'entering' : ''}" style="--dc:${entering ? crestHue(i) : hue}">
+  // Read by the glow behind the crest, and nothing else.
+  return `<li class="dv-row ${state} ${entering ? 'entering' : ''}" style="--dc:${crestHue(i)}">
     <span class="dv-node">${crest(i, state === 'here' || entering ? 58 : 42).replace('alt="" aria-hidden="true"', `alt="${escapeHtml(d.name)}"`)}</span>
     <span class="dv-body">
       <b>${escapeHtml(d.name)}</b>
