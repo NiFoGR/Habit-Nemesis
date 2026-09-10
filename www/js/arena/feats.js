@@ -339,6 +339,12 @@ export const FEATS = [
     blurb: 'Out-scored the best week you ever had.',
     // The Arc final is the Nemesis under another name.
     test: () => Object.values(arenaState().weeks).some((w) => w.result === 'won' && (w.opponent === 'nemesis' || w.opponent === 'final')) },
+  { id: 'beatNemesis3', section: 'The Arena', icon: 'flash', days: 90, name: 'Three off the Nemesis',
+    blurb: 'Beat him three meetings running.',
+    now: () => arena.headToHead().best, at: 3 },
+  { id: 'nemesis3', section: 'The Arena', icon: 'crown', days: 21, name: 'Three Nemeses',
+    blurb: 'Set a best week three times over.',
+    now: () => arena.reigns().length, at: 3 },
   { id: 'arcWin', section: 'The Arena', icon: 'trophy', days: 90, name: 'An Arc',
     blurb: 'Won an Arc.', now: arcsWon, at: 1 },
   { id: 'arcThree', section: 'The Arena', icon: 'trophy', days: 270, name: 'Three Arcs',
@@ -405,6 +411,37 @@ export function bySection() {
   }));
 }
 
+/* ---------------- tiers ---------------- */
+
+// Named by what they cost, so a tier needs no heading beyond its name.
+const TIERS = [
+  { name: 'Years', min: 350 },
+  { name: 'Months', min: 60 },
+  { name: 'Weeks', min: 14 },
+  { name: 'Days', min: 0 },
+];
+
+/** The one you are nearest in a tier: furthest along, else the cheapest. */
+function nearestOf(items) {
+  const left = items.filter((f) => !f.earned);
+  if (!left.length) return null;
+  return left.reduce((a, b) => (b.frac > a.frac || (b.frac === a.frac && b.days < a.days) ? b : a)).id;
+}
+
+/** Feats by price, each carrying the state a progression cell reads. */
+export function byTier() {
+  const all = FEATS.map((f) => ({ ...f, ...progressOf(f) }));
+  return TIERS.map((t, i) => {
+    const hi = i ? TIERS[i - 1].min : Infinity;
+    const items = all.filter((f) => f.days >= t.min && f.days < hi);
+    const near = nearestOf(items);
+    return {
+      name: t.name,
+      items: items.map((f) => ({ ...f, state: f.earned ? 'earned' : f.id === near ? 'current' : 'locked' })),
+    };
+  }).filter((t) => t.items.length);
+}
+
 /* ---------------- what a feat costs ---------------- */
 
 /** A price in words. The number alone reads as noise at 728. */
@@ -434,6 +471,6 @@ export function counts() {
 export function closest(n = 3) {
   return FEATS.map((f) => ({ ...f, ...progressOf(f) }))
     .filter((f) => !f.earned && f.need)
-    .sort((a, b) => b.frac - a.frac)
+    .sort((a, b) => b.frac - a.frac || a.days - b.days)
     .slice(0, n);
 }

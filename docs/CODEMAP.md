@@ -93,6 +93,8 @@ The domain is five modules in dependency order, re-exported whole by
 | `js/arena/crest.js` | 41 | The division crests: one file of artwork per rung, in `www/img/`. |
 | `js/arena/cup.js` | 23 | The three seasonal cups, same idea. |
 | `js/arena/face.js` | 100 | Your Nemesis, with the face you gave it. |
+| `js/arena/nemesis.js` | 113 | The head to head, the succession, the next meeting. All derived. |
+| `js/arena/nemesis-screen.js` | 82 | His screen: who he is now, the record, and the ones he replaced. |
 | `js/arena/moment.js` | 150 | The Arc's three ceremonies: it opens, you qualify, you win. |
 | `js/arena/rank.js` | 109 | The month settling: promotion, relegation, placement. |
 | `js/arena/divisions.js` | 47 | Every rung and what it costs. |

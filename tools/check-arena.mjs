@@ -562,5 +562,113 @@ function seedMonths(division, scores) {
   is('nothing below the floor, so the floor is never on notice', [m1.move, st.get().arena.notice], ['held', false]);
 }
 
+/* ---------------- the Nemesis ----------------
+   He is the best week on the record, so nothing about him is stored: the app
+   reads him back off the weeks the ledger already wrote. These are the numbers
+   it puts on screen. */
+group('the head to head');
+
+/** A week in the shape the ledger writes one. */
+const nwk = (score, opponent, result, oppScore = 0.5) => ({
+  score, due: 10, done: Math.round(score * 10),
+  opponent, oppName: '', oppScore, result, arc: null, note: '',
+});
+
+/** Five weeks: three meetings with him, two of them yours, and three bests. */
+function seedRivalry() {
+  st.reset();
+  st.update((s) => {
+    s.arena.weeks = {
+      '2026-W01': nwk(0.4, 'lastMonth', 'won'),
+      '2026-W02': nwk(0.3, 'nemesis', 'lost', 0.4),
+      '2026-W03': nwk(0.55, 'nemesis', 'won', 0.4),
+      '2026-W04': nwk(0.5, 'worst', 'won'),
+      '2026-W05': nwk(0.7, 'nemesis', 'won', 0.55),
+    };
+  });
+}
+
+{
+  seedRivalry();
+  const h = a.headToHead();
+  is('only the weeks he played count as meetings', h.met, 3);
+  is('won and lost are counted from your side', [h.w, h.l], [2, 1]);
+  is('the run is signed, and two of yours reads two', h.run, 2);
+  is('the longest run of yours is remembered', h.best, 2);
+  is('the last meeting is the last one played', h.last, '2026-W05');
+  is('and it carries what it was decided by', h.by, 15);
+}
+
+{
+  seedRivalry();
+  st.update((s) => {
+    s.arena.weeks['2026-W06'] = nwk(0.45, 'nemesis', 'lost', 0.7);
+    s.arena.weeks['2026-W07'] = nwk(0.5, 'nemesis', 'lost', 0.7);
+  });
+  const h = a.headToHead();
+  is('two of his reads minus two', h.run, -2);
+  is('and losing does not touch the best run you had', h.best, 2);
+  is('the last one you took is still on the record', h.lastWon, '2026-W05');
+}
+
+group('the succession');
+{
+  seedRivalry();
+  const r = a.reigns();
+  is('a reign starts only on a week better than every week before it',
+    r.map((x) => x.key), ['2026-W01', '2026-W03', '2026-W05']);
+  is('each is held until a better week takes it', r.slice(0, 2).map((x) => x.held), [2, 2]);
+  is('the last of them is the one you have now', r[r.length - 1].current, true);
+  is('and the first best week replaced nobody', a.deposed(), 2);
+  is('a record with nothing in it has no line at all', (() => { st.reset(); return [a.reigns().length, a.deposed()]; })(), [0, 0]);
+}
+
+group('the month ends with him');
+{
+  const months = Array.from({ length: 12 }, (_, i) => `2026-${String(i + 1).padStart(2, '0')}`);
+  const lastOf = (m) => a.weeksOfMonth(m).slice(-1)[0];
+  is('every month of a year ends with him',
+    months.every((m) => a.opponentIdFor(lastOf(m)) === 'nemesis'), true);
+  is('and draws him exactly once',
+    [...new Set(months.map((m) => a.weeksOfMonth(m).filter((w) => a.opponentIdFor(w) === 'nemesis').length))], [1]);
+  is('the undercard counts back from him, so a month builds the same way whatever its shape',
+    [...new Set(months.map((m) => a.weeksOfMonth(m).slice(-4).map(a.opponentIdFor).join(',')))],
+    ['lastMonth,standard,worst,nemesis']);
+}
+
+{
+  // He falls back to The Standard until the record can supply a real week, so a
+  // meeting is only ever announced when there is someone to meet.
+  st.reset();
+  is('no record, no meeting', a.nextMeeting(), null);
+
+  st.update((s) => { s.arena.weeks = { '2026-W01': nwk(0.62, 'standard', 'won') }; });
+  const weeks = a.weeksOfMonth('2026-03');
+  const his = weeks.slice(-1)[0];
+  is('his week draws his score', [a.fixtureFor(his).id, a.fixtureFor(his).score], ['nemesis', 0.62]);
+  const m = a.nextMeeting(weeks[0]);
+  is('and the meeting is counted in weeks off', [m.key, m.away], [his, weeks.length - 1]);
+  is('the week itself is nought weeks off', a.nextMeeting(his).away, 0);
+}
+
+/* ----- the daily line -----
+   Every line is him talking and every number in one comes off the record, so
+   the failure to guard against is a template reading a week that is not there. */
+group('every line he says');
+{
+  const line = await import('../www/js/arena/line.js');
+  const bad = [];
+  const seen = new Set();
+  for (const seed of [() => st.reset(), seedRivalry]) {
+    seed();
+    for (const l of line.openLines()) {
+      seen.add(l.id);
+      if (!l.say || /undefined|NaN|null/.test(l.say)) bad.push(`${l.id}: ${l.say}`);
+    }
+  }
+  is('none says undefined, NaN or nothing', bad, []);
+  is('and the rivalry above opens the ones it should', [...seen].sort(), ['deposed', 'reign', 'run', 'sinceWin']);
+}
+
 console.log(failed.length ? `\n${failed.length} FAILED: ${failed.join('; ')}` : `\nall ${passed} checks passed`);
 process.exit(failed.length ? 1 : 0);

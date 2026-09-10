@@ -30,6 +30,7 @@ export * from './calendar.js';
 export * from './scoring.js';
 export * from './fixtures.js';
 export * from './ledger.js';
+export * from './nemesis.js';
 
 /* ---------------- where the cup is up to ---------------- */
 // One answer for every screen showing the Arc. A stage is where the calendar is,
@@ -44,17 +45,21 @@ export function arcState(key = currentWeek()) {
   const { arc, stage, season } = arcStage(key);
   const rec = arcRecord(arc);
   const group = arcGroupWeeks(arc);
+  const table = groupTable(arc);
   const out =
     rec.qualified === false || rec.qf === 'lost' || rec.sf === 'lost' || rec.final === 'lost';
 
-  const phase = rec.final === 'won' ? 'champion' : stage === 'break' ? 'break' : out ? 'out' : stage;
+  // A record that cannot make a field is not in this cup, whatever week it is.
+  const phase = rec.final === 'won' ? 'champion'
+    : stage === 'break' ? 'break'
+      : !table.entered ? 'entry'
+        : out ? 'out' : stage;
 
   // Next arc. Once you are out, this one is over whatever the calendar says.
   const upcoming = nextArc(arc);
   const opensOn = weekStart(arcSeason(upcoming)[0] || arcWeeks(upcoming)[0]);
 
   // Weeks played, not weeks elapsed.
-  const table = groupTable(arc);
   const elapsed = group.filter((w) => w < key).length;
   return {
     arc,
@@ -70,7 +75,9 @@ export function arcState(key = currentWeek()) {
     played: table.played,
     elapsed,
     // is this a cup at all
-    eligible: table.eligible,
+    entered: table.entered,
+    place: table.place,
+    field: table.table.length,
     need: table.need,
     rivals: table.rivals,
     groupLeft: Math.max(0, group.length - elapsed),
@@ -93,7 +100,8 @@ export function arcMoment() {
   const { rec } = st;
   if (st.phase === 'champion' && !rec.sawCup) return { kind: 'cup', arc: st };
   if (st.stage === 'break') return null;
-  if (!rec.sawOpen && st.stage !== 'break') return { kind: 'open', arc: st };
+  // A cup opens for you when your record can enter it, not when the calendar says.
+  if (!rec.sawOpen && st.entered) return { kind: 'open', arc: st };
   if (rec.qualified !== null && !rec.sawGroup) return { kind: 'group', arc: st };
   return null;
 }

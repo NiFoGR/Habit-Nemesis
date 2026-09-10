@@ -61,11 +61,15 @@ export const weekClosed = (key) => weekEnd(key) < habits.today();
  *  that assumed the day comes first, which gave "24 – Aug 30" on en-US and
  *  "24 – 8月30日" on ja-JP. */
 const RANGE = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
+const RANGE_Y = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: '2-digit' });
 
 export function weekLabel(key) {
   const a = asDate(weekStart(key));
   const b = asDate(weekEnd(key));
-  return RANGE.formatRange ? RANGE.formatRange(a, b) : `${RANGE.format(a)} – ${RANGE.format(b)}`;
+  // The year only when it is not this one: six past weeks in one table read as
+  // six weeks of this year unless the old ones say otherwise.
+  const f = b.getFullYear() === new Date().getFullYear() ? RANGE : RANGE_Y;
+  return f.formatRange ? f.formatRange(a, b) : `${f.format(a)} – ${f.format(b)}`;
 }
 
 export function daysLeftInWeek() {

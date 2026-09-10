@@ -12,7 +12,7 @@ import { icon } from '../icons.js';
 const hex = (h) => (h.colour ? habits.hexOf(h.colour) : 'var(--accent)');
 
 /** The rows of one week, as bars. Shared with the fixture card. */
-export function rowsHtml(rows) {
+function rowsHtml(rows) {
   if (!rows.length) return '';
   return rows
     .map((r) => {

@@ -343,6 +343,7 @@ export function setValue(habitId, key, value) {
 export const PROTOCOLS = [
   {
     id: 'foundation',
+    icon: 'repeat',
     name: 'Foundation',
     days: 30,
     blurb: 'Sleep, light, movement, food. Everything else gets easier once these hold.',
@@ -356,6 +357,7 @@ export const PROTOCOLS = [
   },
   {
     id: 'physical',
+    icon: 'flash',
     name: 'Physical Development',
     days: 84,
     blurb: 'Twelve weeks of training, and the food and recovery it runs on.',
@@ -369,6 +371,7 @@ export const PROTOCOLS = [
   },
   {
     id: 'deepwork',
+    icon: 'target',
     name: 'Deep Work',
     days: 30,
     blurb: 'Not "be productive". The five behaviours that produce it.',
@@ -382,6 +385,7 @@ export const PROTOCOLS = [
   },
   {
     id: 'digital',
+    icon: 'lock',
     name: 'Digital Discipline',
     days: 30,
     blurb: 'Five things you do not do. Taking one away beats adding another.',
@@ -395,6 +399,7 @@ export const PROTOCOLS = [
   },
   {
     id: 'discipline',
+    icon: 'flame',
     name: 'Discipline',
     days: 30,
     blurb: 'Do what you said you would do, on the day you said it.',
@@ -408,6 +413,7 @@ export const PROTOCOLS = [
   },
   {
     id: 'christian',
+    icon: 'book',
     name: 'Christian Life',
     days: 30,
     blurb: 'A rule of prayer, kept daily, and the Liturgy on Sunday.',
@@ -420,7 +426,22 @@ export const PROTOCOLS = [
     ],
   },
   {
+    id: 'testosterone',
+    icon: 'trend',
+    name: 'Boost Testosterone',
+    days: 60,
+    blurb: 'The lifestyle side of it: sleep, heavy work, sun, food, and what you drink.',
+    rows: [
+      { name: 'Seven hours', colour: 'indigo', kind: 'yesno', question: 'Seven hours of sleep or more?' },
+      { name: 'Lifted heavy', colour: 'clay', kind: 'yesno', question: 'Trained with compound lifts near your limit?' },
+      { name: 'Sunlight', colour: 'amber', kind: 'yesno', question: 'Twenty minutes of daylight on your skin?' },
+      { name: 'Protein', colour: 'lime', kind: 'number', unit: 'g', target: 150, question: 'How much protein?' },
+      { name: 'No alcohol', colour: 'plum', kind: 'yesno', question: 'Nothing to drink today?' },
+    ],
+  },
+  {
     id: 'character',
+    icon: 'medal',
     name: 'Character',
     days: 60,
     blurb: 'Sixty days measuring the man rather than the water intake.',

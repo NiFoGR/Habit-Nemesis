@@ -32,16 +32,25 @@ export function worstWeek(exclude = currentWeek(), within = 13) {
   return pool.sort((a, b) => a.score - b.score)[0] || null;
 }
 
+/** The undercard, counted back from his week so a month of four and a month of
+ *  five both build to the same fight. */
+const UNDERCARD = ['worst', 'standard', 'lastMonth'];
+
+/** Who an ordinary week draws. The month ends with the Nemesis. */
+export function opponentIdFor(key) {
+  const weeks = weeksOfMonth(monthOfWeek(key));
+  const i = Math.max(0, weeks.indexOf(key));
+  const back = weeks.length - 1 - i;
+  return back === 0 ? 'nemesis' : UNDERCARD[(back - 1) % UNDERCARD.length];
+}
+
 /** Who you face, and what they scored. Falls back to The Standard when the
  *  record cannot supply a real week. */
 export function fixtureFor(key = currentWeek()) {
   const arc = arcFixture(key);
   if (arc) return arc;
 
-  const weeksInMonth = weeksOfMonth(monthOfWeek(key));
-  const i = Math.max(0, weeksInMonth.indexOf(key));
-  const order = ['nemesis', 'lastMonth', 'standard', 'worst', 'nemesis'];
-  const want = order[Math.min(i, order.length - 1)];
+  const want = opponentIdFor(key);
 
   const standard = () => ({
     ...OPPONENTS.standard,
@@ -118,10 +127,13 @@ export function arcFixture(key) {
 
 /* --------------------- the group --------------------- */
 
+/** The field a cup needs before it is a cup. */
+export const ARC_MIN_RIVALS = 3;
 /** Turn-up threshold. A share of the group, so a differently shaped cup does
  *  not get an easier entry. */
-export const ARC_MIN_RIVALS = 3;
 export const arcWeeksNeeded = (groupWeeks) => Math.ceil(groupWeeks.length / 2);
+/** Through the group. */
+export const ARC_THROUGH = 3;
 
 /** You and five past selves, fixed from day one. Spread across the record, not
  *  taken off the top. */
@@ -142,6 +154,13 @@ export function groupTable(arc = arcOfMonth(currentMonth())) {
   // A cup needs a field, and you have to have played in it.
   const eligible = mine.length >= need && rivals.length >= ARC_MIN_RIVALS;
 
+  // Rivals are weeks from outside the arc, so the field is fixed the day it
+  // opens and a record too thin for one can never enter this cup. The second
+  // half is turning up: once too few group weeks are left, it is out of reach.
+  const now = currentWeek();
+  const reachable = mine.filter((w) => w.key < now).length + groupWeeks.filter((w) => w >= now).length;
+  const entered = rivals.length >= ARC_MIN_RIVALS && reachable >= need;
+
   const table = [
     // Every row is you: the subtitle says so and the bold row marks which one.
     ...rivals.map((r, i) => ({ you: false, name: weekLabel(r.key), week: r.key, score: r.score, seed: i + 1 })),
@@ -154,8 +173,9 @@ export function groupTable(arc = arcOfMonth(currentMonth())) {
     table,
     place,
     // Third in a field of one is not third.
-    qualifies: eligible && place <= 3,
+    qualifies: eligible && place <= ARC_THROUGH,
     eligible,
+    entered,
     need,
     rivals: rivals.length,
     groupWeeks,

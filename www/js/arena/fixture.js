@@ -1,32 +1,68 @@
-// This week's match.
+// This week, as a duel.
 //
-// One track, two runners on it. Two numbers in two boxes made the reader do the
-// subtraction; a shared axis puts the gap on screen as a distance. The gap is
-// the headline, because "behind by 12" is what you act on and "68% vs 80%" is
-// what you have to work out first.
+// One track, your fill on it, and a tick where the opponent stands. Two bars
+// made the reader compare two lengths; one track makes the gap a distance, and
+// the verdict says it once, in the block's only colour.
 
 import * as arena from './program.js';
+import * as habits from '../habits/program.js';
 import { faceAvatar } from './face.js';
-import { rowsHtml } from './week-sheet.js';
+import { rail } from './standing.js';
 import { escapeHtml, openSheet, haptic, pct } from '../ui.js';
+import { navigate } from '../back.js';
 import { icon } from '../icons.js';
 
 const points = (v) => Math.round(v * 100);
+const hex = (r) => (r.colour ? habits.hexOf(r.colour) : 'var(--accent)');
 
-/** Both bars share one scale so the longer one is visibly longer. Below 8% a
- *  fill is invisible, so a fresh 0% keeps a sliver to sit its label against. */
-const width = (v) => Math.max(v > 0 ? 4 : 1.5, v * 100).toFixed(1);
+/** A heading and the date it covers. */
+function sectionHead(title, aside) {
+  return `<div class="ar-sec"><h2>${escapeHtml(title)}</h2><span>${escapeHtml(aside)}</span></div>`;
+}
+
+/* ---- the duel ---- */
+
+function duelHtml(live, opp, left, gap) {
+  const verdict = gap === 0 ? 'Level' : gap > 0 ? `+${gap}` : `\u2212${-gap}`;
+  const hasFace = opp.id === 'nemesis' || opp.knockout === 'final';
+  return `<div class="ar-duel">
+    <p class="ar-you"><b>${pct(live.score)}</b><i>You</i></p>
+    <p class="ar-gap"><b>${escapeHtml(verdict)}</b></p>
+    ${rail(live.score, { ghost: opp.score })}
+    <button class="ar-rival" id="oppBtn" aria-label="${escapeHtml(opp.name)}, ${pct(opp.score)}">
+      ${hasFace ? faceAvatar(20) : '<i class="ar-tick"></i>'}
+      <b>${pct(opp.score)}</b>
+    </button>
+    <span class="ar-left">${left === 1 ? 'Last day' : `${left} days left`}</span>
+  </div>`;
+}
+
+/* ---- the scoreboard ---- */
+
+/** The rows behind the score, in the grid's order. The bar carries the habit's
+ *  own colour, which is how you find a row without reading it. */
+function scoreboard(rows) {
+  if (!rows.length) return '';
+  return `<div class="ar-sb">${rows
+    .map((r) => {
+      const frac = r.due ? Math.min(1, r.done / r.due) : 0;
+      return `<a class="ar-sb-row ${r.done >= r.due ? 'full' : ''}" href="#/habits/habit?id=${encodeURIComponent(r.id)}">
+        <span class="ar-sb-name">${escapeHtml(r.name)}</span>
+        <span class="ar-sb-bar"><i style="width:${(frac * 100).toFixed(0)}%;background:${hex(r)}"></i></span>
+        <b>${r.done}/${r.due}</b>
+      </a>`;
+    })
+    .join('')}</div>`;
+}
+
+/* ---- the section ---- */
 
 /** Nothing is due yet: the fixture is not a contest, so it does not pretend to
  *  be one. No opponent, no 0%, no deficit invented before you have started. */
 function notYet(key) {
-  return `<section class="card ar-fixture waiting">
-    <div class="ar-fx-head">
-      <h2>This week</h2>
-      <span class="pill ghost">${escapeHtml(arena.weekLabel(key))}</span>
-    </div>
-    <p class="ar-fx-none">A row on the grid makes this a fixture.</p>
-    <a class="btn ghost wide" href="#/habits">${icon('plus', 15)}<span>Go to the grid</span></a>
+  return `<section class="card ar-week">
+    ${sectionHead('This week', arena.weekLabel(key))}
+    <a class="btn ghost wide" href="#/habits">${icon('plus', 15)}<span>Add a habit</span></a>
   </section>`;
 }
 
@@ -39,46 +75,24 @@ export function fixtureHtml() {
   const opp = arena.fixtureFor(key);
   const gap = points(live.score) - points(opp.score);
   const state = gap > 0 ? 'ahead' : gap < 0 ? 'behind' : 'level';
-  const verdict = gap === 0 ? 'Level' : gap > 0 ? `Ahead by ${gap}` : `Behind by ${-gap}`;
-  const hasFace = opp.id === 'nemesis' || opp.knockout === 'final';
 
-  return `<section class="card ar-fixture ${state}">
-    <div class="ar-fx-head">
-      <h2>${opp.knockout ? escapeHtml(arena.KNOCKOUT[opp.knockout].name) : 'This week'}</h2>
-      <span class="pill ghost">${escapeHtml(arena.weekLabel(key))}</span>
-    </div>
-
-    <div class="ar-track">
-      <div class="ar-lane me">
-        <span class="ar-lane-who"><i class="ar-dot"></i>You</span>
-        <span class="ar-lane-bar"><i style="width:${width(live.score)}%"></i></span>
-        <b>${pct(live.score)}</b>
-      </div>
-      <button class="ar-lane them" id="oppBtn" aria-label="${escapeHtml(opp.name)}, ${pct(opp.score)}">
-        <span class="ar-lane-who">${hasFace ? faceAvatar(20) : '<i class="ar-dot"></i>'}${escapeHtml(opp.name)}</span>
-        <span class="ar-lane-bar"><i style="width:${width(opp.score)}%"></i></span>
-        <b>${pct(opp.score)}</b>
-      </button>
-    </div>
-
-    <p class="ar-verdict">
-      <b>${escapeHtml(verdict)}</b>
-      <i>${left === 1 ? 'Last day' : `${left} days left`}</i>
-    </p>
-
-    ${live.rows.length
-      ? `<div class="ar-rows">${rowsHtml(live.rows)}</div>`
-      : '<p class="ar-fx-none">Nothing is due this week yet.</p>'}
+  return `<section class="card ar-week ${state}">
+    ${sectionHead(opp.knockout ? arena.KNOCKOUT[opp.knockout].name : 'This week', arena.weekLabel(key))}
+    ${duelHtml(live, opp, left, gap)}
+    ${scoreboard(live.rows)}
   </section>`;
 }
 
 /** The opponent opens: a real week if it was one, an explanation if it is the bar. */
 export function wireFixture(mount) {
+  mount.querySelectorAll('.ar-sb-row').forEach((row) => row.addEventListener('click', () => haptic('tick')));
   const btn = mount.querySelector('#oppBtn');
   if (!btn) return;
   const fixture = arena.fixtureFor(arena.currentWeek());
   btn.addEventListener('click', async () => {
     haptic('press');
+    // Tapping him opens him, not the week that made him.
+    if (fixture.id === 'nemesis' || fixture.knockout === 'final') return navigate('#/arena/nemesis');
     if (fixture.week) {
       const { openWeekSheet } = await import('./week-sheet.js');
       return openWeekSheet(fixture.week);

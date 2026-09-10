@@ -1,8 +1,7 @@
-// Where you stand: the crest, the division by name, the ladder, and the one
-// number the rest of the month has to average.
+// Where you stand, as one component: the badge, and the climb out of it.
 //
-// The division's name is the most important fact on the Arena and it used to be
-// reachable only by opening another screen. It leads now.
+// The badge is the way into the ladder, so the row of pips and the link under
+// them are gone. "4th of 9" said the same thing three times over.
 
 import * as arena from './program.js';
 import { escapeHtml, pct } from '../ui.js';
@@ -10,97 +9,117 @@ import { icon } from '../icons.js';
 import { crest, UNRANKED } from './crest.js';
 
 const ORDINAL = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th', '11th', '12th'];
+const CREST = 68;
+const GOAL_CREST = 34;
 
-/** One pip per division, the way into the full ladder. */
-function pips(at) {
-  return `<span class="ar-pips" aria-hidden="true">${arena.DIVISIONS.map(
-    (d, i) => `<i class="${at != null && i <= at ? 'on' : ''} ${i === at ? 'here' : ''}" title="${escapeHtml(d.name)}"></i>`
-  ).join('')}</span>`;
+const width = (v) => (Math.max(0, Math.min(v, 1)) * 100).toFixed(1);
+
+/* ---- the one bar ---- */
+
+/** The screen's bar. `ghost` marks a rival on the same scale. */
+export function rail(frac, { tone = '', ghost = null } = {}) {
+  return `<span class="ar-rail ${tone}">
+    <i style="width:${width(frac)}%"></i>
+    ${ghost == null ? '' : `<u style="left:${width(ghost)}%"></u>`}
+  </span>`;
 }
 
-/** The month inside your division: floor left, next rung right. A 0-100 bar
- *  put every threshold within a few pixels of the last. */
-function barToNext(st) {
+/* ---- the badge ---- */
+
+/** Crest, division, rung, and the way to the nine. `rung` is trusted HTML. */
+function badge(art, name, rung, label) {
+  return `<a class="ar-badge" href="#/arena/divisions" aria-label="${escapeHtml(label)}">
+    <span class="ar-badge-art">${art}</span>
+    <div class="ar-badge-who"><h1>${escapeHtml(name)}</h1><i>${rung}</i></div>
+    <span class="ar-badge-go">${icon('back', 16)}</span>
+  </a>`;
+}
+
+/* ---- the climb ---- */
+
+/** What the track ends at: the rung above, or your own back when the month is
+ *  under its bar. Lit once the month has earned it. */
+function goalHtml(rung, lit) {
+  if (rung == null) return '<span class="ar-goal top"><b>The top</b></span>';
+  return `<span class="ar-goal ${lit ? 'lit' : ''}">
+    ${crest(arena.divisionIndex(rung.id), GOAL_CREST)}<b>${escapeHtml(rung.name)}</b>
+  </span>`;
+}
+
+/** The month inside its division, as one track. Below your own bar it runs to
+ *  that bar, because holding the rung is the whole job before the next one is.
+ *  Never 0 to 100: that put every threshold a few pixels from the last. */
+function climbHtml(st) {
   const s = st.month.score;
-  const floor = st.division.bar;
-  const roof = st.next ? st.next.bar : 1;
-  const span = Math.max(0.01, roof - floor);
-  const at = Math.max(0, Math.min((s - floor) / span, 1));
-  // The readout stops short of both ends, or half of it hangs off.
-  const label = Math.min(92, Math.max(8, at * 100));
-  const state = s >= roof ? 'up' : st.safe ? 'safe' : 'down';
-  return `<div class="ar-progress">
-    <div class="ar-bar ${state}">
-      <div class="ar-bar-fill" style="width:${(at * 100).toFixed(1)}%"></div>
-      <b class="ar-bar-now" style="left:${label.toFixed(1)}%">${pct(s)}</b>
+  const under = s < st.division.bar;
+  const rung = under ? st.division : st.next;
+  const from = under ? 0 : st.next ? st.division.bar : st.below?.bar || 0;
+  const to = under ? st.division.bar : st.next ? st.next.bar : 1;
+  const tone = under ? 'down' : s >= to ? 'up' : '';
+  return `<div class="ar-climb">
+    <div class="ar-climb-head">
+      ${st.month.empty ? '' : `<p class="ar-now"><b>${pct(s)}</b></p>`}
+      ${goalHtml(rung, tone === 'up')}
     </div>
-    <div class="ar-bar-ends">
-      <span>${escapeHtml(st.division.name)} · ${pct(floor)}</span>
-      <span>${st.next ? `${escapeHtml(st.next.name)} · ${pct(roof)}` : 'the top'}</span>
-    </div>
-    ${needLine(st)}
+    ${rail((s - from) / Math.max(0.01, to - from), { tone })}
   </div>`;
 }
 
-/** The number the rest of the month has to average. The most useful line on
- *  the screen and the one nobody could work out for themselves. */
-function needLine(st) {
+/** The one line the bar cannot draw: what the weeks left have to average.
+ *  Nobody can work it out for themselves, so it lives on the divisions screen
+ *  rather than on the Arena, where it was explaining a bar that already said it. */
+export function paceLine(st, under = st.month.score < st.division.bar) {
   const hold = arena.needFromHere(st.division.bar);
   const up = st.next ? arena.needFromHere(st.next.bar) : null;
   if (!hold) return '';
-  const weeks = hold.weeks === 1 ? 'this week' : `each of the ${hold.weeks} weeks left`;
+  const weeks = hold.weeks === 1 ? 'One more week' : `${hold.weeks} more weeks`;
 
-  // Promotion first while it is still reachable, then the floor. A need at or
-  // below zero is already banked and is never printed: -94% is not a target.
-  if (up && up.need > 0 && up.need <= 1) {
-    return `<p class="ar-need up">${pct(up.need)} ${escapeHtml(weeks)} takes you to ${escapeHtml(st.next.name)}.</p>`;
+  // Promotion while it is still reachable, then the floor. A need at or below
+  // zero is already banked: -94% is not a target. The crest at the end of the
+  // track names the rung, so no line here repeats it.
+  if (!under && up) {
+    if (up.need <= 0) return 'Nothing can lose it now.';
+    if (up.need <= 1) return up.need <= st.month.score ? `${weeks} at this pace.` : `Needs ${pct(up.need)} a week.`;
   }
-  if (up && up.need <= 0) return '';
-  // On Notice, the bar is the notice: clearing it and holding are one thing.
-  const what = st.notice ? 'clears the notice' : `holds ${escapeHtml(st.division.name)}`;
-  if (hold.need <= 0) return `<p class="ar-need safe">${st.notice ? 'The notice clears at the end of the month.' : `${escapeHtml(st.division.name)} is safe whatever happens.`}</p>`;
-  if (hold.need > 1) return `<p class="ar-need down">${st.notice ? `Below the bar again. ${escapeHtml(st.below?.name || 'The floor')} next month.` : `${escapeHtml(st.division.name)} is out of reach this month.`}</p>`;
-  return `<p class="ar-need">${pct(hold.need)} ${escapeHtml(weeks)} ${what}.</p>`;
+  if (hold.need <= 0) {
+    return st.notice ? 'The notice clears at the end of the month.' : `${st.division.name} is safe whatever happens.`;
+  }
+  // Out of reach is a settled month, so it is reported as one.
+  if (hold.need > 1) {
+    return st.notice ? `${st.below?.name || 'The floor'} next month.` : 'A notice at the end of the month.';
+  }
+  if (st.notice) return `Needs ${pct(hold.need)} a week to clear the notice.`;
+  return under ? `Needs ${pct(hold.need)} a week.` : `${pct(hold.need)} a week holds ${st.division.name}.`;
 }
 
-/** No record yet: no division, no opponent, no cup. A countdown instead, and
- *  what today's marking would place you into. */
+/* ---- no record yet ---- */
+
+/** No division, no opponent, no cup. A countdown, and what today's marking
+ *  would place you into. */
 function unranked() {
   const left = arena.daysLeftInWeek();
+  const days = left === 1 ? 'Last day' : `${left} days`;
   const live = arena.scoreWeek(arena.currentWeek());
   const going = live.void ? null : arena.divisionForScore(live.score);
-  return `<div class="ar-standing unranked">
-    <span class="ar-crest">${crest(UNRANKED, 92)}</span>
-    <div class="ar-titles">
-      <h1>Unranked</h1>
-      <p class="ar-rung">${left} day${left === 1 ? '' : 's'} until your first week is scored</p>
-    </div>
-  </div>
-  <a class="ar-ladder-link" href="#/arena/divisions">${pips(null)}<span>See the nine divisions ${icon('back', 12)}</span></a>
-  ${going ? `<p class="ar-need up">Stop here and you go in at ${escapeHtml(going.name)}.</p>` : ''}`;
+  return `${badge(crest(UNRANKED, CREST), 'Unranked', escapeHtml(days), `Unranked, ${days}. See every division`)}
+    ${going ? `<p class="ar-pace lone">${escapeHtml(going.name)} on today's marks</p>` : ''}`;
 }
 
-/** The head of the Arena. Crest, division, rung, ladder, and the month's bar. */
+/* ---- the head of the Arena ---- */
+
 export function standingHtml() {
   const st = arena.standing();
   if (st.unranked) return unranked();
 
   const at = arena.divisionIndex(st.division.id);
-  // On Notice is on the crest and in the rung line: visible, and named.
-  return `<div class="ar-standing">
-    <span class="ar-crest ${st.notice ? 'notice' : ''}">${crest(at, 92).replace('alt="" aria-hidden="true"', `alt="${escapeHtml(st.division.name)}"`)}</span>
-    <div class="ar-titles">
-      <h1>${escapeHtml(st.division.name)}</h1>
-      <p class="ar-rung">${ORDINAL[at] || at + 1} of ${arena.DIVISIONS.length} · ${
-        st.notice ? 'On Notice' : st.placed ? 'holding' : 'placement month'
-      }</p>
-    </div>
-  </div>
-  <a class="ar-ladder-link" href="#/arena/divisions"
-     aria-label="Division ${escapeHtml(st.division.name)}, ${at + 1} of ${arena.DIVISIONS.length}. See every division">
-    ${pips(at)}<span>See the nine divisions ${icon('back', 12)}</span>
-  </a>
-  ${st.month.empty ? '<p class="ar-need">Nothing scored this month yet.</p>' : barToNext(st)}`;
+  const rung = `${ORDINAL[at] || at + 1} of ${arena.DIVISIONS.length}`;
+  const state = st.notice ? 'On Notice' : st.placed ? '' : 'Placement';
+  return badge(
+    crest(at, CREST),
+    st.division.name,
+    state ? `${rung} · <em class="${st.notice ? 'notice' : ''}">${state}</em>` : rung,
+    `${st.division.name}, ${rung} divisions${state ? ', ' + state : ''}. See every division`
+  ) + climbHtml(st);
 }
 
 /** The rung, so the page can tune its glow to how high you have climbed. */

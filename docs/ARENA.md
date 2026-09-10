@@ -190,6 +190,29 @@ still yours, and still one you would be ashamed to lose to.
 Losing to Your Worst Self is meant to sting. When you beat the Nemesis he is
 replaced by the week that just beat him, so he can never be beaten permanently.
 
+### The month ends with him
+
+The Nemesis is drawn on the last week of every month, and the undercard counts
+back from it: Your Worst Self the week before, then The Standard, then Last
+Month You. A month of four weeks and a month of five build the same way, and a
+fight you can see coming is the point. `opponentIdFor()` is the whole rule.
+
+### He remembers
+
+Nothing about him is stored. Every week already carries who it drew, what they
+scored and how it ended, so `nemesis.js` reads the rivalry back off the record:
+
+| | |
+|---|---|
+| `headToHead()` | wins, losses, the run either way, and what the last meeting was decided by |
+| `reigns()` | every week that was the best on the record when it landed, and how long each stood |
+| `deposed()` | how many he has been, since the first best week replaced nobody |
+| `nextMeeting()` | the next week that draws him, asked of the real fixture so a cup final counts |
+
+`reigns()` is a running maximum over the played weeks, which is why setting a
+best is a succession rather than a number moving: the old Nemesis is finished,
+and the result screen says how long he stood.
+
 ## Two rooms
 
 The Arena is **now**: the division you are in, the week you are playing, the

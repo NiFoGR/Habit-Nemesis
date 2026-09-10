@@ -1,5 +1,6 @@
-// Every feat, and the sheet one opens into. The Cabinet shows the same tiles,
-// so the wiring is exported rather than living inside this screen.
+// Every feat, the sheet one opens into, and the progression grid any screen can
+// call. The Cabinet shows both, so the grid and the wiring are exported rather
+// than living inside this screen.
 
 import * as feats from './feats.js';
 import { escapeHtml, openSheet, haptic } from '../ui.js';
@@ -20,6 +21,8 @@ function tile(f) {
     <i class="ft-price">${escapeHtml(feats.priceOf(f.days))}</i>
   </button>`;
 }
+
+/* ---------------- the catalogue ---------------- */
 
 export function renderFeats(mount) {
   const sections = feats.bySection();

@@ -17,7 +17,7 @@ const SCORE_PERIODS = {
 };
 
 // Module state, not a setting: a way of looking at this screen, not a preference.
-let scorePeriod = 'month';
+let scorePeriod = '';
 let editing = false;
 
 /* ---------------- buckets ---------------- */
@@ -43,6 +43,16 @@ function scoreSeries(sum, period) {
   for (const d of sum.days) last.set(bucketKey(d.key, period, firstDay), d.score);
   const keys = [...last.keys()].sort().slice(-buckets);
   return { values: keys.map((k) => Math.round(last.get(k) * 100)), keys };
+}
+
+/** The coarsest period that still has a line in it, so a young habit opens on
+ *  days and an old one on months rather than on a sentence. */
+function fitPeriod(sum) {
+  const order = ['year', 'quarter', 'month', 'week', 'day'];
+  for (const p of order) {
+    if (scoreSeries(sum, p).values.length > 3) return p;
+  }
+  return 'day';
 }
 
 function periodSelect(id, value, options) {
@@ -73,13 +83,12 @@ export function renderHabitDetail(mount, id) {
   const colour = habits.hexOf(habit.colour);
 
   const draw = () => {
+    if (!scorePeriod) scorePeriod = fitPeriod(sum);
     const scores = scoreSeries(sum, scorePeriod);
     // Six weeks to aim at, twenty to look at.
     const cal = habits.calendar(sum, editing ? 6 : 20);
     // Nothing to compare against inside the first month.
     const month = sum.days.length > 30 ? Math.round((sum.score - habits.scoreAgo(sum, 30)) * 100) : 0;
-    // Under a fortnight a trend line is jitter.
-    const trend = sum.days.length >= 14;
     const per = SCORE_PERIODS[scorePeriod].label.toLowerCase();
     const streaks = streaksHtml(sum, colour);
 
@@ -103,14 +112,12 @@ export function renderHabitDetail(mount, id) {
           `${fmtTotal(habit, sum)} in all`,
         ].filter(Boolean).join(' · ')}</p>
 
-        ${trend
-          ? `<section class="card">
+        <section class="card">
           <div class="h-row"><h2>Score</h2>${periodSelect('scoreP', scorePeriod, SCORE_PERIODS)}</div>
-          ${scores.values.length > 2
+          ${scores.values.length > 1
             ? lineChart(scores.values, { color: colour, labels: [bucketLabel(scores.keys[0]), bucketLabel(scores.keys[scores.keys.length - 1])] })
             : `<div class="chart-empty">${scores.values.length} ${per}${scores.values.length === 1 ? '' : 's'} so far.</div>`}
-        </section>`
-          : ''}
+        </section>
 
         <section class="card">
           <div class="h-row"><h2>Calendar</h2>

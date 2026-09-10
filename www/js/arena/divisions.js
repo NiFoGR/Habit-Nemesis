@@ -5,6 +5,7 @@ import * as arena from './program.js';
 import { escapeHtml, pct } from '../ui.js';
 import { icon } from '../icons.js';
 import { crest, crestHue, UNRANKED } from './crest.js';
+import { paceLine } from './standing.js';
 
 export function renderDivisions(mount) {
   const st = arena.standing();
@@ -26,8 +27,8 @@ export function renderDivisions(mount) {
       </header>
 
       <p class="muted small dv-rule">${st.unranked
-        ? 'Your first scored week places you outright. After that, a month at the next bar moves you up one. A month below yours puts you On Notice, and a second in a row moves you down one.'
-        : 'A month at the next bar moves you up one. A month below yours puts you On Notice, a second in a row moves you down one, and a month at the bar clears it.'}</p>
+        ? 'Your first scored week places you. Then: the next bar to go up, below yours twice to go down.'
+        : 'The next bar to go up. Below yours twice to go down.'}</p>
 
       <ol class="dv-list">
         ${rows.map(({ d, i }) => row(d, i, at, st, goingIn)).join('')}
@@ -43,7 +44,8 @@ function row(d, i, at, st, goingIn = -1) {
     <span class="dv-node">${crest(i, state === 'here' || entering ? 58 : 42).replace('alt="" aria-hidden="true"', `alt="${escapeHtml(d.name)}"`)}</span>
     <span class="dv-body">
       <b>${escapeHtml(d.name)}</b>
-      ${state === 'here' ? `<i>${st.month.empty ? 'placement month' : `${pct(st.month.score)} this month`}</i>` : ''}
+      ${state === 'here' ? `<i>${st.month.empty ? 'placement month' : `${pct(st.month.score)} this month`}</i>
+        ${st.month.empty ? '' : `<i class="dv-pace">${escapeHtml(paceLine(st))}</i>`}` : ''}
       ${entering ? '<i>where this week puts you</i>' : ''}
     </span>
     <span class="dv-bar">${pct(d.bar)}</span>

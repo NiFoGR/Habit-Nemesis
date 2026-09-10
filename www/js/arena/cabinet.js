@@ -4,7 +4,7 @@
 import * as store from '../store.js';
 import * as arena from './program.js';
 import * as feats from './feats.js';
-import { escapeHtml, haptic } from '../ui.js';
+import { escapeHtml, haptic, tierGrid } from '../ui.js';
 import { icon } from '../icons.js';
 import { cup } from './cup.js';
 import { openWeekSheet } from './week-sheet.js';
@@ -45,14 +45,9 @@ export function renderCabinet(mount) {
       <hr class="cut">
       <div class="cab-shelf">${shelf(cups)}</div>
 
-      <section class="card">
-        <div class="ar-fx-head">
-          <h2>Feats</h2>
-          <span class="pill ghost">${c.earned} of ${c.total}</span>
-        </div>
-        ${featList(c.earned)}
-        <a class="btn ghost wide" href="#/cabinet/feats">${icon('medal', 16)}<span>All feats</span></a>
-      </section>
+      ${feats.byTier().map(tier).join('')}
+      ${c.earned ? '' : nearest()}
+      <a class="btn ghost wide" href="#/cabinet/feats">${icon('medal', 16)}<span>All feats</span></a>
 
       <section class="card">
         <h2>The year</h2>
@@ -121,35 +116,31 @@ function shelf(cups) {
 
 /* --------------------- what is in the case --------------------- */
 
-/** Short, and the year only when it is not this one. */
-function when(at) {
-  const d = new Date(at);
-  const opts = { day: 'numeric', month: 'short' };
-  if (d.getFullYear() !== new Date().getFullYear()) opts.year = 'numeric';
-  return d.toLocaleDateString(undefined, opts);
+/** A tier of feats as the cells the grid wants. */
+function tier(t) {
+  return tierGrid({
+    name: t.name,
+    cells: t.items.map((f) => ({
+      id: f.id,
+      icon: f.icon,
+      state: f.state,
+      label: `${f.name}, ${feats.priceOf(f.days)}`,
+    })),
+  });
 }
 
-/** The last five taken, or the five nearest when nothing has been. */
-function featList(earned) {
-  const rows = earned
-    ? feats.FEATS.map((f) => ({ ...f, at: feats.earnedAt(f.id) }))
-      .filter((f) => f.at)
-      .sort((a, b) => b.at - a.at)
-      .slice(0, 5)
-      .map((f) => row(f, when(f.at)))
-    : feats.closest(5).map((f) => row(f, feats.priceOf(f.days), f.frac));
-  return rows.join('');
-}
-
-/* No glyph: the catalogue reuses them, so five rows can carry three marks. */
-function row(f, right, frac = 0) {
-  return `<button class="cab-feat" data-feat="${escapeHtml(f.id)}">
-    <span class="cab-feat-body">
-      <b>${escapeHtml(f.name)}</b>
-      ${frac > 0.02 ? `<span class="ft-bar"><i style="width:${(frac * 100).toFixed(0)}%"></i></span>` : ''}
-    </span>
-    <i>${escapeHtml(right)}</i>
-  </button>`;
+/* Nothing taken yet: the tiers hold them, this names the ones within reach. */
+function nearest() {
+  return `<section class="cab-near">
+    <h2>Nearest</h2>
+    ${feats.closest(5).map((f) => `<button class="cab-feat" data-feat="${escapeHtml(f.id)}">
+      <span class="cab-feat-body">
+        <b>${escapeHtml(f.name)}</b>
+        ${f.frac > 0.02 ? `<span class="ft-bar"><i style="width:${(f.frac * 100).toFixed(0)}%"></i></span>` : ''}
+      </span>
+      <i>${escapeHtml(feats.priceOf(f.days))}</i>
+    </button>`).join('')}
+  </section>`;
 }
 
 const cupName = (key) => {

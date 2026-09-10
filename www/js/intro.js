@@ -176,8 +176,8 @@ const PAGES = [
   },
   // Last, so signing in has something to carry. Skipped with no service.
   {
-    title: 'Keep the record',
-    line: 'Your account holds the grid, the ladder and the cabinet.',
+    title: 'Sign in',
+    line: '',
     // The tour opens and closes on the mark.
     art: () => mark(64),
     account: true,
@@ -258,11 +258,12 @@ export function renderIntro(mount) {
     page.onShow?.(mount);
   }
 
-  /** Three ways off the last page. Not now is a link because it is the third
+  /** Four ways off the last page. Not now is a link because it is the last
    *  choice, and it is never disabled: a wall here costs more than the sync. */
   function accountChoice() {
     return `<div class="intro-account">
       <button class="btn primary big" id="google">Continue with Google</button>
+      <button class="btn big" id="phone">Continue with phone</button>
       <button class="btn big" id="email">Continue with email</button>
       <button class="tail-btn" id="later">Not now</button>
     </div>`;
@@ -297,6 +298,13 @@ export function renderIntro(mount) {
       } catch (e) {
         toast(e.message);
       }
+    });
+    // Both land on the account screen. The hash says which tab opens.
+    mount.querySelector('#phone')?.addEventListener('click', () => {
+      haptic('press');
+      askOnNextSignIn();
+      finish();
+      navigate('#/account?by=phone');
     });
     mount.querySelector('#email')?.addEventListener('click', () => {
       haptic('press');
