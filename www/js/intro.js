@@ -83,16 +83,34 @@ function ladder() {
   </ol>`;
 }
 
+// Each cup lands on its own beat and blooms its own light, then the feats
+// deal in behind them. The delays are the page: three cups placed at once
+// arrive as a picture, placed in turn they arrive as a cabinet being filled.
+const CUP_STEP = 150;
+const FEAT_FROM = 620;
+
 function cabinet() {
-  const shelf = (id, colour) => `<span class="intro-cup" style="--cc:${colour}">${cup(id, 56)}</span>`;
+  const shelf = (id, colour, n) =>
+    `<span class="intro-cup" style="--cc:${colour};--d:${n * CUP_STEP}ms">${cup(id, 60)}</span>`;
+  const feat = (glyph, text, n) =>
+    `<span class="intro-feat" style="--d:${FEAT_FROM + n * 90}ms">${icon(glyph, 14)}${text}</span>`;
   return `<div class="intro-cabinet">
-    <div class="intro-cups">${shelf('winter', 'var(--calm)')}${shelf('spring', 'var(--good)')}${shelf('autumn', 'var(--warn)')}</div>
+    <div class="intro-cups">
+      ${shelf('winter', 'var(--calm)', 0)}${shelf('spring', 'var(--good)', 1)}${shelf('autumn', 'var(--warn)', 2)}
+    </div>
     <div class="intro-feats">
-      <span class="intro-feat">${icon('flame', 14)}A month straight</span>
-      <span class="intro-feat">${icon('medal', 14)}Beat the Nemesis</span>
-      <span class="intro-feat">${icon('crown', 14)}Top G</span>
+      ${feat('flame', 'A month straight', 0)}${feat('medal', 'Beat the Nemesis', 1)}${feat('crown', 'Top G', 2)}
     </div>
   </div>`;
+}
+
+/** Sparks off each cup as it lands, on the same beat as the artwork. */
+function cabinetShow(mount) {
+  chime('trophy');
+  haptic('trophy');
+  mount.querySelectorAll('.intro-cup').forEach((el, n) => {
+    setTimeout(() => celebrate(el, { count: 10, spread: 46, colour: getComputedStyle(el).color }), 320 + n * CUP_STEP);
+  });
 }
 
 function starters(picked) {
@@ -145,8 +163,9 @@ const PAGES = [
     title: 'What you keep',
     // A function, not a string: PAGES is built at import time and the store is
     // not hydrated yet.
-    line: () => `Three cups a year, on the seasons. ${counts().total} feats, each one worth saying out loud.`,
+    line: () => `Three cups a year, and ${counts().total} feats.`,
     art: cabinet,
+    onShow: cabinetShow,
   },
   {
     title: 'Start with these',
@@ -233,6 +252,7 @@ export function renderIntro(mount) {
 
     if (locked) opener = setTimeout(open, 4000);
     wire(page, last);
+    page.onShow?.(mount);
   }
 
   /** Three ways off the last page. Not now is a link because it is the third

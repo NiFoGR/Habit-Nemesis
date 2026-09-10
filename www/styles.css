@@ -2146,21 +2146,47 @@ html.reduce-motion .hg-cell.intro-tap { animation: none; }
 .intro-rung-need { font-size: var(--f-fine); color: var(--faint); font-variant-numeric: tabular-nums; }
 
 /* Cups and feats. */
-.intro-cabinet { display: grid; gap: 16px; justify-items: center; }
-.intro-cups { display: flex; gap: 16px; }
+/* The cabinet. A cup stands on a shelf in its own light: the tinted disc it
+   used to sit in fought the artwork and made three cups into three buttons. */
+.intro-cabinet { display: grid; gap: 26px; justify-items: center; }
+.intro-cups { display: flex; gap: 20px; align-items: end; }
 .intro-cup {
-  display: grid; place-items: center; width: 60px; height: 60px;
-  border-radius: 50%; color: var(--cc);
-  background: color-mix(in oklab, var(--cc) 12%, transparent);
-  border: 1px solid color-mix(in oklab, var(--cc) 40%, transparent);
+  position: relative; display: grid; place-items: center;
+  width: 64px; height: 64px; color: var(--cc);
+  animation: cup-land 0.62s var(--ease) var(--d, 0ms) both;
 }
-.intro-feats { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+/* The light it throws, and the shelf it stands on. Both arrive after it lands. */
+.intro-cup::before {
+  content: ''; position: absolute; inset: -12px -6px -14px; border-radius: 50%;
+  background: radial-gradient(circle at 50% 62%, color-mix(in oklab, var(--cc) 30%, transparent), transparent 68%);
+  animation: cup-bloom 0.5s var(--ease) calc(var(--d, 0ms) + 0.28s) both;
+}
+.intro-cup::after {
+  content: ''; position: absolute; left: 2px; right: 2px; bottom: -7px; height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--cc) 60%, transparent), transparent);
+  animation: cup-bloom 0.4s var(--ease) calc(var(--d, 0ms) + 0.32s) both;
+}
+.intro-cup .cup-img, .intro-cup .ico { position: relative; }
+/* One per line. Three across wrapped two-and-one on a 390px phone, and a
+   ragged last row is the thing you notice before you read any of them. */
+.intro-feats { display: grid; justify-items: center; gap: 7px; }
 .intro-feat {
   display: inline-flex; align-items: center; gap: 5px;
-  padding: 5px 10px; border-radius: var(--r-pill);
-  background: var(--surface); border: 1px solid var(--line);
-  font-size: var(--f-fine); color: var(--muted);
+  padding: 5px 11px; border-radius: var(--r-pill);
+  background: var(--surface); color: var(--muted);
+  font-size: var(--f-fine);
+  animation: deal 0.42s var(--ease) var(--d, 0ms) both;
 }
+@keyframes cup-land {
+  0% { opacity: 0; transform: translateY(-32px) scale(0.7) rotate(-7deg); }
+  62% { opacity: 1; transform: translateY(5px) scale(1.06) rotate(1.5deg); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes cup-bloom { from { opacity: 0; } to { opacity: 1; } }
+html.reduce-motion .intro-cup,
+html.reduce-motion .intro-cup::before,
+html.reduce-motion .intro-cup::after,
+html.reduce-motion .intro-feat { animation: none; opacity: 1; }
 
 /* The last page: the grid you leave on. */
 .intro-starters { width: 100%; margin-top: 18px; }
