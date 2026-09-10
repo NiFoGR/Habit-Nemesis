@@ -62,7 +62,7 @@
 
 <h2 id="today"><span class="n">2</span>What the app holds today</h2>
 
-<span class="tag now">Active now</span>
+<p class="tagline"><span class="tag now">Active now</span></p>
 
 <p>Everything below is written by the app into your device's own storage, under two keys: <code>habitnemesis.state.v1</code> for the record, and <code>habitnemesis.snap.YYYY-MM-DD</code> for the daily restore points. Without an account nothing is sent anywhere. With one, the record is copied to your account as section 3 describes. The list is taken from the code that defines the record, not from a template.</p>
 
@@ -117,13 +117,13 @@
 
 <h3>An optional account</h3>
 
-<span class="tag now">Active now</span>
+<p class="tagline"><span class="tag now">Active now</span></p>
 
 <p>Signing in is optional and the app works fully without it. The introduction offers an account once, with a Not now that finishes the setup exactly as if it had never been asked. If you create one, you can use an email address and a password, or sign in with Google. Sign in with Apple arrives with the iPhone build. The account holds your email address, an account identifier, and the dates the account was created and last used. Passwords are stored only as a salted hash by the authentication provider, Supabase, never in readable form and never by the app.</p>
 
 <h3>Sync</h3>
 
-<span class="tag now">Active now</span>
+<p class="tagline"><span class="tag now">Active now</span></p>
 
 <p>Signed in, the app keeps a copy of your record in your account, automatically. Every change is sent within about thirty seconds of you making it, and a phone signed into the same account receives the record when it opens. If two phones changed the record apart, the app asks you which copy to keep rather than choosing for you.</p>
 
@@ -175,7 +175,7 @@
 <p>UK GDPR requires a lawful basis for every purpose. Here is each one.</p>
 
 <div class="scroll">
-<table>
+<table class="wide">
   <tr>
     <th>Purpose</th><th>Basis</th><th>Status</th>
   </tr>
@@ -303,7 +303,7 @@
 <p><strong>With an account: Supabase</strong>, which holds the database and the sign-in, and its email sender. Google too if you sign in with Google. Each is bound by a written contract that limits what they may do with your data. The rows marked not yet active are the companies that will be involved when the paid tier and the iPhone build arrive.</p>
 
 <div class="scroll">
-<table>
+<table class="wide">
   <tr><th>Who</th><th>What they do</th><th>What they see</th></tr>
   <tr>
     <td>Supabase</td>

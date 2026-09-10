@@ -3,7 +3,7 @@
 // habits.settings, everything else writes store.settings.
 
 import * as store from './store.js';
-import { escapeHtml, toast, openSheet, saveFile, haptic, relDay, relTime, WEEKDAYS_LONG } from './ui.js';
+import { escapeHtml, toast, openSheet, saveFile, haptic, relDay, relTime, WEEKDAYS, WEEKDAYS_LONG } from './ui.js';
 import * as habits from './habits/program.js';
 import { icon } from './icons.js';
 import * as lock from './lock.js';
@@ -19,6 +19,14 @@ const row = (label, control, note) => `<div class="set-row">
   <span class="set-label">${label}${note ? `<i>${note}</i>` : ''}</span>
   ${control}
 </div>`;
+/** A row that goes somewhere. The chevron is the promise that it does. */
+const link = (label, attrs, value = '') => `<a class="set-link" ${attrs}>
+  <span>${label}</span>${value ? `<i>${escapeHtml(value)}</i>` : ''}${icon('back', 16)}
+</a>`;
+/** A row that does something here. No chevron, because nothing opens. */
+const act = (label, attrs, note = '', cls = '') => `<button type="button" class="set-link ${cls}" ${attrs}>
+  <span>${label}${note ? `<i>${note}</i>` : ''}</span>
+</button>`;
 const select = (id, options, value) =>
   `<select id="${id}">${options.map(([v, t]) => `<option value="${v}" ${String(v) === String(value) ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
 const toggle = (id, on, extra = '') => `<input type="checkbox" id="${id}" ${on ? 'checked' : ''} ${extra}>`;
@@ -67,8 +75,8 @@ const PAGES = [
       el.innerHTML = `
         ${rows([
           row('Week starts', select('firstDay', WEEKDAYS_LONG.map((d, i) => [i, d]), hs.firstDay)),
-          row('A new day begins at', select('dayStartHour', [0, 1, 2, 3, 4, 5, 6].map((h) => [h, h === 0 ? 'Midnight' : `${String(h).padStart(2, '0')}:00`]), hs.dayStartHour),
-            'A late night still counts as the day before.'),
+          row('Day starts at', select('dayStartHour', [0, 1, 2, 3, 4, 5, 6].map((h) => [h, h === 0 ? 'Midnight' : `${String(h).padStart(2, '0')}:00`]), hs.dayStartHour),
+            'A late night counts as the day before.'),
           row('Days on screen', select('columns', [3, 4, 5, 6, 7].map((n) => [n, n]), hs.columns)),
           row('Oldest first', toggle('reverseDays', hs.reverseDays)),
         ])}
@@ -77,7 +85,7 @@ const PAGES = [
           ${rows([
             row('Toggle with a short press', toggle('shortPress', hs.shortPress)),
             row('Skip days', toggle('skipDays', hs.skipDays), 'A skip holds the score and the streak where they are.'),
-            row('Question marks for missing data', toggle('unknownMarks', hs.unknownMarks), 'Tells a day you never answered from one you answered no.'),
+            row('Question marks', toggle('unknownMarks', hs.unknownMarks), 'Tells a day you never answered from one you answered no.'),
           ])}
         </details>`;
       ['firstDay', 'dayStartHour', 'columns'].forEach((id) => bindGrid(el, id, (e) => Number(e.value)));
@@ -93,22 +101,25 @@ const PAGES = [
         ${rows([
           isNative()
             ? row('Notifications', state('notifState', 'checking'), 'Every habit reminder and every Arena alarm needs this.')
-            : row('Notifications', state('notifState', 'Android app only'), 'A browser cannot ring an alarm.'),
-          isNative() ? '<div class="set-actions" id="notifAsk" hidden><button class="btn" id="askNotif">Allow notifications</button></div>' : '',
-          row('Full time', toggle('fullTime', s.fullTime), 'One notification when the day closes, with the day\'s score.'),
-          row('Sound', select('sound', [['off', 'Off'], ['subtle', 'Subtle'], ['full', 'Full']], s.sound), 'Subtle keeps the grid and mutes the ceremonies.'),
+            : row('Notifications', state('notifState', 'Android app only')),
+          isNative() ? act('Allow notifications', 'id="askNotif" hidden') : '',
+          row('Full time', toggle('fullTime', s.fullTime), 'A notification when the day closes, with the score.'),
+          row('Sound', select('sound', [['off', 'Off'], ['subtle', 'Subtle'], ['full', 'Full']], s.sound), 'Subtle mutes the ceremonies.'),
           row('Vibration', toggle('haptics', s.haptics)),
         ])}
-        <h3 class="set-group">Quiet hours</h3>
         ${rows([
-          row('Quiet hours', toggle('quiet', s.quiet), 'Nothing louder than Subtle, and no Arena alarm, between these.'),
-          row('From', time('quietFrom', s.quietFrom)),
-          row('To', time('quietTo', s.quietTo)),
+          row('Quiet hours', toggle('quiet', s.quiet), 'Nothing louder than Subtle, and no Arena alarm.'),
+          s.quiet ? row('From', time('quietFrom', s.quietFrom)) : '',
+          s.quiet ? row('To', time('quietTo', s.quietTo)) : '',
         ])}`;
       bind(el, 'sound');
       bind(el, 'fullTime', 'fullTime', (e) => e.checked);
       bind(el, 'haptics', 'haptics', (e) => e.checked);
-      bind(el, 'quiet', 'quiet', (e) => e.checked);
+      // The two times only exist while quiet hours are on, so the page redraws.
+      q(el, 'quiet').addEventListener('change', (e) => {
+        store.setSetting('quiet', e.target.checked);
+        renderSettings(document.getElementById('app'), 'alerts');
+      });
       bind(el, 'quietFrom', 'quietFrom');
       bind(el, 'quietTo', 'quietTo');
       showNotifications(el);
@@ -121,7 +132,7 @@ const PAGES = [
       const s = store.get().settings;
       el.innerHTML = rows([
         row('Theme', select('theme', [['dark', 'Dark'], ['black', 'Pure black']], s.theme)),
-        row('Reduce motion', toggle('reduceMotion', s.reduceMotion), 'No sparks, no sweeps, no dealt cards.'),
+        row('Reduce motion', toggle('reduceMotion', s.reduceMotion)),
       ]);
       bind(el, 'theme');
       bind(el, 'reduceMotion', 'reduceMotion', (e) => e.checked);
@@ -134,11 +145,12 @@ const PAGES = [
       const s = store.get().settings;
       el.innerHTML = rows([
         row('Lock the app', toggle('appLock', s.appLock, lock.isAvailable() ? '' : 'disabled'),
-          lock.isSet() ? 'Asks for your PIN when you open the app.' : 'Sets a PIN. Forgetting it means erasing the app.'),
-        lock.isSet() ? '<div class="set-actions"><button class="btn" id="changePin">Change PIN</button></div>' : '',
-        // Hidden outside the EEA and the UK, where there is no answer to change.
-        '<div class="set-actions" id="consentRow" hidden><button class="btn" id="adConsent">Ad privacy choices</button></div>',
-      ]);
+          'Forgetting the PIN means erasing the app.'),
+        lock.isSet() ? act('Change PIN', 'id="changePin"') : '',
+      ])
+        // Its own block: hidden outside the EEA and the UK, and a hidden last
+        // row would leave a rule under the one above it.
+        + rows([act('Ad privacy choices', 'id="adConsent" hidden')]);
       wireLock(el);
       showAdConsent(el);
     },
@@ -148,16 +160,15 @@ const PAGES = [
     title: 'Your data',
     render(el) {
       el.innerHTML = `
-        <div class="set-actions">
-          <a class="btn linkbtn" href="#/habits/archive">Archived habits</a>
-          <button class="btn" id="csv">Habits as CSV</button>
-          <button class="btn" id="exportBtn">Export backup</button>
-          <button class="btn" id="importBtn">Import backup</button>
-        </div>
+        ${rows([
+          link('Archived habits', 'href="#/habits/archive"', String(habits.archived().length || '')),
+          act('Export habits as CSV', 'id="csv"'),
+          act('Export backup', 'id="exportBtn"'),
+          act('Import backup', 'id="importBtn"'),
+        ])}
         <input type="file" id="importFile" accept="application/json" hidden>
         ${restorePoints()}
-        <button class="btn danger wide" id="reset">Erase all data</button>
-        <p class="fineprint">Every habit, every day you have marked, and everything the Arena has recorded. No undo.</p>`;
+        ${rows([act('Erase all data', 'id="reset"', '', 'danger')])}`;
       q(el, 'csv').addEventListener('click', exportCsv);
       wireBackup(el);
       q(el, 'reset').addEventListener('click', () => askErase(el));
@@ -168,15 +179,15 @@ const PAGES = [
     title: 'About',
     render(el) {
       el.innerHTML = `
-        <div class="set-links">
-          <a class="set-link" href="./legal/privacy.html"><span>Privacy policy</span>${icon('back', 16)}</a>
-          <a class="set-link" href="./legal/terms.html"><span>Terms of service</span>${icon('back', 16)}</a>
-          <a class="set-link" href="./legal/wellbeing.html"><span>Health and wellbeing</span>${icon('back', 16)}</a>
-          <a class="set-link" href="./legal/licences.html"><span>Open source licences</span>${icon('back', 16)}</a>
-        </div>
+        ${rows([
+          link('Privacy policy', 'href="./legal/privacy.html"'),
+          link('Terms of service', 'href="./legal/terms.html"'),
+          link('Health and wellbeing', 'href="./legal/wellbeing.html"'),
+          link('Open source licences', 'href="./legal/licences.html"'),
+        ])}
         ${rows([
           row('Version', state('version', VERSION)),
-          row('Diagnostics', '<button class="btn small-btn ghost" id="diag">Copy</button>', 'Versions and counts, for a bug report.'),
+          act('Copy diagnostics', 'id="diag"'),
         ])}
         <div class="set-tail">
           <a class="tail-btn" href="#/intro">Show the introduction again</a>
@@ -213,38 +224,56 @@ function diagnostics() {
 
 /* ---------------- the root ---------------- */
 
+/** What a page is set to, read down the right edge. A row with no value is a
+ *  row you cannot tell apart from the next one. */
+function pageState(id) {
+  const s = store.get().settings;
+  const hs = habits.settings();
+  return {
+    grid: `${WEEKDAYS[hs.firstDay]}, ${hs.columns} days`,
+    alerts: { off: 'Silent', subtle: 'Subtle', full: 'Full' }[s.sound] || '',
+    appearance: s.theme === 'black' ? 'Pure black' : 'Dark',
+    privacy: lock.isSet() ? 'PIN set' : 'No PIN',
+    data: `${Math.max(1, Math.round(store.exportJson().length / 1024))} KB`,
+    about: VERSION,
+  }[id] || '';
+}
+
 /** State, not a label: whether the record is anywhere but this phone. */
 function accountCard() {
   if (!configured()) return '';
   if (!account.signedIn()) {
     return `<div class="card acc-card">
-      <b>Not backed up</b>
-      <span class="muted">This record lives on this phone only.</span>
+      <span class="acc-state" data-state="none">Not backed up</span>
       <a class="btn primary" href="#/account">Sign in</a>
     </div>`;
   }
   return `<a class="card acc-card" href="#/account">
-    <b>Backed up</b>
-    <span class="muted">${escapeHtml(account.emailOf())}</span>
-    <i id="syncLine">${escapeHtml(syncLine())}</i>
+    <span class="acc-state" id="syncLine" data-state="${syncState()}">${escapeHtml(syncLine())}</span>
+    <span class="acc-mail">${escapeHtml(account.emailOf())}</span>
+    ${icon('back', 16)}
   </a>`;
 }
 
-/** The card's last line follows the sync. Unhooks itself once the card is gone. */
+/** The card's state line follows the sync. Unhooks itself once the card is gone. */
 function followSync() {
   const off = store.onSyncState(() => {
     const el = document.getElementById('syncLine');
     if (!el) return off();
     el.textContent = syncLine();
+    el.dataset.state = syncState();
   });
 }
+
+// The dot's colour, not the words: good, waiting, or failed.
+const syncState = () => ({ pending: 'wait', offline: 'wait', error: 'bad' }[store.syncState()] || 'good');
 
 function syncLine() {
   const at = store.lastSynced();
   return {
     pending: 'Syncing',
-    offline: 'Offline. Syncs when you are back.',
-    error: 'Could not sync',
+    offline: 'Offline',
+    error: 'Sync failed',
   }[store.syncState()] || (at ? `Synced ${relTime(at)}` : 'Not synced yet');
 }
 
@@ -258,30 +287,26 @@ export function renderSettings(mount, page) {
         <h1>${escapeHtml(p ? p.title : 'Settings')}</h1>
         <span class="icon-btn ghost"></span>
       </header>
-      ${p ? '<div id="page"></div>' : `${accountCard()}<div class="set-links">${PAGES.map((x) =>
-        `<a class="set-link" href="#/settings/${x.id}"><span>${escapeHtml(x.title)}</span>${icon('back', 16)}</a>`).join('')}</div>`}
+      ${p ? '<div id="page"></div>' : `${accountCard()}${rows(PAGES.map((x) =>
+        link(escapeHtml(x.title), `href="#/settings/${x.id}"`, pageState(x.id))))}`}
     </div>`;
   if (p) p.render(mount.querySelector('#page'));
   else if (account.signedIn()) followSync();
 }
 
-/** What is kept, and what each thing actually protects against. Every change
- *  saves the instant it happens; these are the daily copies, and Android's own
- *  backup is the only one that survives the app being uninstalled. */
+/** One copy a day, three kept. Android's own backup is the only one that
+ *  survives the app being uninstalled. */
 function restorePoints() {
   const snaps = store.snapshots();
-  return `<div class="restore">
-    <h4>Restore points</h4>
+  return `<h3 class="set-group">Restore points</h3>
     ${snaps.length
-      ? `<p class="fineprint">One a day, last three kept.</p>
-         <div class="set-actions">${snaps
-           .map((s) => `<button class="btn" data-restore="${escapeHtml(s.day)}">${escapeHtml(relDay(s.day))}</button>`)
-           .join('')}</div>`
+      ? rows(snaps.map((s) => `<button type="button" class="set-link" data-restore="${escapeHtml(s.day)}">
+          <span>${escapeHtml(relDay(s.day))}</span><i>Restore</i>
+        </button>`))
       : '<p class="fineprint">The first one is written the next time you open the app.</p>'}
     <p class="fineprint">${isNative()
       ? 'This phone also backs the record up to your Google account, so reinstalling brings it back.'
-      : 'Nothing here survives clearing your browser data.'}</p>
-  </div>`;
+      : 'Nothing here survives clearing your browser data.'}</p>`;
 }
 
 /* ---------------- the PIN ---------------- */
@@ -352,13 +377,13 @@ function askPin({ change }) {
 async function showNotifications(el) {
   if (!isNative()) return;
   const out = q(el, 'notifState');
-  const ask = q(el, 'notifAsk');
+  const ask = q(el, 'askNotif');
   const draw = (perm) => {
     out.textContent = { granted: 'On', denied: 'Off, blocked in Android', prompt: 'Not asked yet' }[perm];
     ask.hidden = perm !== 'prompt';
   };
   draw(await alarmPermission());
-  q(el, 'askNotif').addEventListener('click', async () => {
+  ask.addEventListener('click', async () => {
     await askAlarms();
     draw(await alarmPermission());
   });
@@ -367,10 +392,10 @@ async function showNotifications(el) {
 /** Google requires a way back into the consent form for anyone who was asked,
  *  and shows nothing to anyone who was not. */
 async function showAdConsent(el) {
-  const box = q(el, 'consentRow');
+  const box = q(el, 'adConsent');
   if (!box || !(await ads.consentChangeable())) return;
   box.hidden = false;
-  q(el, 'adConsent').addEventListener('click', () => ads.openConsentForm());
+  box.addEventListener('click', () => ads.openConsentForm());
 }
 
 /* ---------------- your data ---------------- */
@@ -414,9 +439,8 @@ function wireBackup(el) {
 function askErase() {
   const sheet = openSheet(`
     <h2>Erase all data</h2>
-    <p class="warn-inline">This cannot be undone.</p>
-    <p class="muted small">Every habit, every day you marked, and everything the Arena has recorded. Type <b>erase</b> to confirm.</p>
-    <input type="text" id="word" autocomplete="off" class="pin-input" placeholder="erase">
+    <p class="muted small">Every habit, every day you marked, and everything the Arena has recorded. No undo. Type <b>erase</b> to confirm.</p>
+    <input type="text" id="word" autocomplete="off" class="set-word" placeholder="erase">
     <div class="btn-row">
       <button class="btn ghost" data-close>Keep it</button>
       <button class="btn danger" id="go">Erase</button>
