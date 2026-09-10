@@ -110,6 +110,8 @@ function settleGroup(st, key, events) {
   const rec = (st.arena.arcs[k] ||= blankArc());
   if (rec.qualified !== null) return;
   const table = groupTable(arc);
+  // A cup your record could never make a field for is not one you went out of.
+  if (!table.entered) return;
   rec.qualified = table.qualifies;
   events.push({ kind: 'group', arc, qualified: rec.qualified, place: table.place, table: table.table });
 }
@@ -160,6 +162,7 @@ function closeGroups(st, events) {
     const rec = (st.arena.arcs[k] ||= blankArc());
     if (rec.qualified !== null) continue;
     const table = groupTable(a);
+    if (!table.entered) continue;
     rec.qualified = table.qualifies;
     events.push({ kind: 'group', arc: a, qualified: rec.qualified, place: table.place, table: table.table });
   }

@@ -1305,25 +1305,6 @@ button.ar-lane:active { opacity: 0.7; }
 /* The icon on the left carries good or bad. The number stays a number. */
 .ar-nscore { font-size: var(--f-head); color: var(--text); font-variant-numeric: tabular-nums; }
 
-/* ---------- the arc ---------- */
-
-.ar-table { border-top: 1px solid var(--line-soft); }
-.ar-tr { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 6px; border-bottom: 1px solid var(--line-soft); font-size: var(--f-small); }
-.ar-tr:last-child { border-bottom: 0; }
-.ar-tr .ar-pos { flex: 0 0 20px; color: var(--faint); font-variant-numeric: tabular-nums; }
-.ar-tr .ar-tn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
-.ar-tr b { font-variant-numeric: tabular-nums; color: var(--muted); }
-/* A league table: rows on a rule, one dashed rule at the cut, the accent yours. */
-.ar-tr.q .ar-pos, .ar-tr.q b { color: var(--text); }
-.ar-tr.q:nth-of-type(3) { border-bottom: 1px dashed var(--line); }
-.ar-tr.you .ar-tn { color: var(--text); font-weight: 600; }
-.ar-tr.you b { color: var(--text); }
-.ar-tr.you { box-shadow: inset 2px 0 0 var(--accent); border-radius: var(--r-chip); }
-.ar-tr[data-week] { cursor: pointer; }
-.ar-tr[data-week]:active { transform: scale(0.995); }
-
-/* The rounds stack: three columns at 360px gave each round forty pixels. */
-
 /* ---------- the progression grid ----------
    A tier of feats: a heading, a count, a bar and its cells. One size, one
    radius, one gap and three states, wherever tierGrid is called. */
@@ -2459,57 +2440,146 @@ html.reduce-motion .intro-cup::after { animation: none; opacity: 1; }
 .arc-btn.live { border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
 .arc-btn.won { border-color: color-mix(in srgb, var(--warn) 42%, transparent); }
 
+
 /* ==========================================================================
    The Arc, whole
    ==========================================================================
    The cup, the group it came out of, and the knockout under it. Three sections
    in one order in every state, so the screen is the same screen all year. */
 
-/* ---------- the cup ---------- */
+/* ---------- the cup ----------
+   A cover, not a header: the trophy stands in a pool of its own light, the
+   competition names itself above the one line the screen is about. */
 
-.arc-cup { text-align: center; padding: 4px 8px var(--s-6); margin-bottom: 6px; }
+.arc-cup {
+  position: relative; text-align: center;
+  padding: var(--s-4) var(--s-2) var(--s-6);
+  margin-bottom: var(--s-2);
+}
+/* The pool. Sized off the art, so it stays behind the cup and never the copy. */
+.arc-cup::before {
+  content: ''; position: absolute; left: 50%; top: 0;
+  width: 260px; height: 190px; transform: translateX(-50%);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--warn) 13%, transparent), transparent);
+  pointer-events: none;
+}
 /* Relative: the sparks hang off this. */
 .arc-cup-art { position: relative; display: grid; place-items: center; margin-bottom: 10px; color: var(--warn); }
-.arc-cup .eyebrow { margin-bottom: 3px; }
-.arc-cup-name { font-size: var(--f-display); letter-spacing: -0.03em; margin: 0 0 6px; }
-.arc-cup-line { margin: 0; font-size: var(--f-small); color: var(--muted); }
-.arc-cup-line b { color: var(--text); font-variant-numeric: tabular-nums; }
+/* The competition names itself: a title band, not a caption. */
+.arc-cup .eyebrow { font-size: var(--f-small); letter-spacing: 0.16em; margin-bottom: 3px; }
+.arc-status {
+  font-size: var(--f-display); line-height: 1.05; letter-spacing: 0.005em;
+  text-transform: uppercase; margin: 0 0 6px;
+}
+.arc-status span { white-space: nowrap; }
+/* A round's full name is four words. One rung down so it lands in two lines. */
+.arc-status.long { font-size: var(--f-sub); }
+.arc-fact { margin: 0; font-size: var(--f-small); color: var(--muted); }
 .arc-cup .said-quote { margin: 14px 0 0; }
-/* The block's one colour, and only once it has been won. */
-.arc-cup.won .arc-cup-name { color: var(--warn); }
-.arc-cup.won .arc-cup-art { filter: drop-shadow(0 0 30px color-mix(in srgb, var(--warn) 38%, transparent)); }
-.arc-cup.out .arc-cup-art { opacity: 0.45; }
+
+/* One colour a state, and the trophy's own gold beside it. */
+.arc-status.live { color: var(--accent-ink); }
+.arc-status.good { color: var(--good); }
+.arc-status.warn { color: var(--warn); }
+.arc-status.gold { color: var(--warn); }
+.arc-status.cold { color: var(--muted); }
+.arc-cup.won .arc-cup-art { filter: drop-shadow(0 0 30px color-mix(in srgb, var(--warn) 40%, transparent)); }
+.arc-cup.won::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--warn) 26%, transparent), transparent); }
+/* Out and not entered are both cups you are not playing for. */
+.arc-cup.out .arc-cup-art, .arc-cup.entry .arc-cup-art { opacity: 0.4; }
+.arc-cup.out::before, .arc-cup.entry::before, .arc-cup.shut::before { opacity: 0.4; }
 
 /* ---------- the arrival ----------
    `.deal` is set once per state per session, never under reduced motion, so the
-   second visit is instant and nothing is left at zero opacity. Over in 0.7s. */
+   second visit is instant and nothing is left at zero opacity. Over in 0.8s. */
 
+.arc.deal .arc-cup-art { animation: cup-rise 0.5s var(--ease) backwards; }
+@keyframes cup-rise { from { opacity: 0; transform: translateY(8px) scale(0.94); } }
+.arc.deal .arc-cup::before { animation: deal 0.7s var(--ease) 0.2s backwards; }
 .arc.deal .arc-cup .eyebrow,
-.arc.deal .arc-cup-name,
-.arc.deal .arc-cup-line { opacity: 0; animation: deal 0.36s var(--ease) 0.12s forwards; }
-.arc.deal .arc-group .ar-tr {
+.arc.deal .arc-status,
+.arc.deal .arc-fact { opacity: 0; animation: deal 0.36s var(--ease) 0.18s forwards; }
+.arc.deal .arc-gate { opacity: 0; animation: deal 0.36s var(--ease) 0.3s forwards; }
+.arc.deal .arc-gate-bar i { transform-origin: left; animation: bar-grow var(--t-slow) var(--ease) 0.42s backwards; }
+@keyframes bar-grow { from { transform: scaleX(0); } }
+.arc.deal .arc-row {
   opacity: 0; animation: deal 0.36s var(--ease) forwards;
-  animation-delay: calc(var(--i) * 0.05s + 0.18s);
+  animation-delay: calc(var(--i) * 0.05s + 0.4s);
 }
 .arc.deal .arc-tie { opacity: 0; }
 
 /* ---------- the group ---------- */
 
-.arc-group .ar-fx-head { margin-bottom: 6px; }
-.arc-note { margin: 0 0 10px; font-size: var(--f-fine); color: var(--muted); }
-.ar-table + .arc-note { margin: 10px 0 0; }
+.arc-group h2 { margin-bottom: 10px; }
+.arc-note { margin: 10px 0 0; font-size: var(--f-fine); color: var(--muted); }
+
+/* The gate: the one bar the screen is about, and a thing you press for the
+   rule behind it, which is what earns it a surface. */
+.arc-gate {
+  display: grid; gap: 7px; width: 100%; margin: 0 0 14px; padding: 11px 12px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-ctrl);
+  color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.arc-gate:active { transform: scale(0.995); }
+.arc-gate-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.arc-gate-top i {
+  font-style: normal; font-size: var(--f-fine); text-transform: uppercase;
+  letter-spacing: 0.12em; color: var(--muted);
+}
+.arc-gate-top b { font-size: var(--f-small); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.arc-gate-bar { display: block; height: 8px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; }
+.arc-gate-bar i { display: block; height: 100%; border-radius: var(--r-pill); background: var(--line); }
+.arc-gate-note {
+  display: flex; align-items: center; gap: 4px;
+  font-size: var(--f-fine); color: var(--faint);
+}
+.arc-gate-note .ico { flex: 0 0 auto; transform: rotate(180deg); opacity: 0.7; }
+/* The block's one colour, worn by the bar and the label together. */
+.arc-gate.live .arc-gate-bar i { background: var(--accent); }
+.arc-gate.live .arc-gate-top i { color: var(--accent-ink); }
+.arc-gate.good .arc-gate-bar i { background: var(--good); }
+.arc-gate.good .arc-gate-top i { color: var(--good); }
+.arc-gate.warn .arc-gate-bar i { background: var(--warn); }
+.arc-gate.warn .arc-gate-top i { color: var(--warn); }
+
+/* The field: rows on a hairline, each rule carrying a segment as long as that
+   week was. A bar, not a box: the lane is what makes six rows a record rather
+   than a table, and a filled row would put a tile under every one of them. */
+.arc-field { border-top: 1px solid var(--line-soft); }
+.arc-row {
+  position: relative; display: flex; align-items: center; gap: 10px;
+  min-height: 44px; padding: 4px 2px;
+  border-bottom: 1px solid var(--line-soft); font-size: var(--f-small);
+}
+.arc-row::after {
+  content: ''; position: absolute; left: 0; bottom: -1px; width: var(--w);
+  height: 3px; border-radius: var(--r-pill); background: var(--line);
+}
+.arc-field .arc-row:last-child { border-bottom: 0; }
+.arc-row-pos { flex: 0 0 18px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.arc-row-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.arc-row b { font-variant-numeric: tabular-nums; color: var(--muted); }
+/* The last row through, so the rule under it is the cut. */
+.arc-row.through { border-bottom: 1px dashed var(--line); }
+/* Yours is the accent, on its lane and in its text. That is how you find it. */
+.arc-row.you::after { background: var(--accent); height: 4px; }
+.arc-row.you .arc-row-name { color: var(--text); font-weight: 600; }
+.arc-row.you .arc-row-pos, .arc-row.you b { color: var(--text); }
+.arc-row[data-week] { cursor: pointer; }
+.arc-row[data-week]:active { transform: scale(0.995); }
 
 /* ---------- the knockout ----------
    Three columns at 360px gave each round forty pixels. Three rows on a rail,
-   read downwards. */
+   read downwards, warming into the final at the bottom. */
 
 .arc-bracket { position: relative; display: grid; padding-left: var(--s-6); }
 .arc-bracket::before {
-  content: ''; position: absolute; left: 9px; top: 22px; bottom: 22px; width: 2px;
-  border-radius: var(--r-pill); background: var(--line-soft);
+  content: ''; position: absolute; left: 9px; top: 22px; bottom: 26px; width: 2px;
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--line-soft) 40%, color-mix(in srgb, var(--warn) 45%, var(--line-soft)));
   transform-origin: top;
 }
-.arc.deal .arc-bracket::before { transform: scaleY(0); animation: rail-draw 0.4s var(--ease) 0.24s forwards; }
+.arc.deal .arc-bracket::before { transform: scaleY(0); animation: rail-draw 0.4s var(--ease) 0.34s forwards; }
 @keyframes rail-draw { to { transform: scaleY(1); } }
 
 .arc-tie {
@@ -2520,7 +2590,7 @@ html.reduce-motion .intro-cup::after { animation: none; opacity: 1; }
 }
 .arc.deal .arc-tie {
   animation: deal 0.4s var(--ease) forwards;
-  animation-delay: calc(var(--i) * 0.08s + 0.3s);
+  animation-delay: calc(var(--i) * 0.08s + 0.4s);
 }
 .arc-bracket .arc-tie:last-child { border-bottom: 0; }
 /* The node sits in the gutter, on the rail. */
@@ -2538,6 +2608,7 @@ html.reduce-motion .intro-cup::after { animation: none; opacity: 1; }
 .arc-tie-score { flex: 0 0 auto; text-align: right; font-variant-numeric: tabular-nums; }
 .arc-tie-score b { display: block; font-size: var(--f-head); letter-spacing: -0.02em; }
 .arc-tie-score i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); }
+.arc-tie-lock { flex: 0 0 auto; display: grid; place-items: center; color: var(--faint); opacity: 0.5; }
 
 /* One colour a tie, and no word repeating it. */
 .arc-tie.won .arc-tie-node { background: var(--good); box-shadow: none; }
@@ -2557,10 +2628,41 @@ html.reduce-motion .intro-cup::after { animation: none; opacity: 1; }
   50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--accent) 0%, transparent); }
 }
 .arc-tie.todo .arc-tie-body b { color: var(--muted); }
+
+/* The destination, so not a row like the others: a wider node, the cup where
+   the score will be, and the only gold outside the trophy. */
+.arc-tie.final { min-height: 64px; }
+.arc-tie.final .arc-tie-body b { font-size: var(--f-head); letter-spacing: -0.01em; }
+.arc-tie.final.todo .arc-tie-body b { color: var(--text); }
+.arc-tie.final.todo .arc-tie-node {
+  width: 14px; height: 14px; left: -24px; margin-top: -7px;
+  background: var(--bg); box-shadow: inset 0 0 0 2px var(--warn);
+}
+.arc-tie-prize { flex: 0 0 auto; display: grid; place-items: center; }
+.arc-tie-prize .cup-img { filter: drop-shadow(0 0 14px color-mix(in srgb, var(--warn) 30%, transparent)); }
+.screen.arc[data-state='out'] .arc-tie-prize,
+.screen.arc[data-state='entry'] .arc-tie-prize { opacity: 0.4; filter: grayscale(0.6); }
 /* Out means the rounds under it were never played, not that they are coming. */
 .screen.arc[data-state='out'] .arc-tie.todo { opacity: 0.4; }
-.arc-tie[data-week] { cursor: pointer; }
-.arc-tie[data-week]:active { transform: scale(0.99); }
+.arc-tie[data-week], .arc-tie[data-round] { cursor: pointer; }
+.arc-tie[data-week]:active, .arc-tie[data-round]:active { transform: scale(0.99); }
+
+/* ---------- what a tap explains ---------- */
+
+.arc-rules { list-style: none; margin: 10px 0 0; padding: 0; }
+.arc-rules li {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid var(--line-soft); font-size: var(--f-small);
+}
+.arc-rules li:last-child { border-bottom: 0; }
+.arc-rules span { flex: 1; min-width: 0; color: var(--muted); }
+.arc-rules b { color: var(--text); white-space: nowrap; }
+.arc-rules i {
+  flex: 0 0 auto; font-style: normal; color: var(--faint);
+  font-size: var(--f-fine); font-variant-numeric: tabular-nums;
+}
+.arc-sheet-cup { display: grid; place-items: center; padding: 10px 0 0; }
+.arc-sheet-cup .cup-img { filter: drop-shadow(0 0 26px color-mix(in srgb, var(--warn) 32%, transparent)); }
 
 /* The only motion outside `.deal`, so the only one left to switch off. */
 @media (prefers-reduced-motion: reduce) {
