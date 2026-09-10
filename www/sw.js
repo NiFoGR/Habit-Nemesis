@@ -1,6 +1,6 @@
 // Offline-first service worker. Bump CACHE to drop everything stored.
 // Code is revalidated against the network; the cache is the offline answer.
-const CACHE = 'habit-nemesis-v7';
+const CACHE = 'habit-nemesis-v13';
 
 const SHELL = [
   './',
@@ -21,6 +21,8 @@ const SHELL = [
   './js/native.js',
   './js/tabs.js',
   './js/intro.js',
+  './js/version.js',
+  './js/widgets.js',
 
   // habits
   './js/habits/program.js',
@@ -29,6 +31,7 @@ const SHELL = [
   './js/habits/marking.js',
   './js/habits/edit.js',
   './js/habits/tracking.js',
+  './js/habits/timer.js',
 
   // arena
   './js/arena/program.js',
@@ -56,6 +59,7 @@ const SHELL = [
   './js/arena/arc.js',
   './js/arena/week-sheet.js',
   './js/arena/feats-screen.js',
+  './js/arena/line.js',
 
   // the account
   // ads

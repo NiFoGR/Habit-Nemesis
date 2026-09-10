@@ -3,7 +3,7 @@
   "appName": "Habit Nemesis",
   "webDir": "www",
   "android": {
-    "backgroundColor": "#0b0f14"
+    "backgroundColor": "#0a0c10"
   },
   "server": {
     "androidScheme": "https"

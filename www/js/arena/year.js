@@ -2,7 +2,7 @@
 // until it has been lived.
 //
 // A review, not a second competition. The months chart is drawn here rather
-// than with barChart, which scales to its tallest bar: on percentages that
+// than with a shared bar chart, which scales to its tallest bar: on percentages that
 // draws a 44% month as a near-miss of a full column. Always 0 to 100, and as
 // many columns as the year has months, counted from the data.
 
@@ -76,16 +76,8 @@ export function renderYear(mount, want) {
       ${best && worst
         ? `<section class="card">
             <h2>Two weeks</h2>
-            <button class="ar-nemesis" data-week="${best.key}">
-              <span class="ar-nico">${icon('flash', 16)}</span>
-              <span class="ar-nname"><b>Best week</b><i>${escapeHtml(arena.weekLabel(best.key))}</i></span>
-              <b class="ar-nscore">${pct(best.score)}</b>
-            </button>
-            <button class="ar-nemesis" data-week="${worst.key}">
-              <span class="ar-nico">${icon('flash', 16)}</span>
-              <span class="ar-nname"><b>Worst week</b><i>${escapeHtml(arena.weekLabel(worst.key))}</i></span>
-              <b class="ar-nscore">${pct(worst.score)}</b>
-            </button>
+            ${extreme('Best week', best)}
+            ${extreme('Worst week', worst)}
           </section>`
         : ''}
 
@@ -104,6 +96,14 @@ export function renderYear(mount, want) {
   );
 }
 
+/** One glyph on both sides of a contrast is decoration. The scores carry it. */
+function extreme(label, w) {
+  return `<button class="ar-nemesis" data-week="${w.key}">
+    <span class="ar-nname"><b>${label}</b><i>${escapeHtml(arena.weekLabel(w.key))}</i></span>
+    <b class="ar-nscore">${pct(w.score)}</b>
+  </button>`;
+}
+
 function hop(mount, year) {
   if (!year) return;
   haptic('tick');
@@ -113,7 +113,7 @@ function hop(mount, year) {
 const span = (y) => {
   const fmt = (k) => {
     const [yy, mm, dd] = k.split('-').map(Number);
-    return new Date(yy, mm - 1, dd).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
+    return new Date(yy, mm - 1, dd).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
   };
   return `${fmt(y.from)} – ${fmt(y.to)}`;
 };
@@ -123,7 +123,7 @@ function renderLocked(mount) {
   const left = arena.daysLeftInYear();
   const y = arena.yearAt(arena.currentYearIndex());
   mount.innerHTML = `
-    <div class="screen">
+    <div class="screen yr-locked">
       <header class="screen-head">
         <button class="icon-btn" data-back="cabinet" aria-label="Back">${icon('back')}</button>
         <h1>The Year</h1>
@@ -134,9 +134,8 @@ function renderLocked(mount) {
         <b class="vault-count">${left}</b>
         <span class="vault-unit">day${left === 1 ? '' : 's'}</span>
         <p class="vault-label">until <b>${escapeHtml(y.label)}</b> is sealed</p>
-        <p class="muted small">${escapeHtml(span(y))}</p>
+        <p class="fineprint">${escapeHtml(span(y))}</p>
       </section>
-
     </div>`;
 }
 
@@ -154,8 +153,8 @@ function monthChart(year) {
         const score = rec ? rec.score : live && !live.empty ? live.score : null;
         const cls = score == null ? 'none'
           : rec?.move === 'up' || rec?.move === 'placed' ? 'up'
-            : rec?.move === 'down' ? 'down'
-              : live ? 'live' : 'held';
+            : rec?.move === 'down' || rec?.move === 'notice' ? 'down'
+              : live ? 'live' : '';
         return `<div class="yr-col ${cls}" title="${escapeHtml(key)}${score == null ? '' : `: ${pct(score)}`}">
           <span class="yr-fill" style="height:${score == null ? 0 : (score * 100).toFixed(1)}%"></span>
           <i>${shortMonth(key)}</i>
@@ -165,20 +164,26 @@ function monthChart(year) {
   </div>`;
 }
 
-/** The division each month finished in, as a track. */
+/** Only the months that moved you. */
 function ladderTrack(year) {
   const months = store.get().arena.months;
   const seen = arena.monthsOfYear(year).map((m) => (months[m] ? { m, ...months[m] } : null)).filter(Boolean);
   if (!seen.length) return '<p class="muted small">No month of this year closed.</p>';
+  const moves = seen.filter((m) => m.move !== 'held' || m.cleared);
+  if (!moves.length) {
+    return `<p class="muted small">${escapeHtml(arena.divisionOf(seen[seen.length - 1].to).name)} all year.</p>`;
+  }
   return `<div class="yr-track">
-    ${seen
-      .map((m) => `<span class="yr-step ${m.move}" title="${escapeHtml(`${m.m}: ${m.move}`)}">
-        ${icon(m.move === 'up' || m.move === 'placed' ? 'arrowUp' : m.move === 'down' ? 'arrowDown' : 'check', 13)}
-        <i>${escapeHtml(arena.divisionOf(m.to).name)}</i>
+    ${moves
+      .map((m) => `<span class="yr-step ${m.cleared && m.move === 'held' ? 'up' : m.move}">
+        ${icon(m.move === 'up' || m.move === 'placed' ? 'arrowUp' : m.move === 'down' ? 'arrowDown' : m.move === 'notice' ? 'warn' : 'check', 13)}
+        <i>${escapeHtml(`${monthName(m.m)} · ${arena.divisionOf(m.to).name}`)}</i>
       </span>`)
       .join('')}
   </div>`;
 }
+
+const monthName = (key) => new Date(`${key}-04T00:00:00`).toLocaleDateString(undefined, { month: 'short' });
 
 function lastDivisionOf(year) {
   const months = store.get().arena.months;
@@ -206,10 +211,10 @@ function arcRow(year) {
               : rec.final === 'lost' ? 'final'
                 : rec.sf === 'lost' ? 'sf'
                   : rec.qf === 'lost' ? 'qf' : 'open';
-          const label = { won: 'Won', out: 'Group stage', final: 'Runner-up', sf: 'Semi-final', qf: 'Quarter-final', open: 'Running' }[state];
-          return `<div class="yr-arc ${rec.won ? 'won' : state === 'final' ? 'final' : ''}" data-arc="${escapeHtml(k)}">
-            <span>${icon(rec.won ? 'trophy' : 'ladder', 20)}</span>
-            <b>${escapeHtml(arc.name)}</b>
+          const label = { won: 'Won', out: 'Out in the group', final: 'Runner-up', sf: 'Out in the semi', qf: 'Out in the quarter', open: 'Running' }[state];
+          return `<div class="yr-arc ${rec.won ? 'won' : ''}">
+            <span>${icon(rec.won ? 'trophy' : 'ladder', 18)}</span>
+            <b>${escapeHtml(`${arc.name} ${arc.year}`)}</b>
             <i>${escapeHtml(label)}</i>
           </div>`;
         })
@@ -266,8 +271,8 @@ function featsOfYear(year) {
     <h2>Feats of ${escapeHtml(year.label)}</h2>
     ${earned
       .map((f) => `<div class="rs-feat">
-        <span class="ft-ico on">${icon(f.icon, 18)}</span>
-        <span><b>${escapeHtml(f.name)}</b><i>${escapeHtml(new Date(f.at).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }))}</i></span>
+        <b>${escapeHtml(f.name)}</b>
+        <i>${escapeHtml(new Date(f.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }))}</i>
       </div>`)
       .join('')}
   </section>`;

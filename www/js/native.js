@@ -50,6 +50,28 @@ export async function scheduleAlarm(id, at, title, body) {
   }
 }
 
+/* ----------------- a route from outside -----------------
+   A launcher shortcut or a widget opens com.habitnemesis.app://open?route=key.
+   The key is looked up in the shell's table, never used as a hash. */
+
+export function onOpenRoute(fn) {
+  const app = window.Capacitor?.Plugins?.App;
+  if (!isNative() || !app?.addListener) return;
+  const take = (url) => {
+    let u;
+    try {
+      u = new URL(url);
+    } catch {
+      return;
+    }
+    if (u.protocol !== 'com.habitnemesis.app:' || u.host !== 'open') return;
+    const key = u.searchParams.get('route');
+    if (key) fn(key);
+  };
+  app.addListener('appUrlOpen', ({ url }) => take(url));
+  app.getLaunchUrl?.().then((r) => r?.url && take(r.url)).catch(() => {});
+}
+
 export async function cancelAlarm(id) {
   if (!hasAlarms()) return;
   try {
@@ -69,7 +91,7 @@ export async function cancelAlarms(ids) {
   }
 }
 
-/** Each `{ id, title, body, hour, minute, weekday }`. weekday 1 = Sunday, null = daily. */
+/** One-shots. Each `{ id, title, body, at, extra, actionTypeId }`. */
 export async function scheduleMany(list) {
   if (!hasAlarms() || !list.length) return false;
   try {
@@ -78,15 +100,43 @@ export async function scheduleMany(list) {
         id: n.id,
         title: n.title,
         body: n.body,
-        schedule: {
-          on: n.weekday ? { weekday: n.weekday, hour: n.hour, minute: n.minute } : { hour: n.hour, minute: n.minute },
-          allowWhileIdle: true,
-        },
+        extra: n.extra || {},
+        actionTypeId: n.actionTypeId,
+        schedule: { at: new Date(n.at), allowWhileIdle: true },
       })),
     });
     return true;
   } catch {
     return false;
+  }
+}
+
+/* ----------------- the buttons on a reminder ----------------- */
+
+/** Done and Skip on a yes/no reminder, Enter with a field on a counted one. */
+export async function registerActions() {
+  if (!hasAlarms()) return;
+  try {
+    await plugin().registerActionTypes({
+      types: [
+        { id: 'yesno', actions: [{ id: 'done', title: 'Done' }, { id: 'skip', title: 'Skip' }] },
+        { id: 'number', actions: [{ id: 'enter', title: 'Enter', input: true, inputButtonTitle: 'Save', inputPlaceholder: 'How many?' }] },
+      ],
+    });
+  } catch {
+    /* an older plugin shows the reminder with no buttons */
+  }
+}
+
+/** A button tapped on a reminder. `fn({ actionId, input, extra })`. */
+export function onAction(fn) {
+  if (!hasAlarms()) return;
+  try {
+    plugin().addListener('localNotificationActionPerformed', (e) => {
+      fn({ actionId: e.actionId, input: e.inputValue, extra: e.notification?.extra || {} });
+    });
+  } catch {
+    /* no listener, no buttons */
   }
 }
 
@@ -107,9 +157,11 @@ export async function hideNavBar() {
 }
 
 // Fixed ids: re-scheduling replaces rather than stacks.
-// Habits get a block: eight ids each, seven weekdays plus the daily collapse.
+// Habits get a block: eight ids each, one per day for the next seven. Android
+// caps an app at 500 alarms, which is why the week is the horizon.
 export const ALARM_HABIT_BASE = 6001;
 export const ALARM_HABIT_SLOTS = 40;
+export const ALARM_HABIT_DAYS = 7;
 // Arena block: arc opening, qualification, each knockout, the night before a final.
 export const ALARM_ARENA_BASE = 7001;
 export const ALARM_ARENA_SLOTS = 8;

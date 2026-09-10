@@ -21,6 +21,20 @@ Applies to comments, UI copy, docs, commits and PRs.
 - Short. Cut any sentence that does not change what the reader does.
 - No hedging, no filler, no restating the heading.
 
+### The second sentence
+
+The app once said `Away a fortnight, then seven days running. Nobody saw you
+stop.` and `Broke a streak of thirty, then built another one. The second is the
+hard one.` Fifty of those shipped before anyone read them together, and read
+together they are the reason the app sounded written by a machine.
+
+- A second sentence earns its place by adding a fact. If it reframes, flatters
+  or lands a line, cut it.
+- No label that explains an obvious control. `Unit` needs no `What you count.`
+  under it.
+- No aphorisms. A feat says what you did, once.
+- Say a number once. If a bar shows it, the sentence does not repeat it.
+
 ## The app on screen
 
 - Labels, not paragraphs. A screen reads in one glance or it is too long.
@@ -33,17 +47,33 @@ Applies to comments, UI copy, docs, commits and PRs.
 
 ### The scale, and how it stays one
 
-Every size in the app is one of the ten rungs in `:root`, and every colour is
-one of the tokens. `npm run check:ui` fails on a raw `font-size` or a hex
-outside the palette. This is checked rather than asked for because asking did
-not work: the app reached forty-five hand-written sizes on top of the eight it
-already had, which is what makes one screen look assembled by several people.
+Every size in the app is one of the ten rungs in `:root`, every colour is one of
+the tokens, and every corner is one of four radii. `npm run check:ui` fails on a
+raw `font-size`, a raw `border-radius` or a hex outside the palette. This is
+checked rather than asked for because asking did not work: the app reached
+forty-five hand-written sizes on top of the eight it already had, and
+twenty-six corner radii, which is what makes one screen look assembled by
+several people.
 
 - Pick the rung by the job, not by the pixels: `--f-mega` is a running numeral,
   `--f-hero` the one number a screen is about, `--f-sub` a screen's h1,
   `--f-head` a card's h2, `--f-fine` a caption, `--f-micro` an axis label.
 - A new size means a missing rung. Add it to `:root` with a comment saying what
   it is for, or use the nearest one. Never both a rung and a rem.
+
+### A border is earned
+
+`.card` is a section: a heading and space around it. A surface and a border go
+only to something you act on as one unit. Boxes inside boxes is what made the
+grid read as a stack of tiles and the habit screen as six of them, and it is the
+first thing anyone notices.
+
+- A list is rows on a hairline rule, the way Settings has always been.
+- A radius token by job, not by pixels: `--r-card` a thing you act on,
+  `--r-ctrl` an input or a cell, `--r-chip` a small mark, `--r-pill` a bar.
+- Colour means state, with one exception: a habit's own colour, which it wears
+  on its name, its ring and its marks. That is how you find a row without
+  reading it.
 
 ### One state colour per block
 
@@ -68,8 +98,8 @@ and a repetition, and the repetition is what makes a screen feel bloated.
 
 ## Data
 
-- localStorage on device. No account, no server, no analytics. Accounts are
-  planned, not built: see `docs/RELEASE.md` before assuming either way.
+- localStorage on device, and an optional account that keeps a copy of it.
+  No analytics. `docs/ACCOUNTS.md` is the runbook, `account/sync.js` the rule.
 - Schema additive: `hydrate()` merges saved state over `blank()`.
 - Sanitise on read. A saved file is untrusted input.
 

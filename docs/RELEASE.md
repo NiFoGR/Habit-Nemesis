@@ -128,17 +128,20 @@ What is missing is a Supabase project. `SUPABASE_URL` and `SUPABASE_KEY` in
 `www/js/account/config.js` are empty, so the app runs local-only and the account
 row is hidden rather than offered as a dead end. Two strings turn it on.
 
-V1 ships without it. The simplest launch has no server to run, no password
-resets at midnight and no Data Safety answers about a database. Turn it on when
-there is a reason to.
+V2 ships with it: the introduction offers the account on its last page and
+sync runs on its own. Two strings in `www/js/account/config.js` turn it on,
+and until they land every account screen is absent rather than dead.
+`docs/ACCOUNTS.md` is the runbook.
 
-### Keep local-first
+### Keep the grid free of the wall
 
-The app's claim is that your record never leaves the phone, and that is a
-feature, not an accident. Do not trade it for sync. **The account stays
-optional.** The app works forever without one; signing in adds a copy in the
-cloud and a second device. Say exactly that on the sign-in screen, and the
-people who came for the privacy stay.
+The account is the default path in v2 and the sync is automatic, but **the
+account stays optional**. The grid must work on first launch with no network,
+Not now is a link that always works, and the one nudge on the grid dies after
+two dismissals. Play's own guidance expects an account to be optional when the
+app functions without one, and a wall costs more installs than the sync is
+worth. The privacy policy names the processor, the region and the deletion
+route, because once the account is offered that is a store requirement.
 
 ### The shape of it
 
@@ -250,20 +253,25 @@ most users to decline the second and price the model on non-personalised rates.
 Free has to be a real app or nobody stays long enough to pay. Paywall depth and
 convenience, never the core loop.
 
-| Free | Pro |
+| Never gated | Behind the one payment |
 |---|---|
-| Unlimited habits, the whole grid | Sync and a second device |
-| The Arena: weeks, fixtures, divisions | The full year and full history |
-| Feats, cups, the Cabinet | Themes, icon colours, widgets |
-| Export and CSV | The share card without a watermark |
-| The PIN | No ads |
+| Unlimited habits, the whole grid | No ads |
+| The Arena: every week, fixture and division | The widgets |
+| Feats, cups, the Cabinet, the whole history | Extra themes |
+| Export and CSV, the account and sync | The share card without a watermark |
+| The PIN | |
 
 The Arena stays free. It is the reason to choose this app over the twenty
-others, and hiding it means nobody ever finds out it is there.
+others, and hiding it means nobody ever finds out it is there. The history
+stays free too: a tracker that ransoms your own record is the thing this app
+exists to not be.
 
-Price it at about £2.99 a month, £19.99 a year, £29.99 once. Annual is the one
-to push; lifetime is the one that converts the people who would otherwise never
-pay.
+**One payment, no subscription.** HabitNow's most praised attribute across
+every source is a one-off $11.99 unlock; Finch's most attacked is its billing.
+Habitica charges $4.99 a month. So: one payment of about £6.99, undercutting
+the incumbent, and `No subscription, ever.` on the listing and in the paywall.
+Against three competitors who all charge monthly that sentence is worth more
+than the feature list above it.
 
 ### What the stores take
 
@@ -438,8 +446,9 @@ the listing rather than on one file. Kept knowingly. Blocker 3.
 
 **The icon is a red N on black**, which is Netflix's mark, and an icon is the
 asset a store looks at hardest. The letterform is not the problem, the colour
-pairing is, and the colour is one token: `--mark` in `www/styles.css` and `INK`
-in `tools/gen-icons.mjs`. Kept knowingly. If review does flag it, that is a
+pairing is, and the colour is one token: `--accent` in `www/styles.css` and
+`INK` in `tools/gen-icons.mjs`. Since v2 the app on screen wears the same red,
+so the icon and the app are one product. Kept knowingly. If review does flag it, that is a
 rejection and a resubmission, not a ban.
 
 **The 12 testers are real people** who have to keep the app installed for a

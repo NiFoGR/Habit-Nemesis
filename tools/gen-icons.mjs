@@ -43,7 +43,7 @@ function sdMark(px, py) {
 }
 
 const BG = [10, 12, 16]; // --bg
-const INK = [230, 36, 41]; // --mark
+const INK = [230, 36, 41]; // --accent
 
 /* ---- the mark as a file ---- */
 

@@ -10,14 +10,13 @@ import * as store from '../store.js';
 import * as habits from '../habits/program.js';
 import * as arena from './program.js';
 import * as feats from './feats.js';
-import { escapeHtml, chime, celebrate, haptic, WEEKDAYS_LONG } from '../ui.js';
+import { escapeHtml, chime, celebrate, haptic, reducedMotion, WEEKDAYS_LONG } from '../ui.js';
 import { icon } from '../icons.js';
 import { navigate } from '../back.js';
 import { shareWeek } from './share.js';
 
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 const points = (v) => Math.round(v * 100);
-const still = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const signed = (n) => `${n >= 0 ? '+' : ''}${n}`;
 
 /* ---------------- the week, as numbers ---------------- */
@@ -57,6 +56,7 @@ function readWeek(key) {
     prev: prev.void || !prev.due ? null : prev,
     alive: habits.active().map((h) => habits.summary(h)).filter((s) => s?.streak).sort((a, b) => b.streak - a.streak),
     broke: habits.brokenIn(from, to)[0] || null,
+    notes: habits.notesIn(from, to),
     fresh: featsIn(from, to),
     opponent: live ? arena.fixtureFor(key) : null,
     open: open.length,
@@ -96,9 +96,12 @@ function daysBeat(w) {
     </span>`;
   }).join('');
 
+  const notes = w.notes.length
+    ? `<div class="rv-notes">${w.notes.map((n) => `<p><b>${escapeHtml(weekday(n.key).slice(0, 3))}</b>${escapeHtml(n.text)}</p>`).join('')}</div>`
+    : '';
   return `
     <p class="eyebrow">The days</p>
-    <div class="rv-days">${bars}</div>`;
+    <div class="rv-days">${bars}</div>${notes}`;
 }
 
 function rowsBeat(w) {
@@ -157,10 +160,18 @@ function verdictBeat(w) {
   }
 
   const d = w.prev ? points(w.score - w.prev.score) : null;
-  const head = d == null ? 'On the record' : d > 0 ? `Up ${d} on last week` : d < 0 ? `Down ${-d} on last week` : 'Level with last week';
+  const head = d == null ? 'On the record' : d > 0 ? 'Up on last week' : d < 0 ? 'Down on last week' : 'Level with last week';
+  // The two scores say by how much, so the headline does not.
   return `
     <p class="eyebrow">The verdict</p>
     <h1 class="rv-title ${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${escapeHtml(head)}</h1>
+    ${w.prev
+      ? `<div class="rv-vs">
+          <span><b>${pct(w.score)}</b><i>This week</i></span>
+          <span class="rv-versus">${icon('versus', 18)}</span>
+          <span><b>${pct(w.prev.score)}</b><i>Last week</i></span>
+        </div>`
+      : ''}
     ${featBlock}`;
 }
 
@@ -238,7 +249,7 @@ function draw(mount, w) {
 /** The score arrives rather than appearing. The one number worth waiting on. */
 function countUp(el, to) {
   if (!el) return;
-  if (still()) {
+  if (reducedMotion()) {
     el.textContent = pct(to);
     return;
   }

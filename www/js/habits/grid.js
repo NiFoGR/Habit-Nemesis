@@ -9,7 +9,7 @@ export const rowColour = (habit) => (habit.colour ? habits.hexOf(habit.colour) :
 
 /** The line under the name: what a measurable habit counts. */
 function detailOf(habit) {
-  if (habit.kind !== 'number') return '';
+  if (!habits.measurable(habit)) return '';
   const unit = habit.unit || '';
   if (!habit.target) return unit;
   const aim = `${habit.targetType === 'atmost' ? 'under' : 'at least'} ${fmtNumber(habit.target)}`;
@@ -18,7 +18,7 @@ function detailOf(habit) {
 
 /** The small ring: the score in the habit's own colour. ringSvg is the 168px
  *  one and does not survive being shrunk to 26px. */
-function miniRing(frac, colour) {
+export function miniRing(frac, colour) {
   const r = 9;
   const c = 2 * Math.PI * r;
   const off = c * (1 - Math.max(0, Math.min(frac, 1)));
@@ -42,13 +42,13 @@ export function cellHtml(habit, key, sum, s) {
   if (raw === habits.SKIP) {
     return `<button class="hg-cell skip" data-day="${key}" aria-label="${escapeHtml(label)}: skipped">${icon('skip', 15)}</button>`;
   }
-  if (habit.kind === 'number') {
-    const has = typeof raw === 'number';
+  // Before the yes/no branches: a number habit reading 1 is a measurement.
+  if (habits.measurable(habit) && typeof raw === 'number') {
     const met = !!d?.hit;
     // No unit here. It is said once, under the name.
-    return `<button class="hg-cell num ${met ? 'on' : has ? 'part' : ''}" data-day="${key}"
-      style="${met ? `color:${colour}` : ''}" aria-label="${escapeHtml(label)}: ${has ? fmtNumber(raw) : 'nothing'} ${escapeHtml(habit.unit || '')}">
-      ${has ? escapeHtml(fmtNumber(raw)) : '–'}</button>`;
+    return `<button class="hg-cell num ${met ? 'on' : 'part'}" data-day="${key}"
+      style="${met ? `color:${colour}` : ''}" aria-label="${escapeHtml(label)}: ${fmtNumber(raw)} ${escapeHtml(habit.unit || '')}">
+      ${escapeHtml(fmtNumber(raw))}</button>`;
   }
   if (raw === habits.YES) {
     return `<button class="hg-cell on" data-day="${key}" style="color:${colour}" aria-label="${escapeHtml(label)}: done">${icon('check', 18)}</button>`;
@@ -63,6 +63,9 @@ export function cellHtml(habit, key, sum, s) {
   }</button>`;
 }
 
+/** A cell's width in px, by column count: seven days give room back to the name. */
+export const cellSize = (cols) => ({ 3: 46, 4: 44, 5: 40, 6: 34, 7: 30 })[cols] || 44;
+
 /** A cell is about 45px wide, so "23.18" reads as noise. One decimal under ten,
  *  none above it, and k past a thousand. */
 export function fmtNumber(v) {
@@ -76,49 +79,60 @@ export function fmtNumber(v) {
 export function headCell(key) {
   const [y, m, d] = key.split('-').map(Number);
   const dt = new Date(y, m - 1, d);
-  return `<i class="${key === habits.today() ? 'now' : ''}"><b>${WEEKDAYS[dt.getDay()].toUpperCase()}</b><em>${dt.getDate()}</em></i>`;
+  const note = habits.noteOn(key);
+  const cls = `${key === habits.today() ? 'now' : ''} ${note ? 'noted' : ''}`;
+  return `<i class="${cls.trim()}"${note ? ` title="${escapeHtml(note)}"` : ''}><b>${WEEKDAYS[dt.getDay()].toUpperCase()}</b><em>${dt.getDate()}</em></i>`;
 }
 
-export function rowHtml(habit, days, s, { reorder = false, groupOptions = () => '' } = {}) {
+export function rowHtml(habit, days, s, { reorder = false } = {}) {
   const sum = habits.summary(habit);
   const colour = rowColour(habit);
+  const name = escapeHtml(habit.name);
+  const mark = `${miniRing(sum.score, colour)}
+    <span class="hg-label">
+      <b style="color:${colour}">${name}</b>
+      ${detailOf(habit) ? `<i>${escapeHtml(detailOf(habit))}</i>` : ''}
+    </span>`;
+
+  // Reordering: the grip drags, the arrows step, and the name opens nothing.
+  if (reorder) {
+    return `<div class="hg-row" data-id="${escapeHtml(habit.id)}">
+      <span class="hg-drag" aria-hidden="true">${icon('reorder', 16)}</span>
+      <span class="hg-name">${mark}</span>
+      <span class="hg-move">
+        <button class="hg-mv" data-move="up" aria-label="Move ${name} up">${icon('arrowUp', 16)}</button>
+        <button class="hg-mv" data-move="down" aria-label="Move ${name} down">${icon('arrowDown', 16)}</button>
+      </span>
+    </div>`;
+  }
+
   // The name goes there, never to the same place as the cell beside it.
   const href = `#/habits/habit?id=${encodeURIComponent(habit.id)}`;
   return `<div class="hg-row" data-id="${escapeHtml(habit.id)}">
-    ${reorder ? `<button class="hg-drag" aria-label="Reorder ${escapeHtml(habit.name)}">${icon('reorder', 16)}</button>` : ''}
-    <a class="hg-name" href="${href}">
-      ${miniRing(sum.score, colour)}
-      <span class="hg-label">
-        <b style="color:${colour}">${escapeHtml(habit.name)}</b>
-        ${detailOf(habit) ? `<i>${escapeHtml(detailOf(habit))}</i>` : ''}
-      </span>
-    </a>
-    ${reorder
-      ? `<div class="hg-move">
-          <button class="icon-btn small" data-move="up" aria-label="Move up">${icon('arrowUp', 15)}</button>
-          <button class="icon-btn small" data-move="down" aria-label="Move down">${icon('arrowDown', 15)}</button>
-          <select class="hg-group-pick" aria-label="Group">${groupOptions(habit.group)}</select>
-        </div>`
-      : days.map((key) => cellHtml(habit, key, sum, s)).join('')}
+    <a class="hg-name" href="${href}">${mark}</a>
+    ${days.map((key) => cellHtml(habit, key, sum, s)).join('')}
   </div>`;
 }
 
 /* --------------------- the header --------------------- */
 
+/** The one line at the top. No "today" in it: the date sits under it. */
 export function dueHead(due) {
-  if (!due.total) return { text: 'Nothing here yet', frac: 0 };
-  if (due.pending.length) return { text: `${due.pending.length} left today`, frac: due.done / due.total };
-  return { text: 'All done today', frac: 1 };
+  if (!due.total) return { text: 'Pick your first', frac: 0 };
+  if (due.pending.length) return { text: `${due.pending.length} left`, frac: due.done / due.total };
+  return { text: 'Perfect', frac: 1 };
 }
 
+/** The day's ring. Every row owed answered and none a miss: solid accent. */
 export function headRing(frac) {
   const f = Math.max(0, Math.min(frac, 1));
   const r = 20;
   const c = 2 * Math.PI * r;
-  return `<svg class="gh-ring" width="46" height="46" viewBox="0 0 46 46" aria-hidden="true">
+  return `<svg class="gh-ring ${f >= 1 ? 'perfect' : ''}" width="46" height="46" viewBox="0 0 46 46" aria-hidden="true">
+    <circle class="gh-disc" cx="23" cy="23" r="17" fill="var(--accent)"/>
     <circle cx="23" cy="23" r="${r}" fill="none" stroke="var(--line)" stroke-width="4"/>
     <circle class="gh-ring-fill" cx="23" cy="23" r="${r}" fill="none"
-      stroke="${f >= 1 ? 'var(--good)' : 'var(--accent)'}" stroke-width="4" stroke-linecap="round"
+      stroke="var(--accent)" stroke-width="4" stroke-linecap="round"
       stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - f)).toFixed(1)}"
       transform="rotate(-90 23 23)"/>
   </svg>`;

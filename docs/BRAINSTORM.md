@@ -59,8 +59,11 @@ was true under the old one.
 ## Backlog
 
 - Notes on a day, not only on a habit.
-- A home-screen widget, which is the one thing the source app does that this
-  cannot.
+
+### Shipped from here
+
+- Home screen widgets, three of them, under `native/widgets/`. The fixture
+  widget is the one nothing else in the category can build.
 
 
 ---

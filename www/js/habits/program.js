@@ -1,29 +1,33 @@
 // Habits domain. The general-purpose room: name, question, colour, unit,
 // target, frequency, group, reminder, order and any past day are all editable.
 //
-// Three things to know first:
+// Four things to know first:
 //   Entries are the record. Streaks and scores compute on every read, because
 //   the past is editable here.
 //   A day is a key, and `dayStartHour` moves the boundary. This section only.
 //   Frequency is a fraction, n in d. Daily is 1/1, three a week is 3/7.
+//   Three kinds, two shapes. A timed habit is a number of minutes with a
+//   floor, so nothing downstream branches on it.
 
 import * as store from '../store.js';
 import { WEEKDAYS } from '../ui.js';
-import { cancelAlarms, scheduleMany, ALARM_HABIT_BASE, ALARM_HABIT_SLOTS } from '../native.js';
+import { cancelAlarms, scheduleMany, ALARM_HABIT_BASE, ALARM_HABIT_SLOTS, ALARM_HABIT_DAYS } from '../native.js';
 
 /* -------------------- the palette -------------------- */
 
+// Every one clears 7:1 on the ground, and none sits within thirty degrees of
+// the accent's hue. A habit's colour must never be mistaken for the app's.
 export const COLOURS = [
-  { id: 'teal', hex: '#22d3c5', name: 'Teal' },
+  { id: 'teal', hex: '#2fd4c4', name: 'Teal' },
   { id: 'mint', hex: '#4ade80', name: 'Mint' },
   { id: 'lime', hex: '#a3e635', name: 'Lime' },
   { id: 'amber', hex: '#fbbf24', name: 'Amber' },
   { id: 'orange', hex: '#fb923c', name: 'Orange' },
-  { id: 'clay', hex: '#d08a6a', name: 'Clay' },
+  { id: 'clay', hex: '#d9a08a', name: 'Clay' },
   { id: 'rose', hex: '#f472b6', name: 'Rose' },
-  { id: 'red', hex: '#f87171', name: 'Red' },
+  { id: 'plum', hex: '#e879f9', name: 'Plum' },
   { id: 'violet', hex: '#a78bfa', name: 'Violet' },
-  { id: 'indigo', hex: '#8aa4e8', name: 'Indigo' },
+  { id: 'indigo', hex: '#93a5f0', name: 'Indigo' },
   { id: 'sky', hex: '#38bdf8', name: 'Sky' },
   { id: 'slate', hex: '#94a3b8', name: 'Slate' },
 ];
@@ -104,6 +108,7 @@ function blankHabit() {
     notes: '',
     colour: 'teal',
     kind: 'yesno',
+    items: [],
     unit: '',
     target: 0,
     targetType: 'atleast',
@@ -130,8 +135,11 @@ export const STARTERS = [
   { name: 'No sugar', colour: 'rose', kind: 'yesno', freq: { num: 6, den: 7 }, question: 'Stayed off sugar?' },
 ];
 
+/** Anything answered with a number, so measurable or timed. */
+export const measurable = (h) => h.kind !== 'yesno';
+
 /** The line under a starter's name: what it will ask of you. */
-export const starterMeta = (h) => (h.kind === 'number' ? `${h.target} ${h.unit} a day` : freqLabel(h.freq));
+export const starterMeta = (h) => (measurable(h) ? `${h.target} ${h.unit} a day` : freqLabel(h.freq));
 
 export function addStarter(i) {
   const pick = STARTERS[i];
@@ -141,7 +149,16 @@ export function addStarter(i) {
 }
 
 export function draft(kind = 'yesno') {
-  return { ...blankHabit(), kind, target: kind === 'number' ? 1 : 0 };
+  const h = { ...blankHabit(), kind };
+  if (kind === 'number') h.target = 1;
+  if (kind === 'timed') Object.assign(h, { unit: 'min', target: 20 });
+  return h;
+}
+
+/** A timed habit keeps its shape whatever the form sent. */
+function normalise(h) {
+  if (h.kind === 'timed') Object.assign(h, { unit: 'min', targetType: 'atleast' });
+  return h;
 }
 
 /** Every write stamps updatedAt, so two copies of one habit can be told apart.
@@ -156,12 +173,12 @@ export function save(habit) {
   return store.update((st) => {
     const i = st.habits.items.findIndex((h) => h.id === habit.id);
     if (i >= 0) {
-      st.habits.items[i] = stamp({ ...st.habits.items[i], ...habit });
+      st.habits.items[i] = stamp(normalise({ ...st.habits.items[i], ...habit }));
       return;
     }
     if (st.habits.items.length >= MAX_HABITS) return;
     const max = st.habits.items.reduce((a, h) => Math.max(a, h.order), -1);
-    st.habits.items.push(stamp({ ...habit, order: max + 1 }));
+    st.habits.items.push(stamp(normalise({ ...habit, order: max + 1 })));
   });
 }
 
@@ -170,6 +187,55 @@ export function remove(id) {
     st.habits.items = st.habits.items.filter((h) => h.id !== id);
     delete st.habits.entries[id];
   });
+}
+
+/* ---------------- undo ---------------- */
+// An act happens at once and a toast holds the way back for six seconds. What
+// it holds is the whole of a habit, or a group and who was in it.
+
+/** Everything a habit is, taken before it goes. */
+export function snapshotOf(id) {
+  const st = store.get().habits;
+  const habit = st.items.find((h) => h.id === id);
+  if (!habit) return null;
+  return { habit: { ...habit }, entries: { ...(st.entries[id] || {}) } };
+}
+
+export function reinstate(snap) {
+  if (!snap) return;
+  return store.update((st) => {
+    if (st.habits.items.some((h) => h.id === snap.habit.id)) return;
+    st.habits.items.push({ ...snap.habit });
+    if (Object.keys(snap.entries).length) st.habits.entries[snap.habit.id] = { ...snap.entries };
+  });
+}
+
+/** A group and its members, taken before it goes. */
+export function groupSnapshot(id) {
+  const g = groupById(id);
+  if (!g) return null;
+  return { group: { ...g }, members: all().filter((h) => h.group === id).map((h) => h.id) };
+}
+
+export function reinstateGroup(snap) {
+  if (!snap) return;
+  return store.update((st) => {
+    if (st.habits.groups.some((g) => g.id === snap.group.id)) return;
+    st.habits.groups.push({ ...snap.group });
+    st.habits.items.forEach((h) => {
+      if (snap.members.includes(h.id)) stamp(h).group = snap.group.id;
+    });
+  });
+}
+
+/** The same habit again, with no record. Reminders come along, days do not. */
+export function duplicate(id) {
+  const h = byId(id);
+  if (!h) return null;
+  const copy = { ...blankHabit(), ...h, id: blankHabit().id, name: `${h.name} copy`.slice(0, 60), createdAt: Date.now(), archived: false, archivedAt: 0, order: 0 };
+  delete copy.updatedAt;
+  save(copy);
+  return copy.id;
 }
 
 export function setArchived(id, archived) {
@@ -270,6 +336,190 @@ export function setValue(habitId, key, value) {
   });
 }
 
+/* ---------------- protocols ---------------- */
+// A curated block: rows created for you, a fixed span, and a feat at the end.
+// Data, never a screen of special cases. A run is a group like any other.
+
+export const PROTOCOLS = [
+  {
+    id: 'foundation',
+    name: 'Foundation',
+    days: 30,
+    blurb: 'Sleep, light, movement, food. Everything else gets easier once these hold.',
+    rows: [
+      { name: 'Wake time', colour: 'amber', kind: 'yesno', question: 'Up within half an hour of your wake time?' },
+      { name: 'Morning light', colour: 'orange', kind: 'yesno', question: 'Ten minutes outside within an hour of waking?' },
+      { name: 'Steps', colour: 'mint', kind: 'number', unit: 'steps', target: 8000, question: 'How many steps?' },
+      { name: 'Protein', colour: 'lime', kind: 'number', unit: 'g', target: 150, question: 'How much protein?' },
+      { name: 'Bedtime', colour: 'indigo', kind: 'yesno', question: 'In bed at the time you planned?' },
+    ],
+  },
+  {
+    id: 'physical',
+    name: 'Physical Development',
+    days: 84,
+    blurb: 'Twelve weeks of training, and the food and recovery it runs on.',
+    rows: [
+      { name: 'Training', colour: 'orange', kind: 'yesno', freq: { num: 3, den: 7 }, question: 'Did the session you had scheduled?' },
+      { name: 'Steps', colour: 'mint', kind: 'number', unit: 'steps', target: 8000, question: 'How many steps?' },
+      { name: 'Protein', colour: 'lime', kind: 'number', unit: 'g', target: 150, question: 'How much protein?' },
+      { name: 'Creatine', colour: 'teal', kind: 'yesno', question: 'Took creatine?' },
+      { name: 'Mobility', colour: 'sky', kind: 'timed', target: 10, question: 'Ten minutes of mobility?' },
+    ],
+  },
+  {
+    id: 'deepwork',
+    name: 'Deep Work',
+    days: 30,
+    blurb: 'Not "be productive". The five behaviours that produce it.',
+    rows: [
+      { name: 'Deep work', colour: 'violet', kind: 'timed', target: 90, question: 'Ninety minutes on the one thing that matters?' },
+      { name: 'Phone in another room', colour: 'indigo', kind: 'yesno', question: 'One work session with the phone out of reach?' },
+      { name: 'Learn', colour: 'sky', kind: 'timed', target: 30, question: 'Thirty minutes learning something hard?' },
+      { name: 'Plan tomorrow', colour: 'teal', kind: 'timed', target: 5, question: 'Five minutes writing tomorrow down?' },
+      { name: 'Nothing before work', colour: 'clay', kind: 'yesno', question: 'Opened no feed before the first block of work?' },
+    ],
+  },
+  {
+    id: 'digital',
+    name: 'Digital Discipline',
+    days: 30,
+    blurb: 'Five things you do not do. Taking one away beats adding another.',
+    rows: [
+      { name: 'No phone in bed', colour: 'indigo', kind: 'yesno', question: 'Phone charging outside the bedroom?' },
+      { name: 'Nothing before noon', colour: 'violet', kind: 'yesno', question: 'No social media before midday?' },
+      { name: 'No short-form', colour: 'plum', kind: 'yesno', question: 'No reels, shorts or TikTok?' },
+      { name: 'Phone out of the room', colour: 'clay', kind: 'yesno', question: 'Phone outside the room you work in?' },
+      { name: 'Screens off by ten', colour: 'slate', kind: 'yesno', question: 'Screens off an hour before bed?' },
+    ],
+  },
+  {
+    id: 'discipline',
+    name: 'Discipline',
+    days: 30,
+    blurb: 'Do what you said you would do, on the day you said it.',
+    rows: [
+      { name: 'First alarm', colour: 'amber', kind: 'yesno', question: 'Up on the first alarm, no snooze?' },
+      { name: 'Trained as planned', colour: 'orange', kind: 'yesno', question: 'Did the training you had planned?' },
+      { name: 'Worked as planned', colour: 'rose', kind: 'yesno', question: 'Did the work you had planned?' },
+      { name: 'Ten minute reset', colour: 'teal', kind: 'timed', target: 10, question: 'Ten minutes putting the place straight?' },
+      { name: 'One hard thing', colour: 'clay', kind: 'yesno', question: 'Did one thing you had decided was worth it and did not want to do?' },
+    ],
+  },
+  {
+    id: 'christian',
+    name: 'Christian Life',
+    days: 30,
+    blurb: 'A rule of prayer, kept daily, and the Liturgy on Sunday.',
+    rows: [
+      { name: 'Morning prayer', colour: 'amber', kind: 'yesno', question: 'Prayed the morning rule?' },
+      { name: 'Scripture', colour: 'sky', kind: 'timed', target: 10, question: 'Ten minutes in Scripture?' },
+      { name: 'Evening prayer', colour: 'indigo', kind: 'yesno', question: 'Prayed the evening rule?' },
+      { name: 'Examine the day', colour: 'violet', kind: 'yesno', question: 'Looked back over the day before sleeping?' },
+      { name: 'Divine Liturgy', colour: 'plum', kind: 'yesno', freq: { num: 1, den: 7 }, question: 'At the Liturgy this week?' },
+    ],
+  },
+  {
+    id: 'character',
+    name: 'Character',
+    days: 60,
+    blurb: 'Sixty days measuring the man rather than the water intake.',
+    rows: [
+      { name: 'Kept your word', colour: 'lime', kind: 'yesno', question: 'Kept every commitment you made today?' },
+      { name: 'Told the truth', colour: 'mint', kind: 'yesno', question: 'Said nothing untrue today?' },
+      { name: 'No complaining', colour: 'teal', kind: 'yesno', question: 'Let the day pass without an unnecessary complaint?' },
+      { name: 'One useful thing', colour: 'orange', kind: 'yesno', question: 'Did one useful thing for someone else?' },
+      { name: 'Examined the day', colour: 'slate', kind: 'yesno', question: 'Went back over the day honestly?' },
+    ],
+  },
+];
+
+/** The bar a run has to hold: four in five of the cells it owed. */
+const PROTOCOL_BAR = 0.8;
+
+export const protocolRuns = () => store.get().habits.protocols;
+
+/** The run a group belongs to, while it is running. */
+export function protocolOf(groupId) {
+  const [id, run] = Object.entries(protocolRuns()).find(([, r]) => r.group === groupId && !r.settled) || [];
+  return id ? { id, ...run, days: daysLeftIn(run) } : null;
+}
+
+const daysLeftIn = (run) => {
+  let n = 0;
+  let k = today();
+  while (k <= run.ends && n < 400) {
+    n++;
+    k = store.addDays(k, 1);
+  }
+  return n;
+};
+
+/** Creates the group and the rows, and starts the clock. One run per protocol at a time. */
+export function startProtocol(id) {
+  const p = PROTOCOLS.find((x) => x.id === id);
+  if (!p || (protocolRuns()[id] && !protocolRuns()[id].settled)) return null;
+  const group = addGroup(p.name);
+  const rows = [];
+  for (const r of p.rows) {
+    const h = { ...draft(r.kind), ...r, group, order: active().length };
+    save(h);
+    rows.push(h.id);
+  }
+  const started = today();
+  store.update((st) => {
+    st.habits.protocols[id] = { started, ends: store.addDays(started, p.days - 1), group, rows, settled: false, completed: false };
+  });
+  return group;
+}
+
+/** A run past its last day is judged once: the mean of its rows over the span. */
+export function settleProtocols() {
+  const now = today();
+  for (const [id, run] of Object.entries(protocolRuns())) {
+    if (run.settled || run.ends >= now) continue;
+    let owed = 0;
+    let kept = 0;
+    for (const hid of run.rows) {
+      const h = byId(hid);
+      if (!h) continue;
+      const sum = summary(h);
+      for (let k = run.started; k <= run.ends; k = store.addDays(k, 1)) {
+        const d = sum.index.get(k);
+        if (!d || d.skipped) continue;
+        owed++;
+        if (d.satisfied) kept++;
+      }
+    }
+    const completed = owed > 0 && kept / owed >= PROTOCOL_BAR;
+    store.update((st) => {
+      Object.assign(st.habits.protocols[id], { settled: true, completed });
+    });
+  }
+}
+
+export const completedProtocol = (id) => !!protocolRuns()[id]?.completed;
+
+/* ---------------- a line on a day ---------------- */
+
+export const noteOn = (key) => store.get().habits.notes[key] || '';
+
+export function setDayNote(key, text) {
+  return store.update((st) => {
+    const line = String(text || '').trim().slice(0, 140);
+    if (line) st.habits.notes[key] = line;
+    else delete st.habits.notes[key];
+  });
+}
+
+/** The lines inside a span, oldest first. */
+export function notesIn(from, to) {
+  return Object.entries(store.get().habits.notes)
+    .filter(([k]) => k >= from && k <= to)
+    .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+    .map(([key, text]) => ({ key, text }));
+}
+
 /** The tap cycle:
  *    off              nothing -> done -> nothing
  *    + question marks nothing -> done -> lapse -> nothing
@@ -318,7 +568,7 @@ function rawOf(habit, key) {
 /** A day's worth, 0 to 1, before frequency. A ceiling habit scores 1 at or
  *  under target and 0 at twice it. Nothing recorded scores 0 either way. */
 function unitValue(habit, raw) {
-  if (habit.kind === 'number') {
+  if (measurable(habit)) {
     const t = habit.target;
     if (raw == null) return 0;
     if (!t) return raw > 0 ? 1 : 0;
@@ -412,7 +662,7 @@ export function summary(habit) {
 
   const total = days.reduce((a, d) => {
     if (d.skipped) return a;
-    if (habit.kind === 'number') return a + (typeof d.raw === 'number' && d.raw > 0 ? d.raw : 0);
+    if (measurable(habit)) return a + (typeof d.raw === 'number' && d.raw > 0 ? d.raw : 0);
     return a + (d.raw === YES ? 1 : 0);
   }, 0);
 
@@ -461,57 +711,30 @@ export function scoreAgo(sum, back) {
   return sum.days.length && key < sum.days[0].key ? 0 : sum.score;
 }
 
+/* ---------------- why the number moved ---------------- */
+
+/** The last seven days against the seven before: the score's move in points,
+ *  the days that cost it, the days that held. Computed, never stored. */
+export function movement(sum) {
+  const end = today();
+  const week = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = sum.index.get(store.addDays(end, -i));
+    if (d) week.push(d);
+  }
+  const misses = week.filter((d) => !d.skipped && !d.satisfied && d.key !== end).map((d) => d.key);
+  const kept = week.filter((d) => d.satisfied).length;
+  return {
+    days: week.length,
+    delta: Math.round((sum.score - scoreAgo(sum, 7)) * 100),
+    misses,
+    kept,
+  };
+}
+
 /* ---------------- charts ---------------- */
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
-
-/** Bars for the history chart, one bucket per period, oldest first. */
-export function history(sum, period = 'week', buckets = 14) {
-  const parse = (key) => {
-    const [y, m, d] = key.split('-').map(Number);
-    return new Date(y, m - 1, d);
-  };
-  const bucketOf = (dt) => {
-    if (period === 'day') return store.dayKey(dt);
-    if (period === 'week') {
-      const first = settings().firstDay;
-      const shift = (dt.getDay() - first + 7) % 7;
-      return store.dayKey(new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() - shift));
-    }
-    if (period === 'month') return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
-    if (period === 'quarter') return `${dt.getFullYear()}-Q${Math.floor(dt.getMonth() / 3) + 1}`;
-    return String(dt.getFullYear());
-  };
-  const label = (key) => {
-    if (period === 'day' || period === 'week') {
-      const dt = parse(key);
-      return `${dt.getDate()} ${MONTHS[dt.getMonth()]}`;
-    }
-    if (period === 'month') {
-      const [y, m] = key.split('-');
-      return `${MONTHS[Number(m) - 1]} ${y.slice(2)}`;
-    }
-    return key;
-  };
-
-  const map = new Map();
-  for (const d of sum.days) {
-    if (d.skipped) continue;
-    const b = bucketOf(parse(d.key));
-    const add = sum.habit.kind === 'number' ? (typeof d.raw === 'number' && d.raw > 0 ? d.raw : 0) : d.hit ? 1 : 0;
-    map.set(b, (map.get(b) || 0) + add);
-  }
-  const keys = [...map.keys()].sort().slice(-buckets);
-  return keys.map((k) => {
-    const v = map.get(k);
-    return {
-      label: label(k),
-      short: label(k).split(' ')[0],
-      value: Math.round(v * 100) / 100,
-      text: `${Math.round(v * 100) / 100}${sum.habit.unit ? ` ${sum.habit.unit}` : ''}`,
-    };
-  });
-}
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 /** Weeks as columns, weekdays as rows, with the dates written in. */
 export function calendar(sum, weeks = 17) {
@@ -525,6 +748,8 @@ export function calendar(sum, weeks = 17) {
 
   const cols = [];
   let lastMonth = -1;
+  // Two months starting three weeks apart printed "AprMay" over one column.
+  let lastLabel = -9;
   for (let w = 0; w < weeks; w++) {
     const cells = [];
     let label = '';
@@ -547,7 +772,10 @@ export function calendar(sum, weeks = 17) {
       });
       if (i === 0 && dt.getMonth() !== lastMonth) {
         lastMonth = dt.getMonth();
-        label = dt.getMonth() === 0 ? `${MONTHS[0]} ${dt.getFullYear()}` : MONTHS[dt.getMonth()];
+        if (w - lastLabel >= 3) {
+          lastLabel = w;
+          label = dt.getMonth() === 0 ? `${MONTHS[0]} ${dt.getFullYear()}` : MONTHS[dt.getMonth()];
+        }
       }
     }
     cols.push({ label, cells });
@@ -556,6 +784,28 @@ export function calendar(sum, weeks = 17) {
 }
 
 /* ---------------- across all habits ---------------- */
+
+/** Rows owed on `key` that nothing answered: no mark, and not carried by the
+ *  window either. */
+export function unansweredOn(key) {
+  return active().filter((h) => {
+    const d = summary(h).index.get(key);
+    return !!d && d.raw === undefined && !d.satisfied;
+  });
+}
+
+/** The catch-up sheet: yesterday only, once a day, never in the first week. */
+export function catchUpDue() {
+  if (settings().catchUpDay === today()) return false;
+  if (store.get().createdAt > Date.now() - 7 * 864e5) return false;
+  return unansweredOn(store.addDays(today(), -1)).length > 0;
+}
+
+export function markCatchUp() {
+  store.update((st) => {
+    st.habits.settings.catchUpDay = today();
+  }, { local: true });
+}
 
 /** What is still owed today across the grid. */
 export function dueToday() {
@@ -578,42 +828,49 @@ export function groupScore(groupId) {
 }
 
 /* --------------------- reminders --------------------- */
+// One-shots, a week ahead, re-armed on every change. A day already answered
+// gets none, which is what cancels a reminder the moment its cell is marked.
 
-export function syncAlarms() {
-  const ids = [];
-  for (let slot = 0; slot < ALARM_HABIT_SLOTS; slot++) {
-    for (let d = 0; d < 7; d++) ids.push(ALARM_HABIT_BASE + slot * 8 + d);
-  }
-  const list = active().slice(0, ALARM_HABIT_SLOTS);
-  const notifications = [];
-  list.forEach((h, slot) => {
+/** The reminder id for a row's slot and a day `offset` from today. */
+export const alarmIdFor = (slot, offset) => ALARM_HABIT_BASE + slot * 8 + offset;
+
+/** The rows that can carry a reminder, in slot order. */
+export const reminded = () => active().slice(0, ALARM_HABIT_SLOTS);
+
+/** What would be armed. `line` is the match from the Arena, carried in the text. */
+export function planReminders(line = () => '') {
+  const now = Date.now();
+  const match = line();
+  const out = [];
+  reminded().forEach((h, slot) => {
     if (!h.remindAt || !/^\d{2}:\d{2}$/.test(h.remindAt)) return;
     const [hour, minute] = h.remindAt.split(':').map(Number);
     const days = h.remindDays.length ? h.remindDays : [0, 1, 2, 3, 4, 5, 6];
-    for (const d of days) {
-      notifications.push({
-        id: ALARM_HABIT_BASE + slot * 8 + d,
+    const sum = summary(h);
+    for (let offset = 0; offset < ALARM_HABIT_DAYS; offset++) {
+      const key = store.addDays(today(), offset);
+      const [y, m, d] = key.split('-').map(Number);
+      const at = new Date(y, m - 1, d, hour, minute, 0, 0);
+      if (!days.includes(at.getDay()) || at.getTime() <= now) continue;
+      const cell = sum.index.get(key);
+      if (cell?.satisfied || cell?.skipped) continue;
+      out.push({
+        id: alarmIdFor(slot, offset),
         title: 'Habit Nemesis',
-        body: h.question || h.name,
-        hour,
-        minute,
-        // Capacitor counts weekdays from Sunday as 1, JavaScript from 0.
-        weekday: days.length === 7 ? null : d + 1,
+        body: match ? `${h.name}. ${match}` : h.question || h.name,
+        at: at.getTime(),
+        extra: { habitId: h.id, day: key },
+        actionTypeId: h.kind === 'yesno' ? 'yesno' : 'number',
       });
     }
   });
-  // All seven days is one daily alarm, not seven weekly ones.
-  const collapsed = [];
-  const seen = new Set();
-  for (const n of notifications) {
-    if (n.weekday === null) {
-      const slotId = n.id - (n.id - ALARM_HABIT_BASE) % 8;
-      if (seen.has(slotId)) continue;
-      seen.add(slotId);
-      collapsed.push({ ...n, id: slotId });
-      continue;
-    }
-    collapsed.push(n);
+  return out;
+}
+
+export function syncAlarms(line) {
+  const ids = [];
+  for (let slot = 0; slot < ALARM_HABIT_SLOTS; slot++) {
+    for (let d = 0; d < 8; d++) ids.push(alarmIdFor(slot, d));
   }
-  return cancelAlarms(ids).then(() => scheduleMany(collapsed));
+  return cancelAlarms(ids).then(() => scheduleMany(planReminders(line)));
 }

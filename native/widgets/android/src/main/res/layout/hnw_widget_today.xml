@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Today widget, 2x2: the owed ring with the fraction inside it. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/hnw_today_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/hnw_widget_bg"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/hnw_today_ring"
+            android:layout_width="84dp"
+            android:layout_height="84dp"
+            android:contentDescription="@null"
+            android:scaleType="fitCenter" />
+
+        <TextView
+            android:id="@+id/hnw_today_fraction"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:maxLines="1"
+            android:textColor="#e6eaf0"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/hnw_today_left"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:maxLines="1"
+        android:textColor="#97a1b0"
+        android:textSize="12sp" />
+</LinearLayout>

@@ -477,5 +477,90 @@ function seedWeeks(weeks, hit) {
     a.divisionOf(arena.division).bar <= 0.5, true);
 }
 
+/* ---------------- timed ----------------
+   A timed habit is a quantity habit underneath, so the Arena's scoring has no
+   branch for it. These prove it by scoring one through the number path. */
+group('a timed habit scores as a number');
+{
+  const habits = await import('../www/js/habits/program.js');
+  const d = a.weekDays('2026-W20');
+  st.reset();
+  st.update((s) => {
+    s.habits.items = [
+      habit('h_t', 'Read', { kind: 'timed', unit: 'min', target: 20 }),
+    ];
+    s.habits.entries = {
+      h_t: { [d[0]]: 25, [d[1]]: 10, [d[2]]: 20 },
+    };
+  });
+  const w = a.scoreWeek('2026-W20');
+  is('minutes at or past the target are a cell, under it are not', w.rows.find((r) => r.id === 'h_t').done, 2);
+  is('it owes every day like any daily row', w.rows.map((r) => r.due), [7]);
+  const t = habits.summary(st.get().habits.items[0]);
+  is('ten of twenty minutes is half a day, for the score', t.index.get(d[1]).unit, 0.5);
+  is('a timed habit round-trips through hydrate', (() => { const b = st.exportJson(); st.reset(); st.importJson(b); const h = st.get().habits.items.find((x) => x.id === 'h_t'); return [h.kind, h.unit, h.target]; })(), ['timed', 'min', 20]);
+  st.reset();
+  st.update((s) => { s.habits.items = [habit('h_c', 'Morning', { kind: 'checklist', unit: 'items', target: 3 })]; });
+  const back = (() => { const b = st.exportJson(); st.reset(); st.importJson(b); return st.get().habits.items[0]; })();
+  is('a saved checklist comes back as a number habit', [back.kind, back.target], ['number', 3]);
+}
+
+/* ---------------- On Notice ----------------
+   One month below the bar is a notice, two in a row is a drop, and a month at
+   the bar or a promotion clears it. Seeded as stored weeks, so the scores are
+   exact and the write path is the only thing under test. */
+group('a month below the bar');
+
+/** Two settled months before this one, at the given scores, from a division. */
+function seedMonths(division, scores) {
+  st.reset();
+  const cur = a.currentMonth();
+  const months = [];
+  let m = cur;
+  for (let i = 0; i < scores.length; i++) {
+    const [y, mm] = m.split('-').map(Number);
+    m = mm === 1 ? `${y - 1}-12` : `${y}-${String(mm - 1).padStart(2, '0')}`;
+    months.unshift(m);
+  }
+  const weeks = {};
+  months.forEach((month, i) => {
+    for (const k of a.weeksOfMonth(month)) {
+      weeks[k] = { score: scores[i], due: 10, done: Math.round(scores[i] * 10), opponent: 'standard', oppName: 'The Standard', oppScore: 0.5, result: scores[i] >= 0.5 ? 'won' : 'lost', arc: null };
+    }
+  });
+  const first = a.weekStart(a.weeksOfMonth(months[0])[0]);
+  st.update((s) => {
+    s.habits.items = [habit('h_n', 'N', { createdAt: at(first) })];
+    s.habits.entries = { h_n: { [first]: 1 } };
+    s.arena.division = division;
+    s.arena.placed = true;
+    s.arena.backfilled = true;
+    s.arena.scoring = 1;
+    s.arena.weeks = weeks;
+  });
+  a.sync();
+  return months.map((k) => st.get().arena.months[k]);
+}
+
+{
+  const [m1, m2] = seedMonths('contender', [0.4, 0.55]);
+  is('below the bar is a notice, not a drop', [m1.move, m1.to], ['notice', 'contender']);
+  is('then at the bar clears it', [m2.move, m2.cleared, st.get().arena.notice], ['held', true, false]);
+}
+{
+  const [m1, m2] = seedMonths('contender', [0.4, 0.45]);
+  is('below then below relegates', [m1.move, m2.move, m2.to], ['notice', 'down', 'prospect']);
+  is('and the lower division starts clean', st.get().arena.notice, false);
+}
+{
+  const [m1, m2] = seedMonths('contender', [0.4, 0.65]);
+  is('a promotion out of a notice clears it', [m1.move, m2.move, m2.to, m2.cleared], ['notice', 'up', 'menace', true]);
+  is('and the Comeback feat reads it', (await import('../www/js/arena/feats.js')).FEATS.find((f) => f.id === 'noticeComeback').test(), true);
+}
+{
+  const [m1] = seedMonths('bottom', [0.1]);
+  is('nothing below the floor, so the floor is never on notice', [m1.move, st.get().arena.notice], ['held', false]);
+}
+
 console.log(failed.length ? `\n${failed.length} FAILED: ${failed.join('; ')}` : `\nall ${passed} checks passed`);
 process.exit(failed.length ? 1 : 0);

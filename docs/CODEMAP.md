@@ -32,8 +32,10 @@ does. Long files are split by `/* ---- section ---- */` banners, so
 | `js/icons.js` | 93 | The inline SVG icon set, and the app mark as one polygon. |
 | `js/lock.js` | 123 | The optional PIN gate. Owns whether the app is unlocked. |
 | `js/intro.js` | 274 | The introduction, shown once on a new install. |
-| `js/native.js` | 115 | Capacitor bridge: Android alarms and the notification permission. |
-| `js/settings.js` | 330 | App-wide settings: the grid, marking, feedback, privacy, data, reset. |
+| `js/native.js` | 160 | Capacitor bridge: Android alarms, the buttons on a reminder, the notification permission. |
+| `js/widgets.js` | 110 | The home screen widgets' half: the snapshot on every change, the queue drained on resume. |
+| `js/settings.js` | 400 | App-wide settings: six pages from one table, and the account card. |
+| `js/version.js` | 3 | The version string About shows. Checked against package.json. |
 | `js/tabs.js` | 59 | The bottom bar: Cabinet, Grid, Arena. Drawn once, never rebuilt. |
 | `js/store.js` | 492 | localStorage persistence and the input sanitiser. |
 | `js/ui.js` | 354 | Shared helpers: formatting, haptics, SVG charts, the sheet. |
@@ -123,15 +125,15 @@ the parts that cannot be read off a screen.
 | `js/account/config.js` | 23 | The Supabase project values. Empty until a project exists; see `docs/ACCOUNTS.md`. |
 | `js/account/session.js` | 121 | The client, sign up, sign in, reset, sign out, delete. |
 | `js/account/oauth.js` | 59 | Google sign-in: a Custom Tab out, a deep link back. |
-| `js/account/sync.js` | 63 | Backup and restore, whole-record. Not a merge. |
+| `js/account/sync.js` | 230 | Automatic: push on change, pull on launch, ask on a real conflict. Whole-record, not a merge. |
 | `js/account/screen.js` | 251 | The Account screen in its three states: unconfigured, signed out, signed in. |
 
 The account is a copy of the record, never the record. Everything pulled from
 it goes through `store.js`'s sanitiser like any other untrusted file.
 `SECURITY.md` is the model; `docs/ACCOUNTS.md` is the setup.
 
-With no project configured the Settings row is absent rather than a dead end,
-which is how v1 ships.
+With no project configured the account card, the intro's last page and the
+grid's nudge are all absent rather than dead ends.
 
 ## Ads, which are optional too
 
@@ -158,11 +160,19 @@ nowhere else.
 | File | What it is |
 |---|---|
 | `native/systemui/` | A Capacitor plugin: hides the Android navigation bar, so the app's own bottom bar is the bottom of the screen. |
+| `native/widgets/` | A Capacitor plugin: three home screen widgets drawn from a snapshot the app writes, and a queue of the marks tapped on them. Its README is the contract. |
 
-A plugin package rather than a script that patches the generated project,
+Plugin packages rather than scripts that patch the generated project,
 because `android/` is regenerated on every build and would throw such edits
-away. `package.json` pulls it in with a `file:` dependency and Capacitor does
+away. `package.json` pulls each in with a `file:` dependency and Capacitor does
 the rest.
+
+**Reminders are one-shots, a week ahead.** `habits/program.js` plans one per
+row per day, skips any day already answered, and the plan is re-armed on
+every change to the record. That is what cancels a reminder the moment its
+cell is marked, from the grid, from a widget or from the reminder's own Done
+button. Android caps an app at 500 alarms, which is why the week is the
+horizon: reminders stop a week after the last time the app was opened.
 
 ## Tooling
 
@@ -173,12 +183,14 @@ Everything here is build-time and never ships in `www/`.
 | `tools/serve.mjs` | The dev server. `npm run dev`. |
 | `tools/check-arena.mjs` | The Arena's calendar maths, asserted. `npm run check:arena`. |
 | `tools/check-ui.mjs` | The stylesheet's own rules: one type scale, one palette. `npm run check:ui`. |
+| `tools/check-version.mjs` | package.json and version.js agree. `npm run check:version`. |
 | `tools/png.mjs` | PNG in, PNG out, and the box filter between. Shared, so art and icons cannot drift. |
 | `tools/gen-icons.mjs` | PWA, launcher and store icons. Uses `art/source/mark.png` when it exists, `MARK` otherwise. |
 | `tools/art.mjs` | Takes a dropped-in image, makes the WebP the app loads, updates `sw.js`. |
 | `tools/patch-signing.mjs` | Pins the debug signing key into the generated Gradle build. |
 | `tools/patch-backup.mjs` | Turns on Android's own backup, which is what carries the record off the device. |
-| `tools/patch-deeplink.mjs` | Adds the `com.habitnemesis.app://auth` intent filter Google sign-in returns through. |
+| `tools/patch-deeplink.mjs` | Registers `com.habitnemesis.app://auth`, which sign-in returns through, and `://open`, which carries a route. |
+| `tools/patch-shortcuts.mjs` | The launcher shortcuts, Mark today and Arena, with their icons drawn from `icons.js`. |
 | `tools/patch-release-signing.mjs` | Release signing from CI secrets. Refuses the debug key and a debuggable config. |
 | `tools/patch-version.mjs` | Stamps versionCode and versionName from `package.json`. Play rejects a repeat versionCode. |
 | `tools/patch-ads.mjs` | Turns the real ad units live, in the store bundle only, and writes the AdMob app id into the manifest. |

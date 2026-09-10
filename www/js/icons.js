@@ -54,6 +54,7 @@ const PATHS = {
   crown: '<path d="M4 17h16"/><path d="M4 17L3 7l5 4 4-6 4 6 5-4-1 10z"/>',
   // The divisions, as a thing you climb.
   ladder: '<path d="M7 3v18M17 3v18"/><path d="M7 8h10M7 12h10M7 16h10"/>',
+
 };
 
 /** icon('back') -> inline SVG string. */

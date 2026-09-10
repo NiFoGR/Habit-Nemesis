@@ -142,6 +142,7 @@ function rescore(st) {
   if (stale.length === Object.keys(st.arena.months).length) {
     st.arena.division = 'npc';
     st.arena.placed = false;
+    st.arena.notice = false;
   }
   for (const m of stale) delete st.arena.months[m];
 }
@@ -164,7 +165,10 @@ function closeGroups(st, events) {
   }
 }
 
-/** A month ends: up, stay, or down. */
+/** A month ends: up, stay, On Notice, or down.
+ *  One month below the bar is a notice, not a drop. A second in a row
+ *  relegates. A month at or above it clears the notice, and so does a
+ *  promotion; a relegation starts the lower division clean. */
 function closeMonths(st, events) {
   const nowMonth = currentMonth();
   const known = Object.keys(st.arena.weeks).map(monthOfWeek);
@@ -182,6 +186,7 @@ function closeMonths(st, events) {
     const from = st.arena.division;
     const i = divisionIndex(from);
     const next = DIVISIONS[i + 1];
+    const onNotice = !!st.arena.notice;
     let to = from;
     let move = 'held';
     if (next && ms.score >= next.bar) {
@@ -190,19 +195,25 @@ function closeMonths(st, events) {
     } else if (ms.score >= DIVISIONS[i].bar) {
       move = 'held';
     } else if (i > 0) {
-      to = DIVISIONS[i - 1].id;
-      move = 'down';
+      if (onNotice) {
+        to = DIVISIONS[i - 1].id;
+        move = 'down';
+      } else {
+        move = 'notice';
+      }
     } else {
       // Nothing below the floor, so a month under its bar is not a relegation.
       move = 'held';
     }
+    const cleared = onNotice && (move === 'held' || move === 'up');
     st.arena.division = to;
+    st.arena.notice = move === 'notice';
     // A settled month places you. Only closeWeeks used to, and it skips any
     // week backfill had already stamped, so an install with history was told
     // for ever that it was still its placement month.
     st.arena.placed = true;
-    st.arena.months[m] = { score: ms.score, w: ms.w, l: ms.l, from, to, move };
-    events.push({ kind: 'month', month: m, score: ms.score, from, to, move, w: ms.w, l: ms.l });
+    st.arena.months[m] = { score: ms.score, w: ms.w, l: ms.l, from, to, move, cleared };
+    events.push({ kind: 'month', month: m, score: ms.score, from, to, move, cleared, w: ms.w, l: ms.l });
   }
 }
 

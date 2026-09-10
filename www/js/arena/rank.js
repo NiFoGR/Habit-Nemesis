@@ -43,6 +43,8 @@ export function renderRank(mount) {
   showing = m;
 
   const placed = m.move === 'placed';
+  const notice = m.move === 'notice';
+  const cleared = !!m.cleared;
   const up = m.move === 'up' || placed;
   const from = arena.divisionOf(m.from);
   const to = arena.divisionOf(m.to);
@@ -53,10 +55,15 @@ export function renderRank(mount) {
   const nextMonth = placed ? '' : new Date(`${store.addDays(`${m.month}-28`, 10)}T00:00:00`)
     .toLocaleDateString(undefined, { month: 'long' });
 
-  const word = placed ? 'Placed' : up ? 'Promoted' : 'Relegated';
-  // Only relegation gets a line: what it cost is a number nobody can work out.
-  // A promotion's blurb is flavour the division below already carries.
-  const line = placed || up ? '' : whatItWanted(m.month, m.score, from.bar);
+  const word = placed ? 'Placed' : up ? 'Promoted' : notice ? 'On Notice' : cleared ? 'Cleared' : 'Relegated';
+  // The line says what happens next, or what it would have taken. A promotion
+  // gets none: the division below already carries it.
+  const below = arena.DIVISIONS[fromRung - 1];
+  const line = notice
+    ? `Another month under ${pct(from.bar)} and it is ${below ? below.name : 'the floor'}.`
+    : cleared && !up
+      ? 'Back at the bar. The notice is off.'
+      : placed || up ? '' : whatItWanted(m.month, m.score, from.bar);
 
   // Top rung first: the ladder is read downwards, and the one you are on has to
   // sit where the eye lands.
@@ -66,7 +73,7 @@ export function renderRank(mount) {
     // relegation it is below, and a low number wedged into a descending
     // column reads as that division's bar.
     const mine = here && m.score >= d.bar;
-    const lost = !placed && !up && i > rung && i <= fromRung;
+    const lost = m.move === 'down' && i > rung && i <= fromRung;
     const above = i > rung && !lost;
     return `<li class="rk-rung ${here ? 'here' : ''} ${lost ? 'lost' : ''} ${above ? 'above' : ''}" style="--i:${arena.DIVISIONS.length - 1 - i}">
       <span class="rk-mark">${crest(i, here ? 40 : 28)}</span>
@@ -77,7 +84,7 @@ export function renderRank(mount) {
   }).reverse().join('');
 
   mount.innerHTML = `
-    <div class="screen moment rank-moment ${up ? 'up' : 'down'}" data-beat="0">
+    <div class="screen moment rank-moment ${up ? 'up' : notice ? 'notice' : cleared ? 'cleared' : 'down'}" data-beat="0">
       <p class="eyebrow rk-eyebrow">${placed
         ? escapeHtml(arena.weekLabel(m.week))
         : `${escapeHtml(month)} · ${m.w}W-${m.l}L`}</p>
@@ -96,9 +103,10 @@ export function renderRank(mount) {
   requestAnimationFrame(() => screen.setAttribute('data-beat', '1'));
   setTimeout(() => screen.setAttribute('data-beat', '2'), up ? 520 : 700);
 
-  chime(up ? 'promote' : 'relegate');
-  haptic(up ? 'promote' : 'relegate');
-  if (up) {
+  const cue = up ? 'promote' : notice ? 'notice' : cleared ? 'win' : 'relegate';
+  chime(cue);
+  haptic(cue);
+  if (up || cleared) {
     setTimeout(() => celebrate(mount.querySelector('.rk-rung.here'), {
       count: 22, spread: 120, colour: 'var(--good)',
     }), 560);

@@ -6,9 +6,16 @@ import { toast, setFeedback } from './ui.js';
 import { DIVISIONS } from './arena/ladder.js';
 
 // Closed sets. A colour id lands in a style attribute, free text would be a hole.
-const HABIT_COLOURS = ['teal', 'mint', 'lime', 'amber', 'orange', 'clay', 'rose', 'red', 'violet', 'indigo', 'sky', 'slate'];
-const HABIT_KINDS = ['yesno', 'number'];
+const HABIT_COLOURS = ['teal', 'mint', 'lime', 'amber', 'orange', 'clay', 'rose', 'plum', 'violet', 'indigo', 'sky', 'slate'];
+// v1 had a red. The accent is red now, so those rows wear the nearest colour.
+const LEGACY_COLOURS = { red: 'rose' };
+// Timed is a quantity habit underneath: minutes with a floor.
+const HABIT_KINDS = ['yesno', 'number', 'timed'];
+// An earlier build had a checklist. Its entries were counts, so those rows become numbers.
+const LEGACY_KINDS = { checklist: 'number' };
 const HABIT_TARGET_TYPES = ['atleast', 'atmost'];
+const SOUND_LEVELS = ['off', 'subtle', 'full'];
+const THEMES = ['dark', 'black'];
 
 // ladder.js imports nothing, so the sanitiser can read the one list.
 const ARENA_DIVISIONS = DIVISIONS.map((d) => d.id);
@@ -22,13 +29,23 @@ function blank() {
     createdAt: Date.now(),
     settings: {
       haptics: true,
-      sound: true,
+      sound: 'full', // off | subtle | full
+      quiet: true, // quiet hours on
+      quietFrom: '22:00',
+      quietTo: '07:00',
+      theme: 'dark', // dark | black
+      reduceMotion: false,
+      fullTime: false, // one notification when the day closes
       appLock: false, // ask for the PIN on open
       lock: null, // { salt, iv, check } once a PIN is set. See lock.js.
       onboarded: false, // the introduction has been seen at least once
-      // ISO time of the last write to or from the account. Device-local: it
-      // describes this copy, so it never travels with the record.
+      // The account nudge on the grid, dismissed this many times. Two ends it.
+      nudges: 0,
+      // ISO times, device-local: they describe this copy, so they never travel.
+      // syncedAt is the last write to or from the account, changedAt the last
+      // change to the record here. changedAt past syncedAt means unsynced work.
       syncedAt: '',
+      changedAt: '',
     },
     // Habits. `entries` is habit id, then day. Streaks and scores are computed on
     // read, never stored: the past is editable here.
@@ -41,10 +58,14 @@ function blank() {
         unknownMarks: false, // draw days with no data differently from lapses
         reverseDays: false, // off: today first. On: oldest first
         columns: 4, // day columns on the grid
+        catchUpDay: '', // the last day the catch-up sheet was shown
       },
       groups: [], // { id, name, order, collapsed, updatedAt }
       items: [], // the habits themselves, each stamped updatedAt
       entries: {}, // habitId -> { dayKey: value }, -1 skip, 0 lapse, else done
+      notes: {}, // dayKey -> a line on the day, not on a habit
+      // A protocol run: { started, ends, group, rows, settled, completed }
+      protocols: {},
     },
 
     // Arena. The one slice that stores what it could derive: a closed week is a
@@ -52,10 +73,11 @@ function blank() {
     arena: {
       division: 'npc', // where you currently sit on the ladder
       placed: false, // the first completed month places you and cannot relegate
+      notice: false, // a month below the bar. A second in a row relegates
       // 'YYYY-Www' -> { score, done, due, opponent, oppName, oppScore, result, arc }
       // result: won | lost | void | record | null. 'record' predates the Arena.
       weeks: {},
-      months: {}, // 'YYYY-MM' -> { score, w, l, from, to, move }
+      months: {}, // 'YYYY-MM' -> { score, w, l, from, to, move, cleared }
       arcs: {}, // 'YYYY-season' -> { qualified, qf, sf, final, won }
       feats: {}, // featId -> the timestamp it was first earned
       // Fixed. A year is 365 days from here, so it must not drift.
@@ -70,6 +92,12 @@ function blank() {
       backfilled: false, // the one-time sweep that gives the Arena a history
       // Your face, taken on the week that became your best. { src, week, at }
       face: null,
+      // The daily line said today, so a day never gets a second one.
+      line: { day: '', id: '' },
+      // The match's last known sign, and when the two crossing cues last played.
+      gapSign: 0,
+      overtook: '', // 'YYYY-Www'. Once a week
+      behindDay: '', // 'YYYY-MM-DD'. Once a day
     },
 
     // Ads. Consent itself is held by the UMP SDK, not here.
@@ -125,7 +153,14 @@ function hydrate(saved) {
     settings: {
       // !== false: a state saved before this key keeps the new default.
       haptics: ss.haptics !== false,
-      sound: ss.sound !== false,
+      // v1 stored a boolean. true was the only sound there was, so it is full.
+      sound: typeof ss.sound === 'string' ? oneOf(ss.sound, SOUND_LEVELS, 'full') : ss.sound === false ? 'off' : 'full',
+      quiet: ss.quiet !== false,
+      quietFrom: timeStr(ss.quietFrom, '22:00'),
+      quietTo: timeStr(ss.quietTo, '07:00'),
+      theme: oneOf(ss.theme, THEMES, 'dark'),
+      reduceMotion: bool(ss.reduceMotion),
+      fullTime: bool(ss.fullTime),
       appLock: bool(ss.appLock),
       // Right-shaped base64, or no PIN.
       lock: lk && b64(lk.salt) && b64(lk.iv) && b64(lk.check)
@@ -134,7 +169,9 @@ function hydrate(saved) {
       // Defaults the opposite way to blank(): reaching hydrate means a saved
       // state exists, so this install is already in use.
       onboarded: ss.onboarded !== false,
+      nudges: int(ss.nudges, 0, 9, 0),
       syncedAt: isoStr(ss.syncedAt),
+      changedAt: isoStr(ss.changedAt),
     },
     habits: cleanHabits(saved.habits, base.habits),
     arena: cleanArena(saved.arena, base.arena),
@@ -180,7 +217,9 @@ function cleanArena(sa, base) {
       l: int(v.l, 0, 10, 0),
       from: oneOf(v.from, ARENA_DIVISIONS, base.division),
       to: oneOf(v.to, ARENA_DIVISIONS, base.division),
-      move: oneOf(v.move, ['up', 'down', 'held', 'placed'], 'held'),
+      move: oneOf(v.move, ['up', 'down', 'held', 'placed', 'notice'], 'held'),
+      // This month took a notice off.
+      cleared: bool(v.cleared),
     };
   }
 
@@ -224,6 +263,7 @@ function cleanArena(sa, base) {
   return {
     division: oneOf(src.division, ARENA_DIVISIONS, base.division),
     placed: bool(src.placed),
+    notice: bool(src.notice),
     weeks,
     months,
     arcs,
@@ -237,6 +277,13 @@ function cleanArena(sa, base) {
     placedWeek: /^\d{4}-W\d{2}$/.test(src.placedWeek) ? src.placedWeek : '',
     seenPlacement: /^\d{4}-W\d{2}$/.test(src.seenPlacement) ? src.seenPlacement : '',
     backfilled: bool(src.backfilled),
+    line: {
+      day: /^\d{4}-\d{2}-\d{2}$/.test(src.line?.day) ? src.line.day : '',
+      id: typeof src.line?.id === 'string' && /^[a-zA-Z]{1,20}$/.test(src.line.id) ? src.line.id : '',
+    },
+    gapSign: oneOf(src.gapSign, [-1, 0, 1], 0),
+    overtook: weekKeyOf(src.overtook),
+    behindDay: /^\d{4}-\d{2}-\d{2}$/.test(src.behindDay) ? src.behindDay : '',
   };
 }
 
@@ -277,8 +324,8 @@ function cleanHabits(sh, base) {
         name: str(h?.name, 60),
         question: str(h?.question, 120),
         notes: str(h?.notes, 500),
-        colour: oneOf(h?.colour, HABIT_COLOURS, 'teal'),
-        kind: oneOf(h?.kind, HABIT_KINDS, 'yesno'),
+        colour: oneOf(LEGACY_COLOURS[h?.colour] || h?.colour, HABIT_COLOURS, 'teal'),
+        kind: oneOf(LEGACY_KINDS[h?.kind] || h?.kind, HABIT_KINDS, 'yesno'),
         unit: str(h?.unit, 20),
         target: num(h?.target, 0, 1e9) ?? 0,
         targetType: oneOf(h?.targetType, HABIT_TARGET_TYPES, 'atleast'),
@@ -314,6 +361,29 @@ function cleanHabits(sh, base) {
     if (Object.keys(kept).length) entries[hid] = kept;
   }
 
+  const notes = {};
+  const rawNotes = src.notes && typeof src.notes === 'object' ? src.notes : {};
+  for (const [k, v] of Object.entries(rawNotes).slice(0, 4000)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(k)) continue;
+    const text = str(v, 140).trim();
+    if (text) notes[k] = text;
+  }
+
+  const protocols = {};
+  const rawProtocols = src.protocols && typeof src.protocols === 'object' ? src.protocols : {};
+  const dayOf = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : '');
+  for (const [k, v] of Object.entries(rawProtocols).slice(0, 20)) {
+    if (!/^[a-z]{1,20}$/.test(k) || !v || typeof v !== 'object' || !dayOf(v.started) || !dayOf(v.ends)) continue;
+    protocols[k] = {
+      started: v.started,
+      ends: v.ends,
+      group: groupIds.has(v.group) ? v.group : '',
+      rows: arr(v.rows, 8).filter((id) => itemIds.has(id)),
+      settled: bool(v.settled),
+      completed: bool(v.completed),
+    };
+  }
+
   return {
     settings: {
       firstDay: int(hs.firstDay, 0, 6, base.settings.firstDay),
@@ -323,15 +393,20 @@ function cleanHabits(sh, base) {
       unknownMarks: bool(hs.unknownMarks),
       reverseDays: bool(hs.reverseDays),
       columns: int(hs.columns, 3, 7, base.settings.columns),
+      catchUpDay: /^\d{4}-\d{2}-\d{2}$/.test(hs.catchUpDay) ? hs.catchUpDay : '',
     },
     groups,
     items,
     entries,
+    notes,
+    protocols,
   };
 }
 
 let state = load();
 const listeners = new Set();
+// The text last written, so an update that changed nothing is not a change.
+let lastText = JSON.stringify(state);
 
 // Also at boot: a launch that never saves would leave ui.js on defaults.
 setFeedback(state.settings);
@@ -361,11 +436,12 @@ export function get() {
 
 let saveFailed = false;
 
-export function save() {
+export function save(text = JSON.stringify(state)) {
   // ui.js cannot import this module, so the feedback switches are pushed to it.
   setFeedback(state.settings);
+  lastText = text;
   try {
-    localStorage.setItem(KEY, JSON.stringify(state));
+    localStorage.setItem(KEY, text);
     saveFailed = false;
   } catch (err) {
     // Surfaced, not logged: losing a session is the worst failure a tracker has.
@@ -383,8 +459,13 @@ export function subscribe(fn) {
   return () => listeners.delete(fn);
 }
 
-export function update(fn) {
+/** A change to the record. `local` is for a fact about this device, which
+ *  must not read as unsynced work. */
+export function update(fn, { local = false } = {}) {
   fn(state);
+  // A launch-time settle that wrote nothing must not read as unsynced work.
+  if (JSON.stringify(state) === lastText) return state;
+  if (!local) state.settings.changedAt = new Date().toISOString();
   save();
   return state;
 }
@@ -393,15 +474,35 @@ export function update(fn) {
 export function markSynced() {
   return update((s) => {
     s.settings.syncedAt = new Date().toISOString();
-  });
+  }, { local: true });
 }
 
 export const lastSynced = () => state.settings.syncedAt || '';
 
-export function setSetting(key, value) {
+/* ---------------- sync state ---------------- */
+// This launch's word on the account: idle, pending, synced, offline, error.
+// Ephemeral, so it is never saved and never travels.
+
+let sync = 'idle';
+const syncListeners = new Set();
+
+export const syncState = () => sync;
+
+export function setSyncState(next) {
+  if (sync === next) return;
+  sync = next;
+  syncListeners.forEach((fn) => fn(sync));
+}
+
+export function onSyncState(fn) {
+  syncListeners.add(fn);
+  return () => syncListeners.delete(fn);
+}
+
+export function setSetting(key, value, opts) {
   return update((s) => {
     s.settings[key] = value;
-  });
+  }, opts);
 }
 
 export function reset() {
@@ -457,8 +558,14 @@ export function restoreSnapshot(day) {
   return importJson(text);
 }
 
+// The PIN, the lock and the two sync times describe this device, not the
+// record, so neither a backup file nor the account ever carries them.
+const DEVICE_ONLY = ['lock', 'appLock', 'syncedAt', 'changedAt'];
+
 export function exportJson() {
-  return JSON.stringify(state, null, 2);
+  const settings = { ...state.settings };
+  for (const k of DEVICE_ONLY) delete settings[k];
+  return JSON.stringify({ ...state, settings }, null, 2);
 }
 
 /** Restore. The PIN is this device's, so a backup never carries one in. */
@@ -468,12 +575,11 @@ export function importJson(text) {
   if (!parsed || typeof parsed !== 'object' || !parsed.habits) {
     throw new Error('Not a Habit Nemesis backup file');
   }
-  const { lock, appLock, syncedAt } = state.settings;
+  const kept = Object.fromEntries(DEVICE_ONLY.map((k) => [k, state.settings[k]]));
   state = hydrate(parsed);
-  // All three describe this device, not the record, so they stay behind.
-  state.settings.lock = lock;
-  state.settings.appLock = appLock;
-  state.settings.syncedAt = syncedAt;
+  Object.assign(state.settings, kept);
+  // A file is a change to the record. A pull marks itself synced right after.
+  state.settings.changedAt = new Date().toISOString();
   save();
 }
 

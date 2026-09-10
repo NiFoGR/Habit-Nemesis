@@ -48,7 +48,7 @@ function opening(mount, st) {
 
       <div class="mo-deal">
         ${g.table.length <= 1
-          ? '<p class="muted small centre">Your group fills up as you play weeks. Every rival in it will be a week you actually had.</p>'
+          ? '<p class="muted small centre">Your group fills up as you play weeks.</p>'
           : g.table
               .map((r, i) => `<div class="mo-card ${r.you ? 'you' : ''} ${i < 3 ? 'q' : 'nq'}" style="--i:${i}">
                 <span class="mo-seed">${i + 1}</span>
@@ -58,7 +58,7 @@ function opening(mount, st) {
               .join('')}
       </div>
 
-      <button class="btn primary big" id="go" data-back>Let's go</button>
+      <button class="btn primary big" id="go" data-back>Into it</button>
     </div>`;
   land(mount, 'promote', 'promote');
 }
@@ -99,14 +99,17 @@ function qualification(mount, st) {
 
 /* -------------------- the ceremony -------------------- */
 
+/** The label's year half. The name is the title, so it carries the year. */
+const seasonYear = (arc) => (arc.id === 'winter' ? `${arc.year}/${String(arc.year + 1).slice(2)}` : arc.year);
+
 function ceremony(mount, st) {
   const existing = st.rec.note;
   mount.innerHTML = `
     <div class="screen moment">
       <section class="mo-head cup" id="hero">
         <span class="mo-cup">${cup(st.arc.id, 132)}</span>
-        <p class="eyebrow">Champion</p>
-        <h1 class="mo-title">${escapeHtml(arena.arcLabel(st.arc))}</h1>
+        <p class="eyebrow">Champion · ${escapeHtml(String(seasonYear(st.arc)))}</p>
+        <h1 class="mo-title">${escapeHtml(st.arc.name)}</h1>
       </section>
 
       <section class="card note-ask" id="noteAsk">
@@ -125,7 +128,7 @@ function ceremony(mount, st) {
     const box = mount.querySelector('#noteAsk');
     box.innerHTML = field.value.trim()
       ? `<h2>On the trophy</h2><p class="said-quote">“${escapeHtml(field.value.trim().slice(0, arena.MAX_NOTE))}”</p>`
-      : '<h2>Nothing said</h2><p class="muted small">The cup speaks for itself, then.</p>';
+      : '<h2>Nothing said</h2>';
   });
 
   land(mount, 'trophy', 'trophy', true);

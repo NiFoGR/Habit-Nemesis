@@ -4,8 +4,10 @@ import * as store from './store.js';
 import { renderHome, renderArchive } from './habits/home.js';
 import { renderHabitEdit } from './habits/edit.js';
 import { renderHabitDetail } from './habits/tracking.js';
+import { renderTimer, leaveTimer } from './habits/timer.js';
 import * as habitsProgram from './habits/program.js';
 import { renderArena } from './arena/home.js';
+import { renderArc } from './arena/arc.js';
 import { renderFeats } from './arena/feats-screen.js';
 import { renderDivisions } from './arena/divisions.js';
 import { renderCabinet } from './arena/cabinet.js';
@@ -15,9 +17,10 @@ import { renderResult, collect, hasResults, leaveResult } from './arena/result.j
 import { renderMoment, hasMoment, leaveMoment } from './arena/moment.js';
 import { renderRank, hasRank, leaveRank } from './arena/rank.js';
 import { renderWeekReview } from './arena/review.js';
-import { renderSettings } from './settings.js';
+import { renderSettings, SETTINGS_PAGES, applyAppearance } from './settings.js';
 import { render as renderAccount } from './account/screen.js';
 import * as account from './account/session.js';
+import * as sync from './account/sync.js';
 import { listenForReturn } from './account/oauth.js';
 import { lockActive, renderLock, relock } from './lock.js';
 import { renderIntro, introDue } from './intro.js';
@@ -25,6 +28,8 @@ import { initBack, navigate, replaceWith } from './back.js';
 import { initTabs, syncTabs } from './tabs.js';
 import * as native from './native.js';
 import * as ads from './ads/program.js';
+import { initWidgets } from './widgets.js';
+import { chime, haptic } from './ui.js';
 
 // js/webview.js has already said why. Drawing over it would hide the reason.
 if (window.__hnUnsupported) throw new Error('Habit Nemesis needs a newer WebView');
@@ -36,13 +41,16 @@ const app = document.getElementById('app');
 const ROUTES = {
   '#/hub': () => renderHome(app),
   '#/settings': () => renderSettings(app),
+  ...Object.fromEntries(SETTINGS_PAGES.map((p) => [`#/settings/${p}`, () => renderSettings(app, p)])),
   '#/account': () => renderAccount(app),
   // Aliases. A pinned link must not land on a dead route.
   '#/habits': () => renderHome(app),
   '#/habits/habit': (params) => renderHabitDetail(app, params.get('id')),
   '#/habits/edit': (params) => renderHabitEdit(app, { id: params.get('id'), kind: params.get('kind') }),
   '#/habits/archive': () => renderArchive(app),
+  '#/habits/timer': (params) => renderTimer(app, params.get('id')),
   '#/arena': () => renderArena(app),
+  '#/arena/arc': () => renderArc(app),
   '#/arena/result': () => renderResult(app),
   '#/arena/moment': () => renderMoment(app),
   '#/arena/rank': () => renderRank(app),
@@ -59,8 +67,9 @@ const ROUTES = {
 
 const NAV = {
   hub: '#/hub', settings: '#/settings', account: '#/account',
+  ...Object.fromEntries(SETTINGS_PAGES.map((p) => [`settings-${p}`, `#/settings/${p}`])),
   habits: '#/habits', 'habits-archive': '#/habits/archive',
-  arena: '#/arena', cabinet: '#/cabinet',
+  arena: '#/arena', 'arena-arc': '#/arena/arc', cabinet: '#/cabinet',
   'cabinet-feats': '#/cabinet/feats', 'cabinet-year': '#/cabinet/year',
   intro: '#/intro',
 };
@@ -72,6 +81,8 @@ function route() {
   if (lastHash.startsWith('#/arena/result') && !location.hash.startsWith('#/arena/result')) leaveResult();
   if (lastHash.startsWith('#/arena/moment') && !location.hash.startsWith('#/arena/moment')) leaveMoment();
   if (lastHash.startsWith('#/arena/rank') && !location.hash.startsWith('#/arena/rank')) leaveRank();
+  // Leaving a running timer pauses it and keeps the minutes.
+  if (lastHash.startsWith('#/habits/timer') && !location.hash.startsWith('#/habits/timer')) leaveTimer();
   lastHash = location.hash;
 
   if (lockActive()) return renderLock(app, route);
@@ -105,16 +116,21 @@ document.addEventListener('click', (e) => {
   const nav = e.target.closest('[data-nav]');
   if (!nav) return;
   e.preventDefault();
+  haptic('press');
   navigate(NAV[nav.dataset.nav] || '#/hub');
 });
 
 // Never left on the back stack: these start on arrival.
 const EPHEMERAL = ['#/habits/edit', '#/arena/result', '#/arena/rank', '#/arena/moment', '#/arena/review', '#/intro'];
 
+// Theme and motion, before the first paint of anything.
+applyAppearance();
+
 // One restore point a day, before anything can write over the day's record.
 store.snapshot();
 
-// Close the Arena's books before the first render.
+// A protocol past its last day is judged, then the Arena's books are closed.
+habitsProgram.settleProtocols();
 collect();
 
 // replaceState: no blank entry under the grid.
@@ -151,8 +167,14 @@ function dayTurned() {
   if (document.querySelector('.sheet-scrim')) return false;
   onDay = now;
   store.snapshot();
+  habitsProgram.settleProtocols();
   collect();
   route();
+  // The day closed with the app open: full time, and the lead may have moved.
+  chime('fulltime');
+  haptic('fulltime');
+  const cue = arenaProgram.watchGap();
+  if (cue) setTimeout(() => { chime(cue); haptic(cue); }, 400);
   return true;
 }
 
@@ -175,15 +197,50 @@ window.addEventListener('hashchange', route);
 
 route();
 
+// A launcher shortcut or a widget, landing on its screen.
+native.onOpenRoute((key) => {
+  if (NAV[key]) navigate(NAV[key]);
+});
+
 // Optional, and absent from a build with no project configured.
 account.init().then(() => {
+  sync.start();
   if (location.hash.startsWith('#/account')) route();
 });
 listenForReturn();
 
-habitsProgram.syncAlarms();
-// Arc alarms: opens, group ends, round ends.
-arenaProgram.syncAlarms();
+// Reminders carry the match, so both plans are armed together.
+const armAlarms = () => {
+  habitsProgram.syncAlarms(arenaProgram.matchLine);
+  arenaProgram.syncAlarms();
+};
+native.registerActions().then(armAlarms);
+
+// Every alarm's text is fixed when it is armed, so a change re-arms them all.
+let alarmTimer = null;
+store.subscribe(() => {
+  if (!native.hasAlarms()) return;
+  clearTimeout(alarmTimer);
+  alarmTimer = setTimeout(armAlarms, 2000);
+});
+
+// Done, Skip or Enter on a reminder marks the day it named.
+native.onAction(({ actionId, input, extra }) => {
+  const habit = habitsProgram.byId(extra.habitId);
+  const day = extra.day;
+  if (!habit || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return;
+  if (actionId === 'done') habitsProgram.setValue(habit.id, day, habitsProgram.YES);
+  else if (actionId === 'skip') habitsProgram.setValue(habit.id, day, habitsProgram.SKIP);
+  else if (actionId === 'enter') {
+    const v = Number(String(input || '').replace(',', '.'));
+    if (Number.isFinite(v) && v >= 0) habitsProgram.setValue(habit.id, day, v);
+  } else return;
+  collect();
+  route();
+});
+
+// APK only: the home screen widgets, fed on every change.
+initWidgets();
 
 // Consent first, then the SDK. Absent from a build with no AdMob account.
 ads.init().then(() => ads.onRoute(location.hash.split('?')[0]));

@@ -4,7 +4,7 @@
 
 import * as store from '../store.js';
 import * as habits from './program.js';
-import { escapeHtml, barChart, lineChart, openSheet, haptic, fmtDate } from '../ui.js';
+import { escapeHtml, lineChart, openSheet, haptic, fmtDate, fmtRange, WEEKDAYS } from '../ui.js';
 import { icon } from '../icons.js';
 import { announce } from '../arena/result.js';
 
@@ -18,7 +18,6 @@ const SCORE_PERIODS = {
 
 // Module state, not a setting: a way of looking at this screen, not a preference.
 let scorePeriod = 'month';
-let historyPeriod = 'week';
 let editing = false;
 
 /* ---------------- buckets ---------------- */
@@ -75,88 +74,66 @@ export function renderHabitDetail(mount, id) {
 
   const draw = () => {
     const scores = scoreSeries(sum, scorePeriod);
-    const bars = habits.history(sum, historyPeriod, 14);
-    const cal = habits.calendar(sum, 17);
-    const month = Math.round((sum.score - habits.scoreAgo(sum, 30)) * 100);
-    const year = sum.days.length > 365 ? Math.round((sum.score - habits.scoreAgo(sum, 365)) * 100) : null;
-    // The tile is the delta, so it is coloured rather than repeated underneath.
-    const deltaClass = (v) => (v > 0 ? 'good-text' : v < 0 ? 'warn-inline' : '');
+    // Six weeks to aim at, twenty to look at.
+    const cal = habits.calendar(sum, editing ? 6 : 20);
+    // Nothing to compare against inside the first month.
+    const month = sum.days.length > 30 ? Math.round((sum.score - habits.scoreAgo(sum, 30)) * 100) : 0;
+    // Under a fortnight a trend line is jitter.
+    const trend = sum.days.length >= 14;
+    const per = SCORE_PERIODS[scorePeriod].label.toLowerCase();
+    const streaks = streaksHtml(sum, colour);
 
     mount.innerHTML = `
-      <div class="screen habits" style="--hc:${colour}">
+      <div class="screen habits hb-detail" style="--hc:${colour}">
         <header class="screen-head">
           <button class="icon-btn" data-back="habits" aria-label="Back">${icon('back')}</button>
           <h1 style="color:${colour}">${escapeHtml(habit.name)}</h1>
           <a class="icon-btn linkbtn" href="#/habits/edit?id=${encodeURIComponent(habit.id)}" aria-label="Edit">${icon('pencil')}</a>
         </header>
 
-        <div class="habit-hero">
-          ${habit.question && habit.question !== habit.name
-            ? `<h2 style="color:${colour}">${escapeHtml(habit.question)}</h2>` : ''}
-          <p class="muted small">
-            ${icon('calendar', 14)} ${escapeHtml(habits.freqLabel(habit.freq))}
-            · ${icon('bell', 14)} ${habit.remindAt ? escapeHtml(habit.remindAt) : 'no reminder'}
-          </p>
+        <div class="hb-top">
+          <b class="hb-score">${Math.round(sum.score * 100)}%</b>
+          ${month === 0 ? '' : `<span class="hb-move ${month > 0 ? 'up' : 'down'}">${month > 0 ? '+' : ''}${month}% this month</span>`}
         </div>
+        <p class="hb-why">${escapeHtml(whyLine(sum))}</p>
+        <p class="hb-facts">${[
+          escapeHtml(habits.freqLabel(habit.freq)),
+          habit.remindAt ? escapeHtml(habit.remindAt) : '',
+          sum.streak ? `${sum.streak} day streak` : '',
+          `${fmtTotal(habit, sum)} in all`,
+        ].filter(Boolean).join(' · ')}</p>
 
-        <section class="card">
-          <div class="h-row">${icon('chart', 16)}<h2>Overview</h2></div>
-          <div class="stat-grid ${year === null ? 'four' : 'three'}">
-            <div class="stat"><b>${Math.round(sum.score * 100)}%</b><span>score</span></div>
-            <div class="stat"><b class="${deltaClass(month)}">${month > 0 ? '+' : ''}${month}%</b><span>month</span></div>
-            ${year === null ? '' : `<div class="stat"><b class="${deltaClass(year)}">${year > 0 ? '+' : ''}${year}%</b><span>year</span></div>`}
-            <div class="stat"><b>${sum.streak}</b><span>streak</span></div>
-            
-            <div class="stat"><b>${fmtTotal(habit, sum)}</b><span>total</span></div>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="h-row">${icon('trend', 16)}<h2>Score</h2>${periodSelect('scoreP', scorePeriod, SCORE_PERIODS)}</div>
-          ${scores.values.length > 1
+        ${trend
+          ? `<section class="card">
+          <div class="h-row"><h2>Score</h2>${periodSelect('scoreP', scorePeriod, SCORE_PERIODS)}</div>
+          ${scores.values.length > 2
             ? lineChart(scores.values, { color: colour, labels: [bucketLabel(scores.keys[0]), bucketLabel(scores.keys[scores.keys.length - 1])] })
-            : '<div class="chart-empty">A few days of answers fill this in</div>'}
-        </section>
+            : `<div class="chart-empty">${scores.values.length} ${per}${scores.values.length === 1 ? '' : 's'} so far.</div>`}
+        </section>`
+          : ''}
 
         <section class="card">
-          <div class="h-row">${icon('calendar', 16)}<h2>History</h2>${periodSelect('histP', historyPeriod, {
-            day: 'Day', week: 'Week', month: 'Month', quarter: 'Quarter', year: 'Year',
-          })}</div>
-          ${barChart(bars, { unit: habit.unit ? ` ${habit.unit}` : '', colour })}
+          <div class="h-row"><h2>Calendar</h2>
+            <button class="chipbtn hb-edit ${editing ? 'on' : ''}" id="editCal">${icon('pencil', 14)}<span>${editing ? 'Done' : 'Edit'}</span></button></div>
+          ${calendarHtml(cal, editing)}
         </section>
 
-        <section class="card">
-          <div class="h-row">${icon('calendar', 16)}<h2>Calendar</h2>
-            <button class="chipbtn ${editing ? 'on' : ''}" id="editCal">${icon('pencil', 14)}<span>${editing ? 'Done' : 'Edit'}</span></button></div>
-          ${calendarHtml(cal)}
-          <div class="hm-key">
-            <i class="hc-cell on"></i> done
-            <i class="hc-cell carried"></i> covered
-            ${cal.cols.some((c) => c.cells.some((d) => d.skipped)) ? '<i class="hc-cell skip"></i> skipped' : ''}
-            <i class="hc-cell"></i> not done
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="h-row">${icon('flame', 16)}<h2>Best streaks</h2></div>
-          ${streaksHtml(sum, colour)}
-        </section>
+        ${streaks
+          ? `<section class="card"><div class="h-row"><h2>Streaks</h2></div>${streaks}</section>`
+          : ''}
 
         ${habit.notes
-          ? `<section class="card"><div class="h-row">${icon('book', 16)}<h2>Notes</h2></div>
-              <p class="muted small">${escapeHtml(habit.notes)}</p></section>`
+          ? `<section class="card"><div class="h-row"><h2>Notes</h2></div>
+              <p class="hb-note">${escapeHtml(habit.notes)}</p></section>`
           : ''}
       </div>`;
 
-    mount.querySelector('#scoreP').addEventListener('change', (e) => {
+    mount.querySelector('#scoreP')?.addEventListener('change', (e) => {
       scorePeriod = e.target.value;
       draw();
     });
-    mount.querySelector('#histP').addEventListener('change', (e) => {
-      historyPeriod = e.target.value;
-      draw();
-    });
-    mount.querySelector('#editCal')?.addEventListener('click', () => {
+    mount.querySelector('#editCal').addEventListener('click', () => {
+      haptic('press');
       editing = !editing;
       draw();
     });
@@ -167,9 +144,25 @@ export function renderHabitDetail(mount, id) {
 }
 
 function fmtTotal(habit, sum) {
-  if (habit.kind !== 'number') return String(sum.total);
+  if (!habits.measurable(habit)) return String(sum.total);
+  // Minutes read as hours past two of them.
+  if (habit.kind === 'timed' && sum.total >= 120) return `${(sum.total / 60).toFixed(1)}h`;
   const v = Math.round(sum.total * 100) / 100;
   return v >= 10000 ? `${Math.round(v / 1000)}k` : String(v);
+}
+
+/** One sentence on why the score moved this week. Computed, never stored. */
+function whyLine(sum) {
+  const m = habits.movement(sum);
+  const points = (n) => `${n} point${n === 1 ? '' : 's'}`;
+  if (m.days < 7) return `${m.days} day${m.days === 1 ? '' : 's'} on the record.`;
+  // One day is worth naming. More than one, the calendar shows which.
+  const only = m.misses.length === 1 ? `, on ${WEEKDAYS[new Date(`${m.misses[0]}T00:00:00`).getDay()]}` : '';
+  // A counted thing, so a numeral, the way the rest of the app counts.
+  const count = m.misses.length || 'No';
+  if (m.delta < 0) return `Down ${points(-m.delta)} this week. ${count} miss${m.misses.length === 1 ? '' : 'es'}${only}.`;
+  if (m.delta > 0) return `Up ${points(m.delta)} this week. ${m.kept} of 7 days kept.`;
+  return `Level this week. ${m.kept} of 7 days kept.`;
 }
 
 function bucketLabel(key) {
@@ -185,8 +178,8 @@ function bucketLabel(key) {
 
 /* ---------------- the calendar ---------------- */
 
-function calendarHtml(cal) {
-  return `<div class="hcal">
+function calendarHtml(cal, editing) {
+  return `<div class="hcal ${editing ? 'on' : ''}">
     <div class="hcal-body">
       ${cal.cols
         .map((c) => `<div class="hcal-col">
@@ -206,8 +199,9 @@ function calendarHtml(cal) {
                         : d.before
                           ? 'void'
                           : '';
+              // The date only while you are aiming at it. A heatmap otherwise.
               return `<button class="hc-cell ${cls} ${d.today ? 'now' : ''}" data-day="${d.key}"
-                ${d.future ? 'disabled' : ''} title="${d.key}">${d.day}</button>`;
+                ${d.future || !editing ? 'disabled' : ''} title="${d.key}">${editing ? d.day : ''}</button>`;
             })
             .join('')}
         </div>`)
@@ -219,10 +213,11 @@ function calendarHtml(cal) {
 
 function wireCalendarEdit(mount, habit, refresh) {
   mount.querySelector('.hcal')?.addEventListener('click', (e) => {
+    if (!e.currentTarget.classList.contains('on')) return;
     const cell = e.target.closest('.hc-cell');
     if (!cell || cell.disabled) return;
     const key = cell.dataset.day;
-    if (habit.kind === 'number') return openPastValue(habit, key, refresh);
+    if (habits.measurable(habit)) return openPastValue(habit, key, refresh);
     haptic('tick');
     habits.setValue(habit.id, key, habits.nextValue(habit, key));
     announce();
@@ -258,24 +253,19 @@ function openPastValue(habit, key, refresh) {
   sheet.el.querySelector('#clear').addEventListener('click', () => done(undefined));
 }
 
-/* ---------------- streaks and frequency ---------------- */
+/* ---------------- streaks ---------------- */
 
+/** The five longest, longest first. Empty until one of them beats a single day. */
 function streaksHtml(sum, colour) {
-  // Five, and never a run of one: a list of single days is not a best.
-  const long = sum.streaks.filter((s) => s.len > 1);
-  const list = (long.length ? long : sum.streaks).slice(0, 5);
-  if (!list.length) return '<p class="muted small">No streak yet.</p>';
+  const list = sum.streaks.filter((s) => s.len > 1).slice(0, 5);
+  if (!list.length) return '';
   const max = list[0].len;
   return `<div class="streak-list">${list
     .map((s) => `<div class="streak-row">
-      <span>${escapeHtml(shortDate(s.from))}</span>
-      <span class="streak-bar"><i style="width:${Math.max(8, (s.len / max) * 100)}%;background:${colour}">${s.len}</i></span>
-      <span>${escapeHtml(shortDate(s.to))}</span>
+      <span class="streak-when">${escapeHtml(fmtRange(s.from, s.to))}</span>
+      <span class="streak-bar"><i style="width:${Math.max(6, (s.len / max) * 100)}%;background:${colour}"></i></span>
+      <b>${s.len}</b>
     </div>`)
     .join('')}</div>`;
 }
 
-function shortDate(key) {
-  const [y, m, d] = key.split('-').map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: '2-digit' });
-}

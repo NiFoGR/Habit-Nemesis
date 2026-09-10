@@ -99,9 +99,7 @@ export function renderResult(mount) {
       <section class="rs-hero pending">
         <p class="eyebrow">${res ? escapeHtml(arena.weekLabel(res.key)) : 'Since you were last here'}</p>
         <h1 class="rs-word">${res ? 'Your week is in' : fresh.length === 1 ? 'A feat' : `${fresh.length} feats`}</h1>
-        <p class="muted small">${res
-          ? `Against ${escapeHtml(res.week.oppName || 'the bar')}.`
-          : 'Earned while you were about your business.'}</p>
+        ${res ? `<p class="muted small">Against ${escapeHtml(res.week.oppName || 'the bar')}.</p>` : ''}
         <button class="btn primary big" id="reveal">${res ? 'See the result' : 'Show me'}</button>
       </section>
     </div>`;
@@ -131,12 +129,14 @@ function drawFull(mount, res, fresh) {
               <span class="vs">${icon('versus', 18)}</span>
               <span class="them"><b>${pct(res.week.oppScore)}</b><i>${escapeHtml(res.week.oppName || 'The Standard')}</i></span>
             </div>
-            <p class="muted small">${
+            ${
               // Only if this week was the knockout. The arc block below reports
               // a round played in an earlier unseen week, and stamping its name
               // on this week's headline said the wrong week had been the final.
-              res.arc?.week === res.key ? escapeHtml(arena.KNOCKOUT[res.arc.round]?.name || 'Knockout') : ''
-            }</p>
+              res.arc?.week === res.key
+                ? `<p class="muted small">${escapeHtml(arena.KNOCKOUT[res.arc.round]?.name || 'Knockout')}</p>`
+                : ''
+            }
           </section>`
         : ''}
 
@@ -149,24 +149,14 @@ function drawFull(mount, res, fresh) {
 
       ${res?.arc ? arcBlock(res.arc) : ''}
 
-      ${fresh.length
-        ? `<section class="card">
-            <h2>${fresh.length === 1 ? 'A feat' : `${fresh.length} feats`}</h2>
-            ${fresh
-              .map((f) => `<div class="rs-feat">
-                <span class="ft-ico on">${icon(f.icon, 18)}</span>
-                <span><b>${escapeHtml(f.name)}</b></span>
-              </div>`)
-              .join('')}
-          </section>`
-        : ''}
+      ${fresh.length ? featBlock(fresh) : ''}
 
       ${res && arena.isBestWeek(res.key) ? noteBlock(res.key) : ''}
 
       <button class="btn primary big" id="onward" data-back>${escapeHtml(res ? 'Into the week' : 'Good')}</button>
       <div class="rs-exits">
         ${res ? `<button class="btn ghost" id="shareWeek">${icon('external', 16)}<span>Share</span></button>` : ''}
-        <a class="btn ghost linkbtn" href="#/arena">${icon('trophy', 16)}<span>The Arena</span></a>
+        <a class="btn ghost linkbtn" href="#/arena">${icon('trophy', 16)}<span>Arena</span></a>
       </div>
     </div>`;
 
@@ -186,6 +176,18 @@ function drawFull(mount, res, fresh) {
   window.scrollTo(0, 0);
 }
 
+/** Four, then a count: a backfill can land sixteen at once. */
+function featBlock(fresh) {
+  const shown = fresh.slice(0, 4);
+  return `<section class="card">
+    <h2>${fresh.length === 1 ? 'A feat' : `${fresh.length} feats`}</h2>
+    ${shown.map((f) => `<div class="rs-feat"><b>${escapeHtml(f.name)}</b></div>`).join('')}
+    ${fresh.length > shown.length
+      ? `<a class="btn ghost wide" href="#/cabinet/feats">${fresh.length - shown.length} more</a>`
+      : ''}
+  </section>`;
+}
+
 /* ----------------------- notes ----------------------- */
 
 function noteBlock(key) {
@@ -203,8 +205,8 @@ function noteBlock(key) {
       <button class="btn small-btn" id="faceGo">${has ? 'Retake' : 'Take one'}</button>
     </div>
 
-    <label class="fineprint" for="noteText">A line for whoever beats it.</label>
     <input type="text" id="noteText" maxlength="${arena.MAX_NOTE}" autocomplete="off"
+      aria-label="A line for whoever beats this week"
       placeholder="Beat that." value="${escapeHtml(existing)}">
     <button class="btn" id="noteSave">${existing ? 'Change it' : 'Leave it'}</button>
   </section>`;
@@ -231,9 +233,8 @@ function wireNote(mount, res) {
     haptic('press');
     const box = mount.querySelector('#noteAsk');
     box.innerHTML = field.value.trim()
-      ? `<h2>Left on the record</h2><p class="said-quote">“${escapeHtml(field.value.trim().slice(0, arena.MAX_NOTE))}”</p>
-         <p class="muted small">He will see it the next time this week comes up as your Nemesis.</p>`
-      : '<h2>Nothing said</h2><p class="muted small">The week stands on its own, then.</p>';
+      ? `<h2>Left on the record</h2><p class="said-quote">“${escapeHtml(field.value.trim().slice(0, arena.MAX_NOTE))}”</p>`
+      : '<h2>Nothing said</h2>';
   });
 }
 
@@ -248,11 +249,11 @@ function arcBlock(arc) {
   const round = arena.KNOCKOUT[arc.round];
   if (!round) return '';
   const final = arc.round === 'final';
-  return `<section class="card rs-arc ${arc.won ? 'won' : 'out'}">
+  return `<section class="card rs-arc ${arc.won ? 'won' : ''}">
     <span class="rs-cup">${icon('trophy', 26)}</span>
     <div>
       <b>${arc.won ? (final ? 'Arc won' : `${round.name} won`) : `${round.name} lost`}</b>
-      <i>${arc.won && final ? 'The final is always your own best week. You beat it.' : escapeHtml(`Against ${round.opponent}.`)}</i>
+      <i>${escapeHtml(arc.won && final ? 'Against your own best week.' : `Against ${round.opponent}.`)}</i>
     </div>
   </section>`;
 }

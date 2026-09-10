@@ -20,10 +20,10 @@
   var app = document.getElementById('app');
   if (!app) return;
   app.setAttribute('style', 'max-width:32em;margin:0 auto;padding:15vh 24px;'
-    + 'font:16px/1.5 system-ui,sans-serif;color:#e6edf3;background:#0b0f14');
+    + 'font:16px/1.5 system-ui,sans-serif;color:#e6eaf0;background:#0a0c10');
   app.innerHTML =
-    '<h1 style="font-size:22px;margin:0 0 12px">Update Android System WebView</h1>'
-    + '<p style="margin:0;color:#9aa7b4">Habit Nemesis draws through Android\'s '
+    '<h1 style="font-size:22px;margin:0 0 12px;color:#ff5257">Update Android System WebView</h1>'
+    + '<p style="margin:0;color:#97a1b0">Habit Nemesis draws through Android\'s '
     + 'browser engine, and this device\'s copy is too old to run it. Update '
     + '<b>Android System WebView</b> and <b>Chrome</b> in the Play Store, then '
     + 'open the app again.</p>';

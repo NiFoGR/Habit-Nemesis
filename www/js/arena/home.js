@@ -13,11 +13,19 @@ import { standingHtml, rungOf } from './standing.js';
 import { fixtureHtml, wireFixture, formHtml } from './fixture.js';
 import { arcHtml } from './arc.js';
 import { wireWeeks } from './week-sheet.js';
+import { dailyLine } from './line.js';
 import { escapeHtml, pct } from '../ui.js';
 import { icon } from '../icons.js';
 
 export { openWeekSheet } from './week-sheet.js';
 export { renderFeats, wireFeatTiles } from './feats-screen.js';
+
+/** One sentence from the Nemesis, once a day. Nothing when nothing is true. */
+function lineHtml() {
+  const text = dailyLine();
+  if (!text) return '';
+  return `<p class="ar-line">${faceAvatar(28)}<span>${escapeHtml(text)}</span></p>`;
+}
 
 /** A line of his own, except on the weeks he is the fixture: the card above
  *  already carries the same face, the same week and the same score. */
@@ -37,6 +45,8 @@ export function renderArena(mount) {
   mount.innerHTML = `
     <div class="screen arena" style="--lift:${rungOf()}">
       <header class="ar-head">${standingHtml()}</header>
+      ${lineHtml()}
+      <hr class="cut">
       ${fixtureHtml()}
       ${formHtml(store.get().arena.weeks)}
       ${nemesisLine()}

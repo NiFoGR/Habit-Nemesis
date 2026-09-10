@@ -27,6 +27,23 @@ is editable from the calendar on purpose. The cost is one pass over the habit's
 history per render, memoised until the next write, which for a decade of daily
 entries is a few thousand additions.
 
+## Three kinds, two shapes
+
+| Kind | Stored | Done when |
+|---|---|---|
+| Yes or no | `1` | you marked it |
+| Measurable | the number | at or past the target, or under a ceiling |
+| Timed | minutes | the minutes reach the target |
+
+Timed is a measurable habit underneath: a number of minutes with a floor, run
+from today's cell on a full-screen timer that writes the minutes on every
+pause, every finish and every whole minute. Nothing downstream branches on it,
+which is the point of modelling it that way.
+
+An earlier build had a checklist kind. It stored a count of items ticked, so
+`hydrate()` reads a saved one back as a measurable habit and the record
+survives.
+
 ## Frequency is a fraction
 
 Every one of the five rows in the picker is the same pair of numbers, `n` times
@@ -41,7 +58,7 @@ in `d` days:
 | 3 times in 14 days | 3 | 14 |
 
 A day is **satisfied** when the window of `d` days ending on it holds at least
-`n` ticks — or when you ticked it, which is the case the window alone gets
+`n` ticks, or when you ticked it, which is the case the window alone gets
 wrong. Mark one day of a habit that asks for four a week and the window still
 holds one; a window-only rule would score that day zero and break the streak on
 the day you actually did the thing. So doing it always counts, and the window is
@@ -68,7 +85,7 @@ score(t)   = score(t-1) × multiplier + value(t) × (1 − multiplier)
 For a daily habit the multiplier is `0.5^(1/13) ≈ 0.9481`: a **thirteen-day
 half-life**. Thirteen consecutive days scores exactly 50%, twenty-six exactly
 75%, and a week off decays the score rather than resetting it. A percentage of
-days kept cannot do any of that — it treats a lapse in March as it treats one
+days kept cannot do any of that: it treats a lapse in March as it treats one
 this morning, and it cannot be moved once there is a year of data behind it.
 
 Rarer habits get a multiplier closer to 1, so they rise and fall more slowly.
@@ -77,14 +94,14 @@ takes proportionally longer to build.
 
 `value(t)` is:
 
-- **yes/no** — 1 if the day is satisfied, 0 otherwise.
-- **measurable, at least** — `min(value / target, 1)`, so 1.4 of a 2-litre
+- **yes/no**: 1 if the day is satisfied, 0 otherwise.
+- **measurable, at least**: `min(value / target, 1)`, so 1.4 of a 2-litre
   target is worth 0.7. Partial credit exists only for daily habits; a
   non-daily one is satisfied or it is not.
-- **measurable, at most** — 1 at or under the target, falling away above it and
+- **measurable, at most**: 1 at or under the target, falling away above it and
   reaching 0 at twice the target. This is the shape of a calorie cap, and of
   anything you are trying to do less of.
-- **skipped** — the day leaves the series entirely rather than scoring zero.
+- **skipped**: the day leaves the series entirely rather than scoring zero.
 
 A day with nothing recorded scores zero under both target types, including a
 ceiling. Not logging is not evidence of having stayed under, and the skip is
@@ -107,6 +124,53 @@ streak at all.
 `dayStartHour` moves when a day begins, up to 06:00, so something ticked at
 01:00 belongs to the night you were still up for. The Arena scores weeks out of
 the same day keys, so the boundary moves for both together.
+
+## Protocols
+
+A curated block: rows created for you in a group of their own, a fixed span,
+and a feat in the Cabinet if you hold four in five of the cells it owed. A run
+is judged once, the day after it ends, from the same record everything else
+reads. The rows stay on the grid afterwards as ordinary rows: the protocol was
+the clock, not the habits.
+
+Seven ship, as data in `PROTOCOLS`, meant to be run one at a time rather than
+at once:
+
+| Protocol | Span | Trains |
+|---|---|---|
+| Foundation | 30 days | wake time, morning light, steps, protein, bedtime |
+| Physical Development | 12 weeks | training, steps, protein, creatine, mobility |
+| Deep Work | 30 days | a 90 minute block, a phone-free session, learning, planning |
+| Digital Discipline | 30 days | five things not done |
+| Discipline | 30 days | doing what you said you would, on the day you said it |
+| Christian Life | 30 days | a morning and evening rule, Scripture, the Liturgy |
+| Character | 60 days | your word, the truth, no complaining, a useful thing |
+
+Every row asks an implementation intention, a cue and a behaviour, not a
+resolution: "Up within half an hour of your wake time?" rather than "Wake
+earlier?". A run of a protocol that has since left the table still settles and
+still keeps its feat if there is one: `settleProtocols()` reads the run, never
+the table.
+
+## Reminders
+
+A reminder is a real Android alarm, and the rule that matters is the one the
+incumbents get wrong: **marking a cell cancels that day's reminder, from every
+surface**. The grid, a widget, and the reminder's own buttons all write the
+same record, and the plan is re-armed from the record two seconds after any
+change.
+
+- One-shots, one per row per day, a week ahead. A day already satisfied or
+  skipped gets none. Android caps an app at 500 alarms, which is why the
+  horizon is a week rather than for ever.
+- The text carries the match: `Run. The Nemesis is one ahead.`
+- Done and Skip on a yes/no reminder, Enter with a field on a counted one.
+  Loop's model, and the reason a reminder can be answered without opening
+  the app.
+- Quiet hours move the Arena's own alarms to their end. A reminder the user
+  set by hand is left alone: they chose the time.
+- No snooze. Android 12 removed notification-level snooze and it is not
+  worth fighting.
 
 ## What the sanitiser has to be careful about
 

@@ -2,8 +2,11 @@
 // for a measurable habit. Patches what changed, never rebuilds the grid.
 
 import * as habits from './program.js';
-import { escapeHtml, openSheet, haptic, chime, celebrate } from '../ui.js';
+import { escapeHtml, openSheet, haptic, chime, celebrate, relDay } from '../ui.js';
 import { announce } from '../arena/result.js';
+import { watchGap, currentWeek, weekDays, scoreWeek } from '../arena/program.js';
+import { syncTabs } from '../tabs.js';
+import { navigate } from '../back.js';
 import { rowColour, cellHtml, fmtNumber, dueHead, nodeFrom, ringLen, patchRowRing } from './grid.js';
 
 const LONG_PRESS_MS = 420;
@@ -19,20 +22,22 @@ function patchTotals(mount, wasDone) {
   const fill = mount.querySelector('.gh-ring-fill');
   if (fill) {
     fill.setAttribute('stroke-dashoffset', (ringLen(20) * (1 - Math.min(f, 1))).toFixed(1));
-    fill.setAttribute('stroke', f >= 1 ? 'var(--good)' : 'var(--accent)');
+    fill.closest('.gh-ring').classList.toggle('perfect', f >= 1);
   }
   mount.querySelectorAll('[data-group-score]').forEach((el) => {
     const score = habits.groupScore(el.dataset.groupScore);
     el.textContent = score == null ? '' : `${Math.round(score * 100)}%`;
   });
+  // The bar's badge counts the same thing.
+  syncTabs(location.hash.split('?')[0]);
 
   // Once a day, on the tap that earns it, never on the way back down.
   const done = due.total > 0 && due.pending.length === 0;
   if (done && !wasDone) {
     haptic('level');
-    chime('complete');
+    chime('perfect');
     const ring = mount.querySelector('.gh-ring');
-    if (ring) celebrate(ring, { count: 20, spread: 74, colour: 'var(--good)' });
+    if (ring) celebrate(ring, { count: 20, spread: 74 });
   }
 }
 
@@ -55,7 +60,8 @@ function markCell(mount, habit, key, cell) {
   const nowOn = !!habits.summary(habit).index.get(key)?.hit;
   const skipped = !!habits.summary(habit).index.get(key)?.skipped;
   haptic(nowOn ? 'hit' : 'tick');
-  chime(nowOn ? 'mark' : skipped ? 'skip' : 'unmark');
+  chime(nowOn ? (kickoff(key) ? 'kickoff' : 'mark') : skipped ? 'skip' : 'unmark');
+  crossing();
   if (nowOn && !wasOn) {
     next.classList.add('just-on');
     celebrate(next, { count: 8, spread: 26, colour: rowColour(habit) });
@@ -76,7 +82,9 @@ export function wireCells(grid, mount, s, redraw) {
     if (!habit) return;
     const key = cell.dataset.day;
     if (!key || key > habits.today()) return;
-    if (habit.kind === 'number') return openValueSheet(mount, habit, key, redraw);
+    // Today's cell of a timed habit runs it. A past one is typed.
+    if (habit.kind === 'timed' && key === habits.today()) return navigate(`#/habits/timer?id=${encodeURIComponent(habit.id)}`);
+    if (habits.measurable(habit)) return openValueSheet(mount, habit, key, redraw);
     markCell(mount, habit, key, cell);
   };
 
@@ -92,17 +100,21 @@ export function wireCells(grid, mount, s, redraw) {
     act(cell);
   });
 
-  if (s.shortPress) return;
-
+  // A long press. On a past day it is a line on that day; on today, with
+  // short press off, it is the mark.
   let from = null;
   grid.addEventListener('pointerdown', (e) => {
     const cell = e.target.closest('.hg-cell');
-    if (!cell) return;
+    if (!cell || cell.disabled) return;
     held = false;
     from = { x: e.clientX, y: e.clientY };
+    const key = cell.dataset.day;
+    const past = key && key < habits.today();
+    if (!past && s.shortPress) return;
     timer = setTimeout(() => {
       held = true;
-      act(cell);
+      if (past) openDayNote(mount, key, redraw);
+      else act(cell);
     }, LONG_PRESS_MS);
   });
   const cancel = () => {
@@ -119,19 +131,88 @@ export function wireCells(grid, mount, s, redraw) {
   grid.addEventListener('scroll', cancel, true);
 }
 
-/** Keypad for a measurable habit, plus a button for each of the other states. */
-function openValueSheet(mount, habit, key, redraw) {
-  const s = habits.settings();
-  const current = habits.valueOn(habit, key);
+/** The week's first mark, on its first day. */
+function kickoff(key) {
+  const week = currentWeek();
+  return key === weekDays(week)[0] && key === habits.today() && scoreWeek(week).done === 1;
+}
+
+/** The lead changing hands, said once. */
+function crossing() {
+  const cue = watchGap();
+  if (!cue) return;
+  setTimeout(() => {
+    chime(cue);
+    haptic(cue);
+  }, 260);
+}
+
+/** One line on a day, for whoever reads the week back. */
+function openDayNote(mount, key, redraw) {
+  haptic('press');
   const sheet = openSheet(`
-    <h2>${escapeHtml(habit.name)}</h2>
-    <p class="muted small">${escapeHtml(habit.question || `How many ${habit.unit || 'this day'}?`)} · ${escapeHtml(key)}</p>
-    <div class="measure-row">
+    <h2>${escapeHtml(relDay(key))}</h2>
+    <p class="muted small">A line on the day, back in the week's review.</p>
+    <input class="hg-note" type="text" id="dayNote" maxlength="140" autocomplete="off"
+      placeholder="What happened" value="${escapeHtml(habits.noteOn(key))}">
+    <div class="btn-row">
+      <button class="btn ghost" data-close>Cancel</button>
+      <button class="btn primary" id="noteSave">Save</button>
+    </div>`, { onClose: () => redraw(mount) });
+  const input = sheet.el.querySelector('#dayNote');
+  input.focus();
+  const save = () => {
+    habits.setDayNote(key, input.value);
+    sheet.close();
+  };
+  sheet.el.querySelector('#noteSave').addEventListener('click', save);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') save();
+  });
+}
+
+/** Swap one cell for its fresh markup and nudge everything that reads it. */
+function patchCell(mount, habit, key, wasDone, wasOn, redraw) {
+  const cell = mount.querySelector(`.hg-row[data-id="${CSS.escape(habit.id)}"] .hg-cell[data-day="${key}"]`);
+  if (!cell) return redraw(mount);
+  const next = nodeFrom(cellHtml(habit, key, habits.summary(habit), habits.settings()));
+  cell.replaceWith(next);
+  patchRowRing(next.closest('.hg-row'), habit);
+  patchTotals(mount, wasDone);
+  const nowOn = !!habits.summary(habit).index.get(key)?.hit;
+  if (nowOn && !wasOn) {
+    next.classList.add('just-on');
+    celebrate(next, { count: 8, spread: 26, colour: rowColour(habit) });
+    next.addEventListener('animationend', () => next.classList.remove('just-on'), { once: true });
+  }
+  crossing();
+}
+
+/** What it asks and which day. A floor is the bar's job, so only a ceiling,
+ *  which has no bar, is spelt out. */
+function askLine(habit, key) {
+  const ask = habit.question || `How many ${habit.unit || 'this day'}?`;
+  const ceiling = habit.target && habit.targetType === 'atmost' ? ` · under ${fmtNumber(habit.target)}` : '';
+  return `${ask} · ${relDay(key)}${ceiling}`;
+}
+
+/** Keypad for a measurable habit, plus a button for each of the other states.
+ *  The bar under the field is the target, so no line prints it as well. */
+export function openValueSheet(mount, habit, key, redraw) {
+  const s = habits.settings();
+  const colour = rowColour(habit);
+  const current = habits.valueOn(habit, key);
+  const bar = habit.target > 0 && habit.targetType !== 'atmost';
+  const sheet = openSheet(`
+    <h2 style="color:${colour}">${escapeHtml(habit.name)}</h2>
+    <p class="muted small">${escapeHtml(askLine(habit, key))}</p>
+    <div class="hg-val">
       <input type="number" inputmode="decimal" step="any" min="0" id="val"
-        value="${typeof current === 'number' && current >= 0 ? current : ''}" placeholder="0">
-      <span>${escapeHtml(habit.unit || '')}</span>
+        value="${typeof current === 'number' && current >= 0 ? current : ''}" placeholder="0"
+        aria-label="${escapeHtml(habit.question || habit.name)}">
+      <span class="hg-val-unit">${escapeHtml(habit.unit || '')}</span>
     </div>
-    ${habit.target ? `<p class="fineprint">Target: ${habit.targetType === 'atmost' ? 'at most' : 'at least'} ${fmtNumber(habit.target)}${habit.unit ? ` ${escapeHtml(habit.unit)}` : ''}.</p>` : ''}
+    ${bar ? `<div class="hg-val-bar" style="--sc:${colour}"><i id="valBar"></i></div>` : ''}
     <div class="btn-row">
       <button class="btn" id="clear">Clear</button>
       ${s.skipDays ? '<button class="btn" id="skip">Skip</button>' : ''}
@@ -139,6 +220,14 @@ function openValueSheet(mount, habit, key, redraw) {
     </div>`);
 
   const input = sheet.el.querySelector('#val');
+  const fill = sheet.el.querySelector('#valBar');
+  const draw = () => {
+    if (!fill) return;
+    const v = Number(input.value);
+    fill.style.width = `${Math.max(0, Math.min(Number.isFinite(v) ? v / habit.target : 0, 1)) * 100}%`;
+  };
+  input.addEventListener('input', draw);
+  draw();
   input.focus();
   const done = (value) => {
     // Same event as a cell tap, so it takes the same path: swap, nudge, no rebuild.
@@ -148,18 +237,7 @@ function openValueSheet(mount, habit, key, redraw) {
     habits.setValue(habit.id, key, value);
     announce();
     sheet.close();
-    const cell = mount.querySelector(`.hg-row[data-id="${CSS.escape(habit.id)}"] .hg-cell[data-day="${key}"]`);
-    if (!cell) return redraw(mount);
-    const next = nodeFrom(cellHtml(habit, key, habits.summary(habit), habits.settings()));
-    cell.replaceWith(next);
-    patchRowRing(next.closest('.hg-row'), habit);
-    patchTotals(mount, wasDone);
-    const nowOn = !!habits.summary(habit).index.get(key)?.hit;
-    if (nowOn && !wasOn) {
-      next.classList.add('just-on');
-      celebrate(next, { count: 8, spread: 26, colour: rowColour(habit) });
-      next.addEventListener('animationend', () => next.classList.remove('just-on'), { once: true });
-    }
+    patchCell(mount, habit, key, wasDone, wasOn, redraw);
   };
   sheet.el.querySelector('#save').addEventListener('click', () => {
     const v = Number(input.value);

@@ -3,9 +3,7 @@
    The one exception is a habit's own colour, which you chose. */
 :root {
   /* ---- ground ---- */
-  /* Steps you can see. surface against surface-2 used to be 1.08:1, which is
-     why an inset track, a bar's groove and a pressed state all vanished into
-     the card they sat on. The ramp is now 1.16, 1.35, 1.73 against surface. */
+  /* The launcher icon's own black. The ramp above it is 1.16, 1.35, 1.73. */
   --bg: #0a0c10;
   --bg-2: #101419;
   --surface: #171d28;
@@ -17,16 +15,19 @@
   --faint: #6b7686;
 
   /* ---- meaning ---- */
-  --accent: #22d3c5;   /* the app, and anything you can act on */
-  --mark: #e62429;     /* the app mark only. Never a state, never a surface */
-  --violet: #a78bfa;   /* the far end of the brand ramp, for the mark only */
-  --good: #4ade80;     /* done */
-  --warn: #fbbf24;     /* careful */
-  --danger: #f87171;   /* wrong, or gone */
-  --calm: #38bdf8;     /* skipped, rested, deliberately not counted */
-  --brand: linear-gradient(120deg, #22d3c5, #a78bfa);
-  /* Ink on an accent fill. Never used on the ground. */
-  --on-accent: #04121a;
+  /* The mark's red. The app, the Nemesis, and anything you can act on. */
+  --accent: #e62429;
+  /* The same red where it has to be read as words. 6.0:1 on the ground. */
+  --accent-ink: #ff5257;
+  /* A pressed fill, and the groove under a red bar. */
+  --accent-deep: #8f1417;
+  --on-accent: #ffffff;
+  --good: #46d17f;   /* done, ahead of the bar */
+  --warn: #f5a524;   /* at risk */
+  --ash: #5b6472;    /* missed. A miss is absence, not an alarm */
+  --calm: #3aa8f0;   /* skipped, deliberately not counted */
+  --danger: #ff5257; /* destructive. The one place the brand red warns */
+  --brand: linear-gradient(120deg, #e62429, #8f1417);
 
   /* ---- type ----
      Ten sizes, and every size in the app is one of them. A raw rem in a
@@ -50,9 +51,12 @@
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
 
   /* ---- shape ---- */
-  --radius: 12px;
-  --radius-sm: 9px;
-  --radius-pill: 999px;
+  /* Corners. Every box is one of these, never a number. Card is a thing you
+     act on, ctrl an input or a cell, chip a small mark, pill a bar. */
+  --r-card: 14px;
+  --r-ctrl: 10px;
+  --r-chip: 4px;
+  --r-pill: 999px;
   --pad: 16px;
   --gap: 10px;
 
@@ -61,6 +65,8 @@
      legible, so it is short enough not to be waited on. */
   --t-fast: 0.12s;
   --t-base: 0.2s;
+  /* A bar filling. The one thing worth waiting on. */
+  --t-slow: 0.5s;
   --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
 
   /* Native controls follow this. Without it a checkbox is a white platform
@@ -68,10 +74,17 @@
   color-scheme: dark;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
+  /* Pure black, for AMOLED. Appearance swaps the ground for it. */
+  --black: #000000;
 }
 
+html.black { --bg: var(--black); --bg-2: var(--black); }
+
 @media (prefers-reduced-motion: reduce) {
-  :root { --t-fast: 0.001s; --t-base: 0.001s; }}
+  :root { --t-fast: 0.001s; --t-base: 0.001s; --t-slow: 0.001s; }}
+/* The switch in Appearance, for phones with no system setting. */
+html.reduce-motion { --t-fast: 0.001s; --t-base: 0.001s; --t-slow: 0.001s; }
+html.reduce-motion * { animation: none !important; transition: none !important; }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -94,7 +107,7 @@ h1 { font-size: var(--f-sub); margin: 0; letter-spacing: -0.02em; }
 h2 { font-size: var(--f-head); margin: 0 0 8px; letter-spacing: -0.01em; }
 p { margin: 0 0 10px; }
 p:last-child { margin-bottom: 0; }
-code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-size: 0.85em; }
+code { background: var(--surface-2); padding: 1px 5px; border-radius: var(--r-chip); font-size: 0.85em; }
 
 .muted { color: var(--muted); }
 .small { font-size: var(--f-small); }
@@ -134,12 +147,21 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
   cursor: pointer;
 }
 .icon-btn:active { background: var(--surface-2); }
+/* Reach. A round button reads at 40px and a small one at 32, but a thumb needs
+   44, so a centred pseudo gives the target without moving a pixel. */
+.icon-btn { position: relative; }
+.icon-btn::after {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  width: 44px; height: 44px; transform: translate(-50%, -50%);
+}
 .icon-btn.ghost { border-color: transparent; background: none; pointer-events: none; }
+/* A button that is holding a mode open. */
+.icon-btn.on { border-color: var(--accent); color: var(--accent-ink); }
 
 .pill {
-  font-size: var(--f-fine); padding: 4px 9px; border-radius: var(--radius-pill);
+  font-size: var(--f-fine); padding: 4px 9px; border-radius: var(--r-pill);
   background: none;
-  color: var(--accent);
+  color: var(--accent-ink);
   border: 1px solid var(--line);
 }
 .pill.done { color: var(--good); }
@@ -147,14 +169,19 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 
 /* ---------- cards ---------- */
 
-.card {
+/* A section, not a box. The heading and the space separate it, which is what
+   stops a screen reading as boxes inside boxes. */
+.card { margin-bottom: 26px; }
+.card:last-child { margin-bottom: 0; }
+
+/* The exception: a thing you act on as one unit keeps a surface. */
+.card.raised, .card.danger, .acc-card, .nudge, .note-ask {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: var(--r-card);
   padding: 16px;
-  margin-bottom: 14px;
 }
-.card.danger { border-color: rgba(248, 113, 113, 0.32); }
+.card.danger { border-color: color-mix(in srgb, var(--danger) 32%, transparent); }
 .warn-inline { color: var(--warn); font-size: var(--f-small); }
 
 /* ---------- buttons ---------- */
@@ -167,7 +194,7 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
   border: 1px solid var(--line);
   background: var(--surface-2);
   color: var(--text);
-  border-radius: 10px;
+  border-radius: var(--r-ctrl);
   padding: 13px 16px;
   font-size: var(--f-body); font-weight: 600;
   cursor: pointer;
@@ -177,25 +204,23 @@ a.btn { text-decoration: none; }
 .btn:active { transform: scale(0.99); }
 .btn:has(.ico) { display: flex; align-items: center; justify-content: center; gap: 9px; }
 .btn.primary { background: var(--accent); color: var(--on-accent); border: 0; font-weight: 700; }
+.btn.primary:active { background: var(--accent-deep); }
 .btn.big { padding: 17px; font-size: var(--f-head); }
 .btn.ghost { background: none; color: var(--muted); }
 /* Bottom margin too: a card has margin-bottom and no margin-top, so a
    full-width button above one sat flush against it. */
 .btn.wide, .btn.big { margin: 14px 0; }
-.btn.danger { background: rgba(248, 113, 113, 0.14); color: var(--danger); border-color: rgba(248, 113, 113, 0.4); }
+/* One signal, not three: the word is red, the box is not. */
+.btn.danger { background: none; color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, transparent); }
 
 /* ---------- stats ---------- */
 
-.stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+.stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 14px; margin-bottom: 18px; }
 .stat-grid.four { grid-template-columns: repeat(2, 1fr); }
 .stat-grid.three { grid-template-columns: repeat(3, 1fr); }
 .stat-grid.three .stat b { font-size: var(--f-head); }
 .stat-grid.four .stat b { font-size: var(--f-head); }
-.stat-grid.three .stat .ico { top: 8px; right: 8px; }
-.stat {
-  background: var(--surface); border: 1px solid var(--line);
-  border-radius: 10px; padding: 12px 14px;
-}
+.stat { padding: 0; }
 .stat b { display: block; font-size: var(--f-title); letter-spacing: -0.02em; }
 .stat span { display: block; color: var(--muted); font-size: var(--f-fine); }
 
@@ -203,24 +228,23 @@ a.btn { text-decoration: none; }
 .kv:last-child { border-bottom: 0; }
 .kv span { color: var(--muted); }
 .kv b { text-align: right; font-weight: 600; }
-.kv b em { font-style: normal; color: var(--accent); font-weight: 500; font-size: var(--f-small); }
+.kv b em { font-style: normal; color: var(--accent-ink); font-weight: 500; font-size: var(--f-small); }
 
 .chart { width: 100%; height: 110px; overflow: visible; }
 .chart .ct { fill: var(--muted); font-size: var(--f-micro); }
 .chart-empty { color: var(--muted); font-size: var(--f-small); padding: 18px 0; text-align: center; }
-.hm-key i { width: 13px; height: 13px; border-radius: 3px; display: block; }
-.hm-key { display: flex; align-items: center; gap: 5px; margin-top: 8px; color: var(--muted); font-size: var(--f-fine); }
 
 /* ---------- settings ---------- */
 
-.setting { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+/* The same row as .set-row, because a list is a list wherever it is. */
+.setting { display: flex; align-items: center; gap: 14px; min-height: 48px; padding: 9px 0; border-bottom: 1px solid var(--line-soft); }
 .setting:last-child { border-bottom: 0; }
-.setting span { flex: 1; }
-.setting b { display: block; font-size: var(--f-body); font-weight: 600; }
-.setting i { display: block; font-style: normal; color: var(--muted); font-size: var(--f-fine); margin-top: 2px; }
-.setting select, .setting input[type="time"], .set-row select {
+.setting span { flex: 1; min-width: 0; }
+.setting b { display: block; font-size: var(--f-body); font-weight: var(--w-normal); }
+.setting i { display: block; font-style: normal; color: var(--muted); font-size: var(--f-fine); line-height: 1.35; margin-top: 2px; }
+.setting select, .setting input[type="time"], .set-row select, .set-row input[type="time"] {
   background: var(--surface-2); color: var(--text); border: 1px solid var(--line);
-  border-radius: 10px; padding: 9px 10px; font-size: var(--f-body); min-width: 96px;
+  border-radius: var(--r-ctrl); padding: 9px 10px; font-size: var(--f-body); min-width: 96px;
 }
 .setting.toggle input { width: 24px; height: 24px; accent-color: var(--accent); }
 
@@ -229,10 +253,12 @@ a.btn { text-decoration: none; }
 #toast {
   position: fixed; left: 50%; bottom: calc(var(--safe-b) + 24px); transform: translate(-50%, 20px);
   background: var(--surface-2); border: 1px solid var(--line); color: var(--text);
-  padding: 11px 18px; border-radius: 999px; font-size: var(--f-small);
+  padding: 11px 18px; border-radius: var(--r-pill); font-size: var(--f-small);
   opacity: 0; pointer-events: none; transition: all 0.24s ease; z-index: 50;
 }
-#toast.show { opacity: 1; transform: translate(-50%, 0); }
+#toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+/* The way back, beside the line. */
+.toast-undo { margin-left: 14px; background: none; border: 0; padding: 0; color: var(--accent-ink); font: inherit; font-size: var(--f-small); font-weight: var(--w-bold); cursor: pointer; }
 input[type="range"] {
   width: 100%; margin: 0 0 4px; accent-color: var(--accent); height: 28px; background: transparent;
 }
@@ -244,23 +270,20 @@ input[type="range"] {
 .measure-row { display: flex; align-items: center; gap: 8px; }
 .measure-row input {
   flex: 1; background: var(--surface-2); border: 1px solid var(--line); color: var(--text);
-  border-radius: 9px; padding: 12px 14px; font-size: var(--f-head); font-variant-numeric: tabular-nums;
+  border-radius: var(--r-ctrl); padding: 12px 14px; font-size: var(--f-head); font-variant-numeric: tabular-nums;
 }
 .measure-row span { color: var(--muted); font-size: var(--f-body); }
 .notes {
   width: 100%; background: var(--surface-2); border: 1px solid var(--line); color: var(--text);
-  border-radius: 9px; padding: 10px 12px; font: inherit; font-size: var(--f-body); resize: vertical; margin-top: 8px;
+  border-radius: var(--r-ctrl); padding: 12px; font: inherit; font-size: var(--f-body); resize: none;
 }
 .small-btn { flex: 0 0 auto; width: auto; padding: 13px 18px; }
 .good-text { color: var(--good); }
 
-.barchart { display: flex; align-items: flex-end; gap: 3px; height: calc(var(--h) + 18px); }
-.bar { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; min-width: 6px; }
-.bar-stack { width: 100%; display: flex; flex-direction: column-reverse; border-radius: 4px 4px 0 0; overflow: hidden; background: var(--surface-2); }
-.bar-stack i { display: block; width: 100%; background: var(--bar, var(--accent)); }
-.bar span { font-size: var(--f-micro); color: var(--muted); margin-top: 4px; white-space: nowrap; }
 
 .empty-state { text-align: center; padding: 30px 10px; }
+/* The icon is a block, so without this it sits at the left of a centred block. */
+.empty-state .ico { margin: 0 auto 12px; color: var(--faint); }
 .empty-state h2 { margin-bottom: 6px; }
 .empty-state p { max-width: 40ch; margin: 0 auto 16px; }
 .empty-state .btn { max-width: 280px; margin: 0 auto; }
@@ -269,9 +292,17 @@ input[type="range"] {
 
 .ico { display: block; flex: 0 0 auto; }
 .icon-btn .ico { width: 20px; height: 20px; }
-/* The mark carries its own colour. It is identity, not state, and it is the
-   only red in the app that does not mean something is wrong. */
-.logo-mark { display: block; color: var(--mark); }
+/* The mark is the accent. */
+.logo-mark { display: block; color: var(--accent); }
+
+/* The mark's diagonal, as a rule. One per screen, never two. */
+.cut {
+  height: 2px;
+  border: 0;
+  margin: 18px 0;
+  background: linear-gradient(90deg, var(--accent), transparent 70%);
+  transform: skewX(-12deg);
+}
 
 /* section headings with an icon */
 .h-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
@@ -280,7 +311,7 @@ input[type="range"] {
 
 /* stat tiles with an icon in the corner */
 .stat { position: relative; }
-.stat .ico { position: absolute; top: 12px; right: 12px; color: var(--muted); opacity: 0.5; width: 16px; height: 16px; }
+.stat .ico { position: absolute; top: 2px; right: 0; color: var(--muted); opacity: 0.5; width: 16px; height: 16px; }
 
 /* ---------- simplified nav bits ---------- */
 
@@ -319,7 +350,7 @@ input[type="range"] {
 .lock-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
 .pin-input {
   width: 190px; text-align: center; font-size: var(--f-sub); letter-spacing: 0.4em;
-  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-ctrl);
   color: var(--text); padding: 14px 10px;
 }
 .lock-screen .btn { width: 220px; }
@@ -327,11 +358,11 @@ input[type="range"] {
 /* ---------- a page count ---------- */
 
 .step-bar { display: flex; gap: 5px; margin-bottom: 16px; }
-.step-bar i { flex: 1; height: 4px; border-radius: 4px; background: var(--line); }
+.step-bar i { flex: 1; height: 4px; border-radius: var(--r-pill); background: var(--line); }
 .step-bar i.on { background: var(--accent); }
 .step-bar i.done { background: color-mix(in srgb, var(--accent) 45%, var(--line)); }
 
-.icon-btn.text-btn { width: auto; padding: 0 14px; border-radius: var(--radius-pill); font-size: var(--f-small); color: var(--muted); }
+.icon-btn.text-btn { width: auto; padding: 0 14px; border-radius: var(--r-pill); font-size: var(--f-small); color: var(--muted); }
 
 /* ---------- one setting, and its control ---------- */
 
@@ -340,7 +371,19 @@ input[type="range"] {
 /* Capped, or one long <option> squeezes the label into a two-word column. One
    width for every control in a settings list: a ragged right edge is what a
    column of selects sized to their own text looks like. */
-.setting select, .setting input[type="time"], .set-row select { flex: 0 0 auto; min-width: 47%; max-width: 62%; }
+.setting select, .setting input[type="time"], .set-row select, .set-row input[type="time"] { flex: 0 0 auto; min-width: 47%; max-width: 62%; }
+/* One share of the row, and one height, for every control in it: a select left
+   on the platform line box came out 4px short of the input above it. */
+.setting select,
+.setting input[type="time"],
+.setting input[type="text"],
+.setting input[type="number"] { flex: 0 0 46%; min-width: 0; max-width: 46%; min-height: 44px; }
+.setting select, .setting input[type="time"] { font: inherit; font-size: var(--f-body); }
+.setting input[type="text"],
+.setting input[type="number"] {
+  background: var(--surface-2); color: var(--text); border: 1px solid var(--line);
+  border-radius: var(--r-ctrl); padding: 9px 10px; font: inherit; font-size: var(--f-body); text-align: right;
+}
 .setting input[type="range"] { flex: 0 1 46%; min-width: 120px; accent-color: var(--accent); }
 .card .h-row + .setting { border-top: 0; }
 .card.danger .h-row .ico { color: var(--danger); }
@@ -354,7 +397,7 @@ input[type="range"] {
 .set-row input[type="checkbox"] { margin: 0;
   appearance: none; -webkit-appearance: none;
   position: relative; flex: 0 0 auto;
-  width: 46px; height: 27px; border-radius: 27px;
+  width: 46px; height: 27px; border-radius: var(--r-pill);
   background: var(--surface-2); border: 1px solid var(--line);
   cursor: pointer; transition: background 0.16s ease, border-color 0.16s ease;
 }
@@ -371,6 +414,11 @@ input[type="range"] {
 .setting.toggle input[type="checkbox"]:checked::after,
 .set-row input[type="checkbox"]:checked::after {
   transform: translateX(19px); background: var(--bg);
+}
+.setting.toggle input[type="checkbox"]::before,
+.set-row input[type="checkbox"]::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 50%;
+  height: 44px; transform: translateY(-50%);
 }
 .setting.toggle input[type="checkbox"]:disabled,
 .set-row input[type="checkbox"]:disabled { opacity: 0.4; cursor: default; }
@@ -398,32 +446,36 @@ input[type="range"] {
   display: block; min-width: 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.hg-label b { font-weight: var(--w-medium); font-size: var(--f-body); }
-.hg-label i { font-style: normal; font-size: var(--f-fine); color: var(--muted); }
+/* Tight enough that a name with a detail line under it still fits the row
+   height a name on its own gets. One rhythm, whatever a row carries. */
+.hg-label b { font-weight: var(--w-medium); font-size: var(--f-body); line-height: 1.25; }
+.hg-label i { font-style: normal; font-size: var(--f-fine); color: var(--muted); line-height: 1.3; }
+
+/* ---------- search ----------
+   Only past twelve rows, where a thumb cannot find a row without it. */
+.hg-search {
+  width: 100%; margin: 0 0 4px; padding: 10px 14px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-pill);
+  color: var(--text); font: inherit; font-size: var(--f-body);
+}
+.hg-search:focus { outline: none; border-color: var(--accent); }
+.hg-search::placeholder { color: var(--faint); }
+.hg-row.hidden, .hg-rows.hidden, .hg-group.hidden, .hg-head.hidden, .hg-none.hidden { display: none; }
+.hg-none { color: var(--muted); font-size: var(--f-small); padding: 22px 2px; margin: 0; }
 
 /* ---------- the grid's one control ----------
    It sits in the day header's empty name slot, so it costs no band of its own.
    Three chips up here said "Reorder", "4 days" and "Groups" with equal weight,
    which read as a toolbar bolted above the screen. */
 
-.arrange {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: none; border: 0; padding: 0;
-  color: var(--faint); font: inherit; font-size: var(--f-fine); cursor: pointer;
-}
-.arrange .ico { width: 14px; height: 14px; }
-.arrange:active { color: var(--text); }
-.arrange.on { color: var(--accent); }
-/* Reorder mode drops the day columns, so the way out needs its own line. */
-.hg-arrange { padding: 0 10px 10px; }
 
 .chipbtn {
   display: inline-flex; align-items: center; gap: 7px;
   background: var(--surface); border: 1px solid var(--line); color: var(--muted);
-  border-radius: 999px; padding: 7px 13px; font-size: var(--f-small); cursor: pointer;
+  border-radius: var(--r-pill); padding: 0 15px; min-height: 44px; font-size: var(--f-small); cursor: pointer;
 }
 .chipbtn:active { background: var(--surface-2); }
-.chipbtn.on { color: var(--accent); border-color: var(--accent); }
+.chipbtn.on { color: var(--accent-ink); border-color: var(--accent); }
 .chipbtn .ico { width: 15px; height: 15px; }
 .h-row .chipbtn { margin-left: auto; }
 
@@ -431,54 +483,70 @@ input[type="range"] {
    The widths have to survive a long name and seven columns on a 360px phone,
    so cells take a maximum and the name takes what is left. */
 
-.hgrid { display: grid; gap: 6px; margin: 18px 0; }
+.hgrid { display: grid; margin: 14px 0; }
 
+/* One template for the day header and every row under it, so a column and the
+   cells beneath it share an edge. --cell comes from home.js: fewer columns, a
+   bigger target. */
 .hg-head, .hg-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) repeat(var(--cols, 4), minmax(0, 36px));
+  grid-template-columns: minmax(0, 1fr) repeat(var(--cols, 4), minmax(0, var(--cell, 36px)));
   align-items: center;
   gap: 2px;
 }
 /* On a 320px phone four day columns leave the name 86px, which cut "Cold
    shower" and every detail line under it. The name is the row: drop a day. */
 @media (max-width: 340px) {
-  .hg-head, .hg-row { grid-template-columns: minmax(0, 1fr) repeat(min(var(--cols, 4), 3), minmax(0, 34px)); }
+  /* Three columns is all that fits, so they take the full target width. */
+  .hg-head, .hg-row { grid-template-columns: minmax(0, 1fr) repeat(min(var(--cols, 4), 3), minmax(0, 44px)); }
   /* By index, not :last-child: at "Days on screen: 3" there is no fourth cell
      to drop and last-child would take the third. */
   .hg-head > :nth-child(n+5), .hg-row > :nth-child(n+5) { display: none; }}
 
-.hg-head { padding: 0 10px; color: var(--muted); align-items: end; }
+.hg-head { padding: 0 2px 6px; color: var(--muted); align-items: end; }
 .hg-head .hg-name { align-self: center; }
 .hg-head i { font-style: normal; text-align: center; line-height: 1.1; }
 .hg-head i b { display: block; font-size: var(--f-micro); letter-spacing: 0.06em; font-weight: 600; }
 .hg-head i em { font-style: normal; font-size: var(--f-fine); }
 .hg-head i.now { color: var(--text); }
+/* A day with a line on it. */
+.hg-head i em { position: relative; }
+.hg-head i.noted em::after { content: ''; position: absolute; right: -7px; top: 5px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); }
 
+/* A line, not a card. Six habits used to be six boxes 68px tall, which is what
+   made the grid read as a stack of tiles rather than one list. */
 .hg-row {
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 6px 10px; min-height: 68px;
+  padding: 2px 2px; min-height: 56px;
+  border-bottom: 1px solid var(--line-soft);
 }
-.hg-row.dragging { opacity: 0.6; border-color: var(--accent); }
+.hg-rows .hg-row:last-child { border-bottom: 0; }
+.hg-row.dragging {
+  opacity: 0.9; background: var(--surface-2);
+  border-radius: var(--r-card); border-bottom-color: transparent;
+}
 
 /* The name takes what the cells leave and ellipsises the rest. Five columns is
    a setting for this reason: at five, "Calisthenics" becomes "Calisth...". */
 .hg-name {
   display: flex; align-items: center; gap: 8px; min-width: 0;
+  align-self: stretch; /* the whole row's height is the tap target */
   text-decoration: none; color: inherit; font-size: var(--f-body); font-weight: 600;
   padding: 6px 0;
 }
 .hg-name > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hg-name b { font-weight: 600; }
 .hg-row { font-size: var(--f-body); }
 .hg-ring { width: 20px; height: 20px; flex: 0 0 20px; display: block; }
 
 .hg-cell {
   display: grid; place-items: center;
-  min-height: 40px; padding: 0;
-  background: none; border: 0; border-radius: 8px;
+  min-height: 44px; padding: 0;
+  background: none; border: 0; border-radius: var(--r-ctrl);
   color: var(--muted); opacity: 0.45; cursor: pointer;
 }
 .hg-cell.on { opacity: 1; }
-.hg-cell.no { opacity: 1; color: var(--danger); }
+/* A miss is absence. Ash, never red. */
+.hg-cell.no { opacity: 1; color: var(--ash); }
 .hg-cell.skip { opacity: 0.8; color: var(--calm); }
 /* Carried: inside the window but not done today. Not a tick and not nothing,
    so a ring rather than a fill. */
@@ -501,7 +569,7 @@ input[type="range"] {
 .hg-cell { position: relative; }
 .hg-cell.just-on { animation: cell-pop 0.3s var(--ease); z-index: 1; }
 .hg-cell.just-on::before {
-  content: ''; position: absolute; inset: 2px; border-radius: 9px;
+  content: ''; position: absolute; inset: 2px; border-radius: var(--r-ctrl);
   background: currentColor; opacity: 0.3; pointer-events: none;
   animation: cell-flash 0.42s var(--ease) forwards;
 }
@@ -524,35 +592,64 @@ input[type="range"] {
   font-size: var(--f-small); font-weight: var(--w-medium);
   font-variant-numeric: tabular-nums;
 }
-.hg-cell.num:not(.on):not(.part) { color: var(--muted); opacity: 0.45; }
 /* Logged, but short of the target. Legible, and visibly not a win. */
 .hg-cell.num.part { color: var(--muted); }
 
-.hg-group { display: flex; align-items: center; gap: 8px; margin: 14px 0 2px; }
+/* One shape whether it carries a clock or not: a caret slot the width of a
+   row's ring, the name on the same left edge as the names below it, and the
+   score on the right edge of the last day column. The header stands one row
+   high, so the three rhythms on this screen are one. */
+.hg-group {
+  display: flex; align-items: center; gap: 10px;
+  margin: 12px 0 0; padding: 0 2px;
+}
 .hg-group-btn {
-  display: flex; align-items: center; gap: 7px;
-  background: none; border: 0; padding: 0; cursor: pointer;
+  display: grid; grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center; gap: 8px;
+  flex: 1; min-width: 0; min-height: 44px;
+  background: none; border: 0; padding: 0; text-align: left; cursor: pointer;
   color: var(--muted); font-size: var(--f-fine); text-transform: uppercase; letter-spacing: 0.1em;
 }
-.hg-group-btn b { font-weight: 600; }
+span.hg-group-btn { cursor: default; }
+.hg-caret { display: grid; place-items: center; width: 20px; }
+.hg-group-btn b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hg-group i {
+  font-style: normal; font-size: var(--f-fine); color: var(--faint);
+  text-transform: uppercase; letter-spacing: 0.1em; white-space: nowrap;
+}
+.hg-score { font-variant-numeric: tabular-nums; }
 .hg-group .ico { color: var(--muted); }
-.hg-rows { display: grid; gap: 6px; }
+.hg-rows { display: grid; }
 
 /* ---------- reordering ---------- */
 
-.hgrid.reordering .hg-row { display: flex; gap: 10px; }
+/* A mode, not a debug view: no day columns, no score, and one row shape. The
+   grip drags between groups, the arrows step, and the name opens nothing. */
+.hgrid.reordering .hg-row { display: flex; align-items: center; gap: 8px; }
+.hgrid.reordering .hg-name { flex: 1; }
 .hg-drag {
-  background: none; border: 0; color: var(--muted); padding: 4px; cursor: grab;
+  display: grid; place-items: center;
+  width: 40px; height: 44px; flex: 0 0 40px;
+  color: var(--faint); cursor: grab;
   touch-action: none; /* or the browser scrolls instead of letting us drag */
 }
-.hg-move { display: flex; align-items: center; gap: 6px; margin-left: auto; }
-.hg-group-pick {
-  background: var(--surface-2); color: var(--text); border: 1px solid var(--line);
-  border-radius: 8px; padding: 6px 6px; font-size: var(--f-fine); max-width: 108px;
+.hg-move { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+.hg-mv {
+  width: 44px; height: 44px; flex: 0 0 44px;
+  display: grid; place-items: center;
+  background: none; border: 0; border-radius: var(--r-ctrl);
+  color: var(--muted); cursor: pointer;
+  transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
 }
+.hg-mv:active { background: var(--surface-2); color: var(--text); }
+/* The grip pushes every row along, so the header goes with them. */
+.hgrid.reordering .hg-group { padding-left: 50px; }
+/* A group with nothing in it is still somewhere to drop. */
+.hgrid.reordering .hg-rows { min-height: 44px; }
+.hgrid.reordering .hg-rows:empty { border: 1px dashed var(--line-soft); border-radius: var(--r-card); }
 .icon-btn.small { width: 32px; height: 32px; flex: 0 0 32px; }
 .icon-btn.small .ico { width: 15px; height: 15px; }
-.icon-btn.small.danger { color: var(--danger); border-color: rgba(248, 113, 113, 0.35); }
+.icon-btn.small.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 35%, transparent); }
 
 /* ---------- the sheet ----------
    Bottom-anchored on a phone, where your thumb is; centred from tablet width up. */
@@ -566,7 +663,7 @@ input[type="range"] {
 .sheet {
   width: 100%; max-width: 520px; max-height: 88vh; overflow-y: auto;
   background: var(--surface); border: 1px solid var(--line);
-  border-radius: 16px 16px 0 0;
+  border-radius: var(--r-card) var(--r-card) 0 0;
   padding: 20px var(--pad) calc(var(--safe-b) + 20px);
 }
 .sheet h2 { font-size: var(--f-head); margin-bottom: 6px; }
@@ -574,105 +671,254 @@ input[type="range"] {
 .sheet .btn.wide { margin: 16px 0 0; }
 @media (min-width: 620px) {
   .sheet-scrim { align-items: center; }
-  .sheet { border-radius: 16px; padding-bottom: 20px; }}
+  .sheet { border-radius: var(--r-card); padding-bottom: 20px; }}
 
 /* ---------- choosing a kind, a colour, a frequency ---------- */
 
-.type-cards { display: grid; gap: 10px; margin: 14px 0 4px; }
-.type-card {
-  display: block; text-decoration: none; color: inherit;
-  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 16px;
+/* A protocol is a row, like everything else that is a list in this app. Seven
+   bordered cards in a sheet was a wall. */
+.proto-list { display: grid; margin: 12px 0 6px; }
+.proto {
+  display: flex; align-items: baseline; gap: 12px; width: 100%;
+  min-height: 48px; padding: 9px 0;
+  background: none; border: 0; border-bottom: 1px solid var(--line-soft);
+  color: var(--text); text-align: left; font: inherit; cursor: pointer;
 }
-.type-card:active { border-color: var(--accent); }
-.type-card b { display: block; font-size: var(--f-head); margin-bottom: 4px; }
-.type-card span { color: var(--muted); font-size: var(--f-small); }
+.proto-list .proto:last-child { border-bottom: 0; }
+.proto-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.proto-text b { font-size: var(--f-body); font-weight: var(--w-medium); }
+/* Two lines, then an ellipsis: a five-row protocol otherwise ran to three. */
+.proto-text i {
+  font-style: normal; font-size: var(--f-fine); color: var(--muted); line-height: 1.35;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+}
+.proto-span { flex: 0 0 auto; font-size: var(--f-fine); color: var(--faint); }
+.proto:active { color: var(--muted); }
+.proto:disabled { cursor: default; }
+.proto:disabled .proto-span { color: var(--accent-ink); }
+/* Not built yet, and it does not pretend otherwise: a state, not a span. */
+.proto.soon { cursor: default; border-bottom: 0; }
+.proto.soon .proto-text b, .proto.soon .proto-text i { color: var(--faint); }
+.proto-soon { font-size: var(--f-micro); text-transform: uppercase; letter-spacing: 0.12em; }
+
+/* Picking a kind is picking from a list, the same one the protocols are in. */
+.type-cards { display: grid; margin: 12px 0 6px; }
+.type-card {
+  display: grid; gap: 2px; width: 100%;
+  min-height: 48px; padding: 9px 0;
+  background: none; border: 0; border-bottom: 1px solid var(--line-soft);
+  color: var(--text); text-decoration: none; text-align: left; font: inherit; cursor: pointer;
+}
+.type-cards .type-card:last-child { border-bottom: 0; }
+.type-card:active { color: var(--muted); }
+.type-card b { font-size: var(--f-body); font-weight: var(--w-medium); }
+.type-card span { color: var(--muted); font-size: var(--f-fine); line-height: 1.35; }
 
 .swatch {
-  width: 34px; height: 34px; border-radius: 9px; border: 2px solid transparent; cursor: pointer;
-  padding: 0;
+  width: 100%; max-width: 56px; aspect-ratio: 1;
+  border-radius: var(--r-ctrl); border: 2px solid transparent; cursor: pointer; padding: 0;
 }
 .swatch.on { border-color: var(--text); }
-.swatch.big { width: 46px; height: 46px; flex: 0 0 46px; border-radius: 10px; border-color: var(--line); }
+.swatch.big { width: 46px; max-width: none; aspect-ratio: auto; flex: 0 0 46px; align-self: stretch; border-color: var(--line); }
 .swatch-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-top: 14px; justify-items: center; }
+/* Six across leaves a 39px target on the narrowest phone. Four does not. */
+@media (max-width: 359px) { .swatch-grid { grid-template-columns: repeat(4, 1fr); } }
 
+/* One height for every row, with a blank in it or without. */
 .freq-row {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  padding: 11px 0; border-bottom: 1px solid var(--line); font-size: var(--f-body);
+  display: flex; align-items: center; gap: 8px;
+  min-height: 56px; padding: 4px 0; border-bottom: 1px solid var(--line-soft); font-size: var(--f-body);
 }
-.freq-row input[type="radio"] { width: 20px; height: 20px; accent-color: var(--accent); flex: 0 0 auto; }
+.freq-row:last-of-type { border-bottom: 0; }
+.freq-row input[type="radio"] { width: 20px; height: 20px; accent-color: var(--accent); flex: 0 0 auto; margin: 0; }
 .freq-num {
-  width: 62px; background: var(--surface-2); color: var(--text);
-  border: 1px solid var(--line); border-radius: 8px; padding: 8px; font-size: var(--f-body);
+  width: 58px; flex: 0 0 58px; min-height: 44px; background: var(--surface-2); color: var(--text);
+  border: 1px solid var(--line); border-radius: var(--r-ctrl); padding: 9px 6px; font-size: var(--f-body);
   text-align: center;
 }
 
 .day-chips { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 14px 0 4px; }
 .day-chip {
-  padding: 11px 0; border-radius: 9px; border: 1px solid var(--line);
+  padding: 11px 0; border-radius: var(--r-ctrl); border: 1px solid var(--line);
   background: var(--surface-2); color: var(--muted); font-size: var(--f-small); cursor: pointer;
 }
-.day-chip.on { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); color: var(--accent); border-color: var(--accent); }
+.day-chip.on { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); color: var(--accent-ink); border-color: var(--accent); }
 
-.pickrow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 14px 0; }
+.pickrow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 12px 0 4px; }
 .pick {
-  padding: 13px 0; border-radius: 9px; border: 1px solid var(--line);
+  min-height: 46px; border-radius: var(--r-ctrl); border: 1px solid var(--line);
   background: var(--surface-2); color: var(--text); font-size: var(--f-body); cursor: pointer;
+  font-variant-numeric: tabular-nums;
 }
-.pick.on { border-color: var(--accent); color: var(--accent); }
+.pick.on { border-color: var(--accent); color: var(--accent-ink); }
+
+/* ---------- a measurement, typed ----------
+   One field with the unit at its end, and a bar that fills to the target. */
+.hg-val {
+  display: flex; align-items: baseline; gap: 10px;
+  margin: 12px 0 0; padding: 10px 16px;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-ctrl);
+}
+.hg-val:focus-within { border-color: var(--accent); }
+.hg-val input {
+  flex: 1; min-width: 0; width: 100%;
+  background: none; border: 0; color: var(--text);
+  font: inherit; font-size: var(--f-hero); line-height: 1.2;
+  font-weight: var(--w-medium); font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+  text-align: right;
+  appearance: textfield;
+}
+/* The platform spinner is two 9px arrows on a phone: unusable, and it drags
+   the field's optical centre off. */
+.hg-val input::-webkit-outer-spin-button,
+.hg-val input::-webkit-inner-spin-button { appearance: none; margin: 0; }
+.hg-val input::placeholder { color: var(--faint); }
+.hg-val input:focus { outline: none; }
+.hg-val-unit { color: var(--muted); font-size: var(--f-head); white-space: nowrap; }
+.hg-val-bar {
+  height: 6px; margin-top: 10px; border-radius: var(--r-pill);
+  background: var(--line-soft); overflow: hidden;
+}
+.hg-val-bar i {
+  display: block; height: 100%; width: 0;
+  background: var(--sc, var(--accent)); border-radius: var(--r-pill);
+  transition: width var(--t-base) var(--ease);
+}
+
+/* A line on a day. One box, not a box in a box. */
+.hg-note {
+  width: 100%; margin: 12px 0 0; padding: 13px 14px;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-ctrl);
+  color: var(--text); font: inherit; font-size: var(--f-body);
+}
+.hg-note:focus { outline: none; border-color: var(--accent); }
+.hg-note::placeholder { color: var(--faint); }
 
 /* These stand on their own, where every other input sits in a .measure-row. */
-.screen.habits .field input[type="text"],
-.screen.habits .field input[type="number"] {
-  width: 100%; background: var(--surface-2); color: var(--text);
-  border: 1px solid var(--line); border-radius: 10px; padding: 12px;
-  font-size: var(--f-body); font-family: inherit;
+
+/* ---------- the rows a form is made of ----------
+   Two shapes and no third: a value beside its label, or, where the control
+   needs the width, the label above it. */
+
+/* Label above, control under it. Not a row on a rule: the control's own
+   border already closes it. */
+.setting.setting-stack { display: block; min-height: 0; padding: 0; border-bottom: 0; margin-bottom: 16px; }
+.setting.setting-stack:last-child { margin-bottom: 0; }
+.setting-stack > label { display: block; margin-bottom: 8px; }
+.setting-stack input[type="text"],
+.setting-stack .notes { display: block; width: 100%; max-width: none; padding: 12px; text-align: left; }
+/* The name and its colour: one height, one corner, one right edge. */
+.setting-pair { display: flex; align-items: stretch; gap: 8px; }
+.setting-pair input[type="text"] { flex: 1 1 auto; min-width: 0; }
+
+/* A row you press: it opens a sheet, or it acts on the habit. */
+.setting-open, .setting-act {
+  width: 100%; border: 0; border-bottom: 1px solid var(--line-soft);
+  background: none; color: inherit; text-align: left; font: inherit; cursor: pointer;
 }
-.screen.habits .field label { margin-bottom: 8px; }
-.screen.habits .notes { width: 100%; }
-.screen.habits .setting input[type="number"],
-.screen.habits .setting input[type="text"] {
-  background: var(--surface-2); color: var(--text); border: 1px solid var(--line);
-  border-radius: 10px; padding: 9px 10px; font-size: var(--f-body); width: 108px; text-align: right;
+.setting-open:last-child, .setting-act:last-child { border-bottom: 0; }
+.setting-open:active, .setting-act:active { color: var(--muted); }
+.setting-open .ico { color: var(--faint); transform: rotate(180deg); }
+/* Red text, never a red box. */
+.setting-act.danger { color: var(--danger); }
+/* The value a pressed row is currently set to. */
+.setting .setting-value {
+  flex: 0 1 auto; min-width: 0; max-width: 62%;
+  font-size: var(--f-small); color: var(--muted); text-align: right;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+/* Seven across, and still a thumb's worth of height. */
+.setting-days .day-chip { min-height: 44px; }
 
 /* A settings-style row that opens something rather than setting it. */
-.rowbtn {
-  display: flex; align-items: center; gap: 14px; width: 100%;
-  padding: 12px 0; border: 0; border-bottom: 1px solid var(--line);
-  background: none; color: inherit; text-align: left; cursor: pointer;
-}
-.rowbtn:last-child { border-bottom: 0; }
-.rowbtn span { flex: 1; }
-.rowbtn b { display: block; font-size: var(--f-body); font-weight: 600; }
-.rowbtn i { display: block; font-style: normal; color: var(--muted); font-size: var(--f-fine); margin-top: 2px; }
-.rowbtn .ico { color: var(--muted); }
 
-.grp-list { display: grid; gap: 8px; margin: 12px 0; }
-.grp-row { display: flex; align-items: center; gap: 6px; }
-.grp-row input {
-  flex: 1; min-width: 0; background: var(--surface-2); color: var(--text);
-  border: 1px solid var(--line); border-radius: 9px; padding: 10px; font-size: var(--f-body);
+/* Rows on a rule, like every other list. The name is text until you touch it,
+   which is what stops four boxes per row. */
+.grp-list { display: grid; margin: 8px 0 0; }
+.grp-row {
+  display: flex; align-items: center; gap: 4px; min-width: 0;
+  border-bottom: 1px solid var(--line-soft);
 }
+.grp-list .grp-row:last-child { border-bottom: 0; }
+.grp-name {
+  flex: 1; min-width: 0; min-height: 44px; padding: 0 8px;
+  background: none; border: 0; border-radius: var(--r-ctrl);
+  color: var(--text); font: inherit; font-size: var(--f-body);
+}
+.grp-name:focus { outline: none; background: var(--surface-2); }
+.grp-name::placeholder { color: var(--faint); }
+.grp-btn {
+  width: 40px; height: 44px; flex: 0 0 40px;
+  display: grid; place-items: center;
+  background: none; border: 0; border-radius: var(--r-ctrl);
+  color: var(--muted); cursor: pointer;
+  transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.grp-btn:active { background: var(--surface-2); color: var(--text); }
+.grp-add { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
+.grp-add .grp-name { background: var(--surface-2); border: 1px solid var(--line); padding: 0 12px; }
+.grp-add .btn { margin: 0; }
 
-.arch-list { display: grid; gap: 8px; }
+/* The same row the grid has: a ring in the habit's colour, the name, the line
+   under it. What changed is that both actions are words. */
+.arch-list { display: grid; }
 .arch-row {
   display: flex; align-items: center; gap: 10px;
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px;
+  padding: 2px; min-height: 56px; border-bottom: 1px solid var(--line-soft);
 }
-.arch-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
-.arch-text b { font-size: var(--f-body); }
-.arch-text i { font-style: normal; color: var(--muted); font-size: var(--f-fine); }
-.arch-row .small-btn { padding: 9px 14px; font-size: var(--f-small); }
+.arch-list .arch-row:last-child { border-bottom: 0; }
+.arch-text { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.arch-text b,
+.arch-text i { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.arch-text b { font-size: var(--f-body); font-weight: var(--w-medium); line-height: 1.25; }
+.arch-text i { font-style: normal; color: var(--muted); font-size: var(--f-fine); line-height: 1.3; }
+/* One treatment for an action on a row. A filled button beside a red circle
+   was two answers to the same question. */
+.row-act {
+  display: grid; place-items: center;
+  min-height: 44px; padding: 0 8px; flex: 0 0 auto;
+  background: none; border: 0; border-radius: var(--r-ctrl);
+  color: var(--text); font: inherit; font-size: var(--f-small); cursor: pointer;
+  transition: background-color var(--t-fast) var(--ease);
+}
+.row-act:active { background: var(--surface-2); }
+.row-act.danger { color: var(--danger); }
 
-/* ---------- one habit's own screen ---------- */
+/* ---------- the timer ----------
+   One numeral and nothing near it. The only place --f-mega is used. */
+.screen.timer { min-height: 100dvh; display: flex; flex-direction: column; }
+.timer-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px; }
+.timer-num { font-size: var(--f-mega); line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; margin: 0; }
+.timer-sub { color: var(--muted); font-size: var(--f-small); margin: 0; }
+/* The ring is the screen. */
+.timer-ring { width: min(276px, 74vw); aspect-ratio: 1; display: grid; place-items: center; position: relative; margin-bottom: 10px; }
+.timer-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.timer-ring .timer-fill { transition: stroke-dashoffset 1s linear, opacity var(--t-base) var(--ease); }
+/* Held. */
+.timer-ring.held .timer-fill { opacity: 0.3; }
+/* One primary. Finish appears once there is something to finish. */
+.timer-actions { display: grid; gap: 8px; }
+.timer-actions .btn { margin: 0; }
+.timer-actions .btn[hidden] { display: none; }
 
-.habit-hero { margin-bottom: 16px; }
-.habit-hero h2 { font-size: var(--f-title); margin-bottom: 6px; }
-.habit-hero p { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
-.habit-hero .ico { width: 14px; height: 14px; }
+/* ---------- one habit ----------
+   The score is the headline, the calendar the picture, the rest a line. */
+.hb-top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.hb-score { font-size: var(--f-hero); letter-spacing: -0.03em; line-height: 1; }
+.hb-move { font-size: var(--f-small); color: var(--muted); }
+/* The one coloured line in the block. */
+.hb-move.up { color: var(--good); }
+.hb-move.down { color: var(--warn); }
+.hb-why { margin: 10px 0 0; font-size: var(--f-small); color: var(--muted); }
+.hb-facts { margin: 6px 0 0; font-size: var(--f-fine); color: var(--faint); }
+.hb-note { font-size: var(--f-small); color: var(--muted); }
+/* Context, not the subject: a wash under the line, not a slab. */
+.hb-detail .chart path { opacity: 0.2; }
+/* The chip keeps its size. Only the hit area reaches 44. */
+.screen.habits .card { margin-bottom: 30px; }
+.screen.habits .hb-facts + .card { margin-top: 30px; }
 
-.btn.small-btn { width: auto; padding: 10px 15px; font-size: var(--f-small); margin-top: 0; }
+.btn.small-btn { width: auto; padding: 0 17px; min-height: 44px; font-size: var(--f-small); margin-top: 0; }
 
 /* A native select, because five options want the platform picker on a phone,
    but dressed as one of the app's pills rather than left as a platform control:
@@ -688,8 +934,9 @@ input[type="range"] {
   background-repeat: no-repeat;
   color: var(--text);
   border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
-  padding: 7px 26px 7px 12px;
+  border-radius: var(--r-pill);
+  padding: 0 28px 0 14px;
+  min-height: 44px;
   font-size: var(--f-fine);
   font-weight: var(--w-medium);
   font-family: inherit;
@@ -701,6 +948,12 @@ input[type="range"] {
    sliced a column in half at whichever edge it came to rest, and hid half the
    record behind a gesture nothing advertised. */
 .hcal { display: flex; gap: 6px; }
+/* Edit mode: six weeks at a size a thumb can hit, on a surface. */
+.hcal.on {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-card); padding: 16px;
+}
+.hcal.on .hc-cell { font-size: var(--f-fine); }
 .hcal-body { display: flex; gap: 2px; flex: 1; min-width: 0; }
 .hcal-col { display: flex; flex-direction: column; gap: 2px; flex: 1 1 0; min-width: 0; }
 .hcal-mon {
@@ -709,26 +962,27 @@ input[type="range"] {
 }
 .hc-cell {
   /* Proportional: a fixed radius turns into a circle once the cell is small. */
-  width: 100%; aspect-ratio: 1; border-radius: 22%; border: 0;
+  width: 100%; aspect-ratio: 1; border-radius: var(--r-chip); border: 0;
   /* A step above the card, not a whisper: at --surface-2 the empty cells read as
    a black hole with squares in it. The grid has to be visible for the gaps to
    mean anything. */
   background: var(--line); color: var(--muted);
-  /* About 15px a cell, so the date sits inside one with air around it. */
+  /* The date shows only in edit mode, where you have to aim at a day. */
   font-size: var(--f-micro); font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
   display: grid; place-items: center; padding: 0; cursor: default;
 }
-.hcal .hc-cell { cursor: pointer; }
+.hcal.on .hc-cell { cursor: pointer; }
 .hc-cell.on { background: var(--hc, var(--accent)); color: var(--bg); font-weight: 600; }
 .hc-cell.carried { background: color-mix(in srgb, var(--hc, var(--accent)) 38%, var(--line)); color: var(--text); }
 .hc-cell.skip { background: var(--line); color: var(--calm); box-shadow: inset 0 0 0 1px var(--calm); }
-.hc-cell.lapse { color: var(--danger); box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.4); }
+/* A recorded miss. A darker block, not a red one. */
+.hc-cell.lapse { background: var(--ash); color: var(--text); }
 /* Inset: an outline sits outside the box and overlapped its neighbour. */
 .hc-cell.now { box-shadow: inset 0 0 0 1.5px var(--text); }
 .hc-cell.on.now { box-shadow: inset 0 0 0 1.5px var(--bg); }
 .hc-cell.future { visibility: hidden; }
-/* Before the habit existed. Faint, not empty: it can still be filled in. */
-.hc-cell.void { opacity: 0.3; }
+/* Before the habit existed. An outline, not a block. Still tappable. */
+.hc-cell.void { background: none; box-shadow: inset 0 0 0 1px var(--line-soft); }
 /* The labels read the rows and must never set them. At the inherited
    line-height the side column outgrew the grid and Mon fell a row out of step. */
 .hcal-side { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
@@ -736,19 +990,18 @@ input[type="range"] {
   flex: 1 1 0; min-height: 0; display: flex; align-items: center;
   font-style: normal; font-size: var(--f-micro); line-height: 1; color: var(--muted);
 }
-.hm-key .hc-cell { width: 13px; height: 13px; aspect-ratio: auto; border-radius: 3px; }
 
-.streak-list { display: grid; gap: 7px; }
-.streak-row { display: flex; align-items: center; gap: 9px; font-size: var(--f-fine); color: var(--muted); }
-.streak-row > span:first-child, .streak-row > span:last-child { flex: 0 0 68px; }
-.streak-row > span:last-child { text-align: right; }
-.streak-bar { flex: 1; background: var(--surface-2); border-radius: 6px; overflow: hidden; }
-.streak-bar i {
-  display: flex; align-items: center; justify-content: center;
-  height: 22px; min-width: 22px; border-radius: 6px;
-  font-style: normal; font-size: var(--f-fine); font-weight: 700; color: var(--bg);
+/* Date, bar, length, on the arena's row. The bar is the rank. */
+.streak-list { display: grid; margin-top: 10px; }
+.streak-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: var(--f-fine); color: var(--muted); }
+/* Wide enough for a run that crosses a new year. */
+.streak-when { flex: 1 1 60%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.streak-bar { flex: 1 1 24%; height: 6px; background: var(--surface-2); border-radius: var(--r-pill); overflow: hidden; }
+.streak-bar i { display: block; height: 100%; border-radius: var(--r-pill); }
+.streak-row b {
+  flex: 0 0 26px; text-align: right; font-variant-numeric: tabular-nums;
+  color: var(--text); font-weight: var(--w-medium); font-size: var(--f-fine);
 }
-
 /* ==========================================================================
    Motion
    ==========================================================================
@@ -757,7 +1010,7 @@ input[type="range"] {
    collapses every duration, so this block turns itself off. */
 
 .btn, .chipbtn, .icon-btn, .hg-cell, .hg-row, .pill, .swatch,
-.day-chip, .pick, .type-card, .rowbtn, .arch-row, .hc-cell {
+.day-chip, .pick, .type-card, .setting-open, .setting-act, .proto, .arch-row, .hc-cell {
   transition: background-color var(--t-fast) var(--ease),
               border-color var(--t-fast) var(--ease),
               color var(--t-fast) var(--ease),
@@ -793,14 +1046,21 @@ input[type="range"] {
 .ar-head::before {
   content: ''; position: absolute; left: 46px; top: -34px; transform: translateX(-50%);
   width: 240px; height: 200px; pointer-events: none; z-index: -1;
-  background: radial-gradient(50% 50% at 50% 50%, rgba(34, 211, 197, calc(0.04 + var(--lift, 0) * 0.035)), transparent 70%);
+  background: radial-gradient(50% 50% at 50% 50%, var(--accent), transparent 70%);
+  opacity: calc(0.04 + var(--lift, 0) * 0.035);
 }
 
 .ar-standing { display: flex; align-items: center; gap: 14px; }
 .ar-standing.unranked { --lift: 0; }
 .ar-standing.unranked ~ .ar-ladder-link i { opacity: 0.3; }
 
-.ar-crest { flex: 0 0 auto; display: block; }
+.ar-crest { flex: 0 0 auto; display: block; position: relative; }
+/* On Notice, on the crest: one amber dot. The rung line names it. */
+.ar-crest.notice::after {
+  content: ''; position: absolute; right: 4px; bottom: 8px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--warn); box-shadow: 0 0 0 2px var(--bg);
+}
 .crest { display: block; object-fit: contain; -webkit-user-select: none; user-select: none; }
 /* Same rules as a crest: artwork, drawn at the size it is asked for. */
 .cup-img { display: block; object-fit: contain; -webkit-user-select: none; user-select: none; }
@@ -820,9 +1080,9 @@ input[type="range"] {
   text-decoration: none; color: inherit;
 }
 .ar-pips { display: flex; gap: 4px; }
-.ar-pips i { flex: 1 1 0; height: 5px; border-radius: 3px; background: var(--line); }
+.ar-pips i { flex: 1 1 0; height: 5px; border-radius: var(--r-pill); background: var(--line); }
 .ar-pips i.on { background: var(--accent); opacity: 0.42; }
-.ar-pips i.here { opacity: 1; box-shadow: 0 0 10px rgba(34, 211, 197, 0.5); }
+.ar-pips i.here { opacity: 1; box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 50%, transparent); }
 .ar-ladder-link span {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: var(--f-fine); color: var(--muted);
@@ -833,9 +1093,8 @@ input[type="range"] {
 .ar-progress { margin-top: 14px; }
 
 /* ---------- every division ----------
-   A rail with the crests standing on it. The rail is painted in each crest's
-   own colour for the rungs behind you and left grey above, so the colour on
-   screen is exactly the ladder you have climbed. */
+   A rail with the crests standing on it. The crest is the only colour: the rail
+   says climbed or not. */
 
 .dv-rule { margin: 0 0 22px; }
 .dv-list { list-style: none; margin: 0; padding: 0; }
@@ -844,23 +1103,23 @@ input[type="range"] {
   display: grid; grid-template-columns: 58px 1fr auto;
   align-items: center; gap: 12px;
   padding: 11px 12px 11px 0;
-  border-radius: var(--radius);
+  border-radius: var(--r-card);
 }
 /* The rail runs the full height of the row so the segments meet with no seam.
    Behind the crest, which is why it is a pseudo-element and not a box. */
 .dv-row::before {
   content: ''; position: absolute; z-index: 0;
   left: 28px; top: 0; bottom: 0; width: 3px; margin-left: -1.5px;
-  background: var(--dc);
+  background: var(--line);
 }
-.dv-row:first-child::before { top: 50%; border-radius: 2px 2px 0 0; }
-.dv-row:last-child::before { bottom: 50%; border-radius: 0 0 2px 2px; }
-.dv-row.locked::before { background: var(--line); }
+.dv-row:first-child::before { top: 50%; border-radius: var(--r-chip) var(--r-chip) 0 0; }
+.dv-row:last-child::before { bottom: 50%; border-radius: 0 0 var(--r-chip) var(--r-chip); }
+.dv-row.locked::before { background: var(--line-soft); }
 
 .dv-node { position: relative; z-index: 1; display: grid; place-items: center; }
 /* The rail must not show through the artwork's transparent corners. */
 .dv-node::before {
-  content: ''; position: absolute; width: 44px; height: 44px; border-radius: var(--radius-pill);
+  content: ''; position: absolute; width: 44px; height: 44px; border-radius: var(--r-pill);
   background: var(--bg);
 }
 .dv-node .crest { position: relative; }
@@ -875,33 +1134,32 @@ input[type="range"] {
 .dv-row.locked .dv-bar { color: var(--faint); }
 .dv-row.done .dv-body b { color: var(--muted); }
 
-/* Where you are. The plate carries the division's own colour, so no ring has
-   to be drawn round the crest to say so. */
-.dv-row.here {
-  background: linear-gradient(90deg, color-mix(in oklab, var(--dc) 34%, var(--surface)), var(--surface) 78%);
-  padding: 13px 12px 13px 0;
-  margin: 4px 0;
-}
+/* Where you are: a bigger crest, a bigger name, the crest's own glow. */
+.dv-row.here { padding: 18px 12px 18px 0; }
 
 /* Unranked, mid-week: the rung today's marking would place you at. */
-.dv-row.entering { opacity: 1; }
-.dv-row.entering .dv-body i { color: var(--accent); }
+.dv-row.entering .dv-body i { color: var(--accent-ink); }
 .dv-row.entering .dv-node .crest { filter: none; opacity: 1; }
+.dv-row.entering .dv-node::before { box-shadow: 0 0 22px 2px color-mix(in oklab, var(--dc) 32%, transparent); }
 .dv-row.here .dv-body b { font-size: var(--f-title); }
 .dv-row.here .dv-body i { color: var(--text); }
 .dv-row.here .dv-bar { color: var(--text); }
-.dv-row.here .dv-node::before { width: 58px; height: 58px; background: color-mix(in oklab, var(--dc) 22%, var(--bg)); }
+.dv-row.here .dv-node::before {
+  width: 58px; height: 58px;
+  background: var(--bg);
+  box-shadow: 0 0 22px 2px color-mix(in oklab, var(--dc) 32%, transparent);
+}
 
 /* The month inside its division: floor left, promotion right. A 0-100 bar put
    every threshold within a few pixels of the last. */
 .ar-bar {
-  position: relative; height: 8px; border-radius: 5px;
+  position: relative; height: 8px; border-radius: var(--r-pill);
   background: var(--surface-2); border: 1px solid var(--line);
   /* Room above for the floating readout, which used to sit on the ladder. */
   margin: 24px 0 6px;
 }
 .ar-bar.plain { margin: 14px 0 8px; }
-.ar-bar-fill { height: 100%; border-radius: 5px; background: var(--accent); transition: width 0.6s var(--ease); }
+.ar-bar-fill { height: 100%; border-radius: var(--r-pill); background: var(--accent); transition: width 0.6s var(--ease); }
 .ar-bar.down .ar-bar-fill { background: var(--warn); }
 .ar-bar.up .ar-bar-fill { background: var(--good); }
 /* Clamped: at 0% and 100% half the readout hung off the card. */
@@ -917,25 +1175,18 @@ input[type="range"] {
    month line under it stays uncoloured. */
 .ar-need { margin: 10px 0 0; font-size: var(--f-small); color: var(--muted); }
 
+/* The daily line: the Nemesis, speaking. Once a day, from the record. */
+.ar-line { display: flex; align-items: center; gap: 10px; margin: 0; font-size: var(--f-small); }
+.ar-line span { font-style: italic; line-height: 1.4; }
+
 /* ---------- this week, as a race ----------
    Two lanes on one scale. Two numbers in two boxes made the reader subtract;
    a shared axis puts the gap on screen as a distance, and the verdict says it
    in words so nobody has to. */
 
-/* The one elevated surface here, so it reads as the thing that is happening. */
-.card.ar-fixture {
-  border-color: rgba(34, 211, 197, 0.22);
-  box-shadow: 0 14px 40px -20px rgba(34, 211, 197, 0.5);
-  padding: 18px 16px 16px;
-}
-.card.ar-fixture.ahead { border-color: rgba(74, 222, 128, 0.3); box-shadow: 0 14px 40px -20px rgba(74, 222, 128, 0.55); }
-.card.ar-fixture.behind { border-color: rgba(251, 191, 36, 0.3); box-shadow: 0 14px 40px -20px rgba(251, 191, 36, 0.45); }
-.card.ar-fixture.waiting { border-color: var(--line); box-shadow: none; }
-
+/* A section, like every other. The verdict is the block's one colour. */
 .ar-fx-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
 .ar-fx-head h2 { margin: 0; }
-.ar-fx-sub { margin: -6px 0 2px; font-size: var(--f-fine); color: var(--muted); }
-.ar-fx-meta { margin: 0 0 12px; font-size: var(--f-fine); color: var(--muted); }
 .ar-fx-none { margin: 0; font-size: var(--f-small); color: var(--muted); }
 .ar-fixture .btn { margin-top: 14px; }
 
@@ -959,16 +1210,16 @@ button.ar-lane:active { opacity: 0.7; }
 /* The bar and the number share a row, so both lanes align on the same axis. */
 .ar-lane-bar {
   grid-column: 1; grid-row: 2;
-  height: 30px; border-radius: 8px; background: var(--surface-2); overflow: hidden;
+  height: 30px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden;
   margin-right: 64px;
 }
 .ar-lane-bar i {
-  display: block; height: 100%; border-radius: 8px;
+  display: block; height: 100%; border-radius: var(--r-pill);
   background: var(--line); transition: width var(--t-slow) var(--ease);
 }
+/* Yours is the accent whatever the score. */
 .ar-lane.me .ar-lane-bar i { background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 55%, transparent), var(--accent)); }
-.ar-fixture.ahead .ar-lane.me .ar-lane-bar i { background: linear-gradient(90deg, color-mix(in srgb, var(--good) 55%, transparent), var(--good)); }
-.ar-lane.them .ar-lane-bar i { background: color-mix(in srgb, var(--muted) 45%, transparent); }
+.ar-lane.them .ar-lane-bar i { background: var(--ash); }
 
 .ar-lane b {
   grid-column: 1; grid-row: 2; justify-self: end; align-self: center;
@@ -992,35 +1243,35 @@ button.ar-lane:active { opacity: 0.7; }
 .ar-rows { margin-top: 14px; }
 .ar-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: var(--f-small); }
 .ar-row-name { flex: 1 1 40%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ar-row-bar { flex: 1 1 40%; height: 6px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
-.ar-row-bar i { display: block; height: 100%; border-radius: 4px; background: var(--accent); transition: width var(--t-base) var(--ease); }
+.ar-row-bar { flex: 1 1 40%; height: 6px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; }
+.ar-row-bar i { display: block; height: 100%; border-radius: var(--r-pill); background: var(--accent); transition: width var(--t-base) var(--ease); }
 /* Fixed, so a 10/12 row does not shorten its bar against a 5/6 one. */
 .ar-row b { flex: 0 0 46px; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 600; font-size: var(--f-fine); }
 
 /* ---------- form + the nemesis ---------- */
 
-/* Eight on one line at any width: fixed-width chips wrapped on a 360px phone. */
-.ar-form { display: flex; gap: 5px; margin-bottom: 12px; }
+/* Six on one line at any width, each wide enough for a thumb. */
+.ar-form { display: flex; gap: 4px; margin-bottom: 12px; }
 .ar-chip {
-  flex: 1 1 0; min-width: 0; min-height: 44px; padding: 7px 0; text-align: center;
+  flex: 1 1 0; min-width: 44px; min-height: 44px; padding: 7px 0; text-align: center;
   display: grid; place-content: center;
-  border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2);
+  border: 1px solid var(--line); border-radius: var(--r-ctrl); background: var(--surface-2);
   color: var(--muted); cursor: pointer;
 }
 .ar-chip b { display: block; font-size: var(--f-small); font-variant-numeric: tabular-nums; }
-.ar-chip.won { border-color: rgba(74, 222, 128, 0.42); color: var(--good); }
-.ar-chip.lost { border-color: rgba(248, 113, 113, 0.36); color: var(--danger); }
+.ar-chip.won { border-color: color-mix(in srgb, var(--good) 42%, transparent); color: var(--good); }
+.ar-chip.lost { border-color: var(--ash); color: var(--muted); }
 .ar-chip:active { transform: scale(0.95); }
 
 .ar-nemesis {
   display: flex; align-items: center; gap: 10px; width: 100%;
   margin: 0 0 14px; padding: 10px 12px;
-  background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-ctrl);
   color: inherit; font: inherit; text-align: left; cursor: pointer;
 }
 .ar-nemesis:active { transform: scale(0.99); }
 .ar-nico { display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 30px;
-  border-radius: 8px; background: var(--surface); color: var(--muted); }
+  border-radius: var(--r-ctrl); background: var(--surface); color: var(--muted); }
 .ar-nname { flex: 1; min-width: 0; }
 .ar-nname b { display: block; font-size: var(--f-small); }
 .ar-nname i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted);
@@ -1035,78 +1286,52 @@ button.ar-lane:active { opacity: 0.7; }
 .ar-tr:last-child { border-bottom: 0; }
 .ar-tr .ar-pos { flex: 0 0 20px; color: var(--faint); font-variant-numeric: tabular-nums; }
 .ar-tr .ar-tn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
-.ar-tr b { font-variant-numeric: tabular-nums; }
-/* Qualification in colour, not in a sentence: the three going through are lit,
-   the rest are dimmed. */
-.ar-tr { border-radius: 9px; transition: background var(--t-base) var(--ease), box-shadow var(--t-base) var(--ease); }
-.ar-tr.q {
-  background: rgba(74, 222, 128, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(74, 222, 128, 0.22), 0 0 20px -8px rgba(74, 222, 128, 0.55);
-}
-.ar-tr.q .ar-pos { color: var(--good); font-weight: 700; }
-.ar-tr.q b { color: var(--good); }
-/* The qualifying line, drawn once rather than by dimming everything under it:
-   half-opacity on the whole field made the card's only content unreadable, and
-   painting your own row red for an unfinished group judged a match still on. */
+.ar-tr b { font-variant-numeric: tabular-nums; color: var(--muted); }
+/* A league table: rows on a rule, one dashed rule at the cut, the accent yours. */
+.ar-tr.q .ar-pos, .ar-tr.q b { color: var(--text); }
 .ar-tr.q:nth-of-type(3) { border-bottom: 1px dashed var(--line); }
 .ar-tr.you .ar-tn { color: var(--text); font-weight: 600; }
-.ar-tr.you { background: color-mix(in srgb, var(--accent) 6%, transparent); box-shadow: inset 2px 0 0 var(--accent); }
-.ar-tr.nq .ar-pos { color: var(--faint); }
+.ar-tr.you b { color: var(--text); }
+.ar-tr.you { box-shadow: inset 2px 0 0 var(--accent); border-radius: var(--r-chip); }
 .ar-tr[data-week] { cursor: pointer; }
 .ar-tr[data-week]:active { transform: scale(0.995); }
 
 /* The rounds stack: three columns at 360px gave each round forty pixels. */
-.ar-bracket { display: grid; gap: 8px; }
-.ar-round {
-  padding: 11px 12px; border-radius: 10px;
-  background: var(--surface-2); border: 1px solid var(--line);
-}
-.ar-round b { display: block; font-size: var(--f-small); }
-.ar-round span { display: block; font-size: var(--f-fine); color: var(--muted); }
-.ar-round i { display: block; font-style: normal; font-size: var(--f-micro); color: var(--faint); margin-top: 3px; }
-.ar-round.won { border-color: rgba(74, 222, 128, 0.4); }
-.ar-round.won span { color: var(--good); }
-.ar-round.lost span { color: var(--danger); }
-.ar-round.here { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(34, 211, 197, 0.25); }
-.ar-round.here span { color: var(--accent); }
 
 /* Three across, two on a narrow phone, with neither number written down. */
 .ft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(98px, 1fr)); gap: 8px; }
+/* A tile you have is an object. One you have not is an outline. */
 .ft {
   position: relative; padding: 12px 9px 10px; text-align: center; cursor: pointer;
-  background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
+  background: none; border: 1px solid var(--line-soft); border-radius: var(--r-ctrl);
   color: var(--muted); font: inherit;
   /* A button centres its content, so tiles of different name lengths put their
      icons at different heights. A column pins the icon, the name and the bar. */
   display: grid; grid-template-rows: auto 1fr auto; align-content: start;
 }
 .ft b { display: block; font-size: var(--f-micro); font-weight: 600; line-height: 1.25; margin-top: 6px; }
-/* No margin: 0 auto: in the flex rows that reuse this it ate the free space and
-   shoved the text to the right edge. The tile asks for the centring itself. */
-.ft-ico { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 34px;
-  border-radius: 10px; background: var(--surface); color: var(--faint); }
-.ft .ft-ico { margin: 0 auto; }
-.rs-feat > span:last-child { flex: 1; min-width: 0; }
-.ft-ico.on, .ft.on .ft-ico { color: var(--on-accent); background: var(--accent); }
-.ft.on { border-color: rgba(34, 211, 197, 0.4); color: var(--text); }
+.ft-ico { display: grid; place-items: center; width: 34px; height: 34px; margin: 0 auto;
+  border-radius: var(--r-ctrl); background: var(--surface); color: var(--faint); }
+.ft.on .ft-ico { color: var(--on-accent); background: var(--accent); }
+.ft.on { background: var(--surface); border-color: color-mix(in srgb, var(--accent) 40%, transparent); color: var(--text); }
 .ft:active { transform: scale(0.97); }
 /* What the feat costs. Every tile carries it, so a tile you have and a tile you
    do not are still comparable. */
 .ft-price { display: block; font-style: normal; font-size: var(--f-micro); color: var(--faint); margin-top: 5px; }
 .ft.on .ft-price { color: var(--muted); }
 .ft-cost { margin-top: -4px; }
-.ft-bar { display: block; height: 3px; border-radius: 2px; background: var(--surface); margin-top: 7px; overflow: hidden; }
+.ft-bar { display: block; height: 3px; border-radius: var(--r-pill); background: var(--surface); margin-top: 7px; overflow: hidden; }
 .ft-bar i { display: block; height: 100%; background: var(--accent); opacity: 0.6; }
 .ft-big { display: grid; place-items: center; width: 60px; height: 60px; margin: 4px auto 12px;
-  border-radius: 18px; background: var(--surface-2); color: var(--faint); }
+  border-radius: var(--r-card); background: var(--surface-2); color: var(--faint); }
 .ft-big.on { background: var(--accent); color: var(--on-accent); }
-.ft-when { color: var(--accent); font-size: var(--f-small); }
+.ft-when { color: var(--accent-ink); font-size: var(--f-small); }
 .ar-sub { font-size: var(--f-small); color: var(--muted); margin: 16px 0 0; font-weight: 600; }
 .ar-sheet-score { text-align: center; margin: 14px 0 4px; }
 .ar-sheet-score b { display: block; font-size: var(--f-display); letter-spacing: -0.03em; }
 .ar-sheet-score span { font-size: var(--f-fine); color: var(--muted); }
 .ar-sheet-score.won b { color: var(--good); }
-.ar-sheet-score.lost b { color: var(--danger); }
+.ar-sheet-score.lost b { color: var(--muted); }
 
 /* ---------- the result screen ----------
    No header and no back arrow: one moment, one way out. The extra top padding
@@ -1114,9 +1339,8 @@ button.ar-lane:active { opacity: 0.7; }
 
 .screen.result { padding-top: calc(var(--safe-t) + 30px); }
 .rs-hero { position: relative; text-align: center; padding: 26px 12px 22px; margin-bottom: 14px;
-  border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); }
-.rs-hero.won { border-color: rgba(74, 222, 128, 0.42); }
-.rs-hero.lost { border-color: rgba(248, 113, 113, 0.3); }
+  border-radius: var(--r-card); background: var(--surface); border: 1px solid var(--line); }
+/* The word and the score carry the verdict, not a border. */
 /* The moment before. One line, one button, and nothing that gives it away. */
 /* Short enough to leave half the viewport empty, so it sits in the middle.
    Taller than the viewport and it scrolls as usual. */
@@ -1133,31 +1357,32 @@ button.ar-lane:active { opacity: 0.7; }
 .rs-hero.pending .btn { margin-top: 22px; }
 .rs-word { font-size: var(--f-display); letter-spacing: -0.03em; margin: 0 0 16px; }
 .rs-hero.won .rs-word { color: var(--good); }
-.rs-hero.lost .rs-word { color: var(--danger); }
+.rs-hero.lost .rs-word { color: var(--muted); }
 .rs-score { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 12px; }
 .rs-score span { display: block; min-width: 0; }
 .rs-score b { display: block; font-size: var(--f-hero); letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
 .rs-score i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); margin-top: 5px; }
-.rs-score .me b { color: var(--accent); }
+.rs-score .me b { color: var(--accent-ink); }
 .rs-hero.won .rs-score .me b { color: var(--good); }
-.rs-hero.lost .rs-score .me b { color: var(--danger); }
+.rs-hero.lost .rs-score .me b { color: var(--muted); }
 .rs-score .them b { color: var(--muted); }
 .rs-score .vs { color: var(--faint); }
 
 .rs-detail .kv:last-child { border-bottom: 0; }
-/* "Cost you" is the second row. Accent on it says the same as accent on the
-   row above, which is the one that went well. */
-.rs-detail .kv:last-child b em { color: var(--muted); }
+/* The verdict above is the screen's one colour. */
+.rs-detail .kv b em { color: var(--muted); }
 .rs-arc { display: flex; align-items: center; gap: 14px; }
 .rs-arc b { display: block; font-size: var(--f-head); }
 .rs-arc i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); }
 .rs-cup { display: grid; place-items: center; width: 48px; height: 48px; flex: 0 0 48px;
-  border-radius: 14px; background: var(--surface-2); color: var(--faint); }
-.rs-arc.won { border-color: rgba(251, 191, 36, 0.42); }
-.rs-arc.won .rs-cup { background: var(--warn); color: var(--on-accent); }
-.rs-feat { display: flex; align-items: center; gap: 11px; padding: 8px 0; }
-.rs-feat b { display: block; font-size: var(--f-small); }
-.rs-feat i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); }
+  border-radius: var(--r-card); background: var(--surface-2); color: var(--faint); }
+.rs-arc.won .rs-cup { background: var(--warn); color: var(--bg); }
+/* No square: every row here is earned, so an identical mark on each is texture. */
+.rs-feat { display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  padding: 9px 0; border-bottom: 1px solid var(--line-soft); }
+.rs-feat:last-child { border-bottom: 0; }
+.rs-feat b { min-width: 0; font-size: var(--f-small); font-weight: var(--w-medium); }
+.rs-feat i { flex: 0 0 auto; font-style: normal; font-size: var(--f-fine); color: var(--faint); }
 
 /* ---------- the one-line feat pop ---------- */
 
@@ -1165,7 +1390,7 @@ button.ar-lane:active { opacity: 0.7; }
   position: fixed; left: 50%; top: calc(var(--safe-t) + 10px); z-index: 60;
   display: flex; align-items: center; gap: 10px;
   padding: 9px 14px 9px 10px; max-width: min(340px, calc(100vw - 28px));
-  background: var(--surface); border: 1px solid var(--accent); border-radius: var(--radius-pill);
+  background: var(--surface); border: 1px solid var(--accent); border-radius: var(--r-pill);
   color: var(--text); font: inherit; text-align: left; cursor: pointer;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
   transform: translate(-50%, -22px); opacity: 0;
@@ -1173,9 +1398,9 @@ button.ar-lane:active { opacity: 0.7; }
 }
 .feat-pop.in { transform: translate(-50%, 0); opacity: 1; }
 .fp-ico { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px;
-  border-radius: var(--radius-pill); background: var(--accent); color: var(--on-accent); }
+  border-radius: var(--r-pill); background: var(--accent); color: var(--on-accent); }
 .fp-text { min-width: 0; }
-.fp-text i { display: block; font-style: normal; font-size: var(--f-micro); color: var(--accent);
+.fp-text i { display: block; font-style: normal; font-size: var(--f-micro); color: var(--accent-ink);
   text-transform: uppercase; letter-spacing: 0.1em; }
 .fp-text b { display: block; font-size: var(--f-small); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -1213,8 +1438,8 @@ button.ar-lane:active { opacity: 0.7; }
 }
 .yr-col { flex: 1 1 0; display: grid; grid-template-rows: 1fr var(--yr-label); justify-items: center;
   height: 100%; }
-.yr-fill { display: block; width: 100%; align-self: end; border-radius: 4px 4px 2px 2px; background: var(--line); min-height: 2px; }
-.yr-col.held .yr-fill { background: var(--accent); opacity: 0.55; }
+/* A month that held is grey. Only a move is coloured. */
+.yr-fill { display: block; width: 100%; align-self: end; border-radius: var(--r-chip) var(--r-chip) 0 0; background: var(--surface-2); min-height: 2px; }
 .yr-col.up .yr-fill { background: var(--good); }
 .yr-col.down .yr-fill { background: var(--warn); }
 .yr-col.live .yr-fill { background: var(--accent); }
@@ -1223,21 +1448,22 @@ button.ar-lane:active { opacity: 0.7; }
 
 .yr-track { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
 .yr-step { display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px;
-  border-radius: var(--radius-pill); border: 1px solid var(--line); background: var(--surface-2); color: var(--muted); }
+  border-radius: var(--r-pill); border: 1px solid var(--line); background: var(--surface-2); color: var(--muted); }
 .yr-step i { font-style: normal; font-size: var(--f-micro); }
-.yr-step.up, .yr-step.placed { border-color: rgba(74, 222, 128, 0.4); color: var(--good); }
-.yr-step.down { border-color: rgba(248, 113, 113, 0.36); color: var(--danger); }
+.yr-step.up, .yr-step.placed { border-color: color-mix(in srgb, var(--good) 40%, transparent); color: var(--good); }
+.yr-step.down, .yr-step.notice { border-color: color-mix(in srgb, var(--warn) 36%, transparent); color: var(--warn); }
 
-.yr-arcs { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
-/* Name over label: side by side they shared 140px and both ellipsised. */
-.yr-arc { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 2px 10px;
-  padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--line);
-  border-radius: 10px; color: var(--muted); }
-.yr-arc > span:first-child { grid-row: span 2; display: grid; place-items: center; }
-.yr-arc b { min-width: 0; font-size: var(--f-fine); color: var(--text); }
-.yr-arc i { font-style: normal; font-size: var(--f-micro); }
-.yr-arc.won { border-color: rgba(251, 191, 36, 0.42); color: var(--warn); }
-.yr-arc.final { border-color: rgba(251, 191, 36, 0.2); }
+/* Rows, not tiles: one cup in a grid sat alone in the corner. */
+.yr-arcs { display: grid; }
+.yr-arc {
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 0; border-bottom: 1px solid var(--line-soft); color: var(--muted);
+}
+.yr-arcs .yr-arc:last-child { border-bottom: 0; }
+.yr-arc > span:first-child { display: grid; place-items: center; color: var(--faint); }
+.yr-arc b { flex: 1; min-width: 0; font-size: var(--f-small); color: var(--text); }
+.yr-arc i { flex: 0 0 auto; font-style: normal; font-size: var(--f-fine); }
+.yr-arc.won > span:first-child, .yr-arc.won i { color: var(--warn); }
 
 /* ==========================================================================
    The bottom bar
@@ -1274,21 +1500,21 @@ button.ar-lane:active { opacity: 0.7; }
 }
 .tab-ico {
   position: relative; display: grid; place-items: center;
-  width: 44px; height: 30px; border-radius: 10px;
+  width: 44px; height: 30px; border-radius: var(--r-ctrl);
   transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
 }
 .tab-label { font-style: normal; font-size: var(--f-micro); letter-spacing: 0.04em; }
-.tab.on { color: var(--accent); }
-.tab.on .tab-ico { background: rgba(34, 211, 197, 0.13); }
+.tab.on { color: var(--accent-ink); }
+.tab.on .tab-ico { background: color-mix(in srgb, var(--accent) 13%, transparent); }
 .tab:active .tab-ico { transform: scale(0.9); }
 
 /* The one you came for. Raised, on the brand ramp, with the only real shadow
    in the app. */
 .tab.main { margin-top: -24px; }
 .tab.main .tab-ico {
-  width: 58px; height: 58px; border-radius: 20px;
+  width: 58px; height: 58px; border-radius: var(--r-card);
   background: var(--brand); color: var(--on-accent);
-  box-shadow: 0 10px 26px rgba(34, 211, 197, 0.3), 0 2px 0 rgba(255, 255, 255, 0.12) inset;
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--accent) 30%, transparent), 0 2px 0 color-mix(in srgb, var(--text) 12%, transparent) inset;
 }
 .tab.main.on { color: var(--text); }
 .tab.main.on .tab-ico { background: var(--brand); }
@@ -1297,7 +1523,7 @@ button.ar-lane:active { opacity: 0.7; }
    much; a number says how much, which is the part you can act on. */
 .tab-badge {
   position: absolute; top: 2px; right: 6px;
-  width: 7px; height: 7px; border-radius: var(--radius-pill);
+  width: 7px; height: 7px; border-radius: var(--r-pill);
   background: var(--accent); box-shadow: 0 0 0 2px var(--bg-2);
 }
 .tab-badge.count {
@@ -1318,14 +1544,23 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
    The today card is gone: the same three facts with no border around them. */
 
 .grid-head {
-  display: flex; align-items: center; gap: 12px;
+  display: flex; align-items: center; gap: 10px;
   margin-bottom: 16px;
 }
-.gh-ring { flex: 0 0 auto; }
+/* Sized here, not by the svg: the ring, the gaps and three round buttons have
+   to leave the line room to say "Perfect" on a 320px phone. */
+.gh-ring { flex: 0 0 auto; width: 42px; height: 42px; }
+/* The disc under the ring, shown on a perfect day. */
+.gh-disc { opacity: 0; transform: scale(0.6); transform-origin: center; transition: opacity var(--t-base) var(--ease), transform var(--t-base) var(--ease); }
+.gh-ring.perfect .gh-disc { opacity: 1; transform: scale(1); }
 .gh-text { flex: 1; min-width: 0; }
-.gh-text h1 { font-size: var(--f-title); letter-spacing: -0.02em; line-height: 1.15; }
+.gh-text h1,
+.gh-text p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gh-text h1 { font-size: var(--f-sub); letter-spacing: -0.02em; line-height: 1.15; }
 .gh-text p { margin: 2px 0 0; font-size: var(--f-fine); color: var(--muted); }
-.grid-head .head-actions { align-self: center; }
+.grid-head .head-actions { align-self: center; gap: 4px; }
+/* Reordering puts a button on this line rather than under it. */
+.grid-head .btn { margin: 0; }
 
 /* ==========================================================================
    The Cabinet
@@ -1347,51 +1582,53 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
   position: absolute; right: -2px; bottom: 2px;
   min-width: 18px; height: 18px; padding: 0 4px;
   display: grid; place-items: center;
-  border-radius: var(--radius-pill); background: var(--accent); color: var(--on-accent);
+  border-radius: var(--r-pill); background: var(--accent); color: var(--on-accent);
   font-style: normal; font-size: var(--f-micro); font-weight: var(--w-bold);
   font-variant-numeric: tabular-nums; box-shadow: 0 0 0 2px var(--bg);
 }
 .plinth i { font-style: normal; font-size: var(--f-micro); color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }
 .plinth u { text-decoration: none; font-size: var(--f-micro); color: var(--faint); font-variant-numeric: tabular-nums; }
 
-/* ---------- feats, by what they cost ----------
-   The band names are the prices, so no heading has to say so. */
+/* ---------- what is in the case ----------
+   The last five taken, or the five nearest when nothing has been. */
 
-.cab-band { margin: 20px 0; }
-.cab-bandhead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.cab-bandhead h2 { font-size: var(--f-head); margin: 0; }
-.cab-bar { height: 6px; border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; margin-bottom: 10px; }
-.cab-bar i { display: block; height: 100%; background: var(--accent); }
-.cab-hexes { display: flex; flex-wrap: wrap; gap: 6px; }
-.hex {
-  width: 34px; height: 34px; flex: 0 0 34px;
-  display: grid; place-items: center;
-  border: 0; border-radius: var(--radius-sm);
-  background: var(--surface); color: var(--faint); cursor: pointer;
+.cab-feat {
+  display: flex; align-items: baseline; gap: 12px; width: 100%; text-align: left;
+  padding: 12px 0; min-height: 44px; border: 0; border-bottom: 1px solid var(--line-soft);
+  background: none; color: inherit; font: inherit; cursor: pointer;
 }
-.hex.on { background: var(--accent); color: var(--on-accent); }
-.hex:active { transform: scale(0.94); }
+.cab-feat:active { opacity: 0.7; }
+.cab-feat-body { flex: 1; min-width: 0; }
+.cab-feat-body b { display: block; font-size: var(--f-small); }
+.cab-feat > i {
+  flex: 0 0 auto; font-style: normal; font-size: var(--f-fine); color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+.cab-feat .ft-bar { margin-top: 6px; background: var(--surface-2); }
 
-/* ---------- the vault ----------
-   A review you can open early is a dashboard, so the year is a number counting
-   down and a lock. */
+/* ---------- the year ----------
+   A review you can open early is a dashboard, so it is a countdown and a lock.
+   A line on the Cabinet, the whole screen on its own. */
+
+.cab-year { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; font-size: var(--f-small); color: var(--muted); }
+.cab-year b { color: var(--text); font-variant-numeric: tabular-nums; }
+.cab-year-lock { display: grid; place-items: center; color: var(--faint); }
 
 .vault {
   display: grid; justify-items: center; text-align: center;
-  padding: 34px 18px 26px; border-radius: var(--radius);
-  border: 1px dashed var(--line); background: var(--surface);
+  align-content: center; flex: 1;
 }
-.vault.small { padding: 20px 14px 16px; border-style: solid; background: var(--surface); margin-bottom: 12px; }
-.vault-lock { display: grid; place-items: center; color: var(--faint); margin-bottom: 8px; }
+.vault-lock { display: grid; place-items: center; color: var(--faint); margin-bottom: 10px; }
 .vault-count { font-size: var(--f-mega); line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
-.vault.small .vault-count { font-size: var(--f-display); }
 .vault-unit { font-size: var(--f-fine); color: var(--muted); text-transform: uppercase; letter-spacing: 0.14em; margin-top: 4px; }
-.vault-label { margin: 12px 0 4px; font-size: var(--f-small); color: var(--muted); }
+.vault-label { margin: 14px 0 4px; font-size: var(--f-small); color: var(--muted); }
 .vault-label b { color: var(--text); }
+/* The screen is the vault: the count on the middle of the page. */
+.screen.yr-locked { min-height: 100dvh; display: flex; flex-direction: column; }
 
 .yr-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .yr-chip {
-  padding: 8px 14px; border-radius: var(--radius-pill);
+  padding: 12px 16px; border-radius: var(--r-pill);
   border: 1px solid var(--line); background: var(--surface-2);
   color: var(--text); text-decoration: none; font-size: var(--f-small);
   font-variant-numeric: tabular-nums;
@@ -1409,36 +1646,19 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 }
 .said:last-child { border-bottom: 0; }
 .said-mark { display: grid; place-items: center; width: 26px; height: 26px; flex: 0 0 26px;
-  border-radius: 8px; background: var(--surface-2); color: var(--warn); }
+  border-radius: var(--r-ctrl); background: var(--surface-2); color: var(--warn); }
 .said-body { min-width: 0; }
 .said-body em { display: block; font-style: italic; font-size: var(--f-small); line-height: 1.4; }
 .said-body i { display: block; font-style: normal; font-size: var(--f-micro); color: var(--muted); margin-top: 3px; }
 
 /* No cup on. One line and a date, and a link, because the date is the only
    thing you can act on. */
-.arc-wait {
-  display: flex; align-items: center; gap: 11px;
-  padding: 13px 14px; margin-bottom: 14px;
-  border: 1px dashed var(--line); border-radius: var(--radius);
-  background: var(--surface); color: inherit; text-decoration: none;
-}
-.arc-wait-mark { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 34px;
-  border-radius: 10px; background: var(--surface-2); color: var(--warn); }
-.arc-wait-text { min-width: 0; }
-.arc-wait-text > b { display: block; font-size: var(--f-small); }
-.arc-wait-text i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); }
-.arc-wait-text i b { color: var(--accent); font-variant-numeric: tabular-nums; }
-
-.ar-won { display: flex; align-items: center; gap: 14px; border-color: rgba(251, 191, 36, 0.42); }
-.ar-won b { display: block; font-size: var(--f-head); }
-.ar-won i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); }
-.ar-won .cup-art { flex: 0 0 54px; margin: 0; }
 
 /* Deliberately unlike a settings input: you are saying something, not
    configuring one. */
 .note-ask input {
   width: 100%; margin: 12px 0 4px; padding: 13px 14px;
-  background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-ctrl);
   color: var(--text); font: inherit; font-size: var(--f-body);
 }
 .note-ask input:focus { outline: none; border-color: var(--accent); }
@@ -1460,6 +1680,9 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
   min-height: calc(100dvh - var(--safe-t) - var(--safe-b));
 }
 .screen.moment:not(.rank-moment) #go { margin-top: auto; }
+/* The ceremony: the cup takes the page above what you do. */
+.screen.moment:has(.note-ask) .mo-head { flex: 1; display: grid; align-content: center; }
+.screen.moment:has(.note-ask) #go { margin-top: 14px; }
 
 .mo-head {
   position: relative; text-align: center;
@@ -1468,7 +1691,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 .mo-title { font-size: var(--f-hero); line-height: 1.05; letter-spacing: -0.04em; margin: 6px 0 10px; }
 .mo-sub { color: var(--muted); font-size: var(--f-small); margin: 0; }
 .mo-head.won .mo-title { color: var(--good); }
-.mo-head.lost .mo-title { color: var(--danger); }
+.mo-head.lost .mo-title { color: var(--muted); }
 .mo-head.cup .mo-title { color: var(--warn); }
 .mo-cup { display: grid; place-items: center; color: var(--warn); margin-bottom: 10px; }
 /* The cup draws itself. Four times a year at most, so it may take a second. */
@@ -1478,7 +1701,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 .mo-deal { display: grid; gap: 7px; margin-bottom: 16px; }
 .mo-card {
   display: flex; align-items: center; gap: 11px;
-  padding: 11px 13px; border-radius: 10px;
+  padding: 11px 13px; border-radius: var(--r-ctrl);
   background: var(--surface); border: 1px solid var(--line);
   opacity: 0; animation: deal 0.42s var(--ease) forwards;
   animation-delay: calc(var(--i) * 0.11s + 0.2s);
@@ -1490,45 +1713,50 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 .mo-card b { font-variant-numeric: tabular-nums; font-size: var(--f-small); }
 /* Same rule as the group table: the three going through are lit. */
 .mo-card.q {
-  border-color: rgba(74, 222, 128, 0.32);
-  background: rgba(74, 222, 128, 0.08);
-  box-shadow: 0 0 22px -8px rgba(74, 222, 128, 0.6);
+  border-color: color-mix(in srgb, var(--good) 32%, transparent);
+  background: color-mix(in srgb, var(--good) 8%, transparent);
+  box-shadow: 0 0 22px -8px color-mix(in srgb, var(--good) 60%, transparent);
 }
 .mo-card.q .mo-seed, .mo-card.q b { color: var(--good); }
 .mo-card.nq { opacity: 0.5; }
 .mo-card.you .mo-who { color: var(--text); font-weight: 700; }
 .mo-card.you { border-width: 1.5px; }
 .mo-card.you.q { border-color: var(--good); }
-.mo-card.you.nq { opacity: 0.9; border-color: rgba(248, 113, 113, 0.4); background: rgba(248, 113, 113, 0.07); }
-.mo-card.you.nq .mo-seed, .mo-card.you.nq b { color: var(--danger); }
+.mo-card.you.nq { opacity: 0.9; border-color: var(--ash); }
+.mo-card.you.nq .mo-seed, .mo-card.you.nq b { color: var(--muted); }
 
 /* Reduced motion kills the stagger globally, which would leave the dealt rows
    at opacity 0. */
 @media (prefers-reduced-motion: reduce) {
   .mo-card { opacity: 1; }}
+html.reduce-motion .mo-card { opacity: 1; }
 
 /* ---------- the introduction ----------
-   One idea per page, mostly a picture. The art box has a floor under its height
-   so five pages do not put their headings at five different heights. */
+   One anatomy on every page: a stage, a title, a line, the button on the floor.
+   The stage is a fixed height, which is what puts eight titles on one eye-line. */
 
-/* Owns the whole window: no bottom bar and nothing to scroll to. Full height,
-   words centred in what is left, button on the floor. */
+/* Owns the whole window: no bottom bar and nothing to scroll to. */
 .screen.intro { min-height: 100dvh; display: flex; flex-direction: column; }
 .intro .screen-head { justify-content: space-between; margin-bottom: 12px; }
-.intro-body {
-  flex: 1;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  text-align: center; padding: 8px 0 26px;
-}
+.intro-body { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; }
+/* Clamped, not fixed: a short phone shortens the stage rather than scrolling. */
 .intro-art {
-  display: grid; place-items: center;
-  width: 100%; min-height: 190px; margin-bottom: 22px;
+  display: grid; place-items: center; align-content: center;
+  width: 100%; height: clamp(252px, 38dvh, 322px);
+  margin-top: clamp(16px, 10dvh, 84px);
 }
-.intro-title { font-size: var(--f-hero); line-height: 1.05; letter-spacing: -0.035em; margin: 0 0 10px; }
-.intro-line { max-width: 30ch; color: var(--muted); font-size: var(--f-body); margin: 0; }
+/* The review ceremony's headline size, so the tour and the week read as one. */
+.intro-title { font-size: var(--f-display); line-height: 1.1; letter-spacing: -0.03em; text-wrap: balance; margin: 26px 0 0; }
+/* Two lines are held whatever it says: page 1 has none and nothing shifts. */
+.intro-line { max-width: 30ch; min-height: 3em; text-wrap: balance; color: var(--muted); font-size: var(--f-body); margin: 8px 0 0; }
+/* The gate before it opens. An instruction, not a red button that does nothing.
+   An inset rule, not a border: a border would move the button by two pixels. */
+.screen.intro .intro-locked {
+  background: var(--surface); color: var(--muted);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
 
-/* The glow is the mark's own colour, not the accent's. */
-.intro-logo { filter: drop-shadow(0 0 26px rgba(230, 36, 41, 0.3)); }
+.intro-logo { filter: drop-shadow(0 0 26px color-mix(in srgb, var(--accent) 30%, transparent)); }
 
 /* Built from the grid's own classes, so what you are told to tap looks like the
    thing you then tap. */
@@ -1537,19 +1765,23 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 .intro-grid .intro-tap { pointer-events: auto; }
 .intro-grid .hg-cell { min-height: 34px; }
 .intro-grid .hg-row { min-height: 44px; }
+.intro-grid .hg-row:last-child { border-bottom: 0; }
 /* Today's cell on the top row: the one the sentence is about. */
-.hg-cell.intro-tap {
+.intro-grid .intro-tap {
   opacity: 1; color: var(--accent);
-  background: rgba(34, 211, 197, 0.14);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
   animation: intro-tap 1.9s var(--ease) infinite;
 }
+/* A 36px column is not a target. The pad reaches 44 without moving the cell. */
+.intro-grid .intro-tap::after { content: ''; position: absolute; inset: -5px -4px; }
 @keyframes intro-tap {
   0%, 62%, 100% { transform: scale(1); }
   70% { transform: scale(0.88); }
   80% { transform: scale(1.06); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .hg-cell.intro-tap { animation: none; }}
+  .intro-grid .intro-tap { animation: none; }}
+html.reduce-motion .intro-grid .intro-tap { animation: none; }
 
 /* ---------- the quiet row at the foot of Settings ----------
    The smallest text on the page: it says what it is, it just does not ask to
@@ -1559,54 +1791,118 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
   margin-top: 22px; padding-top: 4px;
 }
 .tail-btn {
-  background: none; border: 0; padding: 6px 2px;
+  background: none; border: 0; padding: 13px 2px;
   color: var(--faint); font: inherit; font-size: var(--f-fine);
   text-decoration: none; cursor: pointer;
 }
 .tail-btn:active { color: var(--muted); }
 
 /* ---------- settings ----------
-   A dense index: name on the left, what it is set to on the right, and no
-   explanation unless the behaviour is genuinely surprising. */
+   Every screen here is rows on hairlines. A row is a name on the left and what
+   it is set to on the right, so the root can be read down its right edge
+   without opening anything. */
 
-.settings .set-hero {
-  padding: 4px 2px 22px; margin-bottom: 6px;
+/* One container for both kinds of row. */
+.set-rows { display: grid; }
+.set-rows + .set-rows,
+.settings .fineprint + .set-rows { margin-top: 20px; }
+
+/* A row you tap: an <a> that goes somewhere, or a <button> that acts. */
+.set-link {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; min-height: 60px; padding: 8px 2px;
+  border: 0; border-bottom: 1px solid var(--line-soft);
+  background: none; text-align: left; cursor: pointer;
+  color: var(--text); text-decoration: none; font: inherit;
 }
-.set-hero b {
-  display: block; font-size: var(--f-title); line-height: 1;
-  letter-spacing: -0.035em; margin-bottom: 8px;
-  background: var(--brand); -webkit-background-clip: text; background-clip: text; color: transparent;
+.set-link[hidden] { display: none; }
+.set-link:disabled { opacity: 0.45; cursor: default; }
+.set-link .ico { color: var(--faint); transform: rotate(180deg); flex: 0 0 auto; }
+.set-link:active { color: var(--muted); }
+/* The one destructive treatment on a page: red words, never a red box. */
+.set-link.danger { color: var(--danger); }
+.set-link.danger:active { opacity: 0.6; }
+
+/* A row you read and set. One height for every row on every page: a select
+   is 44px, which is the tap target, and 8px of air above and below it. */
+.set-row {
+  display: flex; align-items: center; gap: 14px;
+  min-height: 60px; padding: 8px 2px;
+  border-bottom: 1px solid var(--line-soft);
 }
-.set-hero span { color: var(--muted); font-size: var(--f-small); }
+.set-rows > :last-child { border-bottom: 0; }
+
+/* One shape for every row: label left, caption under it, value right. */
+.set-link > span, .set-label { flex: 1; min-width: 0; font-size: var(--f-body); font-weight: var(--w-medium); }
+/* The exception, not the rule: only where the behaviour would surprise you. */
+.set-link > span > i, .set-label > i {
+  display: block; font-style: normal; font-size: var(--f-fine); font-weight: var(--w-normal);
+  color: var(--muted); line-height: 1.35; margin-top: 2px;
+}
+.set-link > i, .set-state {
+  flex: 0 0 auto; font-style: normal;
+  font-size: var(--f-small); font-weight: var(--w-normal); color: var(--muted);
+}
+.set-row select, .set-row input[type="checkbox"], .set-row input[type="time"] { flex: 0 0 auto; }
+.set-row select, .set-row input[type="time"] { height: 44px; padding: 0 10px; }
+
+/* The account, as state rather than a label. The chevron spans both lines so
+   it sits on the card's optical centre, not under the second one. */
+.acc-card {
+  display: grid; grid-template-columns: 1fr auto; align-items: center;
+  text-decoration: none; color: inherit;
+}
+.acc-card .ico { grid-row: 1 / -1; grid-column: 2; color: var(--faint); transform: rotate(180deg); }
+.acc-card .btn { grid-column: 1 / -1; margin: 12px 0 0; }
+
+/* A disclosure for the rows almost nobody changes. */
+.set-more { margin-top: 18px; }
+.set-more summary {
+  cursor: pointer; list-style: none; padding: 8px 2px;
+  font-size: var(--f-micro); text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--faint); font-weight: var(--w-medium);
+}
+.set-more summary::-webkit-details-marker { display: none; }
+.set-more summary::after { content: ' +'; }
+.set-more[open] summary::after { content: ' \2212'; }
 
 .set-group {
   font-size: var(--f-micro); text-transform: uppercase; letter-spacing: 0.12em;
-  color: var(--faint); font-weight: 600;
-  margin: 22px 0 8px; padding: 0 2px;
+  color: var(--faint); font-weight: var(--w-medium);
+  margin: 24px 0 6px; padding: 0 2px;
 }
 
-/* Hairlines, not a border around a box: the group already says where it starts. */
-.set-rows { display: grid; }
-.set-row {
-  display: flex; align-items: center; gap: 14px;
-  min-height: 48px; padding: 9px 2px;
-  border-bottom: 1px solid var(--line-soft);
-}
-.set-rows .set-row:last-child { border-bottom: 0; }
-.set-label { flex: 1; min-width: 0; font-size: var(--f-body); }
-/* The exception, not the rule: only where the behaviour would surprise you. */
-.set-label i {
-  display: block; font-style: normal; font-size: var(--f-fine);
-  color: var(--muted); line-height: 1.35; margin-top: 2px;
-}
-.set-row select { flex: 0 0 auto; }
-.set-row input[type="checkbox"] { flex: 0 0 auto; }
-/* A row whose value is read, not set. */
-.set-state { flex: 0 0 auto; font-size: var(--f-small); color: var(--muted); }
-
-.set-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-.settings .btn.danger.wide { margin-top: 22px; }
 .settings .fineprint { margin-top: 8px; }
+
+/* Type the word to confirm. A word, so it is not the PIN pad's letter spacing. */
+.set-word {
+  width: 100%; margin-bottom: 14px; padding: 12px 14px;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-ctrl);
+  color: var(--text); font: inherit; font-size: var(--f-body);
+}
+.set-word:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* ---------- the account screen ----------
+   One thing on it: whether the record is anywhere but this phone. The dot is
+   the state, the words name it, and the rows underneath act on it. */
+.acc-who { margin-bottom: 22px; }
+.acc-state {
+  display: flex; align-items: center; gap: 10px;
+  font-size: var(--f-title); font-weight: var(--w-medium); letter-spacing: -0.01em;
+}
+.acc-state::before {
+  content: ''; flex: none; width: 9px; height: 9px;
+  border-radius: var(--r-pill); background: var(--good);
+}
+.acc-state[data-state="wait"]::before { background: var(--warn); }
+.acc-state[data-state="bad"]::before { background: var(--danger); }
+/* Nothing to report: an empty ring, not a filled dot that reads as a bullet. */
+.acc-state[data-state="none"]::before { background: none; box-shadow: inset 0 0 0 2px var(--ash); }
+.acc-mail {
+  display: block; margin-top: 3px; padding-left: 19px;
+  font-size: var(--f-small); color: var(--muted); overflow-wrap: anywhere;
+}
+.acc-lead { color: var(--muted); font-size: var(--f-body); margin-bottom: 22px; }
 
 /* ---------- the Nemesis, with a face ----------
    He is the best week you have ever had, so the picture is you. The frame is
@@ -1616,11 +1912,11 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
   display: inline-grid;
   place-items: center;
   flex: none;
-  border-radius: var(--radius-pill);
+  border-radius: var(--r-pill);
   overflow: hidden;
   background: var(--surface-2);
   border: 2px solid var(--accent);
-  box-shadow: 0 0 0 3px rgb(34 211 197 / 0.12);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 .nem-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .nem-face.empty { color: var(--faint); border-color: var(--line); box-shadow: none; }
@@ -1644,7 +1940,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 /* The one number that says whether you are beating him right now. */
 .nem-gap { font-size: var(--f-small); font-weight: var(--w-medium); margin: 10px 0 0; }
 .nem-gap.ahead { color: var(--good); }
-.nem-gap.behind { color: var(--danger); }
+.nem-gap.behind { color: var(--warn); }
 
 /* ---------- the month settles ----------
    The whole ladder, every rung named with what it costs, and the badge moving
@@ -1669,6 +1965,8 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 .rank-moment[data-beat='2'] .rk-word { opacity: 1; transform: none; }
 .rank-moment.up .rk-word { color: var(--good); }
 .rank-moment.down .rk-word { color: var(--text); }
+.rank-moment.notice .rk-word { color: var(--warn); }
+.rank-moment.cleared .rk-word { color: var(--good); }
 
 .rk-line {
   text-align: center;
@@ -1715,7 +2013,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 .rk-mark img { display: block; }
 .rk-name { grid-area: name; font-size: var(--f-small); color: var(--muted); }
 .rk-need { grid-area: need; font-size: var(--f-fine); color: var(--faint); font-variant-numeric: tabular-nums; }
-.rk-bar { grid-area: bar; height: 4px; border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; margin-top: 5px; }
+.rk-bar { grid-area: bar; height: 4px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; margin-top: 5px; }
 /* Each rung's bar is as long as that rung costs, so the ladder climbs across as
    well as up. Uniform bars made five of the seven rows decoration. */
 .rk-bar i { display: block; height: 100%; width: 0; background: var(--line); border-radius: inherit; transition: width 0.5s var(--ease); }
@@ -1724,17 +2022,21 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 /* Where you are: named in full, lit, and carrying the score that got you here. */
 .rk-rung.here .rk-name { color: var(--text); font-size: var(--f-head); font-weight: var(--w-bold); }
 .rk-rung.here .rk-need { color: var(--good); font-weight: var(--w-bold); }
-/* Red is the division you lost, not the one you are on. */
-.rank-moment.down .rk-rung.here .rk-need { color: var(--text); }
-.rank-moment.up .rk-rung.here .rk-bar i { background: var(--good); box-shadow: 0 0 10px rgb(74 222 128 / 0.45); }
+/* Amber is the division you lost, not the one you are on. */
+/* The bar is already amber. Green here said the month went well. */
+.rank-moment.down .rk-rung.here .rk-need,
+.rank-moment.notice .rk-rung.here .rk-need { color: var(--text); }
+.rank-moment.up .rk-rung.here .rk-bar i { background: var(--good); box-shadow: 0 0 10px color-mix(in srgb, var(--good) 45%, transparent); }
 .rank-moment.down .rk-rung.here .rk-bar i { background: var(--accent); }
+.rank-moment.notice .rk-rung.here .rk-bar i { background: var(--warn); }
+.rank-moment.cleared .rk-rung.here .rk-bar i { background: var(--good); }
 .rk-rung.here { position: relative; }
 
 /* The rung you lost. Dashed and marked with what it wants, because it is where
    you are going back to rather than something that was taken off you. */
-.rk-rung.lost .rk-name { color: var(--danger); }
-.rk-rung.lost .rk-need { color: var(--danger); }
-.rk-rung.lost .rk-bar { background: transparent; border-top: 1px dashed color-mix(in oklab, var(--danger) 55%, transparent); height: 0; margin-top: 7px; }
+.rk-rung.lost .rk-name { color: var(--warn); }
+.rk-rung.lost .rk-need { color: var(--warn); }
+.rk-rung.lost .rk-bar { background: transparent; border-top: 1px dashed color-mix(in oklab, var(--warn) 55%, transparent); height: 0; margin-top: 7px; }
 .rank-moment[data-beat='2'] .rk-rung.lost .rk-bar i { width: 0; }
 
 .rank-moment #go { margin-top: 18px; }
@@ -1743,69 +2045,63 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
   .rk-word, .rk-line, .rk-rung, .rk-bar i { transition: none; }}
 
 /* ---------- the first five ----------
-   Shown only on an empty grid. Each row wears the colour it will have, so
-   tapping one is a preview rather than a promise. */
-.starters { margin-top: 18px; }
-.starters h2 { font-size: var(--f-head); margin: 0 0 2px; }
-.starters p { margin: 0 0 12px; }
-.starter-list { display: grid; gap: 8px; }
+   Shown only on an empty grid, and each row is the row it will become: the
+   same height, the same left edge, and its colour already on it. */
+.starters { margin-top: 6px; }
+.starter-list { display: grid; }
+/* The colour it will wear, where its ring will be. */
+.starter-dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--sc, var(--accent)); justify-self: center;
+}
 .starter {
   display: grid;
-  grid-template-columns: 12px 1fr auto 22px;
+  grid-template-columns: 20px 1fr auto 20px;
   align-items: center;
-  gap: 11px;
+  gap: 8px;
   width: 100%;
-  padding: 13px 14px;
-  border-radius: var(--radius);
-  background: var(--surface);
-  border: 1px solid var(--line);
+  min-height: 56px;
+  padding: 2px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
   color: var(--text);
   text-align: left;
   font-size: var(--f-body);
 }
-.starter:active { transform: scale(0.985); }
-.starter-dot {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: var(--sc);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--sc) 22%, transparent);
-}
+.starter-list .starter:last-child { border-bottom: 0; }
+.starter:active .starter-name { opacity: 0.6; }
 .starter-name { font-weight: var(--w-medium); color: var(--sc); }
 .starter-meta { font-size: var(--f-fine); color: var(--muted); }
-.starter-add { color: var(--faint); display: grid; place-items: center; }
+.starter-add { color: var(--muted); display: grid; place-items: center; }
 
-/* ---------- the account ----------
+/* ---------- the account form ----------
    A form, two providers, and a divider that says the two are alternatives
-   rather than steps. */
+   rather than steps. One rhythm: the grid gap sets every gap, so no control
+   carries a margin of its own. */
 
-.acc-form { display: grid; gap: 14px; }
+.acc-form { display: grid; gap: 16px; }
 /* The label is the .field, so the caption inside it needs its own rule. */
 .acc-form .field { display: grid; gap: 6px; }
 .acc-form .field > span { font-size: var(--f-small); color: var(--muted); }
 .acc-form input {
   width: 100%; padding: 12px 14px;
-  background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-ctrl);
   color: var(--text); font: inherit;
 }
 .acc-form input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.acc-alt { display: flex; justify-content: space-between; gap: 10px; }
+.acc-form .btn { margin: 0; }
+.acc-form .warn-inline { margin: -6px 0 0; }
+.acc-alt { display: flex; justify-content: space-between; gap: 10px; margin-top: -8px; }
 
-.acc-or { display: flex; align-items: center; gap: 12px; margin: 16px 0; color: var(--faint); font-size: var(--f-fine); }
+.acc-or { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--faint); font-size: var(--f-fine); }
 .acc-or::before, .acc-or::after { content: ''; flex: 1; height: 1px; background: var(--line-soft); }
 
-.acc-providers { display: grid; gap: 8px; }
+.acc-providers { display: grid; gap: 10px; margin-bottom: 18px; }
+.acc-providers .btn { margin: 0; }
 
 /* No global anchor rule in this app: every other link is a button or a row. */
-.fineprint a, .muted a { color: var(--accent); text-underline-offset: 2px; }
-
-/* ---------- restore points ----------
-   Under the backup buttons, because it is the same question: what happens to
-   the record when something goes wrong. */
-.restore { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
-.restore h4 { margin: 0 0 4px; font-size: var(--f-small); color: var(--text); }
-.restore .fineprint { margin: 0 0 8px; }
-.restore .set-actions { margin-bottom: 8px; }
-/* One restore point is a full width button, not half a row of nothing. */
-.restore .set-actions:has(> :only-child) { grid-template-columns: 1fr; }
+.fineprint a, .muted a { color: var(--accent-ink); text-underline-offset: 2px; }
 
 /* ---------- the week in review ----------
    Five beats, one tap apart, each one filling the screen. Every beat is one
@@ -1817,7 +2113,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
   padding-top: calc(var(--safe-t) + 22px);
 }
 .rv-dots { display: flex; gap: 5px; justify-content: center; margin-bottom: 4px; }
-.rv-dots i { width: 22px; height: 3px; border-radius: var(--radius-pill); background: var(--line); }
+.rv-dots i { width: 22px; height: 3px; border-radius: var(--r-pill); background: var(--line); }
 .rv-dots i.on { background: var(--accent); }
 
 .rv-body { flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: center; }
@@ -1846,7 +2142,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 }
 
 /* The score against your average, so the number is read against something. */
-.rv-gauge { position: relative; height: 8px; border-radius: var(--radius-pill); background: var(--surface-2); margin: 18px 40px 0; }
+.rv-gauge { position: relative; height: 8px; border-radius: var(--r-pill); background: var(--surface-2); margin: 18px 40px 0; }
 .rv-gauge i { display: block; height: 100%; width: var(--w); background: var(--accent); border-radius: inherit; animation: rv-fill 0.9s var(--ease) both; }
 .rv-gauge u { position: absolute; top: -4px; bottom: -4px; left: var(--avg); width: 2px; background: var(--text); opacity: 0.5; }
 
@@ -1858,7 +2154,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
   height: var(--h);
   align-self: end;
   min-height: 3px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-ctrl);
   background: var(--surface-2);
   transform-origin: bottom;
   animation: rv-grow 0.4s var(--ease) both;
@@ -1869,17 +2165,22 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 .rv-day.future { opacity: 0.35; }
 .rv-day em { font-size: var(--f-micro); color: var(--muted); font-style: normal; height: 10px; }
 .rv-day u { position: relative; font-size: var(--f-micro); color: var(--faint); text-decoration: none; }
-.rv-day.top em { color: var(--accent); font-weight: var(--w-bold); }
+.rv-day.top em { color: var(--accent-ink); font-weight: var(--w-bold); }
 /* A dot under today: the day is not over, which is why its bar is short.
    Called "now": .today is the hub card and a column wearing it took a border. */
 .rv-day.now u::after { content: ''; position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); width: 3px; height: 3px; border-radius: 50%; background: var(--accent); }
 @keyframes rv-grow { from { transform: scaleY(0); } }
 
+/* The lines left on the week's days. */
+.rv-notes { margin: 6px 0 0; display: grid; gap: 4px; text-align: left; }
+.rv-notes p { margin: 0; font-size: var(--f-small); font-style: italic; color: var(--muted); }
+.rv-notes b { font-style: normal; color: var(--text); font-weight: var(--w-medium); margin-right: 6px; }
+
 /* Every row, best first, each bar in the colour you gave it. */
 .rv-rows { list-style: none; margin: 14px 0 4px; padding: 0; display: grid; gap: 7px; }
 .rv-rows li { display: grid; grid-template-columns: 1fr 84px auto; align-items: center; gap: 10px; text-align: left; }
 .rv-rname { font-size: var(--f-small); color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rv-rbar { height: 5px; border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; }
+.rv-rbar { height: 5px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; }
 .rv-rbar i {
   display: block;
   height: 100%;
@@ -1909,7 +2210,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 .rv-feats { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 16px; }
 .rv-feat {
   display: inline-flex; align-items: center; gap: 5px;
-  padding: 5px 10px; border-radius: var(--radius-pill);
+  padding: 5px 10px; border-radius: var(--r-pill);
   background: var(--surface); border: 1px solid var(--line);
   font-size: var(--f-fine); color: var(--warn);
 }
@@ -1917,11 +2218,36 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 
 .screen.rv .btn.primary { margin-top: 20px; }
 
+/* ---------- yesterday, unanswered ----------
+   One row per thing nobody answered, one tap each. */
+.catch-list { display: grid; margin: 10px 0 4px; }
+.catch-row {
+  display: grid; grid-template-columns: 20px 1fr 22px; align-items: center; gap: 8px;
+  width: 100%; min-height: 56px; padding: 2px;
+  background: none; border: 0; border-bottom: 1px solid var(--line-soft);
+  color: var(--text); text-align: left; font-size: var(--f-body); cursor: pointer;
+  transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.catch-list .catch-row:last-child { border-bottom: 0; }
+.catch-row:active { background: var(--surface-2); }
+.catch-name { font-weight: var(--w-medium); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.catch-mark { color: var(--faint); display: grid; place-items: center; }
+/* Answered: the row wears the habit's colour, the way its cell does. */
+.catch-row.on .catch-name,
+.catch-row.on .catch-mark { color: var(--sc); }
+
+/* No account. One card under the rows, and it never comes back once dismissed twice. */
+.nudge { display: flex; align-items: center; gap: 10px; padding: 12px 14px; margin-top: 14px; }
+.nudge-text { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.nudge-text b { font-size: var(--f-small); }
+.nudge-text i { font-style: normal; font-size: var(--f-fine); color: var(--muted); }
+.nudge .btn { margin: 0; }
+
 /* The way in, on the grid. */
 .rv-cta {
   display: flex; align-items: center; gap: 11px;
   margin-top: 12px; padding: 12px 14px;
-  border-radius: var(--radius);
+  border-radius: var(--r-card);
   background: var(--surface);
   border: 1px solid var(--line-soft);
   color: var(--text);
@@ -1943,75 +2269,258 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
    Drawn on a canvas at 1080x1350 and previewed here before it goes anywhere. */
 .sh-card {
   display: block; width: 100%; aspect-ratio: 4 / 5;
-  border-radius: var(--radius); border: 1px solid var(--line);
+  border-radius: var(--r-card); border: 1px solid var(--line);
   margin: 0 0 12px; background: var(--bg-2);
 }
 
 /* ---------- the introduction, page by page ----------
-   Two of the seven are done rather than read. Everything else is one picture
-   and one line, and the picture is built from the screen it is about. */
-
-/* A tall page leads with its heading: seven rungs above the title push it off
-   the bottom of a phone. */
-.intro-body.tall { padding-top: 4px; }
-.intro-body.tall .intro-art { min-height: 0; margin: 16px 0 0; }
+   Every picture is built from the screen it is about, and the three that are
+   lists are the same list: rows on a hairline rule, a dot, a name, a target. */
 
 /* What a row can be. */
-.intro-kinds { display: grid; gap: 9px; width: 100%; }
+.intro-kinds { display: grid; width: 100%; }
 .intro-kind {
-  display: grid; grid-template-columns: 12px 1fr auto; align-items: center; gap: 11px;
-  padding: 13px 14px; border-radius: var(--radius);
-  background: var(--surface); border: 1px solid var(--line);
-  text-align: left;
+  display: grid; grid-template-columns: 20px 1fr auto; align-items: center; gap: 10px;
+  min-height: 54px; padding: 2px; text-align: left;
+  border-bottom: 1px solid var(--line-soft);
 }
+.intro-kinds .intro-kind:last-child { border-bottom: 0; }
 .intro-dot {
-  width: 10px; height: 10px; border-radius: 50%; background: var(--kc);
+  width: 10px; height: 10px; border-radius: 50%; background: var(--kc); justify-self: center;
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--kc) 22%, transparent);
 }
 .intro-kind b { color: var(--kc); font-weight: var(--w-medium); font-size: var(--f-body); }
 .intro-kind em { font-style: normal; font-size: var(--f-fine); color: var(--muted); }
 
-/* The fixture, cut to the two numbers and the gap between them. */
+/* The fixture: the two scores, and the Arena's own gauge under them. Your fill,
+   and a mark where the week you are chasing sits. */
 .intro-fix {
-  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 14px;
-  width: 100%; padding: 20px 18px; border-radius: var(--radius);
-  background: var(--surface); border: 1px solid var(--line);
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; justify-items: center;
+  gap: 16px; width: 100%;
 }
 .intro-fix-side { display: grid; gap: 2px; }
-.intro-fix-side b { font-size: var(--f-display); font-variant-numeric: tabular-nums; }
+.intro-fix-side b { font-size: var(--f-hero); line-height: 1.05; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
 .intro-fix-side i { font-size: var(--f-fine); color: var(--muted); font-style: normal; }
-.intro-fix-vs { color: var(--faint); }
-.intro-race { grid-column: 1 / -1; height: 6px; border-radius: var(--radius-pill); background: var(--danger); overflow: hidden; }
-.intro-race u { display: block; height: 100%; background: var(--accent); text-decoration: none; }
-
-/* Every rung and what it costs. */
-.intro-ladder { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; gap: 2px; }
-.intro-rung {
-  display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 10px;
-  width: 100%; padding: 7px 8px; text-align: left;
+.intro-fix-vs { color: var(--faint); display: grid; place-items: center; }
+.intro-race {
+  grid-column: 1 / -1; position: relative; width: 100%; height: 8px;
+  margin-top: 10px; border-radius: var(--r-pill); background: var(--surface-2);
 }
-.intro-rung-crest { display: grid; place-items: center; opacity: 0.8; }
-.intro-rung-name { font-size: var(--f-small); color: var(--muted); }
+.intro-race i { display: block; height: 100%; width: var(--w); background: var(--accent); border-radius: inherit; animation: rv-fill 0.5s var(--ease) both; }
+.intro-race u { position: absolute; top: -4px; bottom: -4px; left: var(--at); width: 2px; background: var(--text); opacity: 0.5; }
+
+/* The last page: three ways out, the third a link because it is the third.
+   Bottom margin to match .btn.big, so the block ends where Next ends. */
+.intro-account { display: grid; gap: 4px; margin-bottom: 14px; }
+.intro-account .btn { margin: 4px 0 0; }
+.intro-account .tail-btn { justify-self: center; margin-top: 8px; padding: 13px 18px; }
+
+/* Every rung and what it costs, on the Arena's rail. Nine rows share the stage,
+   so the ladder is never taller than the picture it is drawn in. */
+.intro-ladder {
+  list-style: none; margin: 0; padding: 0; width: 100%;
+  align-self: stretch; display: grid; grid-auto-rows: 1fr;
+}
+.intro-rung {
+  position: relative;
+  display: grid; grid-template-columns: 20px 1fr auto; align-items: center; gap: 10px;
+  padding: 0 2px; text-align: left;
+}
+/* Full height, so the segments meet with no seam. Coloured the whole way up:
+   on a new install there is no rung climbed to grey out. */
+.intro-rung::before {
+  content: ''; position: absolute; left: 12px; top: 0; bottom: 0;
+  width: 3px; margin-left: -1.5px; background: var(--dc); opacity: 0.55;
+}
+.intro-rung:first-child::before { top: 50%; border-radius: var(--r-chip) var(--r-chip) 0 0; }
+.intro-rung:last-child::before { bottom: 50%; border-radius: 0 0 var(--r-chip) var(--r-chip); }
+/* The plate keeps the rail off the node. */
+.intro-rung-node {
+  position: relative; justify-self: center;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--dc); box-shadow: 0 0 0 3px var(--bg);
+}
+.intro-rung-name { font-size: var(--f-body); font-weight: var(--w-medium); }
 .intro-rung-need { font-size: var(--f-fine); color: var(--faint); font-variant-numeric: tabular-nums; }
 
 /* Cups and feats. */
-.intro-cabinet { display: grid; gap: 16px; justify-items: center; }
-.intro-cups { display: flex; gap: 16px; }
+/* The cabinet. A cup stands on a shelf in its own light: the tinted disc it
+   used to sit in fought the artwork and made three cups into three buttons. */
+.intro-cabinet { display: grid; justify-items: center; }
+.intro-cups { display: flex; gap: 14px; align-items: end; }
 .intro-cup {
-  display: grid; place-items: center; width: 60px; height: 60px;
-  border-radius: 50%; color: var(--cc);
-  background: color-mix(in oklab, var(--cc) 12%, transparent);
-  border: 1px solid color-mix(in oklab, var(--cc) 40%, transparent);
+  position: relative; display: grid; place-items: center;
+  width: 76px; height: 76px; color: var(--cc);
+  animation: cup-land 0.62s var(--ease) var(--d, 0ms) both;
 }
-.intro-feats { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
-.intro-feat {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 5px 10px; border-radius: var(--radius-pill);
-  background: var(--surface); border: 1px solid var(--line);
-  font-size: var(--f-fine); color: var(--muted);
+/* The light it throws, and the shelf it stands on. Both arrive after it lands. */
+.intro-cup::before {
+  content: ''; position: absolute; inset: -12px -6px -14px; border-radius: 50%;
+  background: radial-gradient(circle at 50% 62%, color-mix(in oklab, var(--cc) 30%, transparent), transparent 68%);
+  animation: cup-bloom 0.5s var(--ease) calc(var(--d, 0ms) + 0.28s) both;
+}
+.intro-cup::after {
+  content: ''; position: absolute; left: 2px; right: 2px; bottom: -7px; height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--cc) 60%, transparent), transparent);
+  animation: cup-bloom 0.4s var(--ease) calc(var(--d, 0ms) + 0.32s) both;
+}
+.intro-cup .cup-img, .intro-cup .ico { position: relative; }
+@keyframes cup-land {
+  0% { opacity: 0; transform: translateY(-32px) scale(0.7) rotate(-7deg); }
+  62% { opacity: 1; transform: translateY(5px) scale(1.06) rotate(1.5deg); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes cup-bloom { from { opacity: 0; } to { opacity: 1; } }
+html.reduce-motion .intro-cup,
+html.reduce-motion .intro-cup::before,
+html.reduce-motion .intro-cup::after { animation: none; opacity: 1; }
+
+/* The grid you leave on. Grey until picked, then the row wears the colour it
+   keeps: the state is the colour, not a box drawn round the row. */
+.intro-starters { width: 100%; }
+.intro-starters .starter-dot { width: 10px; height: 10px; border-radius: 50%; justify-self: center; background: var(--line); }
+.intro-starters .starter-name { color: var(--text); }
+.intro-starters .starter.picked .starter-dot {
+  background: var(--sc);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--sc) 22%, transparent);
+}
+.intro-starters .starter.picked .starter-name { color: var(--sc); }
+.intro-starters .starter.picked .starter-add { color: var(--sc); }
+
+/* ---------- the Arc, on the Arena ----------
+   One row, the way the Nemesis row is one row: the cup, where it is up to,
+   and the arrow that says there is more. */
+
+.arc-btn {
+  display: flex; align-items: center; gap: 11px; width: 100%;
+  margin: 0; padding: 10px 12px;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-ctrl);
+  color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.arc-btn:active { transform: scale(0.99); }
+.arc-btn-art { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 34px; }
+.arc-btn-text { flex: 1; min-width: 0; }
+.arc-btn-text b { display: block; font-size: var(--f-small); }
+.arc-btn-text i {
+  display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.arc-btn-go { display: grid; place-items: center; color: var(--faint); transform: rotate(180deg); }
+/* The border is the state of the cup: on, won, or shut. */
+.arc-btn.live { border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+.arc-btn.won { border-color: color-mix(in srgb, var(--warn) 42%, transparent); }
+
+/* ==========================================================================
+   The Arc, whole
+   ==========================================================================
+   The cup, the group it came out of, and the knockout under it. Three sections
+   in one order in every state, so the screen is the same screen all year. */
+
+/* ---------- the cup ---------- */
+
+.arc-cup { text-align: center; padding: 4px 8px 24px; margin-bottom: 6px; }
+/* Relative: the sparks hang off this. */
+.arc-cup-art { position: relative; display: grid; place-items: center; margin-bottom: 10px; color: var(--warn); }
+@keyframes cup-fill {
+  from { clip-path: inset(100% 0 0 0); opacity: 0.2; }
+  to { clip-path: inset(0 0 0 0); opacity: 1; }
 }
 
-/* The last page: the grid you leave on. */
-.intro-starters { width: 100%; margin-top: 18px; }
-.starter.picked { border-color: color-mix(in oklab, var(--sc) 55%, var(--line)); background: color-mix(in oklab, var(--sc) 10%, var(--surface)); }
-.starter.picked .starter-add { color: var(--sc); }
+.arc-cup .eyebrow { margin-bottom: 3px; }
+.arc-cup-name { font-size: var(--f-display); letter-spacing: -0.03em; margin: 0 0 6px; }
+.arc-cup-line { margin: 0; font-size: var(--f-small); color: var(--muted); }
+.arc-cup-line b { color: var(--text); font-variant-numeric: tabular-nums; }
+.arc-cup .said-quote { margin: 14px 0 0; }
+/* The block's one colour, and only once it has been won. */
+.arc-cup.won .arc-cup-name { color: var(--warn); }
+.arc-cup.won .arc-cup-art { filter: drop-shadow(0 0 30px color-mix(in srgb, var(--warn) 38%, transparent)); }
+.arc-cup.out .arc-cup-art { opacity: 0.45; }
+
+/* ---------- the arrival ----------
+   `.deal` is set once per state per session, never under reduced motion, so the
+   second visit is instant and nothing is left at zero opacity. Over in 0.7s. */
+
+.arc.deal .arc-cup-art .cup-img { animation: cup-fill 0.55s var(--ease) both; }
+/* No artwork file: the glyph draws, exactly as .mo-cup does. */
+.arc.deal .arc-cup-art .ico path { stroke-dasharray: 240; animation: cup-draw 0.9s var(--ease) forwards; }
+.arc.deal .arc-cup .eyebrow,
+.arc.deal .arc-cup-name,
+.arc.deal .arc-cup-line { opacity: 0; animation: deal 0.36s var(--ease) 0.12s forwards; }
+.arc.deal .arc-group .ar-tr {
+  opacity: 0; animation: deal 0.36s var(--ease) forwards;
+  animation-delay: calc(var(--i) * 0.05s + 0.18s);
+}
+.arc.deal .arc-tie { opacity: 0; }
+
+/* ---------- the group ---------- */
+
+.arc-group .ar-fx-head { margin-bottom: 6px; }
+.arc-note { margin: 0 0 10px; font-size: var(--f-fine); color: var(--muted); }
+.ar-table + .arc-note { margin: 10px 0 0; }
+
+/* ---------- the knockout ----------
+   Three columns at 360px gave each round forty pixels. Three rows on a rail,
+   read downwards. */
+
+.arc-bracket { position: relative; display: grid; padding-left: 26px; }
+.arc-bracket::before {
+  content: ''; position: absolute; left: 9px; top: 22px; bottom: 22px; width: 2px;
+  border-radius: var(--r-pill); background: var(--line-soft);
+  transform-origin: top;
+}
+.arc.deal .arc-bracket::before { transform: scaleY(0); animation: rail-draw 0.4s var(--ease) 0.24s forwards; }
+@keyframes rail-draw { to { transform: scaleY(1); } }
+
+.arc-tie {
+  position: relative;
+  display: flex; align-items: center; gap: 11px;
+  min-height: 52px; padding: 8px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.arc.deal .arc-tie {
+  animation: deal 0.4s var(--ease) forwards;
+  animation-delay: calc(var(--i) * 0.08s + 0.3s);
+}
+.arc-bracket .arc-tie:last-child { border-bottom: 0; }
+/* The node sits in the gutter, on the rail. */
+.arc-tie-node {
+  position: absolute; left: -22px; top: 50%;
+  width: 10px; height: 10px; margin-top: -5px; border-radius: 50%;
+  background: var(--bg); box-shadow: inset 0 0 0 2px var(--line);
+}
+.arc-tie-body { flex: 1; min-width: 0; }
+.arc-tie-body b { display: block; font-size: var(--f-small); }
+.arc-tie-body i {
+  display: block; font-style: normal; font-size: var(--f-fine); color: var(--faint);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.arc-tie-score { flex: 0 0 auto; text-align: right; font-variant-numeric: tabular-nums; }
+.arc-tie-score b { display: block; font-size: var(--f-head); letter-spacing: -0.02em; }
+.arc-tie-score i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); }
+
+/* One colour a tie, and no word repeating it. */
+.arc-tie.won .arc-tie-node { background: var(--good); box-shadow: none; }
+.arc-tie.won .arc-tie-score b { color: var(--good); }
+/* Filled, not ringed: a round you lost is not a round you have not played. */
+.arc-tie.lost .arc-tie-body b { color: var(--muted); }
+.arc-tie.lost .arc-tie-node { background: var(--ash); box-shadow: none; }
+.arc-tie.lost .arc-tie-score b { color: var(--muted); }
+.arc-tie.now .arc-tie-body b { color: var(--accent-ink); }
+.arc-tie.now .arc-tie-node {
+  background: var(--accent); box-shadow: none;
+  animation: tie-pulse 2.4s var(--ease) 1.4s infinite;
+}
+.arc-tie.now .arc-tie-score b { color: var(--accent-ink); }
+@keyframes tie-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); }
+  50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--accent) 0%, transparent); }
+}
+.arc-tie.todo .arc-tie-body b { color: var(--muted); }
+/* Out means the rounds under it were never played, not that they are coming. */
+.screen.arc[data-state='out'] .arc-tie.todo { opacity: 0.4; }
+.arc-tie[data-week] { cursor: pointer; }
+.arc-tie[data-week]:active { transform: scale(0.99); }
+
+/* The only motion outside `.deal`, so the only one left to switch off. */
+@media (prefers-reduced-motion: reduce) {
+  .arc-tie.now .arc-tie-node { animation: none; }}

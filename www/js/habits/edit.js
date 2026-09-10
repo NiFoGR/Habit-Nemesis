@@ -11,26 +11,87 @@ import { askAlarms, hasAlarms } from '../native.js';
 const WEEK_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const WEEK_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+// The keypad and the notification read this back, so it asks per kind.
+const QUESTION_HINT = {
+  yesno: 'e.g. Did you exercise today?',
+  number: 'e.g. How many litres today?',
+  timed: 'e.g. How long did you read?',
+};
+
+/** The back arrow, turned round: Settings marks an opening row with it. */
+const chevron = () => icon('back', 16);
+
 /* ------------------ the type picker ------------------ */
 
-export function typePickerHtml() {
+function typeRows(extra = '') {
   return `
-    <h2>What kind of habit?</h2>
     <div class="type-cards">
       <a class="type-card" href="#/habits/edit?kind=yesno">
-        <b>Yes or No</b>
-        <span>Did you wake up early today? Did you read? Did you defeat it?</span>
+        <b>Yes or No</b><span>Done, or not done.</span>
       </a>
       <a class="type-card" href="#/habits/edit?kind=number">
-        <b>Measurable</b>
-        <span>How many litres of water? How many pages? How many calories?</span>
+        <b>Measurable</b><span>A number against a target.</span>
       </a>
+      <a class="type-card" href="#/habits/edit?kind=timed">
+        <b>Timed</b><span>Minutes, run from the cell.</span>
+      </a>
+      ${extra}
     </div>`;
 }
 
 /** Opened from the grid, over the list you are adding to. */
 export function openTypePicker() {
-  openSheet(`${typePickerHtml()}<button class="btn ghost wide" data-close>Cancel</button>`);
+  const sheet = openSheet(`
+    <h2>What are you adding?</h2>
+    ${typeRows(`<button class="type-card" id="protocols">
+      <b>A protocol</b><span>Several rows at once, with an end date.</span>
+    </button>`)}
+    <button class="btn ghost wide" data-close>Cancel</button>`);
+  sheet.el.querySelector('#protocols').addEventListener('click', () => {
+    sheet.close();
+    openProtocolSheet();
+  });
+}
+
+/** Curated blocks. Starting one builds its rows and starts its clock. */
+function openProtocolSheet() {
+  const runs = habits.protocolRuns();
+  const span = (d) => (d % 7 === 0 && d > 30 ? `${d / 7} weeks` : `${d} days`);
+  const sheet = openSheet(`
+    <h2>Protocols</h2>
+    <p class="muted small">Four marks in five puts it in the Cabinet.</p>
+    <div class="proto-list">${habits.PROTOCOLS.map((p) => {
+      const run = runs[p.id];
+      const running = run && !run.settled;
+      // A live run is described by the rows on the grid, not by the table: the
+      // table can change under a run and then the sheet names rows you do not have.
+      const names = running
+        ? run.rows.map((id) => habits.byId(id)?.name).filter(Boolean)
+        : p.rows.map((r) => r.name);
+      return `<button class="proto" data-protocol="${p.id}" ${running ? 'disabled' : ''}>
+        <span class="proto-text">
+          <b>${escapeHtml(p.name)}</b>
+          <i>${escapeHtml((names.length ? names : p.rows.map((r) => r.name)).join(' · '))}</i>
+        </span>
+        <span class="proto-span">${escapeHtml(running ? 'Running' : run?.completed ? 'Kept' : span(p.days))}</span>
+      </button>`;
+    }).join('')}
+      <div class="proto soon">
+        <span class="proto-text">
+          <b>Community protocols</b>
+          <i>Write your own and run someone else's.</i>
+        </span>
+        <span class="proto-span proto-soon">Being built</span>
+      </div>
+    </div>
+    <button class="btn ghost wide" data-close>Cancel</button>`);
+  sheet.el.querySelectorAll('[data-protocol]').forEach((b) =>
+    b.addEventListener('click', () => {
+      if (!habits.startProtocol(b.dataset.protocol)) return;
+      sheet.close();
+      toast('Rows on the grid. The clock is running.');
+      window.dispatchEvent(new Event('hashchange'));
+    }));
 }
 
 /* ---------------- the form ---------------- */
@@ -59,7 +120,7 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
           <button class="icon-btn" data-back="habits" aria-label="Back">${icon('back')}</button>
           <h1>New habit</h1><span class="icon-btn ghost"></span>
         </header>
-        <section class="card">${typePickerHtml()}</section>
+        <section class="card">${typeRows()}</section>
       </div>`;
     // Replaces rather than stacks: saving must not unwind to the picker.
     mount.querySelectorAll('.type-card').forEach((a) =>
@@ -72,7 +133,9 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
   }
 
   // Works on a copy. Nothing is written until Save.
-  const h = existing ? { ...existing, freq: { ...existing.freq }, remindDays: [...existing.remindDays] } : habits.draft(kind);
+  const h = existing
+    ? { ...existing, freq: { ...existing.freq }, remindDays: [...existing.remindDays] }
+    : habits.draft(kind);
 
   const draw = () => {
     mount.innerHTML = `
@@ -84,49 +147,61 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
         </header>
 
         <section class="card">
-          <div class="field">
+          <div class="setting setting-stack">
             <label for="name"><b>Name</b></label>
-            <div class="measure-row">
+            <div class="setting-pair">
               <input type="text" id="name" maxlength="60" placeholder="e.g. Exercise" value="${escapeHtml(h.name)}">
               <button class="swatch big" id="colour" style="background:${habits.hexOf(h.colour)}" aria-label="Colour"></button>
             </div>
           </div>
-          <div class="field">
+          <div class="setting setting-stack">
             <label for="question"><b>Question</b></label>
-            <input type="text" id="question" maxlength="120" placeholder="e.g. Did you exercise today?" value="${escapeHtml(h.question)}">
+            <input type="text" id="question" maxlength="120" placeholder="${QUESTION_HINT[h.kind]}" value="${escapeHtml(h.question)}">
           </div>
         </section>
 
+        ${h.kind === 'timed'
+          ? `<section class="card">
+              <h2>How long</h2>
+              <label class="setting">
+                <span><b>Minutes</b></span>
+                <input type="number" id="target" inputmode="numeric" step="1" min="1" max="1440" value="${h.target}">
+              </label>
+            </section>`
+          : ''}
+
         ${h.kind === 'number'
           ? `<section class="card">
-              <div class="h-row">${icon('chart', 16)}<h2>The measurement</h2></div>
+              <h2>How much</h2>
               <label class="setting">
-                <span><b>Unit</b><i>What you count.</i></span>
+                <span><b>Unit</b></span>
                 <input type="text" id="unit" maxlength="20" placeholder="litres" value="${escapeHtml(h.unit)}">
               </label>
               <label class="setting">
-                <span><b>Target</b><i>A day counts when it reaches this.</i></span>
+                <span><b>Target</b></span>
                 <input type="number" id="target" inputmode="decimal" step="any" min="0" value="${h.target}">
               </label>
               <label class="setting">
-                <span><b>The target is a</b></span>
+                <span><b>Aim</b></span>
                 <select id="targetType">
-                  <option value="atleast" ${h.targetType === 'atleast' ? 'selected' : ''}>Floor, at least</option>
-                  <option value="atmost" ${h.targetType === 'atmost' ? 'selected' : ''}>Ceiling, at most</option>
+                  <option value="atleast" ${h.targetType === 'atleast' ? 'selected' : ''}>At least</option>
+                  <option value="atmost" ${h.targetType === 'atmost' ? 'selected' : ''}>At most</option>
                 </select>
               </label>
             </section>`
           : ''}
 
         <section class="card">
-          <div class="h-row">${icon('calendar', 16)}<h2>How often</h2></div>
-          <button class="rowbtn" id="freq">
-            <span><b>Frequency</b><i>${escapeHtml(habits.freqLabel(h.freq))}</i></span>
-            ${icon('pencil', 16)}
+          <h2>How often</h2>
+          <button class="setting setting-open" id="freq">
+            <span><b>Frequency</b></span>
+            <span class="setting-value">${escapeHtml(habits.freqLabel(h.freq))}</span>
+            ${chevron()}
           </button>
-          <button class="rowbtn" id="remind">
-            <span><b>Reminder</b><i>${h.remindAt ? `${escapeHtml(h.remindAt)} · ${remindDaysLabel(h.remindDays)}` : 'Off'}</i></span>
-            ${icon('bell', 16)}
+          <button class="setting setting-open" id="remind">
+            <span><b>Reminder</b></span>
+            <span class="setting-value">${h.remindAt ? `${escapeHtml(h.remindAt)} · ${remindDaysLabel(h.remindDays)}` : 'Off'}</span>
+            ${chevron()}
           </button>
           <label class="setting">
             <span><b>Group</b></span>
@@ -138,18 +213,25 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
         </section>
 
         <section class="card">
-          <div class="h-row">${icon('book', 16)}<h2>Notes</h2></div>
-          <textarea id="notes" class="notes" rows="3" maxlength="500" placeholder="(Optional) Why this one, or how it is meant to be done.">${escapeHtml(h.notes)}</textarea>
+          <div class="setting setting-stack">
+            <label for="notes"><b>Notes</b></label>
+            <textarea id="notes" class="notes" rows="3" maxlength="500" placeholder="Why this one, or how it is done.">${escapeHtml(h.notes)}</textarea>
+          </div>
         </section>
 
         ${existing
-          ? `<section class="card danger">
-              <div class="h-row">${icon('warn', 16)}<h2>This habit</h2></div>
-              <p class="small muted">Archiving takes it out of the grid and keeps every day you ever marked. Deleting takes the record with it.</p>
-              <div class="btn-row">
-                <button class="btn" id="archive">${h.archived ? 'Restore' : 'Archive'}</button>
-                <button class="btn danger" id="delete">Delete</button>
-              </div>
+          ? `<section class="card">
+              <h2>This habit</h2>
+              <button class="setting setting-act" id="duplicate">
+                <span><b>Duplicate</b></span><span class="setting-value">Setup only, no days</span>
+              </button>
+              <button class="setting setting-act" id="archive">
+                <span><b>${h.archived ? 'Restore' : 'Archive'}</b></span>
+                <span class="setting-value">${h.archived ? 'Back on the grid' : 'Keeps its days'}</span>
+              </button>
+              <button class="setting setting-act danger" id="delete">
+                <span><b>Delete</b></span><span class="setting-value">Loses its days</span>
+              </button>
             </section>`
           : ''}
       </div>`;
@@ -168,6 +250,10 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
       const t = Number(val('#target'));
       h.target = Number.isFinite(t) && t > 0 ? t : 0;
       h.targetType = val('#targetType') === 'atmost' ? 'atmost' : 'atleast';
+    }
+    if (h.kind === 'timed') {
+      const t = Math.round(Number(val('#target')));
+      h.target = Number.isFinite(t) && t > 0 ? Math.min(t, 1440) : 20;
     }
   };
 
@@ -204,12 +290,18 @@ export function renderHabitEdit(mount, { id, kind } = {}) {
       toast(h.archived ? 'Restored' : 'Archived');
       navigate('#/habits');
     });
+    mount.querySelector('#duplicate')?.addEventListener('click', () => {
+      const id = habits.duplicate(h.id);
+      if (!id) return;
+      toast('Duplicated');
+      navigate(`#/habits/edit?id=${encodeURIComponent(id)}`);
+    });
+    // At once, with the way back on the toast. A modal was the slowest thing here.
     mount.querySelector('#delete')?.addEventListener('click', () => {
-      if (!confirm(`Delete "${h.name}" and every day ever recorded on it? There is no undo.`)) return;
+      const snap = habits.snapshotOf(h.id);
       habits.remove(h.id);
-      habits.syncAlarms();
-      toast('Deleted');
       navigate('#/habits');
+      toast(`${h.name} deleted`, { undo: () => { habits.reinstate(snap); location.hash = '#/habits'; window.dispatchEvent(new Event('hashchange')); } });
     });
   };
 
@@ -232,7 +324,7 @@ function remindDaysLabel(days) {
 function openColourSheet(h, done) {
   const sheet = openSheet(`
     <h2>Colour</h2>
-    <p class="muted small">The habit's name, its ring and its calendar all take this. It is how you find a row without reading it.</p>
+    <p class="muted small">The name, the ring and the calendar all take it.</p>
     <div class="swatch-grid">
       ${habits.COLOURS.map((c) => `<button class="swatch ${c.id === h.colour ? 'on' : ''}" data-colour="${c.id}"
         style="background:${c.hex}" aria-label="${c.name}"></button>`).join('')}
@@ -270,31 +362,44 @@ function openFreqSheet(h, done) {
     ${row('week', 'times per week', spin('week', week, 1, 7), '')}
     ${row('month', 'times per month', spin('month', month, 1, 30), '')}
     ${row('custom', 'times in', spin('cNum', cNum, 1, 365), `${spin('cDen', cDen, 1, 365)}<span>days</span>`)}
-    <p class="fineprint">A habit that asks for three days in seven is not late on the fourth: a day counts as kept whenever the week behind it holds three.</p>
+    <p class="fineprint" id="freqHint"></p>
     <div class="btn-row"><button class="btn ghost" data-close>Cancel</button><button class="btn primary" id="freqSave">Save</button></div>`);
 
   const num = (id, dflt) => {
     const v = Number(sheet.el.querySelector(`#${id}`).value);
     return Number.isFinite(v) && v >= 1 ? Math.round(v) : dflt;
   };
+  /** The fraction the checked row is set to, clamped as it will be saved. */
+  const chosen = () => {
+    const c = sheet.el.querySelector('input[name="freq"]:checked')?.value || 'daily';
+    if (c === 'daily') return { num: 1, den: 1 };
+    if (c === 'everyN') return { num: 1, den: Math.max(2, num('everyN', 3)) };
+    if (c === 'week') return { num: Math.min(7, num('week', 3)), den: 7 };
+    if (c === 'month') return { num: Math.min(30, num('month', 10)), den: 30 };
+    const den = num('cDen', 14);
+    return { num: Math.min(den, num('cNum', 3)), den };
+  };
+  // The rolling window is the part nobody expects, so it is stated in the
+  // numbers of the row you are on.
+  const hint = () => {
+    const f = chosen();
+    sheet.el.querySelector('#freqHint').textContent = f.den === 1
+      ? 'A day is kept when you mark it.'
+      : `A day is kept while the last ${f.den} days hold ${f.num}.`;
+  };
+  sheet.el.addEventListener('input', hint);
   // Touching a number picks its row: hunting for the radio as well is how a
   // dialog gets abandoned.
   sheet.el.querySelectorAll('.freq-num').forEach((input) =>
     input.addEventListener('focus', () => {
       input.closest('.freq-row').querySelector('input[type="radio"]').checked = true;
+      hint();
     })
   );
+  hint();
 
   sheet.el.querySelector('#freqSave').addEventListener('click', () => {
-    const choice = sheet.el.querySelector('input[name="freq"]:checked')?.value || 'daily';
-    if (choice === 'daily') h.freq = { num: 1, den: 1 };
-    else if (choice === 'everyN') h.freq = { num: 1, den: Math.max(2, num('everyN', 3)) };
-    else if (choice === 'week') h.freq = { num: Math.min(7, num('week', 3)), den: 7 };
-    else if (choice === 'month') h.freq = { num: Math.min(30, num('month', 10)), den: 30 };
-    else {
-      const den = num('cDen', 14);
-      h.freq = { num: Math.min(den, num('cNum', 3)), den };
-    }
+    h.freq = chosen();
     sheet.close();
     done();
   });
@@ -303,16 +408,16 @@ function openFreqSheet(h, done) {
 function openRemindSheet(h, done) {
   const sheet = openSheet(`
     <h2>Reminder</h2>
-    <p class="muted small">A real alarm on the APK, which fires whether or not the app is running. In a browser it does nothing, so the grid is the reminder.</p>
+    <p class="muted small">A real alarm in the Android app. In a browser the grid is the reminder.</p>
     <label class="setting">
       <span><b>At</b></span>
       <input type="time" id="at" value="${escapeHtml(h.remindAt)}">
     </label>
-    <div class="day-chips">
+    <div class="day-chips setting-days">
       ${WEEK_INITIALS.map((d, i) => `<button class="day-chip ${h.remindDays.includes(i) ? 'on' : ''}" data-day="${i}"
         aria-label="${WEEK_NAMES[i]}" aria-pressed="${h.remindDays.includes(i)}">${d}</button>`).join('')}
     </div>
-    <div class="btn-row"><button class="btn" id="off">Turn off</button><button class="btn primary" id="remSave">Save</button></div>`);
+    <div class="btn-row"><button class="btn ghost" id="off">Turn off</button><button class="btn primary" id="remSave">Save</button></div>`);
 
   const picked = new Set(h.remindDays);
   sheet.el.querySelectorAll('[data-day]').forEach((b) =>

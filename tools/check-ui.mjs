@@ -30,6 +30,18 @@ for (const m of body.matchAll(/font-size:\s*([^;]+);/g)) {
   problems.push(`${lineOf(m.index)}: font-size ${value}. Use one of ${SIZES.map((s) => `--f-${s}`).join(', ')}.`);
 }
 
+/* ---------------- corners ---------------- */
+
+// Forty-five hand-written sizes was the type problem. Twenty-six corner radii
+// was the same problem in another property, and it is what makes a screen read
+// as a pile of unrelated boxes.
+for (const m of body.matchAll(/border-radius:\s*([^;]+);/g)) {
+  const value = m[1].trim();
+  if (/^(0|50%|inherit)$/.test(value)) continue;
+  if (value.split(/\s+/).every((part) => /^(var\(--r-[a-z]+\)|0)$/.test(part))) continue;
+  problems.push(`${lineOf(m.index)}: border-radius ${value}. Use --r-card, --r-ctrl, --r-chip or --r-pill.`);
+}
+
 /* ---------------- colour ---------------- */
 
 // A hex outside :root is a colour nobody else can reuse and nothing can theme.
@@ -46,6 +58,7 @@ for (const m of body.matchAll(/#[0-9a-fA-F]{3,8}\b/g)) {
 if (!problems.length) {
   const n = [...body.matchAll(/font-size:/g)].length;
   console.log(`ok  ${n} font sizes, all on the scale (${SIZES.length} rungs)`);
+  console.log(`ok  ${[...body.matchAll(/border-radius:/g)].length} corners, all on the four tokens`);
   console.log('ok  no raw colours outside the palette');
   process.exit(0);
 }

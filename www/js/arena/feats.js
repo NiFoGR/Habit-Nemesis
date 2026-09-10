@@ -13,16 +13,24 @@ import * as arena from './program.js';
 
 /* ---------------- helpers the tests share ---------------- */
 
-/** A day where every row came good. */
+/** A day where every row came good. Computed once per store version: five
+ *  feats read it, and each is asked on every mark. */
+let perfectCache = null;
+store.subscribe(() => {
+  perfectCache = null;
+});
+
 function perfectDays() {
+  if (perfectCache) return perfectCache;
   const rows = habits.active();
   if (!rows.length) return { best: 0, count: 0 };
   const sums = rows.map((h) => habits.summary(h));
   let count = 0;
   let best = 0;
   let run = 0;
-  let key = store.addDays(habits.today(), -400);
   const end = habits.today();
+  // From the first day any row answers for, so a count can outgrow a window.
+  let key = sums.reduce((a, s) => (s.from < a ? s.from : a), end);
   while (key <= end) {
     let due = 0;
     let ok = 0;
@@ -38,7 +46,8 @@ function perfectDays() {
     if (run > best) best = run;
     key = store.addDays(key, 1);
   }
-  return { best, count };
+  perfectCache = { best, count };
+  return perfectCache;
 }
 
 const arenaState = () => store.get().arena;
@@ -96,7 +105,7 @@ function cameBack(gap = 14, back = 7) {
 }
 
 /** The biggest lifetime total on any measurable habit, in its own unit. */
-const countedMost = () => summaries().filter((s) => s.habit.kind === 'number').reduce((a, s) => Math.max(a, s.total || 0), 0);
+const countedMost = () => summaries().filter((s) => habits.measurable(s.habit)).reduce((a, s) => Math.max(a, s.total || 0), 0);
 
 const bestScore = () => summaries().reduce((a, s) => Math.max(a, s.score || 0), 0);
 
@@ -171,16 +180,22 @@ const arcList = () => Object.values(arenaState().arcs);
 export const FEATS = [
   /* --- The grid --- */
   { id: 'firstMark', section: 'The grid', icon: 'check', days: 1, name: 'Day one',
-    blurb: 'The first day you marked. Everything else is built on it.',
+    blurb: 'The first day you marked.',
     now: marksTotal, at: 1 },
   { id: 'perfectDay', section: 'The grid', icon: 'check', days: 1, name: 'A perfect day',
     blurb: 'Every row on the grid, green, on the same day.',
     now: () => perfectDays().count, at: 1 },
+  { id: 'perfect10', section: 'The grid', icon: 'check', days: 10, name: 'Ten perfect days',
+    blurb: 'Ten perfect days in total, not in a row.',
+    now: () => perfectDays().count, at: 10 },
+  { id: 'perfect100', section: 'The grid', icon: 'medal', days: 100, name: 'A hundred perfect days',
+    blurb: 'A hundred perfect days, all told.',
+    now: () => perfectDays().count, at: 100 },
   { id: 'perfectWeek', section: 'The grid', icon: 'flame', days: 7, name: 'A perfect week',
-    blurb: 'Seven perfect days back to back. Everything, all week.',
+    blurb: 'Seven perfect days back to back.',
     now: () => perfectDays().best, at: 7, unit: ' d' },
   { id: 'perfectMonth', section: 'The grid', icon: 'flame', days: 30, name: 'A perfect month',
-    blurb: 'Thirty perfect days back to back. Nothing slipped for a month.',
+    blurb: 'Thirty perfect days back to back.',
     now: () => perfectDays().best, at: 30, unit: ' d' },
   { id: 'streak7', section: 'The grid', icon: 'habits', days: 7, name: 'A week straight',
     blurb: 'One habit, seven days unbroken.',
@@ -195,7 +210,7 @@ export const FEATS = [
     blurb: 'One habit, kept unbroken for 365 days.',
     now: bestHabitStreak, at: 365, unit: ' d' },
   { id: 'streak1000', section: 'The grid', icon: 'medal', days: 1000, name: 'A thousand days',
-    blurb: 'One habit, a thousand days unbroken. Almost nobody gets here.',
+    blurb: 'One habit, a thousand days unbroken.',
     now: bestHabitStreak, at: 1000, unit: ' d' },
   { id: 'habits5', section: 'The grid', icon: 'habits', days: 1, name: 'Five at once',
     blurb: 'Five habits alive on the grid at the same time.',
@@ -207,7 +222,7 @@ export const FEATS = [
     blurb: 'A hundred days marked, all told.',
     now: marksTotal, at: 100 },
   { id: 'marks1000', section: 'The grid', icon: 'check', days: 200, name: 'A thousand ticks',
-    blurb: 'A thousand days marked. That is years of small decisions.',
+    blurb: 'A thousand days marked, all told.',
     now: marksTotal, at: 1000 },
   { id: 'marks10000', section: 'The grid', icon: 'medal', days: 730, name: 'Ten thousand ticks',
     blurb: 'Ten thousand days marked, across everything you keep.',
@@ -216,10 +231,10 @@ export const FEATS = [
     blurb: 'One measurable habit totalling a thousand of whatever it counts.',
     now: countedMost, at: 1000 },
   { id: 'counted10k', section: 'The grid', icon: 'target', days: 365, name: 'Ten thousand counted',
-    blurb: 'Ten thousand of one thing, a day at a time.',
+    blurb: 'Ten thousand of one thing counted.',
     now: countedMost, at: 10000 },
   { id: 'score90', section: 'The grid', icon: 'trend', days: 60, name: 'Ninety percent',
-    blurb: 'One habit at ninety percent. The score has a thirteen-day memory, so this is recent form.',
+    blurb: 'One habit at ninety percent.',
     now: () => bestScore() * 100, at: 90, unit: '%' },
   { id: 'boardClean', section: 'The grid', icon: 'trend', days: 1, name: 'The whole board',
     blurb: 'Every habit above seventy-five percent at the same time.',
@@ -228,21 +243,43 @@ export const FEATS = [
     blurb: 'Every habit in one group, satisfied every day for a week.',
     test: () => groupCleared(7) },
   { id: 'comeback', section: 'The grid', icon: 'repeat', days: 60, name: 'Back from the dead',
-    blurb: 'Broke a streak of thirty, then built another one. The second is the hard one.',
+    blurb: 'Broke a streak of thirty, then built another.',
     test: () => rebuilt(30) },
   { id: 'returned', section: 'The grid', icon: 'repeat', days: 30, name: 'Came back',
-    blurb: 'Away a fortnight, then seven days running. Nobody saw you stop.',
+    blurb: 'Away a fortnight, then seven days running.',
     test: () => cameBack(14, 7) },
+  // One per protocol, in the order the protocols are meant to be run.
+  { id: 'protocolFoundation', section: 'The grid', icon: 'flash', days: 30, name: 'The foundation',
+    blurb: 'Thirty days of sleep, light, steps and food, four in five kept.',
+    test: () => habits.completedProtocol('foundation') },
+  { id: 'protocolPhysical', section: 'The grid', icon: 'flash', days: 84, name: 'Twelve weeks of training',
+    blurb: 'Twelve weeks of training, food and recovery, four in five kept.',
+    test: () => habits.completedProtocol('physical') },
+  { id: 'protocolDigital', section: 'The grid', icon: 'flash', days: 30, name: 'Off the feeds',
+    blurb: 'Thirty days of five things not done, four in five kept.',
+    test: () => habits.completedProtocol('digital') },
+  { id: 'protocolDeepWork', section: 'The grid', icon: 'flash', days: 30, name: 'Deep work',
+    blurb: 'Thirty days of ninety-minute blocks, four in five kept.',
+    test: () => habits.completedProtocol('deepwork') },
+  { id: 'protocolDiscipline', section: 'The grid', icon: 'flash', days: 30, name: 'Discipline',
+    blurb: 'Thirty days of doing what you said you would, four in five kept.',
+    test: () => habits.completedProtocol('discipline') },
+  { id: 'protocolChristian', section: 'The grid', icon: 'flash', days: 30, name: 'The rule of prayer',
+    blurb: 'Thirty days of the morning and the evening rule, four in five kept.',
+    test: () => habits.completedProtocol('christian') },
+  { id: 'protocolCharacter', section: 'The grid', icon: 'flash', days: 60, name: 'Character',
+    blurb: 'Sixty days of keeping your word, four in five kept.',
+    test: () => habits.completedProtocol('character') },
   { id: 'year1', section: 'The grid', icon: 'calendar', days: 365, name: 'A year on the record',
     blurb: 'A year since the first day you marked.',
     now: daysOnRecord, at: 365, unit: ' d' },
   { id: 'year2', section: 'The grid', icon: 'calendar', days: 730, name: 'Two years',
-    blurb: 'Two years of record. The app is older than most of your excuses.',
+    blurb: 'Two years on the record.',
     now: daysOnRecord, at: 730, unit: ' d' },
 
   /* --- The Arena --- */
   { id: 'firstFixture', section: 'The Arena', icon: 'versus', days: 7, name: 'Your first week',
-    blurb: 'Played a fixture. The record had enough in it to be scored against.',
+    blurb: 'Played a fixture.',
     now: () => fixtures().length, at: 1 },
   { id: 'firstWin', section: 'The Arena', icon: 'versus', days: 7, name: 'First blood',
     blurb: 'Beat a week out of your own history.',
@@ -250,28 +287,34 @@ export const FEATS = [
   { id: 'wins10', section: 'The Arena', icon: 'versus', days: 70, name: 'Ten wins',
     blurb: 'Ten weeks won.', now: wins, at: 10 },
   { id: 'wins50', section: 'The Arena', icon: 'medal', days: 350, name: 'Fifty wins',
-    blurb: 'Fifty weeks won. That is a year of mostly turning up.',
+    blurb: 'Fifty weeks won.',
     now: wins, at: 50 },
   { id: 'winStreak5', section: 'The Arena', icon: 'flame', days: 35, name: 'Five in a row',
-    blurb: 'Five straight weeks won, none of them close enough to lose.',
+    blurb: 'Five straight weeks won.',
     now: bestWinRun, at: 5 },
   { id: 'weeks100', section: 'The Arena', icon: 'calendar', days: 700, name: 'A hundred weeks',
-    blurb: 'A hundred fixtures played. Two years of showing up to be counted.',
+    blurb: 'A hundred fixtures played.',
     now: () => fixtures().length, at: 100 },
   { id: 'beatWorst', section: 'The Arena', icon: 'flash', days: 14, name: 'Beat your worst',
-    blurb: 'Out-scored Your Worst Self. The low bar, cleared.',
+    blurb: 'Out-scored Your Worst Self.',
     test: () => beat('worst') },
   { id: 'beatLastMonth', section: 'The Arena', icon: 'flash', days: 60, name: 'Beat last month',
-    blurb: 'Out-scored the same week of a month ago. Measurably better than you were.',
+    blurb: 'Out-scored the same week of a month ago.',
     test: () => beat('lastMonth') },
   { id: 'divProspect', section: 'The Arena', icon: 'ladder', days: 30, name: 'Prospect',
     blurb: 'Climbed off the bottom of the ladder.', test: () => reachedDivision('prospect') },
   { id: 'divContender', section: 'The Arena', icon: 'ladder', days: 45, name: 'Contender',
-    blurb: 'Reached Contender. A bad week costs you something now.',
+    blurb: 'Reached Contender.',
     test: () => reachedDivision('contender') },
   { id: 'promoted2', section: 'The Arena', icon: 'crown', days: 60, name: 'Back to back',
     blurb: 'Promoted in consecutive months.',
     now: () => monthRun((m) => m.move === 'up'), at: 2 },
+  { id: 'cleared', section: 'The Arena', icon: 'shield', days: 60, name: 'Cleared',
+    blurb: 'On Notice, then a month at the bar.',
+    test: () => monthList().some((m) => m.cleared) },
+  { id: 'noticeComeback', section: 'The Arena', icon: 'crown', days: 60, name: 'Comeback',
+    blurb: 'On Notice, then promoted.',
+    test: () => monthList().some((m) => m.cleared && m.move === 'up') },
   { id: 'noDrop6', section: 'The Arena', icon: 'shield', days: 182, name: 'Six months, no step back',
     blurb: 'Six months settled without a relegation among them.',
     now: () => monthRun((m) => m.move !== 'down'), at: 6 },
@@ -279,25 +322,25 @@ export const FEATS = [
     blurb: 'Finished the group stage in the top three and made the knockout.',
     test: () => arcList().some((a) => a.qualified === true) },
   { id: 'arcFinal', section: 'The Arena', icon: 'trophy', days: 60, name: 'Reached a final',
-    blurb: 'Played an Arc final. The final is always your own best week.',
+    blurb: 'Played an Arc final.',
     test: () => arcList().some((a) => a.final === 'won' || a.final === 'lost') },
   { id: 'divMenace', section: 'The Arena', icon: 'trophy', days: 60, name: 'Menace',
     blurb: 'Climbed to the Menace division.', test: () => reachedDivision('menace') },
   { id: 'divMentzer', section: 'The Arena', icon: 'trophy', days: 90, name: 'Mentzer',
-    blurb: 'Climbed to Mentzer. Seventy percent is the floor now.', test: () => reachedDivision('mentzer') },
+    blurb: 'Climbed to Mentzer.', test: () => reachedDivision('mentzer') },
   { id: 'divLocked', section: 'The Arena', icon: 'trophy', days: 120, name: 'Locked In',
-    blurb: 'Climbed to Locked In. A good week is just a week now.', test: () => reachedDivision('locked') },
+    blurb: 'Climbed to Locked In.', test: () => reachedDivision('locked') },
   { id: 'divTopG', section: 'The Arena', icon: 'trophy', days: 150, name: 'Top G',
     blurb: 'Climbed to the top of the ladder.', test: () => reachedDivision('topg') },
   { id: 'topgHeld', section: 'The Arena', icon: 'medal', days: 180, name: 'Top G, held',
     blurb: 'Finished a month at Top G and stayed there.',
     test: () => Object.values(arenaState().months).some((m) => m.to === 'topg' && m.from === 'topg') },
   { id: 'beatNemesis', section: 'The Arena', icon: 'flash', days: 60, name: 'Beat the Nemesis',
-    blurb: 'Out-scored the best week you had ever had, in a week that counted.',
+    blurb: 'Out-scored the best week you ever had.',
     // The Arc final is the Nemesis under another name.
     test: () => Object.values(arenaState().weeks).some((w) => w.result === 'won' && (w.opponent === 'nemesis' || w.opponent === 'final')) },
   { id: 'arcWin', section: 'The Arena', icon: 'trophy', days: 90, name: 'An Arc',
-    blurb: 'Won an Arc. The final is always your own best week.', now: arcsWon, at: 1 },
+    blurb: 'Won an Arc.', now: arcsWon, at: 1 },
   { id: 'arcThree', section: 'The Arena', icon: 'trophy', days: 270, name: 'Three Arcs',
     blurb: 'Three trophies in the cabinet.', now: arcsWon, at: 3 },
   { id: 'arcYear', section: 'The Arena', icon: 'medal', days: 365, name: 'The clean sweep',
@@ -381,21 +424,13 @@ export function priceOf(days) {
   return days === 1 ? 'a day' : `${days} days`;
 }
 
-/** The hardest thing on the record. A sum would double-count: a year straight
- *  and a month straight are the same days twice. */
-export function steepest() {
-  const earned = FEATS.filter((f) => earnedAt(f.id) && progressOf(f).earned);
-  if (!earned.length) return null;
-  return earned.reduce((a, f) => (f.days > a.days ? f : a));
-}
-
 export function counts() {
   const list = FEATS;
   const all = list.map(progressOf);
   return { earned: all.filter((f) => f.earned).length, total: list.length };
 }
 
-/** Nearest to earned, for the "next up" line. Measurable ones only. */
+/** Nearest to earned, for an empty Cabinet. Measurable ones only. */
 export function closest(n = 3) {
   return FEATS.map((f) => ({ ...f, ...progressOf(f) }))
     .filter((f) => !f.earned && f.need)

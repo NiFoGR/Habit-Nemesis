@@ -1,13 +1,18 @@
 name: Build Android APK
 
 # Produces an installable debug APK. Every branch build attaches it to the run
-# as an artifact; a build of main also publishes it as a release asset.
-# Run it from the Actions tab, or let it run on every push to a branch.
+# as an artifact; a build of the default branch also publishes it as a release
+# asset. Run it from the Actions tab, or let it run on every push to a branch.
 on:
   push:
     branches: ['**']
     paths-ignore: ['docs/**', '**/*.md']
   workflow_dispatch:
+    inputs:
+      release:
+        description: 'Publish this build as a release, to install it on a phone'
+        type: boolean
+        default: false
 
 # Needed to create the release below. Everything else here only reads.
 permissions:
@@ -50,7 +55,7 @@ jobs:
         run: npm install
 
       - name: Generate the Android project
-        # android/ is not committed — Capacitor regenerates it from www/ each build.
+        # android/ is not committed. Capacitor regenerates it from www/ each build.
         run: |
           npx cap add android
           node tools/gen-icons.mjs --android
@@ -68,6 +73,9 @@ jobs:
         # android/ is regenerated every build, so the intent filter that brings
         # a provider sign-in back into the app has to be written each time.
         run: node tools/patch-deeplink.mjs
+
+      - name: Add the launcher shortcuts
+        run: node tools/patch-shortcuts.mjs
 
       - name: Turn on Android's own backup
         # The record has to survive the app being uninstalled, and Auto Backup
@@ -127,25 +135,32 @@ jobs:
         # An artifact is a zip, behind a GitHub login, that expires in 90 days.
         # A release asset is a plain .apk on a permanent URL, which is what you
         # want when the thing being downloaded goes straight onto a phone.
-        # Only the default branch, so branch builds stay artifacts and do not
-        # litter the releases page. Read from the repository rather than written
-        # out: this one has never been called main, so a literal never matched
-        # and the step had never run.
-        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        # The default branch, or a run started by hand with the release box
+        # ticked. Otherwise branch builds stay artifacts and do not litter the
+        # releases page. Read from the repository rather than written out: this
+        # one has never been called main, so a literal never matched and the
+        # step had never run.
+        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || inputs.release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           SHORT="${GITHUB_SHA::7}"
           APK="out/habit-nemesis-$SHORT.apk"
+          # A branch build is never the latest: it is a thing to test, not the
+          # one to install by default.
+          if [ "$GITHUB_REF" = "refs/heads/${{ github.event.repository.default_branch }}" ]; then
+            RANK=--latest
+          else
+            RANK=--prerelease
+          fi
           # Re-running a build of the same commit must not fail on the tag it
           # created the first time round.
           if gh release view "build-$SHORT" >/dev/null 2>&1; then
             gh release upload "build-$SHORT" "$APK" --clobber
           else
-            gh release create "build-$SHORT" "$APK" \
+            gh release create "build-$SHORT" "$APK" "$RANK" \
               --title "Habit Nemesis $SHORT" \
-              --notes "Debug APK built from $GITHUB_SHA. Signed with the project's fixed key, so it installs over an earlier build without clearing your data." \
-              --latest
+              --notes "Debug APK built from $GITHUB_SHA on ${GITHUB_REF#refs/heads/}. Signed with the project's fixed key, so it installs over an earlier build without clearing your data."
           fi
 
   # The store build. Runs only once the release key exists as secrets, so the
@@ -181,6 +196,9 @@ jobs:
 
       - name: Register the sign-in deep link
         run: node tools/patch-deeplink.mjs
+
+      - name: Add the launcher shortcuts
+        run: node tools/patch-shortcuts.mjs
 
       - name: Stamp the version
         run: node tools/patch-version.mjs

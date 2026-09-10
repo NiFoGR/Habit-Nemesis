@@ -2,22 +2,48 @@
 
 import { isNative } from './native.js';
 
-let feedback = { haptics: true, sound: true };
+let feedback = { haptics: true, sound: 'full', quiet: true, quietFrom: '22:00', quietTo: '07:00' };
 
 /* ---------------- feedback switches ---------------- */
 // Held here, not read here: store.js imports this module and cannot be imported
-// back, so it pushes the pair in on every save.
+// back, so it pushes the switches in on every save.
 
 /** Called by store.js only. */
 export function setFeedback(s) {
-  feedback = { haptics: s?.haptics !== false, sound: s?.sound !== false };
+  feedback = {
+    haptics: s?.haptics !== false,
+    sound: ['off', 'subtle', 'full'].includes(s?.sound) ? s.sound : s?.sound === false ? 'off' : 'full',
+    quiet: s?.quiet !== false,
+    quietFrom: s?.quietFrom || '22:00',
+    quietTo: s?.quietTo || '07:00',
+  };
 }
+
+/** HH:MM now, on the wall clock. */
+const clock = (d = new Date()) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+
+/** Inside quiet hours. A span that crosses midnight wraps. */
+export function inQuietHours(at = clock()) {
+  if (!feedback.quiet) return false;
+  const { quietFrom: from, quietTo: to } = feedback;
+  if (from === to) return false;
+  return from < to ? at >= from && at < to : at >= from || at < to;
+}
+
+/** The setting, or the media query, or the switch in Appearance. */
+export const reducedMotion = () =>
+  !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('reduce-motion');
 
 const PATTERNS = {
   tick: 12, press: 18, hit: [0, 30, 60, 30], done: 22, miss: [0, 40, 40, 40], level: [0, 40, 60, 40, 60, 80],
   // Arena: two beats for a win, three rising for a promotion.
   win: [0, 35, 50, 90], loss: [0, 120], promote: [0, 40, 50, 40, 50, 120], relegate: [0, 160, 80, 160],
   feat: [0, 25, 40, 25, 40, 60], trophy: [0, 60, 60, 60, 60, 60, 60, 200],
+  // The month settles On Notice: two long beats, a warning rather than a blow.
+  notice: [0, 90, 60, 90],
+  // Sound and vibration are one language: every cue has both.
+  kickoff: [0, 25, 40, 25], fulltime: 20, overtake: [0, 30, 40, 30, 40, 60], behind: [0, 80],
+  perfect: [0, 40, 60, 40, 60, 80], 'timer-tick': 6, 'timer-done': [0, 30, 40, 120],
 };
 
 export function haptic(kind) {
@@ -54,7 +80,7 @@ function audio() {
   master = ctx.createGain();
   // Everyday cues land around -15 dBFS and the ceremonies around -7, which is
   // audible on a phone speaker without being the loudest thing in the room.
-  master.gain.value = 1.7;
+  master.gain.value = GAIN.full;
   master.connect(comp).connect(ctx.destination);
   return ctx;
 }
@@ -124,8 +150,21 @@ const CUES = {
   unmark: { notes: [[N.A, 0, 0.06, { peak: 0.05 }], [N.E, 0.04, 0.12, { peak: 0.05 }]] },
   skip: { notes: [[N.d, 0, 0.1, { peak: 0.05, type: 'triangle', bright: 2 }]] },
   complete: { notes: [[N.c, 0, 0.14, { peak: 0.11 }], [N.e, 0.08, 0.14, { peak: 0.11 }], [N.G, 0.16, 0.4, { peak: 0.12 }]] },
+  // A timed habit: a whisper on each of its last ten seconds, a strike at the end.
+  'timer-tick': { notes: [[N.A, 0, 0.03, { peak: 0.02, bright: 3 }]] },
+  'timer-done': { strike: [0, 0.14, { peak: 0.16, tone: 1600 }], notes: [[N.C, 0.02, 0.2, { peak: 0.12 }], [N.G, 0.12, 0.45, { peak: 0.12 }]] },
+  // Every row owed today answered: complete, with one note left ringing above it.
+  perfect: { notes: [[N.c, 0, 0.14, { peak: 0.11 }], [N.e, 0.08, 0.14, { peak: 0.11 }], [N.G, 0.16, 0.4, { peak: 0.12 }], [N.C2, 0.5, 0.5, { peak: 0.1, bright: 6 }]] },
   // the Arena
   phase: { notes: [[N.G, 0, 0.12, { peak: 0.09 }]] },
+  // The week's first mark, on its first day.
+  kickoff: { notes: [[N.g, 0, 0.08, { peak: 0.1 }], [N.C, 0.06, 0.16, { peak: 0.1 }]] },
+  // The day closes. One note, no strike.
+  fulltime: { notes: [[N.c, 0, 0.3, { peak: 0.08 }]] },
+  // You pass the Nemesis mid-week. Once a week.
+  overtake: { notes: [[N.e, 0, 0.1, { peak: 0.13, bright: 6 }], [N.G, 0.08, 0.12, { peak: 0.13, bright: 6 }], [N.C2, 0.16, 0.4, { peak: 0.13, bright: 6 }]] },
+  // The Nemesis passes you. Once a day.
+  behind: { notes: [[N.d, 0, 0.35, { peak: 0.08, glide: 0.94 }]] },
   win: { notes: [[N.g, 0, 0.16, { peak: 0.13 }], [N.C, 0.09, 0.34, { peak: 0.14 }]] },
   loss: { notes: [[N.e, 0, 0.2, { peak: 0.1, bright: 2.5 }], [N.c, 0.1, 0.4, { peak: 0.1, bright: 2 }]] },
   feat: { notes: [[N.C, 0, 0.12, { peak: 0.1 }], [N.E, 0.06, 0.12, { peak: 0.11 }], [N.G, 0.12, 0.12, { peak: 0.12 }], [N.C2, 0.18, 0.42, { peak: 0.13 }]] },
@@ -139,19 +178,34 @@ const CUES = {
   relegate: {
     notes: [[N.G, 0, 0.3, { peak: 0.1, bright: 3 }], [N.e, 0.12, 0.34, { peak: 0.1, bright: 2.5 }], [N.c, 0.26, 0.8, { peak: 0.11, bright: 2, glide: 0.94 }]],
   },
+  // On Notice: one note falling, no strike. A warning, not a verdict.
+  notice: { notes: [[N.g, 0, 0.5, { peak: 0.1, bright: 2.5, glide: 0.9 }]] },
   trophy: {
     strike: [0, 0.2, { peak: 0.2, tone: 2200 }],
     notes: [[N.c, 0.02, 0.2, { peak: 0.13 }], [N.g, 0.12, 0.2, { peak: 0.13 }], [N.C, 0.22, 0.2, { peak: 0.14 }], [N.E, 0.32, 0.2, { peak: 0.14 }], [N.G, 0.42, 0.9, { peak: 0.15 }], [N.C2, 0.42, 0.9, { peak: 0.08, bright: 6 }]],
   },
 };
 
+/* Off, Subtle, Full. Subtle is the grid's own cues at everyday level; quiet
+   hours cap everything at Subtle whatever the setting says. */
+const GAIN = { subtle: 1.0, full: 1.7 };
+const SUBTLE = new Set(['tick', 'mark', 'unmark', 'skip']);
+
+function soundLevel() {
+  if (feedback.sound === 'off') return 'off';
+  return inQuietHours() ? 'subtle' : feedback.sound;
+}
+
 /** Play a cue by name. Unknown names are silent rather than an error, so a
  *  screen naming a cue that does not exist yet is not a crash. */
 export function chime(kind) {
   const cue = CUES[kind];
-  if (!cue || !feedback.sound) return;
+  const level = soundLevel();
+  if (!cue || level === 'off') return;
+  if (level === 'subtle' && !SUBTLE.has(kind)) return;
   try {
     if (!audio()) return;
+    master.gain.value = GAIN[level];
     if (ctx.state === 'suspended') ctx.resume();
     if (cue.strike) strike(cue.strike[0], cue.strike[1], cue.strike[2]);
     for (const [freq, at, dur, opts] of cue.notes) voice(freq, at, dur, opts);
@@ -162,7 +216,7 @@ export function chime(kind) {
 
 /** Sparks from the centre of an element. Self-removing, and off under reduced motion. */
 export function celebrate(el, { colour = 'var(--accent)', count = 14, spread = 90 } = {}) {
-  if (!el || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  if (!el || reducedMotion()) return;
   const wrap = document.createElement('div');
   wrap.className = 'sparks';
   for (let i = 0; i < count; i++) {
@@ -181,35 +235,25 @@ export const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 
 /* ---------------- small components ---------------- */
 
-/** Vertical bars. `colour` is for a habit's own screen, which is not in the accent. */
-export function barChart(bars, { h = 120, unit = '', colour = null } = {}) {
-  if (!bars.length) return '<div class="chart-empty">Nothing logged in this period</div>';
-  const max = Math.max(...bars.map((b) => b.value), 1);
-  // Past about eight columns the labels collide, so thin them from the right.
-  const every = Math.max(1, Math.ceil(bars.length / 8));
-  return `<div class="barchart" style="--h:${h}px${colour ? `;--bar:${colour}` : ''}">${bars
-    .map((b, i) => {
-      const pctH = Math.max(b.value > 0 ? 3 : 0, (b.value / max) * 100);
-      const stack = b.parts
-        ? b.parts
-            .filter((p) => p.value > 0)
-            .map((p) => `<i style="height:${(p.value / b.value) * 100}%;background:${p.colour}" title="${escapeHtml(p.label)}"></i>`)
-            .join('')
-        : '<i style="height:100%"></i>';
-      return `<div class="bar" title="${escapeHtml(b.label)}: ${escapeHtml(b.text || String(b.value) + unit)}">
-        <div class="bar-stack" style="height:${pctH}%">${stack}</div>
-        <span>${(bars.length - 1 - i) % every === 0 ? escapeHtml(b.short || b.label) : ''}</span>
-      </div>`;
-    })
-    .join('')}</div>`;
-}
-
 export function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 export const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 export const WEEKDAYS_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+/** Two day keys as one range. formatRange drops the repeated month by the
+ *  locale's own rule; hand-rolling it gave "15 to Apr 17" on en-US. */
+const RANGE = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
+const RANGE_Y = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: '2-digit' });
+
+export function fmtRange(from, to) {
+  const a = new Date(`${from}T00:00:00`);
+  const b = new Date(`${to}T00:00:00`);
+  // The year only when it is not this one.
+  const f = b.getFullYear() === new Date().getFullYear() ? RANGE : RANGE_Y;
+  return f.formatRange ? f.formatRange(a, b) : `${f.format(a)} – ${f.format(b)}`;
+}
 
 export function fmtDate(key) {
   const [y, m, d] = key.split('-').map(Number);
@@ -225,8 +269,26 @@ export function relDay(key) {
   return fmtDate(key);
 }
 
+/** An instant, as distance: just now, 4 minutes ago, yesterday, then a date. */
+export function relTime(iso) {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return '';
+  const s = Math.max(0, (Date.now() - t) / 1000);
+  if (s < 60) return 'just now';
+  const m = Math.round(s / 60);
+  if (m < 60) return `${m} minute${m === 1 ? '' : 's'} ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h} hour${h === 1 ? '' : 's'} ago`;
+  const d = new Date(t);
+  const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return relDay(key).toLowerCase();
+}
+
 let toastTimer = null;
-export function toast(msg) {
+
+/** A line at the foot. With `undo`, a button beside it for six seconds: the
+ *  act has already happened, and this is the way back. */
+export function toast(msg, { undo = null } = {}) {
   let t = document.getElementById('toast');
   if (!t) {
     t = document.createElement('div');
@@ -234,9 +296,20 @@ export function toast(msg) {
     document.body.appendChild(t);
   }
   t.textContent = msg;
+  if (undo) {
+    const b = document.createElement('button');
+    b.className = 'toast-undo';
+    b.textContent = 'Undo';
+    b.addEventListener('click', () => {
+      clearTimeout(toastTimer);
+      t.classList.remove('show');
+      undo();
+    });
+    t.appendChild(b);
+  }
   t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+  toastTimer = setTimeout(() => t.classList.remove('show'), undo ? 6000 : 2600);
 }
 
 /* ---------------- charts ---------------- */

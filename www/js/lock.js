@@ -47,7 +47,7 @@ export async function setPin(pin) {
   const check = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(CHECK_TEXT));
   store.update((s) => {
     s.settings.lock = { salt: b64.to(salt), iv: b64.to(iv), check: b64.to(check) };
-  });
+  }, { local: true });
   unlocked = true;
 }
 
@@ -68,7 +68,7 @@ export function clearPin() {
   store.update((s) => {
     s.settings.lock = null;
     s.settings.appLock = false;
-  });
+  }, { local: true });
   unlocked = true;
 }
 

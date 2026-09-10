@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One habit: the name in its own colour, then four day cells, today on the right. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:minHeight="24dp"
+    android:orientation="horizontal">
+
+    <TextView
+        android:id="@+id/hnw_row_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="3"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:paddingEnd="4dp"
+        android:paddingStart="0dp"
+        android:textColor="#e6eaf0"
+        android:textSize="12sp" />
+
+    <ImageView
+        android:id="@+id/hnw_row_c0"
+        android:layout_width="0dp"
+        android:layout_height="20dp"
+        android:layout_weight="1"
+        android:contentDescription="@null"
+        android:scaleType="fitCenter" />
+
+    <ImageView
+        android:id="@+id/hnw_row_c1"
+        android:layout_width="0dp"
+        android:layout_height="20dp"
+        android:layout_weight="1"
+        android:contentDescription="@null"
+        android:scaleType="fitCenter" />
+
+    <ImageView
+        android:id="@+id/hnw_row_c2"
+        android:layout_width="0dp"
+        android:layout_height="20dp"
+        android:layout_weight="1"
+        android:contentDescription="@null"
+        android:scaleType="fitCenter" />
+
+    <ImageView
+        android:id="@+id/hnw_row_c3"
+        android:layout_width="0dp"
+        android:layout_height="20dp"
+        android:layout_weight="1"
+        android:contentDescription="@null"
+        android:scaleType="fitCenter" />
+</LinearLayout>

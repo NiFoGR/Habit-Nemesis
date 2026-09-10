@@ -1,11 +1,12 @@
 // Registers the app's own URL scheme with Android, so a provider sign-in can
-// come back into the app.
+// come back into the app and a launcher shortcut can open a screen.
 //
 // Google refuses to serve its sign-in pages to an embedded WebView, which is
 // what a Capacitor app is, so the provider opens in a Custom Tab. The way back
 // is a custom scheme: com.habitnemesis.app://auth. Without an intent filter for
 // it, the tab lands on a page Android cannot open and the sign-in silently
-// never finishes.
+// never finishes. The second host, open, carries a route: the shortcuts in
+// tools/patch-shortcuts.mjs and the widgets' taps both go through it.
 //
 // android/ is regenerated on every build, so a hand-edited manifest is thrown
 // away by the next CI run. This runs after `cap sync`, like patch-signing.mjs
@@ -15,7 +16,7 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 const MANIFEST = 'android/app/src/main/AndroidManifest.xml';
 const SCHEME = 'com.habitnemesis.app';
-const HOST = 'auth';
+const HOSTS = ['auth', 'open'];
 
 if (!existsSync(MANIFEST)) {
   console.error(`${MANIFEST} not found. Run \`npx cap add android\` first.`);
@@ -35,7 +36,7 @@ const FILTER = `
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="${SCHEME}" android:host="${HOST}" />
+${HOSTS.map((host) => `                <data android:scheme="${SCHEME}" android:host="${host}" />`).join('\n')}
             </intent-filter>
 `;
 
@@ -58,8 +59,8 @@ writeFileSync(MANIFEST, xml);
 
 // Checked rather than assumed: a silent no-op here is a sign-in that hangs.
 const after = readFileSync(MANIFEST, 'utf8');
-if (!after.includes(MARK) || !after.includes(`android:host="${HOST}"`)) {
+if (!after.includes(MARK) || HOSTS.some((host) => !after.includes(`android:host="${host}"`))) {
   console.error('The intent filter did not land. Manifest left as it was.');
   process.exit(1);
 }
-console.log(`deep link registered: ${SCHEME}://${HOST}`);
+console.log(`deep links registered: ${HOSTS.map((host) => `${SCHEME}://${host}`).join(', ')}`);
