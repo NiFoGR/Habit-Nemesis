@@ -5,7 +5,7 @@
 
 import * as store from '../store.js';
 import * as arena from './program.js';
-import { escapeHtml, pct, chime, haptic, celebrate, reducedMotion } from '../ui.js';
+import { escapeHtml, pct, chime, haptic, celebrate, reducedMotion, openSheet } from '../ui.js';
 import { icon } from '../icons.js';
 import { cup } from './cup.js';
 import { wireWeeks } from './week-sheet.js';
@@ -15,29 +15,25 @@ const ROUNDS = ['qf', 'sf', 'final'];
 /* The draw and its noise, once per state per session. */
 let played = '';
 
+const ORDINALS = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th'];
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
 /** What the screen shows, as one word. A break after a defeat is still that
  *  defeat; a break before you ever entered is not one. */
 function shown(st) {
   // Summer holds no cup, whatever a saved file says.
   if (!st.arc.cup) return 'shut';
   if (st.phase === 'champion') return 'won';
+  if (st.phase === 'entry') return 'entry';
   if (st.phase === 'out') return 'out';
   if (st.phase === 'break') return st.lostAt || st.rec.qualified === false ? 'out' : 'shut';
   if (st.phase === 'group') return 'group';
   return 'knockout';
 }
 
-/** Where it ended. Never entered is not knocked out. */
-function ended(st) {
-  if (st.lostAt) return `Out in the ${arena.KNOCKOUT[st.lostAt].name.toLowerCase()}`;
-  return st.eligible ? 'Out at the group stage' : 'Not enough weeks played';
-}
-
-/** The same fact under an eyebrow that already says Out. */
-function endedAt(st) {
-  if (st.lostAt) return arena.KNOCKOUT[st.lostAt].name;
-  return st.eligible ? 'Group stage' : 'Not enough weeks played';
-}
+/** Where it ended. Losing the group is not losing a round. */
+const endedAt = (st) =>
+  st.lostAt ? `Out in the ${arena.KNOCKOUT[st.lostAt].name.toLowerCase()}` : 'Out at the group stage';
 
 /* ---- the button on the Arena ---- */
 
@@ -58,12 +54,13 @@ export function arcHtml() {
 }
 
 function subtitle(st, state) {
-  if (state === 'shut') return `Opens in ${st.opensIn} day${st.opensIn === 1 ? '' : 's'}`;
+  if (state === 'shut') return `Opens in ${plural(st.opensIn, 'day')}`;
+  if (state === 'entry') return `Not entered, ${plural(st.opensIn, 'day')} to the ${st.next.name}`;
   if (state === 'won') return 'Won';
-  if (state === 'out') return ended(st);
+  if (state === 'out') return endedAt(st);
   if (state === 'group') {
-    return st.eligible
-      ? `Group stage, ${st.groupLeft} week${st.groupLeft === 1 ? '' : 's'} to the knockout`
+    return st.played >= st.need
+      ? `${ORDINALS[st.place]} of ${st.field}, ${plural(st.groupLeft, 'week')} to the knockout`
       : `Group stage, ${st.played} of the ${st.need} weeks played`;
   }
   return st.round.name;
@@ -87,12 +84,13 @@ export function renderArc(mount) {
         <h1>The Arc</h1>
         <span class="icon-btn ghost"></span>
       </header>
-      ${cupSection(st, state, arc)}
+      ${cupSection(st, state, arc, g)}
       ${groupSection(st, state, g)}
       ${knockSection(st, state, arc)}
     </div>`;
 
   wireWeeks(mount);
+  wireSheets(mount, g, arc);
   if (played !== `${st.key}:${state}`) {
     played = `${st.key}:${state}`;
     perform(mount, state);
@@ -101,85 +99,113 @@ export function renderArc(mount) {
 
 /* ---- the cup ---- */
 
-function cupSection(st, state, arc) {
-  const eyebrow = state === 'shut' ? 'Next'
-    : state === 'out' ? 'Out'
-      : state === 'group' ? 'Group stage'
-        : state === 'won' ? 'Champion' : st.round.name;
-  const line = cupLine(st, state);
+/** The trophy, whose cup it is, and the one line the screen is about. */
+function cupSection(st, state, arc, g) {
+  const s = status(st, state, g);
   return `<section class="arc-cup ${state}">
-    <span class="arc-cup-art">${cup(arc.id, 132)}</span>
-    <p class="eyebrow">${escapeHtml(eyebrow)}</p>
-    <h2 class="arc-cup-name">${escapeHtml(state === 'shut' ? st.nextLabel : st.label)}</h2>
-    ${line ? `<p class="arc-cup-line">${line}</p>` : ''}
+    <span class="arc-cup-art">${cup(arc.id, 128)}</span>
+    <p class="eyebrow">${escapeHtml(state === 'shut' ? st.nextLabel : st.label)}</p>
+    <h2 class="arc-status ${s.tone} ${s.head.length > 15 ? 'long' : ''}">${
+      // A word a span: without it "Semi-final" broke across two lines at its hyphen.
+      s.head.split(' ').map((w) => `<span>${escapeHtml(w)}</span>`).join(' ')
+    }</h2>
+    ${s.fact ? `<p class="arc-fact">${escapeHtml(s.fact)}</p>` : ''}
     ${state === 'won' && st.rec.note ? `<p class="said-quote">“${escapeHtml(st.rec.note)}”</p>` : ''}
   </section>`;
 }
 
-/** One fact, and only one. */
-function cupLine(st, state) {
-  const days = (n) => `<b>${n}</b> day${n === 1 ? '' : 's'}`;
-  if (state === 'shut') return `Opens in ${days(st.opensIn)}`;
-  if (state === 'out') return `${escapeHtml(endedAt(st))}. Opens again in ${days(st.opensIn)}`;
-  if (state === 'group') return `<b>${st.groupLeft}</b> week${st.groupLeft === 1 ? '' : 's'} to the knockout`;
-  if (state === 'knockout') return `${days(arena.daysLeftInWeek())} left`;
-  // Champion: the cup, the year and the line you left. Nothing else.
-  return '';
+/** The headline and the single fact under it, both read off the record. */
+function status(st, state, g) {
+  const days = (n) => plural(n, 'day');
+  const weeks = (n) => plural(n, 'week');
+  if (state === 'shut') return { head: `Opens in ${days(st.opensIn)}`, tone: 'cold', fact: 'The weeks you play now become the field.' };
+  if (state === 'entry') return { head: 'Not in this cup', tone: 'cold', fact: `${st.nextLabel} opens in ${days(st.opensIn)}` };
+  if (state === 'won') return { head: 'Champion', tone: 'gold', fact: '' };
+  if (state === 'out') return { head: endedAt(st), tone: 'cold', fact: `Opens again in ${days(st.opensIn)}` };
+  if (state === 'knockout') return { head: st.round.name, tone: 'live', fact: `${days(arena.daysLeftInWeek())} left` };
+  // Group. Turning up comes first: a place in a field you have not made is noise.
+  const short = st.need - st.played;
+  if (short > 0) return { head: `${weeks(short)} to qualify`, tone: 'live', fact: `${weeks(st.groupLeft)} of the group left` };
+  const seat = `${ORDINALS[g.place]} of ${g.table.length}, ${weeks(st.groupLeft)} to the knockout`;
+  return g.place <= arena.ARC_THROUGH
+    ? { head: 'In the hunt', tone: 'good', fact: seat }
+    : { head: 'Outside the cut', tone: 'warn', fact: seat };
 }
 
 /* ---- the group ---- */
 
-/** Every row is a week out of your own record, which the line has to say: a
- *  table of scores you have never seen reads as other people. */
+/** The gate first, then the field. Every row is a week out of your own record,
+ *  which the gate's note has to say: a table of scores you have never seen
+ *  reads as other people. */
 function groupSection(st, state, g) {
   // Nothing has been played into a cup that has not opened, so the preview is
   // the field alone: your own row would be a 0% that means nothing.
   const preview = state === 'shut';
   const rows = preview ? g.table.filter((r) => !r.you) : g.table;
-  const thin = preview ? g.rivals < arena.ARC_MIN_RIVALS : rows.length <= 1;
-
-  if (thin) {
-    return `<section class="card arc-group">
-      <h2>The group</h2>
-      <p class="arc-note">The weeks you play become the field.</p>
-    </section>`;
-  }
-
-  const verdict = preview || state === 'group' ? ''
-    : st.rec.qualified === true ? 'Through'
-      : st.rec.qualified === false ? 'Out here' : '';
+  const cut = !preview && g.eligible;
 
   return `<section class="card arc-group">
-    <div class="ar-fx-head">
-      <h2>The group</h2>
-      ${verdict ? `<span class="pill ${verdict === 'Through' ? 'done' : 'ghost'}">${verdict}</span>` : ''}
-    </div>
-    <p class="arc-note">${preview
-      ? 'The field is fixed the day the cup opens.'
-      : 'Every rival here is a week you have played.'}</p>
-    <div class="ar-table">
-      ${rows.map((r, i) => `<div class="ar-tr ${r.you ? 'you' : ''} ${!preview && g.eligible && i < 3 ? 'q' : ''}" style="--i:${i}"${
-        r.week ? ` data-week="${escapeHtml(r.week)}"` : ''
-      }>
-        <span class="ar-pos">${i + 1}</span>
-        <span class="ar-tn">${escapeHtml(r.name)}</span>
+    <h2>The group</h2>
+    ${gate(st, state, g)}
+    ${rows.length > 1 ? `<div class="arc-field">
+      ${rows.map((r, i) => `<div class="arc-row ${r.you ? 'you' : ''} ${cut && i + 1 === arena.ARC_THROUGH ? 'through' : ''}"
+        style="--w:${(r.score * 100).toFixed(0)}%;--i:${i}"${r.week ? ` data-week="${escapeHtml(r.week)}"` : ''}>
+        <span class="arc-row-pos">${i + 1}</span>
+        <span class="arc-row-name">${escapeHtml(r.name)}</span>
         <b>${pct(r.score)}</b>
       </div>`).join('')}
     </div>
-    ${preview || g.eligible ? '' : `<p class="arc-note">${escapeHtml(shortfall(g))}</p>`}
+    <p class="arc-note">Every rival here is a week you have played.</p>` : ''}
   </section>`;
 }
 
-/** Why this is not a cup yet. */
-function shortfall(g) {
-  if (g.rivals < arena.ARC_MIN_RIVALS) return 'You have not played enough weeks to make a field.';
-  return `You have played ${g.played} of the ${g.need} weeks a cup needs.`;
+/** The one bar the screen is about: what stands between you and the knockout.
+ *  The field a cup needs first, then the weeks you owe it. The label carries
+ *  the verdict once there is one, because a settled cup cannot be re-run. */
+function gate(st, state, g) {
+  const settled = st.rec.qualified !== null && state !== 'shut';
+  let label = 'Qualification';
+  let have = g.played;
+  let want = g.need;
+  let tone = 'live';
+  let note = `Top ${arena.ARC_THROUGH} of the field go through.`;
+
+  if (g.rivals < arena.ARC_MIN_RIVALS) {
+    label = 'The field';
+    have = g.rivals;
+    want = arena.ARC_MIN_RIVALS;
+    tone = 'cold';
+    note = 'A cup needs weeks on the record to play against.';
+  } else if (state === 'entry') {
+    tone = 'cold';
+    note = 'Too few group weeks left to reach it.';
+  } else if (state === 'shut') {
+    // Nothing has been played into a cup that has not opened, so nothing is live.
+    tone = 'cold';
+  } else if (settled) {
+    label = st.rec.qualified ? 'Through' : 'Out here';
+    tone = st.rec.qualified ? 'good' : 'cold';
+    note = `Top ${arena.ARC_THROUGH} of the field went through.`;
+    // You cannot be through without having turned up, whatever the live count.
+    if (st.rec.qualified) have = Math.max(have, want);
+  } else if (have >= want) {
+    tone = g.place <= arena.ARC_THROUGH ? 'good' : 'warn';
+  }
+
+  // Clamped: the gate is a threshold, so past it there is no more of it.
+  const done = Math.min(have, want);
+  const w = (done / Math.max(1, want)) * 100;
+  return `<button class="arc-gate ${tone}" id="arcGate">
+    <span class="arc-gate-top"><i>${escapeHtml(label)}</i><b>${done} of ${want} weeks</b></span>
+    <span class="arc-gate-bar"><i style="width:${w.toFixed(0)}%"></i></span>
+    <span class="arc-gate-note">${escapeHtml(note)}${icon('back', 13)}</span>
+  </button>`;
 }
 
 /* ---- the knockout ---- */
 
 /** Three columns at 320px gave each round forty pixels, so the rounds run down
- *  a rail instead: the bracket, read downwards. */
+ *  a rail instead: the bracket, read downwards, the final at the bottom. */
 function knockSection(st, state, arc) {
   // The season's last three weeks are qf, sf and final, which is arcStage's
   // own rule. arcSeason, not st.season: in summer the two are different arcs.
@@ -188,34 +214,79 @@ function knockSection(st, state, arc) {
   return `<section class="card arc-knock">
     <h2>The knockout</h2>
     <div class="arc-bracket">
-      ${ROUNDS.map((id, i) => tie(st, state, id, i, weeks[i], stored[weeks[i]])).join('')}
+      ${ROUNDS.map((id, i) => tie(st, state, id, i, weeks[i], stored[weeks[i]], arc)).join('')}
     </div>
+    ${prize(state)}
   </section>`;
 }
 
+/** What the final is worth. Nothing once this cup is out of reach: a prize you
+ *  can no longer play for is a taunt. */
+function prize(state) {
+  if (state === 'out') return '';
+  return `<p class="arc-note">${state === 'won'
+    ? 'The cup is in the Cabinet.'
+    : 'Win the final and the cup goes in the Cabinet.'}</p>`;
+}
+
 /** A scoreline once it is played, the score so far while it is on, and the
- *  opponent it will be until then. */
-function tie(st, state, id, i, key, week) {
-  const r = state === 'shut' ? null : st.rec[id];
+ *  opponent it will be until then. The final carries the cup instead. */
+function tie(st, state, id, i, key, week, arc) {
+  const r = state === 'shut' || state === 'entry' ? null : st.rec[id];
   const now = state === 'knockout' && st.stage === id;
-  const played = r === 'won' || r === 'lost';
+  const done = r === 'won' || r === 'lost';
 
-  const mine = played ? week?.score : now ? arena.scoreWeek(arena.currentWeek()).score : null;
-  const theirs = played ? week?.oppScore : now ? st.fixture?.score : null;
-  const who = (played ? week?.oppName : now ? st.fixture?.name : '') || arena.KNOCKOUT[id].who;
-  const open = played ? key : now ? arena.currentWeek() : '';
+  const mine = done ? week?.score : now ? arena.scoreWeek(arena.currentWeek()).score : null;
+  const theirs = done ? week?.oppScore : now ? st.fixture?.score : null;
+  const who = (done ? week?.oppName : now ? st.fixture?.name : '') || arena.KNOCKOUT[id].who;
+  const open = done ? key : now ? arena.currentWeek() : '';
+  const scored = mine != null && theirs != null;
 
-  return `<div class="arc-tie ${r || ''} ${now ? 'now' : ''} ${played || now ? '' : 'todo'}" style="--i:${i}"${
-    open ? ` data-week="${escapeHtml(open)}"` : ''
+  return `<div class="arc-tie ${id} ${r || ''} ${now ? 'now' : ''} ${done || now ? '' : 'todo'}" style="--i:${i}"${
+    open ? ` data-week="${escapeHtml(open)}"` : ` data-round="${id}"`
   }>
     <span class="arc-tie-node"></span>
     <span class="arc-tie-body">
       <b>${escapeHtml(arena.KNOCKOUT[id].name)}</b>
       <i>${escapeHtml(who)}</i>
     </span>
-    ${mine == null || theirs == null ? ''
-      : `<span class="arc-tie-score"><b>${pct(mine)}</b><i>${pct(theirs)}</i></span>`}
+    ${scored ? `<span class="arc-tie-score"><b>${pct(mine)}</b><i>${pct(theirs)}</i></span>`
+      : done || now ? ''
+        // The prize where the score will be, and a lock on the rounds before it.
+        : id === 'final' ? `<span class="arc-tie-prize">${cup(arc.id, 34)}</span>`
+          : `<span class="arc-tie-lock">${icon('lock', 15)}</span>`}
   </div>`;
+}
+
+/* ---- what a tap explains ---- */
+
+function wireSheets(mount, g, arc) {
+  mount.querySelector('#arcGate')?.addEventListener('click', () => {
+    haptic('tick');
+    openSheet(`
+      <h2>Getting to the knockout</h2>
+      <p class="muted small">Every rival in the group is a week you have played.</p>
+      <ul class="arc-rules">
+        <li><span><b>${arena.ARC_MIN_RIVALS} weeks</b> on the record outside this cup</span><i>${g.rivals} so far</i></li>
+        <li><span><b>${g.need} of the ${g.groupWeeks.length}</b> group weeks played</span><i>${g.played} so far</i></li>
+        <li><span><b>Top ${arena.ARC_THROUGH}</b> of the field go through</span><i>${g.table.length > 1 ? `${ORDINALS[g.place]} now` : 'no field yet'}</i></li>
+      </ul>
+      <button class="btn wide" data-close>Close</button>`);
+  });
+
+  mount.querySelectorAll('[data-round]').forEach((el) =>
+    el.addEventListener('click', () => {
+      haptic('tick');
+      const round = arena.KNOCKOUT[el.dataset.round];
+      const week = arena.arcSeason(arc).slice(-3)[ROUNDS.indexOf(round.id)];
+      openSheet(`
+        <h2>${escapeHtml(round.name)}</h2>
+        <p class="muted small">${escapeHtml(arena.weekLabel(week))}</p>
+        <p>You play ${escapeHtml(round.opponent)}.</p>
+        ${round.id === 'final' ? `<div class="arc-sheet-cup">${cup(arc.id, 96)}</div>` : ''}
+        <button class="btn wide" data-close>Close</button>`);
+    })
+  );
 }
 
 /* ---- noise ---- */
