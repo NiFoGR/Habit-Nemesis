@@ -19,13 +19,13 @@ const width = (v) => Math.max(v > 0 ? 4 : 1.5, v * 100).toFixed(1);
 
 /** Nothing is due yet: the fixture is not a contest, so it does not pretend to
  *  be one. No opponent, no 0%, no deficit invented before you have started. */
-function notYet(key, left) {
+function notYet(key) {
   return `<section class="card ar-fixture waiting">
     <div class="ar-fx-head">
       <h2>This week</h2>
       <span class="pill ghost">${escapeHtml(arena.weekLabel(key))}</span>
     </div>
-    <p class="ar-fx-none">Nothing is due yet. Put a row on the grid and this becomes a fixture.</p>
+    <p class="ar-fx-none">A row on the grid makes this a fixture.</p>
     <a class="btn ghost wide" href="#/habits">${icon('plus', 15)}<span>Go to the grid</span></a>
   </section>`;
 }
@@ -34,7 +34,7 @@ export function fixtureHtml() {
   const key = arena.currentWeek();
   const live = arena.scoreWeek(key);
   const left = arena.daysLeftInWeek();
-  if (live.void && !live.due) return notYet(key, left);
+  if (live.void && !live.due) return notYet(key);
 
   const opp = arena.fixtureFor(key);
   const gap = points(live.score) - points(opp.score);
@@ -91,13 +91,13 @@ export function wireFixture(mount) {
   });
 }
 
-/** The last eight results, as a strip. A "Form" heading over eight numbers is
- *  a word doing their job. */
+/** The last six results, as a strip. A "Form" heading over six numbers is a
+ *  word doing their job. */
 export function formHtml(weeks) {
   const played = Object.entries(weeks)
     .filter(([k, w]) => k < arena.currentWeek() && (w.result === 'won' || w.result === 'lost'))
     .sort((a, b) => (a[0] < b[0] ? -1 : 1))
-    .slice(-8);
+    .slice(-6);
   if (!played.length) return '';
   return `<div class="ar-form">${played
     .map(([k, w]) => `<button class="ar-chip ${w.result}" data-week="${k}"

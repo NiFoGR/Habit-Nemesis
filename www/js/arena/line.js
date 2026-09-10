@@ -110,14 +110,16 @@ const LINES = [
     },
   },
   {
+    // The gap: the one number the cards below do not already carry.
     id: 'best',
     when: () => {
       const l = live();
-      return !!l && !!arena.nemesisWeek() && l.left > 1 && l.due > 0;
+      const n = arena.nemesisWeek();
+      return !!l && !!n && l.left > 1 && l.due > 0 && Math.round((n.score - l.score) * 100) > 0;
     },
     say: () => {
-      const l = live();
-      return `Your best week was ${pct(arena.nemesisWeek().score)}. You are on ${pct(l.score)} with ${l.left} days left.`;
+      const gap = Math.round((arena.nemesisWeek().score - live().score) * 100);
+      return `${cap(word(gap))} off your best.`;
     },
   },
   {
@@ -139,7 +141,7 @@ const LINES = [
   {
     id: 'perfect',
     when: () => perfectOn(store.addDays(habits.today(), -1)),
-    say: () => 'Yesterday was a perfect day. Do it again.',
+    say: () => 'Yesterday was a perfect day.',
   },
   {
     id: 'lastDay',

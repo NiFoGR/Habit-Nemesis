@@ -45,28 +45,35 @@ export function renderCabinet(mount) {
       <hr class="cut">
       <div class="cab-shelf">${shelf(cups)}</div>
 
-      ${bands(feats.bySection().flatMap((s) => s.items))}
-      <a class="btn ghost wide" href="#/cabinet/feats">${icon('medal', 16)}<span>All ${c.total} feats</span></a>
+      <section class="card">
+        <div class="ar-fx-head">
+          <h2>Feats</h2>
+          <span class="pill ghost">${c.earned} of ${c.total}</span>
+        </div>
+        ${featList(c.earned)}
+        <a class="btn ghost wide" href="#/cabinet/feats">${icon('medal', 16)}<span>All feats</span></a>
+      </section>
 
-      <div class="vault small">
-        <span class="vault-lock">${icon('lock', 20)}</span>
-        <b class="vault-count">${left}</b>
-        <span class="vault-unit">day${left === 1 ? '' : 's'}</span>
-        <p class="vault-label">until <b>${escapeHtml(running.label)}</b> is sealed</p>
-      </div>
-      ${open.length
-        ? `<div class="yr-chips">
-            ${open
-              .slice()
-              .reverse()
-              .map((y) => `<a class="yr-chip" href="#/cabinet/year?y=${y.n}">${escapeHtml(y.label)}</a>`)
-              .join('')}
-          </div>`
-        : ''}
+      <section class="card">
+        <h2>The year</h2>
+        ${open.length
+          ? `<div class="yr-chips">
+              ${open
+                .slice()
+                .reverse()
+                .map((y) => `<a class="yr-chip" href="#/cabinet/year?y=${y.n}">${escapeHtml(y.label)}</a>`)
+                .join('')}
+            </div>`
+          : ''}
+        <p class="cab-year">
+          <span class="cab-year-lock">${icon('lock', 15)}</span>
+          <b>${left}</b> day${left === 1 ? '' : 's'} until <b>${escapeHtml(running.label)}</b> is sealed
+        </p>
+      </section>
 
       ${notes.length
         ? `<section class="card">
-            <div class="ar-week-head">
+            <div class="ar-fx-head">
               <h2>What you said</h2>
               <span class="pill ghost">${notes.length}</span>
             </div>
@@ -112,31 +119,37 @@ function shelf(cups) {
   }).join('');
 }
 
-/* --------------------- feats by price --------------------- */
+/* --------------------- what is in the case --------------------- */
 
-// Named by what they cost, so the bands need no heading of their own.
-const BANDS = [
-  { name: 'Years', min: 350 },
-  { name: 'Months', min: 60 },
-  { name: 'Weeks', min: 14 },
-  { name: 'Days', min: 0 },
-];
+/** Short, and the year only when it is not this one. */
+function when(at) {
+  const d = new Date(at);
+  const opts = { day: 'numeric', month: 'short' };
+  if (d.getFullYear() !== new Date().getFullYear()) opts.year = 'numeric';
+  return d.toLocaleDateString(undefined, opts);
+}
 
-function bands(all) {
-  return BANDS.map((b, i) => {
-    const hi = i ? BANDS[i - 1].min : Infinity;
-    const items = all.filter((f) => f.days >= b.min && f.days < hi);
-    if (!items.length) return '';
-    const got = items.filter((f) => f.earned).length;
-    return `<section class="cab-band">
-      <div class="cab-bandhead"><h2>${b.name}</h2><span class="pill ghost">${got} of ${items.length}</span></div>
-      <div class="cab-bar"><i style="width:${((got / items.length) * 100).toFixed(0)}%"></i></div>
-      <div class="cab-hexes">
-        ${items.map((f) => `<button class="hex ${f.earned ? 'on' : ''}" data-feat="${escapeHtml(f.id)}"
-          aria-label="${escapeHtml(f.name)}, ${escapeHtml(feats.priceOf(f.days))}">${icon(f.icon, 15)}</button>`).join('')}
-      </div>
-    </section>`;
-  }).join('');
+/** The last five taken, or the five nearest when nothing has been. */
+function featList(earned) {
+  const rows = earned
+    ? feats.FEATS.map((f) => ({ ...f, at: feats.earnedAt(f.id) }))
+      .filter((f) => f.at)
+      .sort((a, b) => b.at - a.at)
+      .slice(0, 5)
+      .map((f) => row(f, when(f.at)))
+    : feats.closest(5).map((f) => row(f, feats.priceOf(f.days), f.frac));
+  return rows.join('');
+}
+
+/* No glyph: the catalogue reuses them, so five rows can carry three marks. */
+function row(f, right, frac = 0) {
+  return `<button class="cab-feat" data-feat="${escapeHtml(f.id)}">
+    <span class="cab-feat-body">
+      <b>${escapeHtml(f.name)}</b>
+      ${frac > 0.02 ? `<span class="ft-bar"><i style="width:${(frac * 100).toFixed(0)}%"></i></span>` : ''}
+    </span>
+    <i>${escapeHtml(right)}</i>
+  </button>`;
 }
 
 const cupName = (key) => {

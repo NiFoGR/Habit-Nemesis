@@ -424,21 +424,13 @@ export function priceOf(days) {
   return days === 1 ? 'a day' : `${days} days`;
 }
 
-/** The hardest thing on the record. A sum would double-count: a year straight
- *  and a month straight are the same days twice. */
-export function steepest() {
-  const earned = FEATS.filter((f) => earnedAt(f.id) && progressOf(f).earned);
-  if (!earned.length) return null;
-  return earned.reduce((a, f) => (f.days > a.days ? f : a));
-}
-
 export function counts() {
   const list = FEATS;
   const all = list.map(progressOf);
   return { earned: all.filter((f) => f.earned).length, total: list.length };
 }
 
-/** Nearest to earned, for the "next up" line. Measurable ones only. */
+/** Nearest to earned, for an empty Cabinet. Measurable ones only. */
 export function closest(n = 3) {
   return FEATS.map((f) => ({ ...f, ...progressOf(f) }))
     .filter((f) => !f.earned && f.need)
