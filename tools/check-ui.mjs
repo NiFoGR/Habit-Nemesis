@@ -42,6 +42,25 @@ for (const m of body.matchAll(/border-radius:\s*([^;]+);/g)) {
   problems.push(`${lineOf(m.index)}: border-radius ${value}. Use --r-card, --r-ctrl, --r-chip or --r-pill.`);
 }
 
+/* ---------------- space ---------------- */
+
+// The same problem again, in a third property. The app carried 25 different
+// hand-written spacing values, which is why two screens never shared a rhythm.
+// Structural spacing, 16px and up, comes off the scale. Below 16 is optical:
+// a nudge inside a control, not the rhythm between sections.
+const SPACE = /^(?:margin|padding|gap|row-gap|column-gap)(?:-top|-bottom|-left|-right|-block|-inline)?$/;
+for (const m of body.matchAll(/([a-z-]+):\s*([^;{]+);/g)) {
+  if (!SPACE.test(m[1])) continue;
+  const value = m[2].trim();
+  // calc, clamp and env are doing something other than rhythm.
+  if (/calc\(|clamp\(|env\(/.test(value)) continue;
+  for (const px of value.matchAll(/(\d+)px/g)) {
+    if (Number(px[1]) < 16) continue;
+    problems.push(`${lineOf(m.index)}: ${m[1]} ${value}. Use --s-4 to --s-9, or --pad.`);
+    break;
+  }
+}
+
 /* ---------------- colour ---------------- */
 
 // A hex outside :root is a colour nobody else can reuse and nothing can theme.
@@ -59,6 +78,7 @@ if (!problems.length) {
   const n = [...body.matchAll(/font-size:/g)].length;
   console.log(`ok  ${n} font sizes, all on the scale (${SIZES.length} rungs)`);
   console.log(`ok  ${[...body.matchAll(/border-radius:/g)].length} corners, all on the four tokens`);
+  console.log(`ok  ${[...body.matchAll(/(?:margin|padding|gap)[a-z-]*:/g)].length} spacings, structural ones on the scale`);
   console.log('ok  no raw colours outside the palette');
   process.exit(0);
 }

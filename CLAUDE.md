@@ -48,18 +48,25 @@ together they are the reason the app sounded written by a machine.
 ### The scale, and how it stays one
 
 Every size in the app is one of the ten rungs in `:root`, every colour is one of
-the tokens, and every corner is one of four radii. `npm run check:ui` fails on a
-raw `font-size`, a raw `border-radius` or a hex outside the palette. This is
-checked rather than asked for because asking did not work: the app reached
-forty-five hand-written sizes on top of the eight it already had, and
-twenty-six corner radii, which is what makes one screen look assembled by
-several people.
+the tokens, every corner is one of four radii, and every structural space is one
+of the six spacing rungs. `npm run check:ui` fails on a raw `font-size`, a raw
+`border-radius`, a raw margin, padding or gap of 16px or more, and a hex outside
+the palette. This is checked rather than asked for because asking did not work:
+the app reached forty-five hand-written sizes on top of the eight it already
+had, twenty-six corner radii, and twenty-five spacing values, which is what
+makes one screen look assembled by several people.
 
 - Pick the rung by the job, not by the pixels: `--f-mega` is a running numeral,
   `--f-hero` the one number a screen is about, `--f-sub` a screen's h1,
   `--f-head` a card's h2, `--f-fine` a caption, `--f-micro` an axis label.
 - A new size means a missing rung. Add it to `:root` with a comment saying what
   it is for, or use the nearest one. Never both a rung and a rem.
+- Space between sections comes off `--s-4` to `--s-9`, or `--pad` for the page
+  gutter. Under 16px is optical, a nudge inside a control rather than rhythm
+  between sections, and is not checked.
+- A number that is neither rhythm nor a rung is a derived constant: a grip's
+  lane, the width a numeral reserves. Name it as a local custom property with a
+  comment saying what it is derived from. Never leave it bare.
 
 ### A border is earned
 
