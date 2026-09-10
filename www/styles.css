@@ -743,27 +743,36 @@ button.type-card { width: 100%; text-align: left; font: inherit; cursor: pointer
 /* ---------- the timer ----------
    One numeral and nothing near it. The only place --f-mega is used. */
 .screen.timer { min-height: 100dvh; display: flex; flex-direction: column; }
-.timer-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 8px; }
+.timer-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px; }
 .timer-num { font-size: var(--f-mega); line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; margin: 0; }
-.timer-num.running { color: var(--hc, var(--accent)); }
 .timer-sub { color: var(--muted); font-size: var(--f-small); margin: 0; }
-.timer-ring { width: 220px; height: 220px; display: grid; place-items: center; position: relative; margin-bottom: 8px; }
+/* The ring is the screen. */
+.timer-ring { width: min(276px, 74vw); aspect-ratio: 1; display: grid; place-items: center; position: relative; margin-bottom: 10px; }
 .timer-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.timer-ring .timer-fill { transition: stroke-dashoffset 1s linear; }
-.timer-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-/* ---------- one habit's own screen ---------- */
+.timer-ring .timer-fill { transition: stroke-dashoffset 1s linear, opacity var(--t-base) var(--ease); }
+/* Held. */
+.timer-ring.held .timer-fill { opacity: 0.3; }
+/* One primary. Finish appears once there is something to finish. */
+.timer-actions { display: grid; gap: 8px; }
+.timer-actions .btn { margin: 0; }
+.timer-actions .btn[hidden] { display: none; }
 
 /* ---------- one habit ----------
-   The score is what the screen is about, so it is the only large thing on it.
-   Everything else is a line: four equal tiles gave four numbers equal weight
-   and left the screen with no headline. */
+   The score is the headline, the calendar the picture, the rest a line. */
 .hb-top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .hb-score { font-size: var(--f-hero); letter-spacing: -0.03em; line-height: 1; }
 .hb-move { font-size: var(--f-small); color: var(--muted); }
+/* The one coloured line in the block. */
+.hb-move.up { color: var(--good); }
+.hb-move.down { color: var(--warn); }
 .hb-why { margin: 10px 0 0; font-size: var(--f-small); color: var(--muted); }
 .hb-facts { margin: 6px 0 0; font-size: var(--f-fine); color: var(--faint); }
 .hb-note { font-size: var(--f-small); color: var(--muted); }
+/* Context, not the subject: a wash under the line, not a slab. */
+.hb-detail .chart path { opacity: 0.2; }
+/* The chip keeps its size. Only the hit area reaches 44. */
+.hb-edit { position: relative; }
+.hb-edit::after { content: ''; position: absolute; inset: -7px -6px; }
 .screen.habits .card { margin-bottom: 30px; }
 .screen.habits .hb-facts + .card { margin-top: 30px; }
 
@@ -796,6 +805,12 @@ button.type-card { width: 100%; text-align: left; font: inherit; cursor: pointer
    sliced a column in half at whichever edge it came to rest, and hid half the
    record behind a gesture nothing advertised. */
 .hcal { display: flex; gap: 6px; }
+/* Edit mode: six weeks at a size a thumb can hit, on a surface. */
+.hcal.on {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-card); padding: 16px;
+}
+.hcal.on .hc-cell { font-size: var(--f-fine); }
 .hcal-body { display: flex; gap: 2px; flex: 1; min-width: 0; }
 .hcal-col { display: flex; flex-direction: column; gap: 2px; flex: 1 1 0; min-width: 0; }
 .hcal-mon {
@@ -823,8 +838,8 @@ button.type-card { width: 100%; text-align: left; font: inherit; cursor: pointer
 .hc-cell.now { box-shadow: inset 0 0 0 1.5px var(--text); }
 .hc-cell.on.now { box-shadow: inset 0 0 0 1.5px var(--bg); }
 .hc-cell.future { visibility: hidden; }
-/* Before the habit existed. Faint, not empty: it can still be filled in. */
-.hc-cell.void { opacity: 0.3; }
+/* Before the habit existed. An outline, not a block. Still tappable. */
+.hc-cell.void { background: none; box-shadow: inset 0 0 0 1px var(--line-soft); }
 /* The labels read the rows and must never set them. At the inherited
    line-height the side column outgrew the grid and Mon fell a row out of step. */
 .hcal-side { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
@@ -833,19 +848,17 @@ button.type-card { width: 100%; text-align: left; font: inherit; cursor: pointer
   font-style: normal; font-size: var(--f-micro); line-height: 1; color: var(--muted);
 }
 
-.streak-list { display: grid; gap: 8px; margin-top: 12px; }
-.streak-row { display: flex; align-items: center; gap: 10px; font-size: var(--f-fine); color: var(--muted); }
-.streak-when { flex: 0 0 92px; }
-.streak-bar { flex: 1; background: var(--surface-2); border-radius: var(--r-pill); overflow: hidden; }
-.streak-bar i {
-  display: flex; align-items: center; justify-content: center;
-  height: 22px; min-width: 26px; border-radius: var(--r-pill);
-  font-style: normal; font-size: var(--f-fine); font-weight: var(--w-bold); color: var(--bg);
+/* Date, bar, length, on the arena's row. The bar is the rank. */
+.streak-list { display: grid; margin-top: 10px; }
+.streak-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: var(--f-fine); color: var(--muted); }
+/* Wide enough for a run that crosses a new year. */
+.streak-when { flex: 1 1 60%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.streak-bar { flex: 1 1 24%; height: 6px; background: var(--surface-2); border-radius: var(--r-pill); overflow: hidden; }
+.streak-bar i { display: block; height: 100%; border-radius: var(--r-pill); }
+.streak-row b {
+  flex: 0 0 26px; text-align: right; font-variant-numeric: tabular-nums;
+  color: var(--text); font-weight: var(--w-medium); font-size: var(--f-fine);
 }
-/* Ranked by length. The whole row recedes, or a faded bar keeps a solid date
-   beside it and the list stops reading as an order. */
-.streak-row.mid { opacity: 0.6; }
-.streak-row.low { opacity: 0.34; }
 /* ==========================================================================
    Motion
    ==========================================================================

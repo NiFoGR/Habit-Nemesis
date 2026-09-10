@@ -4,7 +4,7 @@
 
 import * as store from '../store.js';
 import * as habits from './program.js';
-import { escapeHtml, lineChart, openSheet, haptic, fmtDate, fmtRange, WEEKDAYS_LONG } from '../ui.js';
+import { escapeHtml, lineChart, openSheet, haptic, fmtDate, fmtRange, WEEKDAYS } from '../ui.js';
 import { icon } from '../icons.js';
 import { announce } from '../arena/result.js';
 
@@ -74,14 +74,17 @@ export function renderHabitDetail(mount, id) {
 
   const draw = () => {
     const scores = scoreSeries(sum, scorePeriod);
-    const cal = habits.calendar(sum, 20);
-    const month = Math.round((sum.score - habits.scoreAgo(sum, 30)) * 100);
-    const year = sum.days.length > 365 ? Math.round((sum.score - habits.scoreAgo(sum, 365)) * 100) : null;
-    // The tile is the delta, so it is coloured rather than repeated underneath.
-    const deltaClass = (v) => (v > 0 ? 'good-text' : v < 0 ? 'warn-inline' : '');
+    // Six weeks to aim at, twenty to look at.
+    const cal = habits.calendar(sum, editing ? 6 : 20);
+    // Nothing to compare against inside the first month.
+    const month = sum.days.length > 30 ? Math.round((sum.score - habits.scoreAgo(sum, 30)) * 100) : 0;
+    // Under a fortnight a trend line is jitter.
+    const trend = sum.days.length >= 14;
+    const per = SCORE_PERIODS[scorePeriod].label.toLowerCase();
+    const streaks = streaksHtml(sum, colour);
 
     mount.innerHTML = `
-      <div class="screen habits" style="--hc:${colour}">
+      <div class="screen habits hb-detail" style="--hc:${colour}">
         <header class="screen-head">
           <button class="icon-btn" data-back="habits" aria-label="Back">${icon('back')}</button>
           <h1 style="color:${colour}">${escapeHtml(habit.name)}</h1>
@@ -90,34 +93,34 @@ export function renderHabitDetail(mount, id) {
 
         <div class="hb-top">
           <b class="hb-score">${Math.round(sum.score * 100)}%</b>
-          ${month === 0 ? '' : `<span class="hb-move ${deltaClass(month)}">${month > 0 ? '+' : ''}${month}% this month</span>`}
+          ${month === 0 ? '' : `<span class="hb-move ${month > 0 ? 'up' : 'down'}">${month > 0 ? '+' : ''}${month}% this month</span>`}
         </div>
         <p class="hb-why">${escapeHtml(whyLine(sum))}</p>
         <p class="hb-facts">${[
           escapeHtml(habits.freqLabel(habit.freq)),
           habit.remindAt ? escapeHtml(habit.remindAt) : '',
-          `${sum.streak} day streak`,
+          sum.streak ? `${sum.streak} day streak` : '',
           `${fmtTotal(habit, sum)} in all`,
-          year === null ? '' : `${year > 0 ? '+' : ''}${year}% this year`,
         ].filter(Boolean).join(' · ')}</p>
 
-        <section class="card">
+        ${trend
+          ? `<section class="card">
           <div class="h-row"><h2>Score</h2>${periodSelect('scoreP', scorePeriod, SCORE_PERIODS)}</div>
-          ${scores.values.length > 1
+          ${scores.values.length > 2
             ? lineChart(scores.values, { color: colour, labels: [bucketLabel(scores.keys[0]), bucketLabel(scores.keys[scores.keys.length - 1])] })
-            : '<div class="chart-empty">A few days of answers fill this in</div>'}
-        </section>
+            : `<div class="chart-empty">${scores.values.length} ${per}${scores.values.length === 1 ? '' : 's'} so far.</div>`}
+        </section>`
+          : ''}
 
         <section class="card">
           <div class="h-row"><h2>Calendar</h2>
-            <button class="chipbtn ${editing ? 'on' : ''}" id="editCal">${icon('pencil', 14)}<span>${editing ? 'Done' : 'Edit'}</span></button></div>
+            <button class="chipbtn hb-edit ${editing ? 'on' : ''}" id="editCal">${icon('pencil', 14)}<span>${editing ? 'Done' : 'Edit'}</span></button></div>
           ${calendarHtml(cal, editing)}
         </section>
 
-        <section class="card">
-          <div class="h-row"><h2>Streaks</h2></div>
-          ${streaksHtml(sum, colour)}
-        </section>
+        ${streaks
+          ? `<section class="card"><div class="h-row"><h2>Streaks</h2></div>${streaks}</section>`
+          : ''}
 
         ${habit.notes
           ? `<section class="card"><div class="h-row"><h2>Notes</h2></div>
@@ -125,11 +128,12 @@ export function renderHabitDetail(mount, id) {
           : ''}
       </div>`;
 
-    mount.querySelector('#scoreP').addEventListener('change', (e) => {
+    mount.querySelector('#scoreP')?.addEventListener('change', (e) => {
       scorePeriod = e.target.value;
       draw();
     });
-    mount.querySelector('#editCal')?.addEventListener('click', () => {
+    mount.querySelector('#editCal').addEventListener('click', () => {
+      haptic('press');
       editing = !editing;
       draw();
     });
@@ -152,10 +156,10 @@ function whyLine(sum) {
   const m = habits.movement(sum);
   const points = (n) => `${n} point${n === 1 ? '' : 's'}`;
   if (m.days < 7) return `${m.days} day${m.days === 1 ? '' : 's'} on the record.`;
-  const names = m.misses.map((k) => WEEKDAYS_LONG[new Date(`${k}T00:00:00`).getDay()]);
-  const list = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
+  // One day is worth naming. More than one, the calendar shows which.
+  const only = m.misses.length === 1 ? `, on ${WEEKDAYS[new Date(`${m.misses[0]}T00:00:00`).getDay()]}` : '';
   const count = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven'][m.misses.length] || String(m.misses.length);
-  if (m.delta < 0) return `Down ${points(-m.delta)} this week. ${count} miss${m.misses.length === 1 ? '' : 'es'}${list ? `, on ${list}` : ''}.`;
+  if (m.delta < 0) return `Down ${points(-m.delta)} this week. ${count} miss${m.misses.length === 1 ? '' : 'es'}${only}.`;
   if (m.delta > 0) return `Up ${points(m.delta)} this week. ${m.kept} of 7 days kept.`;
   return `Level this week. ${m.kept} of 7 days kept.`;
 }
@@ -174,7 +178,7 @@ function bucketLabel(key) {
 /* ---------------- the calendar ---------------- */
 
 function calendarHtml(cal, editing) {
-  return `<div class="hcal">
+  return `<div class="hcal ${editing ? 'on' : ''}">
     <div class="hcal-body">
       ${cal.cols
         .map((c) => `<div class="hcal-col">
@@ -247,23 +251,19 @@ function openPastValue(habit, key, refresh) {
   sheet.el.querySelector('#clear').addEventListener('click', () => done(undefined));
 }
 
-/* ---------------- streaks and frequency ---------------- */
+/* ---------------- streaks ---------------- */
 
-/** Longest first, and ranked: the top third full, the middle softer, the rest
- *  faint. A list of equal bars said nothing about which one was the best. */
+/** The five longest, longest first. Empty until one of them beats a single day. */
 function streaksHtml(sum, colour) {
-  // Five, and never a run of one: a list of single days is not a best.
-  const long = sum.streaks.filter((s) => s.len > 1);
-  const list = (long.length ? long : sum.streaks).slice(0, 5);
-  if (!list.length) return '<p class="hb-note">None yet.</p>';
+  const list = sum.streaks.filter((s) => s.len > 1).slice(0, 5);
+  if (!list.length) return '';
   const max = list[0].len;
-  const tier = (i) => (i < list.length / 3 ? '' : i < (list.length * 2) / 3 ? ' mid' : ' low');
-  return `<p class="hb-facts">Now ${sum.streak} · best ${max}</p>
-    <div class="streak-list">${list
-      .map((s, i) => `<div class="streak-row${tier(i)}">
-        <span class="streak-when">${escapeHtml(fmtRange(s.from, s.to))}</span>
-        <span class="streak-bar"><i style="width:${Math.max(8, (s.len / max) * 100)}%;background:${colour}">${s.len}</i></span>
-      </div>`)
-      .join('')}</div>`;
+  return `<div class="streak-list">${list
+    .map((s) => `<div class="streak-row">
+      <span class="streak-when">${escapeHtml(fmtRange(s.from, s.to))}</span>
+      <span class="streak-bar"><i style="width:${Math.max(6, (s.len / max) * 100)}%;background:${colour}"></i></span>
+      <b>${s.len}</b>
+    </div>`)
+    .join('')}</div>`;
 }
 

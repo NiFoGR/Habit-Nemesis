@@ -65,6 +65,8 @@ export function renderTimer(mount, id) {
   }
   const colour = habits.hexOf(habit.colour);
   const target = habit.target || 0;
+  // A legacy row with no target still gets a ring: an hour dial.
+  const dial = target || 60;
   const r = 100;
   const c = 2 * Math.PI * r;
 
@@ -87,25 +89,28 @@ export function renderTimer(mount, id) {
         <p class="timer-sub" id="sub">${target ? `of ${target} min` : 'minutes'}</p>
       </div>
       <div class="timer-actions">
-        <button class="btn big" id="toggle">Start</button>
-        <button class="btn primary big" id="finish">Finish</button>
+        <button class="btn primary big" id="toggle">Start</button>
+        <button class="btn" id="finish" hidden>Finish</button>
       </div>
     </div>`;
 
   const num = mount.querySelector('#num');
+  const ring = mount.querySelector('.timer-ring');
   const fill = mount.querySelector('.timer-fill');
   const toggle = mount.querySelector('#toggle');
+  const finish = mount.querySelector('#finish');
   let ticked = -1;
 
   const draw = () => {
     const ms = elapsedMs();
     const s = Math.floor(ms / 1000);
     num.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-    num.classList.toggle('running', !!run?.since);
+    // The ring carries the state, so the numeral stays the subject.
+    ring.classList.toggle('held', !run?.since);
     toggle.textContent = run?.since ? 'Pause' : ms ? 'Resume' : 'Start';
+    finish.hidden = !ms;
+    fill.setAttribute('stroke-dashoffset', (c * (1 - Math.min(1, ms / (dial * 60000)))).toFixed(1));
     if (target) {
-      const frac = Math.min(1, ms / (target * 60000));
-      fill.setAttribute('stroke-dashoffset', (c * (1 - frac)).toFixed(1));
       // The last ten seconds to the target, and the moment it lands.
       const left = target * 60 - s;
       if (run?.since && left <= 10 && left > 0 && left !== ticked) {
@@ -116,7 +121,7 @@ export function renderTimer(mount, id) {
         ticked = 0;
         chime('timer-done');
         haptic('done');
-        celebrate(mount.querySelector('.timer-ring'), { count: 16, spread: 90, colour });
+        celebrate(ring, { count: 16, spread: 90, colour });
       }
     }
     // A whole minute is worth keeping.
@@ -134,10 +139,10 @@ export function renderTimer(mount, id) {
     draw();
   });
 
-  mount.querySelector('#finish').addEventListener('click', () => {
+  finish.addEventListener('click', () => {
     pause();
     const m = minutes();
-    if (m && !reducedMotion()) celebrate(mount.querySelector('#finish'), { count: 10, spread: 50, colour });
+    if (m && !reducedMotion()) celebrate(finish, { count: 10, spread: 50, colour });
     if (m && !(target && m >= target)) chime('timer-done');
     haptic('done');
     clearInterval(ticker);
