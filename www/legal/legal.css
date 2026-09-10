@@ -28,13 +28,15 @@
   --f-body: 0.95rem;
   --f-small: 0.84rem;
   --f-fine: 0.76rem;
+  --f-micro: 0.66rem;
   --w-medium: 600;
   --w-bold: 700;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
 
-  --radius: 12px;
-  --radius-sm: 9px;
-  --radius-pill: 999px;
+  --r-card: 14px;
+  --r-ctrl: 10px;
+  --r-chip: 4px;
+  --r-pill: 999px;
   --pad: 16px;
 
   color-scheme: dark;
@@ -65,16 +67,18 @@ header { border-bottom: 1px solid var(--line-soft); padding-bottom: 18px; margin
   color: var(--muted); font-size: var(--f-fine); text-transform: uppercase;
   letter-spacing: 0.12em; margin: 0 0 6px;
 }
-h1 { font-size: var(--f-sub); margin: 0 0 8px; letter-spacing: -0.02em; }
+h1 { font-size: var(--f-sub); margin: 0 0 8px; letter-spacing: -0.02em; text-wrap: balance; }
 .stamp { color: var(--muted); font-size: var(--f-small); margin: 0; }
 
 /* ---- body ---- */
 h2 {
   font-size: var(--f-title); margin: 34px 0 10px; letter-spacing: -0.01em;
   scroll-margin-top: 12px;
+  /* No single word alone on a heading's last line at 320px. */
+  text-wrap: balance;
 }
 h2 .n { color: var(--faint); font-weight: var(--w-medium); margin-right: 8px; }
-h3 { font-size: var(--f-head); margin: 20px 0 8px; color: var(--text); }
+h3 { font-size: var(--f-head); margin: 20px 0 8px; color: var(--text); text-wrap: balance; }
 p { margin: 0 0 12px; font-size: var(--f-body); }
 p:last-child { margin-bottom: 0; }
 ul { margin: 0 0 12px; padding-left: 20px; font-size: var(--f-body); }
@@ -83,27 +87,36 @@ li:last-child { margin-bottom: 0; }
 strong { font-weight: var(--w-medium); }
 a { color: var(--accent-ink); }
 code {
-  background: var(--surface-2); padding: 1px 5px; border-radius: 5px;
+  background: var(--surface-2); padding: 1px 5px; border-radius: var(--r-chip);
   font-size: 0.85em; word-break: break-all;
 }
 .muted { color: var(--muted); }
 .small { font-size: var(--f-small); }
 
-/* ---- contents ---- */
-nav.toc {
-  background: var(--surface); border: 1px solid var(--line-soft);
-  border-radius: var(--radius); padding: 14px var(--pad); margin-bottom: 8px;
+/* ---- contents ----
+   Rows on a hairline, the way every list in the app is. Sixteen accent-red
+   lines in a box was the loudest thing on the page and none of it was state. */
+nav.toc { margin: 20px 0 8px; }
+nav.toc p {
+  font-size: var(--f-micro); text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--faint); font-weight: var(--w-medium); margin: 0 0 2px;
 }
-nav.toc p { font-size: var(--f-fine); text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin: 0 0 8px; }
-nav.toc ol { margin: 0; padding-left: 20px; font-size: var(--f-small); }
-nav.toc li { margin-bottom: 4px; }
-nav.toc a { text-decoration: none; }
-nav.toc a:hover { text-decoration: underline; }
+nav.toc ol { margin: 0; padding: 0; list-style: none; counter-reset: toc; }
+nav.toc li { margin: 0; counter-increment: toc; }
+nav.toc a {
+  display: flex; gap: 12px; align-items: baseline;
+  min-height: 44px; padding: 11px 2px;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--text); text-decoration: none; font-size: var(--f-body);
+}
+nav.toc li:last-child a { border-bottom: 0; }
+nav.toc a::before { content: counter(toc); color: var(--faint); font-size: var(--f-small); min-width: 16px; }
+@media (hover: hover) { nav.toc a:hover { color: var(--accent-ink); } }
 
 /* ---- callouts ---- */
 .card {
   background: var(--surface); border: 1px solid var(--line-soft);
-  border-radius: var(--radius); padding: 14px var(--pad); margin: 0 0 14px;
+  border-radius: var(--r-card); padding: 14px var(--pad); margin: 0 0 14px;
 }
 .card.warn { border-left: 3px solid var(--warn); }
 .card.danger { border-left: 3px solid var(--danger); }
@@ -111,18 +124,25 @@ nav.toc a:hover { text-decoration: underline; }
 .card.calm { border-left: 3px solid var(--calm); }
 .card h3 { margin-top: 0; }
 
+/* A status mark. It sits inside running text, so it never breaks and never
+   grows the line it is on. */
 .tag {
-  display: inline-block; font-size: var(--f-fine); font-weight: var(--w-medium);
-  padding: 3px 9px; border-radius: var(--radius-pill);
+  display: inline-block; white-space: nowrap; margin: 0;
+  font-size: var(--f-fine); font-weight: var(--w-medium); line-height: 1.3;
+  padding: 0 8px; border-radius: var(--r-pill);
   border: 1px solid var(--line); color: var(--muted); background: var(--bg-2);
-  margin: 0 0 10px;
 }
+/* A tag on its own under a heading, saying whether the section is live yet. */
+.tagline { margin: -2px 0 12px; }
 .tag.soon { border-color: var(--warn); color: var(--warn); }
 .tag.now { border-color: var(--good); color: var(--good); }
 
 /* ---- tables ---- */
 .scroll { overflow-x: auto; margin: 0 0 14px; -webkit-overflow-scrolling: touch; }
-table { border-collapse: collapse; width: 100%; min-width: 460px; font-size: var(--f-small); }
+/* Two columns fit a 320px phone. Three and four do not, and only those get a
+   scroller, because a table that scrolls when it need not is a nuisance. */
+table { border-collapse: collapse; width: 100%; font-size: var(--f-small); }
+table.wide { min-width: 440px; }
 th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
 th { color: var(--muted); font-weight: var(--w-medium); font-size: var(--f-fine); text-transform: uppercase; letter-spacing: 0.08em; }
 tr:last-child td { border-bottom: none; }
@@ -132,7 +152,7 @@ td code { font-size: 0.8em; }
 .not-set {
   color: var(--danger); font-weight: var(--w-bold);
   background: color-mix(in srgb, var(--danger) 12%, transparent);
-  padding: 1px 5px; border-radius: 5px;
+  padding: 1px 5px; border-radius: var(--r-chip);
 }
 
 /* ---- footer ---- */
@@ -140,7 +160,7 @@ footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line-s
 .btn {
   display: inline-block; text-decoration: none;
   background: var(--accent); color: var(--on-accent);
-  font-weight: var(--w-medium); font-size: var(--f-body);
-  padding: 11px 20px; border-radius: var(--radius-sm);
+  font-weight: var(--w-bold); font-size: var(--f-body); line-height: 1.2;
+  padding: 13px 22px; border-radius: var(--r-ctrl);
 }
 .fineprint { color: var(--muted); font-size: var(--f-fine); line-height: 1.45; margin-top: 14px; }

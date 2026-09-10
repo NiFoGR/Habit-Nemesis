@@ -1720,35 +1720,69 @@ html.reduce-motion .intro-grid .intro-tap { animation: none; }
 .tail-btn:active { color: var(--muted); }
 
 /* ---------- settings ----------
-   Six rows and a card on the root. Each row is a page: name on the left, what
-   it is set to on the right, and no explanation unless the behaviour is
-   genuinely surprising. */
+   Every screen here is rows on hairlines. A row is a name on the left and what
+   it is set to on the right, so the root can be read down its right edge
+   without opening anything. */
 
-.set-links { display: grid; }
+/* One container for both kinds of row. */
+.set-rows { display: grid; }
+.set-rows + .set-rows,
+.settings .fineprint + .set-rows { margin-top: 20px; }
+
+/* A row you tap: an <a> that goes somewhere, or a <button> that acts. */
 .set-link {
   display: flex; align-items: center; gap: 12px;
-  min-height: 54px; padding: 0 2px;
-  border-bottom: 1px solid var(--line-soft);
-  color: var(--text); text-decoration: none; font-size: var(--f-body); font-weight: var(--w-medium);
+  width: 100%; min-height: 60px; padding: 8px 2px;
+  border: 0; border-bottom: 1px solid var(--line-soft);
+  background: none; text-align: left; cursor: pointer;
+  color: var(--text); text-decoration: none; font: inherit;
 }
-.set-link:last-child { border-bottom: 0; }
-.set-link span { flex: 1; }
-.set-link .ico { color: var(--faint); transform: rotate(180deg); }
+.set-link[hidden] { display: none; }
+.set-link:disabled { opacity: 0.45; cursor: default; }
+.set-link .ico { color: var(--faint); transform: rotate(180deg); flex: 0 0 auto; }
 .set-link:active { color: var(--muted); }
+/* The one destructive treatment on a page: red words, never a red box. */
+.set-link.danger { color: var(--danger); }
+.set-link.danger:active { opacity: 0.6; }
 
-/* The account, as state rather than a label. */
-.acc-card { display: grid; gap: 3px; text-decoration: none; color: inherit; }
-.acc-card b { font-size: var(--f-head); }
-.acc-card span { font-size: var(--f-small); }
-.acc-card i { font-style: normal; font-size: var(--f-fine); color: var(--faint); }
-.acc-card .btn { margin: 10px 0 0; }
+/* A row you read and set. One height for every row on every page: a select
+   is 44px, which is the tap target, and 8px of air above and below it. */
+.set-row {
+  display: flex; align-items: center; gap: 14px;
+  min-height: 60px; padding: 8px 2px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.set-rows > :last-child { border-bottom: 0; }
+
+/* One shape for every row: label left, caption under it, value right. */
+.set-link > span, .set-label { flex: 1; min-width: 0; font-size: var(--f-body); font-weight: var(--w-medium); }
+/* The exception, not the rule: only where the behaviour would surprise you. */
+.set-link > span > i, .set-label > i {
+  display: block; font-style: normal; font-size: var(--f-fine); font-weight: var(--w-normal);
+  color: var(--muted); line-height: 1.35; margin-top: 2px;
+}
+.set-link > i, .set-state {
+  flex: 0 0 auto; font-style: normal;
+  font-size: var(--f-small); font-weight: var(--w-normal); color: var(--muted);
+}
+.set-row select, .set-row input[type="checkbox"], .set-row input[type="time"] { flex: 0 0 auto; }
+.set-row select, .set-row input[type="time"] { height: 44px; padding: 0 10px; }
+
+/* The account, as state rather than a label. The chevron spans both lines so
+   it sits on the card's optical centre, not under the second one. */
+.acc-card {
+  display: grid; grid-template-columns: 1fr auto; align-items: center;
+  text-decoration: none; color: inherit;
+}
+.acc-card .ico { grid-row: 1 / -1; grid-column: 2; color: var(--faint); transform: rotate(180deg); }
+.acc-card .btn { grid-column: 1 / -1; margin: 12px 0 0; }
 
 /* A disclosure for the rows almost nobody changes. */
 .set-more { margin-top: 18px; }
 .set-more summary {
   cursor: pointer; list-style: none; padding: 8px 2px;
   font-size: var(--f-micro); text-transform: uppercase; letter-spacing: 0.12em;
-  color: var(--faint); font-weight: 600;
+  color: var(--faint); font-weight: var(--w-medium);
 }
 .set-more summary::-webkit-details-marker { display: none; }
 .set-more summary::after { content: ' +'; }
@@ -1756,34 +1790,41 @@ html.reduce-motion .intro-grid .intro-tap { animation: none; }
 
 .set-group {
   font-size: var(--f-micro); text-transform: uppercase; letter-spacing: 0.12em;
-  color: var(--faint); font-weight: 600;
-  margin: 22px 0 8px; padding: 0 2px;
+  color: var(--faint); font-weight: var(--w-medium);
+  margin: 24px 0 6px; padding: 0 2px;
 }
 
-/* Hairlines, not a border around a box: the group already says where it starts. */
-.set-rows { display: grid; }
-.set-row {
-  display: flex; align-items: center; gap: 14px;
-  min-height: 48px; padding: 9px 2px;
-  border-bottom: 1px solid var(--line-soft);
-}
-.set-rows .set-row:last-child { border-bottom: 0; }
-.set-label { flex: 1; min-width: 0; font-size: var(--f-body); }
-/* The exception, not the rule: only where the behaviour would surprise you. */
-.set-label i {
-  display: block; font-style: normal; font-size: var(--f-fine);
-  color: var(--muted); line-height: 1.35; margin-top: 2px;
-}
-.set-row select { flex: 0 0 auto; }
-.set-row input[type="checkbox"] { flex: 0 0 auto; }
-/* A row whose value is read, not set. */
-.set-state { flex: 0 0 auto; font-size: var(--f-small); color: var(--muted); }
-
-.set-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-/* A display of its own beats the hidden attribute. */
-.set-actions[hidden] { display: none; }
-.settings .btn.danger.wide { margin-top: 22px; }
 .settings .fineprint { margin-top: 8px; }
+
+/* Type the word to confirm. A word, so it is not the PIN pad's letter spacing. */
+.set-word {
+  width: 100%; margin-bottom: 14px; padding: 12px 14px;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-ctrl);
+  color: var(--text); font: inherit; font-size: var(--f-body);
+}
+.set-word:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* ---------- the account screen ----------
+   One thing on it: whether the record is anywhere but this phone. The dot is
+   the state, the words name it, and the rows underneath act on it. */
+.acc-who { margin-bottom: 22px; }
+.acc-state {
+  display: flex; align-items: center; gap: 10px;
+  font-size: var(--f-title); font-weight: var(--w-medium); letter-spacing: -0.01em;
+}
+.acc-state::before {
+  content: ''; flex: none; width: 9px; height: 9px;
+  border-radius: var(--r-pill); background: var(--good);
+}
+.acc-state[data-state="wait"]::before { background: var(--warn); }
+.acc-state[data-state="bad"]::before { background: var(--danger); }
+/* Nothing to report: an empty ring, not a filled dot that reads as a bullet. */
+.acc-state[data-state="none"]::before { background: none; box-shadow: inset 0 0 0 2px var(--ash); }
+.acc-mail {
+  display: block; margin-top: 3px; padding-left: 19px;
+  font-size: var(--f-small); color: var(--muted); overflow-wrap: anywhere;
+}
+.acc-lead { color: var(--muted); font-size: var(--f-body); margin-bottom: 22px; }
 
 /* ---------- the Nemesis, with a face ----------
    He is the best week you have ever had, so the picture is you. The frame is
@@ -1953,11 +1994,12 @@ html.reduce-motion .intro-grid .intro-tap { animation: none; }
 .starter-meta { font-size: var(--f-fine); color: var(--muted); }
 .starter-add { color: var(--faint); display: grid; place-items: center; }
 
-/* ---------- the account ----------
+/* ---------- the account form ----------
    A form, two providers, and a divider that says the two are alternatives
-   rather than steps. */
+   rather than steps. One rhythm: the grid gap sets every gap, so no control
+   carries a margin of its own. */
 
-.acc-form { display: grid; gap: 14px; }
+.acc-form { display: grid; gap: 16px; }
 /* The label is the .field, so the caption inside it needs its own rule. */
 .acc-form .field { display: grid; gap: 6px; }
 .acc-form .field > span { font-size: var(--f-small); color: var(--muted); }
@@ -1967,25 +2009,18 @@ html.reduce-motion .intro-grid .intro-tap { animation: none; }
   color: var(--text); font: inherit;
 }
 .acc-form input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.acc-alt { display: flex; justify-content: space-between; gap: 10px; }
+.acc-form .btn { margin: 0; }
+.acc-form .warn-inline { margin: -6px 0 0; }
+.acc-alt { display: flex; justify-content: space-between; gap: 10px; margin-top: -8px; }
 
-.acc-or { display: flex; align-items: center; gap: 12px; margin: 16px 0; color: var(--faint); font-size: var(--f-fine); }
+.acc-or { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--faint); font-size: var(--f-fine); }
 .acc-or::before, .acc-or::after { content: ''; flex: 1; height: 1px; background: var(--line-soft); }
 
-.acc-providers { display: grid; gap: 8px; }
+.acc-providers { display: grid; gap: 10px; margin-bottom: 18px; }
+.acc-providers .btn { margin: 0; }
 
 /* No global anchor rule in this app: every other link is a button or a row. */
 .fineprint a, .muted a { color: var(--accent-ink); text-underline-offset: 2px; }
-
-/* ---------- restore points ----------
-   Under the backup buttons, because it is the same question: what happens to
-   the record when something goes wrong. */
-.restore { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
-.restore h4 { margin: 0 0 4px; font-size: var(--f-small); color: var(--text); }
-.restore .fineprint { margin: 0 0 8px; }
-.restore .set-actions { margin-bottom: 8px; }
-/* One restore point is a full width button, not half a row of nothing. */
-.restore .set-actions:has(> :only-child) { grid-template-columns: 1fr; }
 
 /* ---------- the week in review ----------
    Five beats, one tap apart, each one filling the screen. Every beat is one
