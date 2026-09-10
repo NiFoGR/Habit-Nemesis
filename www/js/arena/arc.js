@@ -141,7 +141,7 @@ function groupSection(st, state, g) {
   if (thin) {
     return `<section class="card arc-group">
       <h2>The group</h2>
-      <p class="arc-note">Fills up as you play weeks.</p>
+      <p class="arc-note">The weeks you play become the field.</p>
     </section>`;
   }
 
@@ -154,7 +154,9 @@ function groupSection(st, state, g) {
       <h2>The group</h2>
       ${verdict ? `<span class="pill ${verdict === 'Through' ? 'done' : 'ghost'}">${verdict}</span>` : ''}
     </div>
-    <p class="arc-note">${preview ? 'The field, fixed the day it opens.' : 'Weeks out of your own record.'}</p>
+    <p class="arc-note">${preview
+      ? 'The field is fixed the day the cup opens.'
+      : 'Every rival here is a week you have played.'}</p>
     <div class="ar-table">
       ${rows.map((r, i) => `<div class="ar-tr ${r.you ? 'you' : ''} ${!preview && g.eligible && i < 3 ? 'q' : ''}" style="--i:${i}"${
         r.week ? ` data-week="${escapeHtml(r.week)}"` : ''
@@ -170,8 +172,8 @@ function groupSection(st, state, g) {
 
 /** Why this is not a cup yet. */
 function shortfall(g) {
-  if (g.rivals < arena.ARC_MIN_RIVALS) return 'Not enough weeks on the record to make a field.';
-  return `${g.played} of the ${g.need} weeks a cup wants.`;
+  if (g.rivals < arena.ARC_MIN_RIVALS) return 'You have not played enough weeks to make a field.';
+  return `You have played ${g.played} of the ${g.need} weeks a cup needs.`;
 }
 
 /* ---- the knockout ---- */

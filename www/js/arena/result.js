@@ -156,7 +156,7 @@ function drawFull(mount, res, fresh) {
       <button class="btn primary big" id="onward" data-back>${escapeHtml(res ? 'Into the week' : 'Good')}</button>
       <div class="rs-exits">
         ${res ? `<button class="btn ghost" id="shareWeek">${icon('external', 16)}<span>Share</span></button>` : ''}
-        <a class="btn ghost linkbtn" href="#/arena">${icon('trophy', 16)}<span>The Arena</span></a>
+        <a class="btn ghost linkbtn" href="#/arena">${icon('trophy', 16)}<span>Arena</span></a>
       </div>
     </div>`;
 
@@ -181,12 +181,7 @@ function featBlock(fresh) {
   const shown = fresh.slice(0, 4);
   return `<section class="card">
     <h2>${fresh.length === 1 ? 'A feat' : `${fresh.length} feats`}</h2>
-    ${shown
-      .map((f) => `<div class="rs-feat">
-        <span class="ft-ico on">${icon(f.icon, 18)}</span>
-        <span><b>${escapeHtml(f.name)}</b></span>
-      </div>`)
-      .join('')}
+    ${shown.map((f) => `<div class="rs-feat"><b>${escapeHtml(f.name)}</b></div>`).join('')}
     ${fresh.length > shown.length
       ? `<a class="btn ghost wide" href="#/cabinet/feats">${fresh.length - shown.length} more</a>`
       : ''}
@@ -210,8 +205,8 @@ function noteBlock(key) {
       <button class="btn small-btn" id="faceGo">${has ? 'Retake' : 'Take one'}</button>
     </div>
 
-    <label class="fineprint" for="noteText">A line for whoever beats it.</label>
     <input type="text" id="noteText" maxlength="${arena.MAX_NOTE}" autocomplete="off"
+      aria-label="A line for whoever beats this week"
       placeholder="Beat that." value="${escapeHtml(existing)}">
     <button class="btn" id="noteSave">${existing ? 'Change it' : 'Leave it'}</button>
   </section>`;

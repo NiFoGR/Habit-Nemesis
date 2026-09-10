@@ -136,14 +136,14 @@ function featList(earned) {
       .filter((f) => f.at)
       .sort((a, b) => b.at - a.at)
       .slice(0, 5)
-      .map((f) => row(f, when(f.at), true))
-    : feats.closest(5).map((f) => row(f, feats.priceOf(f.days), false, f.frac));
+      .map((f) => row(f, when(f.at)))
+    : feats.closest(5).map((f) => row(f, feats.priceOf(f.days), f.frac));
   return rows.join('');
 }
 
-function row(f, right, on, frac = 0) {
+/* No glyph: the catalogue reuses them, so five rows can carry three marks. */
+function row(f, right, frac = 0) {
   return `<button class="cab-feat" data-feat="${escapeHtml(f.id)}">
-    <span class="ft-ico ${on ? 'on' : ''}">${icon(f.icon, 17)}</span>
     <span class="cab-feat-body">
       <b>${escapeHtml(f.name)}</b>
       ${frac > 0.02 ? `<span class="ft-bar"><i style="width:${(frac * 100).toFixed(0)}%"></i></span>` : ''}

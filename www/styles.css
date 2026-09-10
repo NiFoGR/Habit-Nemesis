@@ -1154,13 +1154,9 @@ button.ar-lane:active { opacity: 0.7; }
   display: grid; grid-template-rows: auto 1fr auto; align-content: start;
 }
 .ft b { display: block; font-size: var(--f-micro); font-weight: 600; line-height: 1.25; margin-top: 6px; }
-/* No margin: 0 auto: in the flex rows that reuse this it ate the free space and
-   shoved the text to the right edge. The tile asks for the centring itself. */
-.ft-ico { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 34px;
+.ft-ico { display: grid; place-items: center; width: 34px; height: 34px; margin: 0 auto;
   border-radius: var(--r-ctrl); background: var(--surface); color: var(--faint); }
-.ft .ft-ico { margin: 0 auto; }
-.rs-feat > span:last-child { flex: 1; min-width: 0; }
-.ft-ico.on, .ft.on .ft-ico { color: var(--on-accent); background: var(--accent); }
+.ft.on .ft-ico { color: var(--on-accent); background: var(--accent); }
 .ft.on { background: var(--surface); border-color: color-mix(in srgb, var(--accent) 40%, transparent); color: var(--text); }
 .ft:active { transform: scale(0.97); }
 /* What the feat costs. Every tile carries it, so a tile you have and a tile you
@@ -1217,18 +1213,20 @@ button.ar-lane:active { opacity: 0.7; }
 .rs-score .vs { color: var(--faint); }
 
 .rs-detail .kv:last-child { border-bottom: 0; }
-/* "Cost you" is the second row. Accent on it says the same as accent on the
-   row above, which is the one that went well. */
-.rs-detail .kv:last-child b em { color: var(--muted); }
+/* The verdict above is the screen's one colour. */
+.rs-detail .kv b em { color: var(--muted); }
 .rs-arc { display: flex; align-items: center; gap: 14px; }
 .rs-arc b { display: block; font-size: var(--f-head); }
 .rs-arc i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); }
 .rs-cup { display: grid; place-items: center; width: 48px; height: 48px; flex: 0 0 48px;
   border-radius: var(--r-card); background: var(--surface-2); color: var(--faint); }
 .rs-arc.won .rs-cup { background: var(--warn); color: var(--bg); }
-.rs-feat { display: flex; align-items: center; gap: 11px; padding: 8px 0; }
-.rs-feat b { display: block; font-size: var(--f-small); }
-.rs-feat i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); }
+/* No square: every row here is earned, so an identical mark on each is texture. */
+.rs-feat { display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  padding: 9px 0; border-bottom: 1px solid var(--line-soft); }
+.rs-feat:last-child { border-bottom: 0; }
+.rs-feat b { min-width: 0; font-size: var(--f-small); font-weight: var(--w-medium); }
+.rs-feat i { flex: 0 0 auto; font-style: normal; font-size: var(--f-fine); color: var(--faint); }
 
 /* ---------- the one-line feat pop ---------- */
 
@@ -1436,7 +1434,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
    The last five taken, or the five nearest when nothing has been. */
 
 .cab-feat {
-  display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
+  display: flex; align-items: baseline; gap: 12px; width: 100%; text-align: left;
   padding: 9px 0; border: 0; border-bottom: 1px solid var(--line-soft);
   background: none; color: inherit; font: inherit; cursor: pointer;
 }

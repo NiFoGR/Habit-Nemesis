@@ -76,16 +76,8 @@ export function renderYear(mount, want) {
       ${best && worst
         ? `<section class="card">
             <h2>Two weeks</h2>
-            <button class="ar-nemesis" data-week="${best.key}">
-              <span class="ar-nico">${icon('flash', 16)}</span>
-              <span class="ar-nname"><b>Best week</b><i>${escapeHtml(arena.weekLabel(best.key))}</i></span>
-              <b class="ar-nscore">${pct(best.score)}</b>
-            </button>
-            <button class="ar-nemesis" data-week="${worst.key}">
-              <span class="ar-nico">${icon('flash', 16)}</span>
-              <span class="ar-nname"><b>Worst week</b><i>${escapeHtml(arena.weekLabel(worst.key))}</i></span>
-              <b class="ar-nscore">${pct(worst.score)}</b>
-            </button>
+            ${extreme('Best week', best)}
+            ${extreme('Worst week', worst)}
           </section>`
         : ''}
 
@@ -102,6 +94,14 @@ export function renderYear(mount, want) {
       openWeekSheet(el.dataset.week);
     })
   );
+}
+
+/** One glyph on both sides of a contrast is decoration. The scores carry it. */
+function extreme(label, w) {
+  return `<button class="ar-nemesis" data-week="${w.key}">
+    <span class="ar-nname"><b>${label}</b><i>${escapeHtml(arena.weekLabel(w.key))}</i></span>
+    <b class="ar-nscore">${pct(w.score)}</b>
+  </button>`;
 }
 
 function hop(mount, year) {
@@ -271,8 +271,8 @@ function featsOfYear(year) {
     <h2>Feats of ${escapeHtml(year.label)}</h2>
     ${earned
       .map((f) => `<div class="rs-feat">
-        <span class="ft-ico on">${icon(f.icon, 18)}</span>
-        <span><b>${escapeHtml(f.name)}</b><i>${escapeHtml(new Date(f.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }))}</i></span>
+        <b>${escapeHtml(f.name)}</b>
+        <i>${escapeHtml(new Date(f.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }))}</i>
       </div>`)
       .join('')}
   </section>`;
