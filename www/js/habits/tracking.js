@@ -116,7 +116,7 @@ export function renderHabitDetail(mount, id) {
 
         <section class="card">
           <div class="h-row"><h2>Streaks</h2></div>
-          ${streaksHtml(sum)}
+          ${streaksHtml(sum, colour)}
         </section>
 
         ${habit.notes
@@ -249,16 +249,20 @@ function openPastValue(habit, key, refresh) {
 
 /* ---------------- streaks and frequency ---------------- */
 
-function streaksHtml(sum) {
+/** Longest first, and ranked: the top third full, the middle softer, the rest
+ *  faint. A list of equal bars said nothing about which one was the best. */
+function streaksHtml(sum, colour) {
   // Five, and never a run of one: a list of single days is not a best.
   const long = sum.streaks.filter((s) => s.len > 1);
   const list = (long.length ? long : sum.streaks).slice(0, 5);
   if (!list.length) return '<p class="hb-note">None yet.</p>';
-  return `<p class="hb-facts">Now ${sum.streak} · best ${list[0].len}</p>
+  const max = list[0].len;
+  const tier = (i) => (i < list.length / 3 ? '' : i < (list.length * 2) / 3 ? ' mid' : ' low');
+  return `<p class="hb-facts">Now ${sum.streak} · best ${max}</p>
     <div class="streak-list">${list
-      .map((s) => `<div class="streak-row">
-        <span>${escapeHtml(fmtRange(s.from, s.to))}</span>
-        <b>${s.len}</b>
+      .map((s, i) => `<div class="streak-row${tier(i)}">
+        <span class="streak-when">${escapeHtml(fmtRange(s.from, s.to))}</span>
+        <span class="streak-bar"><i style="width:${Math.max(8, (s.len / max) * 100)}%;background:${colour}">${s.len}</i></span>
       </div>`)
       .join('')}</div>`;
 }

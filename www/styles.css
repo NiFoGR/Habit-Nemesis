@@ -809,14 +809,19 @@ button.type-card { width: 100%; text-align: left; font: inherit; cursor: pointer
   font-style: normal; font-size: var(--f-micro); line-height: 1; color: var(--muted);
 }
 
-.streak-list { display: grid; margin-top: 10px; }
-.streak-row {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
-  padding: 9px 0; border-bottom: 1px solid var(--line-soft);
-  font-size: var(--f-small); color: var(--muted);
+.streak-list { display: grid; gap: 8px; margin-top: 12px; }
+.streak-row { display: flex; align-items: center; gap: 10px; font-size: var(--f-fine); color: var(--muted); }
+.streak-when { flex: 0 0 92px; }
+.streak-bar { flex: 1; background: var(--surface-2); border-radius: var(--r-pill); overflow: hidden; }
+.streak-bar i {
+  display: flex; align-items: center; justify-content: center;
+  height: 22px; min-width: 26px; border-radius: var(--r-pill);
+  font-style: normal; font-size: var(--f-fine); font-weight: var(--w-bold); color: var(--bg);
 }
-.streak-row:last-child { border-bottom: 0; }
-.streak-row b { color: var(--text); font-variant-numeric: tabular-nums; }
+/* Ranked by length. The whole row recedes, or a faded bar keeps a solid date
+   beside it and the list stops reading as an order. */
+.streak-row.mid { opacity: 0.6; }
+.streak-row.low { opacity: 0.34; }
 /* ==========================================================================
    Motion
    ==========================================================================
