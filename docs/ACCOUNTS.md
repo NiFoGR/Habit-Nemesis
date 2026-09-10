@@ -29,17 +29,31 @@ account screen says so rather than showing a form that cannot work.
 
 ## 1. The project, and the two values
 
-1. Sign up at supabase.com and create a project. **Pick an EU region**: the
-   privacy policy says the data is held in the EU, and moving a project later
-   means moving the data.
+1. Sign up at supabase.com and create a project. **Pick a specific EU
+   region**, such as West EU (Ireland): the privacy policy says the data is held
+   in the EU, and moving a project later means moving the data. Not the general
+   "Europe" choice, which can land in London, outside the EU. Leave
+   *Automatically expose new tables* on: `schema.sql` grants nothing itself.
 2. Open the SQL Editor, paste all of `supabase/schema.sql`, run it. It is safe
-   to run twice.
-3. Go to **Settings > API** and copy two things: the **Project URL** and the
-   **publishable** key (the long one labelled public or anon, not the secret
-   one).
+   to run twice. The editor warns about destructive operations because of the
+   `drop policy if exists` lines; on a new project there is nothing to drop.
+3. Go to **Settings > API Keys** and copy two things: the **Project URL** and
+   the **publishable** key (`sb_publishable_...`, not the secret one).
 4. Put them in `www/js/account/config.js`.
+5. **Authentication > URL Configuration.** Set the Site URL to
+   `https://nifogr.github.io/Habit-Nemesis/`, and add three redirect URLs:
 
-That is email sign-in working.
+       com.habitnemesis.app://auth
+       https://nifogr.github.io/Habit-Nemesis/**
+       http://localhost:8080/**
+
+   The first is how Google sign-in and a confirmation link opened on the phone
+   get back into the APK. Without it Supabase refuses the redirect and sends
+   the user to the Site URL, which is `localhost:3000` on a new project.
+
+That is email sign-in working. The browser build lives on GitHub Pages, which
+must be on: **Settings > Pages > Source: GitHub Actions**. The Play listing's
+privacy policy URL is on the same site.
 
 > **The secret key never goes in `www/`.** Everything under `www/` is shipped to
 > the phone and readable by anyone who looks. The publishable key is meant to be
@@ -209,14 +223,17 @@ a decision, not a checkbox.
 
 ### The redirect allow list
 
-**Authentication > URL Configuration > Redirect URLs.** A password reset and a
-provider sign-in both come back to a URL, and Supabase will only send them to
-one on this list. Add exactly two and nothing else:
+Section 1 step 5 is the list, and it is the one that has been applied. Two
+rules stand over it, because a reset link and a provider return both carry a
+token and Supabase will send it to anything on this list.
 
-    com.habitnemesis.app://auth
-    https://nifogr.github.io/Habit-Nemesis/
-
-A wildcard here is how a reset token ends up on somebody else's page.
+- **Never a domain you do not control.** `nifogr.github.io` is yours and every
+  path under it is yours, so the wildcard on it costs nothing. A wildcard on a
+  domain somebody else can publish to is how a token ends up on their page.
+- **Take `http://localhost:8080/**` out before the store build.** It is there so
+  `npm run dev` can sign in, and it means any process on a machine that opens a
+  reset link can receive that token. On your own laptop that is nothing. On a
+  project serving other people it is a door left open for no one's benefit.
 
 ### What cannot be fixed from a dashboard
 

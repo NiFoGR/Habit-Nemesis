@@ -93,7 +93,12 @@ export const cleanEmail = (v) => String(v || '').trim().toLowerCase();
  *  way round: the screen says an email is on its way, whatever happened. */
 export async function signUp(email, password) {
   const sb = need();
-  const { data, error } = await sb.auth.signUp({ email: cleanEmail(email), password });
+  // Without a redirect, Supabase sends the link back to the Referer's bare origin.
+  const { data, error } = await sb.auth.signUp({
+    email: cleanEmail(email),
+    password,
+    options: { emailRedirectTo: redirectTo() },
+  });
   if (error) {
     if (/already registered|already exists|user_already_exists/i.test(error.message)) {
       return { needsConfirmation: true };
