@@ -201,7 +201,7 @@ function calendarHtml(cal, editing) {
                           : '';
               // The date only while you are aiming at it. A heatmap otherwise.
               return `<button class="hc-cell ${cls} ${d.today ? 'now' : ''}" data-day="${d.key}"
-                ${d.future ? 'disabled' : ''} title="${d.key}">${editing ? d.day : ''}</button>`;
+                ${d.future || !editing ? 'disabled' : ''} title="${d.key}">${editing ? d.day : ''}</button>`;
             })
             .join('')}
         </div>`)
@@ -213,6 +213,7 @@ function calendarHtml(cal, editing) {
 
 function wireCalendarEdit(mount, habit, refresh) {
   mount.querySelector('.hcal')?.addEventListener('click', (e) => {
+    if (!e.currentTarget.classList.contains('on')) return;
     const cell = e.target.closest('.hc-cell');
     if (!cell || cell.disabled) return;
     const key = cell.dataset.day;
