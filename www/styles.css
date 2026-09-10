@@ -2148,11 +2148,11 @@ html.reduce-motion .hg-cell.intro-tap { animation: none; }
 /* Cups and feats. */
 /* The cabinet. A cup stands on a shelf in its own light: the tinted disc it
    used to sit in fought the artwork and made three cups into three buttons. */
-.intro-cabinet { display: grid; gap: 26px; justify-items: center; }
-.intro-cups { display: flex; gap: 20px; align-items: end; }
+.intro-cabinet { display: grid; justify-items: center; }
+.intro-cups { display: flex; gap: 14px; align-items: end; }
 .intro-cup {
   position: relative; display: grid; place-items: center;
-  width: 64px; height: 64px; color: var(--cc);
+  width: 76px; height: 76px; color: var(--cc);
   animation: cup-land 0.62s var(--ease) var(--d, 0ms) both;
 }
 /* The light it throws, and the shelf it stands on. Both arrive after it lands. */
@@ -2167,16 +2167,6 @@ html.reduce-motion .hg-cell.intro-tap { animation: none; }
   animation: cup-bloom 0.4s var(--ease) calc(var(--d, 0ms) + 0.32s) both;
 }
 .intro-cup .cup-img, .intro-cup .ico { position: relative; }
-/* One per line. Three across wrapped two-and-one on a 390px phone, and a
-   ragged last row is the thing you notice before you read any of them. */
-.intro-feats { display: grid; justify-items: center; gap: 7px; }
-.intro-feat {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 5px 11px; border-radius: var(--r-pill);
-  background: var(--surface); color: var(--muted);
-  font-size: var(--f-fine);
-  animation: deal 0.42s var(--ease) var(--d, 0ms) both;
-}
 @keyframes cup-land {
   0% { opacity: 0; transform: translateY(-32px) scale(0.7) rotate(-7deg); }
   62% { opacity: 1; transform: translateY(5px) scale(1.06) rotate(1.5deg); }
@@ -2185,8 +2175,7 @@ html.reduce-motion .hg-cell.intro-tap { animation: none; }
 @keyframes cup-bloom { from { opacity: 0; } to { opacity: 1; } }
 html.reduce-motion .intro-cup,
 html.reduce-motion .intro-cup::before,
-html.reduce-motion .intro-cup::after,
-html.reduce-motion .intro-feat { animation: none; opacity: 1; }
+html.reduce-motion .intro-cup::after { animation: none; opacity: 1; }
 
 /* The last page: the grid you leave on. */
 .intro-starters { width: 100%; margin-top: 18px; }

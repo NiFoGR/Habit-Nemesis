@@ -83,23 +83,17 @@ function ladder() {
   </ol>`;
 }
 
-// Each cup lands on its own beat and blooms its own light, then the feats
-// deal in behind them. The delays are the page: three cups placed at once
-// arrive as a picture, placed in turn they arrive as a cabinet being filled.
+// Each cup lands on its own beat and blooms its own light. The delays are the
+// page: three cups placed at once arrive as a picture, placed in turn they
+// arrive as a cabinet being filled.
 const CUP_STEP = 150;
-const FEAT_FROM = 620;
 
 function cabinet() {
   const shelf = (id, colour, n) =>
-    `<span class="intro-cup" style="--cc:${colour};--d:${n * CUP_STEP}ms">${cup(id, 60)}</span>`;
-  const feat = (glyph, text, n) =>
-    `<span class="intro-feat" style="--d:${FEAT_FROM + n * 90}ms">${icon(glyph, 14)}${text}</span>`;
+    `<span class="intro-cup" style="--cc:${colour};--d:${n * CUP_STEP}ms">${cup(id, 72)}</span>`;
   return `<div class="intro-cabinet">
     <div class="intro-cups">
       ${shelf('winter', 'var(--calm)', 0)}${shelf('spring', 'var(--good)', 1)}${shelf('autumn', 'var(--warn)', 2)}
-    </div>
-    <div class="intro-feats">
-      ${feat('flame', 'A month straight', 0)}${feat('medal', 'Beat the Nemesis', 1)}${feat('crown', 'Top G', 2)}
     </div>
   </div>`;
 }
