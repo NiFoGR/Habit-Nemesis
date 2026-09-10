@@ -59,7 +59,7 @@ function openProtocolSheet() {
   const span = (d) => (d % 7 === 0 && d > 30 ? `${d / 7} weeks` : `${d} days`);
   const sheet = openSheet(`
     <h2>Protocols</h2>
-    <p class="muted small">Four cells in five puts it in the Cabinet.</p>
+    <p class="muted small">Four marks in five puts it in the Cabinet.</p>
     <div class="proto-list">${habits.PROTOCOLS.map((p) => {
       const run = runs[p.id];
       const running = run && !run.settled;
@@ -362,31 +362,44 @@ function openFreqSheet(h, done) {
     ${row('week', 'times per week', spin('week', week, 1, 7), '')}
     ${row('month', 'times per month', spin('month', month, 1, 30), '')}
     ${row('custom', 'times in', spin('cNum', cNum, 1, 365), `${spin('cDen', cDen, 1, 365)}<span>days</span>`)}
-    <p class="fineprint">Three in seven is not late on the fourth: a day counts as kept whenever the window behind it holds three.</p>
+    <p class="fineprint" id="freqHint"></p>
     <div class="btn-row"><button class="btn ghost" data-close>Cancel</button><button class="btn primary" id="freqSave">Save</button></div>`);
 
   const num = (id, dflt) => {
     const v = Number(sheet.el.querySelector(`#${id}`).value);
     return Number.isFinite(v) && v >= 1 ? Math.round(v) : dflt;
   };
+  /** The fraction the checked row is set to, clamped as it will be saved. */
+  const chosen = () => {
+    const c = sheet.el.querySelector('input[name="freq"]:checked')?.value || 'daily';
+    if (c === 'daily') return { num: 1, den: 1 };
+    if (c === 'everyN') return { num: 1, den: Math.max(2, num('everyN', 3)) };
+    if (c === 'week') return { num: Math.min(7, num('week', 3)), den: 7 };
+    if (c === 'month') return { num: Math.min(30, num('month', 10)), den: 30 };
+    const den = num('cDen', 14);
+    return { num: Math.min(den, num('cNum', 3)), den };
+  };
+  // The rolling window is the part nobody expects, so it is stated in the
+  // numbers of the row you are on.
+  const hint = () => {
+    const f = chosen();
+    sheet.el.querySelector('#freqHint').textContent = f.den === 1
+      ? 'A day is kept when you mark it.'
+      : `A day is kept while the last ${f.den} days hold ${f.num}.`;
+  };
+  sheet.el.addEventListener('input', hint);
   // Touching a number picks its row: hunting for the radio as well is how a
   // dialog gets abandoned.
   sheet.el.querySelectorAll('.freq-num').forEach((input) =>
     input.addEventListener('focus', () => {
       input.closest('.freq-row').querySelector('input[type="radio"]').checked = true;
+      hint();
     })
   );
+  hint();
 
   sheet.el.querySelector('#freqSave').addEventListener('click', () => {
-    const choice = sheet.el.querySelector('input[name="freq"]:checked')?.value || 'daily';
-    if (choice === 'daily') h.freq = { num: 1, den: 1 };
-    else if (choice === 'everyN') h.freq = { num: 1, den: Math.max(2, num('everyN', 3)) };
-    else if (choice === 'week') h.freq = { num: Math.min(7, num('week', 3)), den: 7 };
-    else if (choice === 'month') h.freq = { num: Math.min(30, num('month', 10)), den: 30 };
-    else {
-      const den = num('cDen', 14);
-      h.freq = { num: Math.min(den, num('cNum', 3)), den };
-    }
+    h.freq = chosen();
     sheet.close();
     done();
   });
