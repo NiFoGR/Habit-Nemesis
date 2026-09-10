@@ -1216,7 +1216,7 @@ span.hg-group-btn { cursor: default; }
 
 .ar-track { display: grid; gap: 10px; }
 .ar-lane {
-  display: grid; grid-template-columns: 1fr; gap: 6px;
+  display: grid; grid-template-columns: 1fr; gap: 7px;
   width: 100%; padding: 0; text-align: left;
   background: none; border: 0; color: inherit; font: inherit;
 }
@@ -1234,7 +1234,7 @@ button.ar-lane:active { opacity: 0.7; }
 /* The bar and the number share a row, so both lanes align on the same axis. */
 .ar-lane-bar {
   grid-column: 1; grid-row: 2;
-  height: 30px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden;
+  height: 8px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden;
   /* Not rhythm: the width the percentage needs, reserved so both lanes end on
      one axis however wide the number is. */
   margin-right: var(--lane-num, 64px);
@@ -1244,7 +1244,7 @@ button.ar-lane:active { opacity: 0.7; }
   background: var(--line); transition: width var(--t-slow) var(--ease);
 }
 /* Yours is the accent whatever the score. */
-.ar-lane.me .ar-lane-bar i { background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 55%, transparent), var(--accent)); }
+.ar-lane.me .ar-lane-bar i { background: var(--accent); }
 .ar-lane.them .ar-lane-bar i { background: var(--ash); }
 
 .ar-lane b {
@@ -2062,7 +2062,7 @@ html.reduce-motion .intro-grid .intro-tap { animation: none; }
 .rk-mark img { display: block; }
 .rk-name { grid-area: name; font-size: var(--f-small); color: var(--muted); }
 .rk-need { grid-area: need; font-size: var(--f-fine); color: var(--faint); font-variant-numeric: tabular-nums; }
-.rk-bar { grid-area: bar; height: 4px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; margin-top: 5px; }
+.rk-bar { grid-area: bar; height: 6px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; margin-top: 5px; }
 /* Each rung's bar is as long as that rung costs, so the ladder climbs across as
    well as up. Uniform bars made five of the seven rows decoration. */
 .rk-bar i { display: block; height: 100%; width: 0; background: var(--line); border-radius: inherit; transition: width 0.5s var(--ease); }
@@ -2229,7 +2229,7 @@ html.reduce-motion .intro-grid .intro-tap { animation: none; }
 .rv-rows { list-style: none; margin: 14px 0 4px; padding: 0; display: grid; gap: 7px; }
 .rv-rows li { display: grid; grid-template-columns: 1fr 84px auto; align-items: center; gap: 10px; text-align: left; }
 .rv-rname { font-size: var(--f-small); color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rv-rbar { height: 5px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; }
+.rv-rbar { height: 6px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; }
 .rv-rbar i {
   display: block;
   height: 100%;
