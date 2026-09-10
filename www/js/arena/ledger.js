@@ -43,6 +43,33 @@ function backfill(st) {
   return first;
 }
 
+/** A week that has not ended cannot have a result.
+ *
+ *  Moving the device clock forward closes the week you are in the middle of,
+ *  and moving it back left that defeat on the record for ever, because rescore
+ *  only touches weeks nobody played. Nothing here writes a week at or after the
+ *  current one, so anything found there came from a clock that was wrong.
+ *
+ *  Dropping it loses nothing: closeWeeks builds a week back out of the marks,
+ *  which are never touched, so the same entries settle to the same result once
+ *  the clock is right.
+ *
+ *  Only a verdict is dropped. A 'record' week at or after the current one is a
+ *  real past week seen through a clock that has gone back, and deleting it
+ *  turned four backfilled performances into four played wins and five feats.
+ *  Months are left alone for the same reason: a month settles only when every
+ *  week in it is stored, and a clock jump stores none of them because they hold
+ *  no marks, so rolling the ladder back would be a real demotion for a problem
+ *  that does not arise. */
+const FABRICATED = new Set(['won', 'lost', 'void']);
+
+function unwind(st) {
+  const week = currentWeek();
+  for (const [key, w] of Object.entries(st.arena.weeks)) {
+    if (key >= week && FABRICATED.has(w.result)) delete st.arena.weeks[key];
+  }
+}
+
 /** Play out every week that has ended since we last looked. Returns what
  *  happened, so the app can show it. */
 function closeWeeks(st, events) {
@@ -224,6 +251,7 @@ function closeMonths(st, events) {
 export function sync() {
   const events = [];
   store.update((st) => {
+    unwind(st);
     if (!st.arena.backfilled) backfill(st);
     rescore(st);
     closeWeeks(st, events);
