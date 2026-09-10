@@ -53,10 +53,15 @@ export function openProtocolSheet() {
     <div class="proto-list">${habits.PROTOCOLS.map((p) => {
       const run = runs[p.id];
       const running = run && !run.settled;
+      // A live run is described by the rows on the grid, not by the table: the
+      // table can change under a run and then the sheet names rows you do not have.
+      const names = running
+        ? run.rows.map((id) => habits.byId(id)?.name).filter(Boolean)
+        : p.rows.map((r) => r.name);
       return `<button class="proto" data-protocol="${p.id}" ${running ? 'disabled' : ''}>
         <span class="proto-text">
           <b>${escapeHtml(p.name)}</b>
-          <i>${escapeHtml(p.rows.map((r) => r.name).join(' · '))}</i>
+          <i>${escapeHtml((names.length ? names : p.rows.map((r) => r.name)).join(' · '))}</i>
         </span>
         <span class="proto-span">${escapeHtml(running ? 'Running' : run?.completed ? 'Kept' : span(p.days))}</span>
       </button>`;
