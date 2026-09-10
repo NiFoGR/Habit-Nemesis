@@ -1,11 +1,12 @@
 // The introduction. Eight pages on a new install, replayable from Settings.
 //
-// Two of them are done rather than read: page 2 makes you mark a cell, page 7
-// builds the grid you leave on. Page 8 offers the account, and only where a
-// service is configured. Everything else is one picture and one line.
+// One anatomy on every page: a picture in a fixed stage, a title, a line, and
+// the button on the floor. Page 2 makes you mark a cell, page 7 builds the grid
+// you leave on. Page 8 offers the account, and only where a service is set.
 
 import * as store from './store.js';
 import * as habits from './habits/program.js';
+import { miniRing } from './habits/grid.js';
 import * as arena from './arena/program.js';
 import { icon, logoMark } from './icons.js';
 import { crest } from './arena/crest.js';
@@ -22,28 +23,31 @@ export const introDue = () => !store.get().settings.onboarded;
 
 const pct = (v) => `${Math.round(v * 100)}%`;
 
+// The two rows of the sample grid, in the colours the hub uses for them.
+const RUN = habits.hexOf('orange');
+const READ = habits.hexOf('violet');
+
 /* ---------------- the pictures ---------------- */
 
 /** The grid, drawn with the grid's own classes, so what you are told to tap
  *  looks like the thing you then tap. Dates are not real. */
 function miniGrid() {
-  // A done cell wears the row's colour on the real grid. Muted here read as off.
-  const cell = (cls, ico, colour) => `<span class="hg-cell ${cls}"${cls === 'on' ? ` style="color:${colour}"` : ''}>${ico ? icon(ico, 16) : ''}</span>`;
-  const row = (name, colour, cells) => `<div class="hg-row">
-    <span class="hg-name"><span class="hg-ring" style="color:${colour}">${icon('check', 18)}</span><span>${escapeHtml(name)}</span></span>
+  const cell = (cls, ico, colour) => `<span class="hg-cell ${cls}"${colour ? ` style="color:${colour}"` : ''}>${ico ? icon(ico, 16) : ''}</span>`;
+  const row = (name, colour, frac, cells) => `<div class="hg-row">
+    <span class="hg-name">${miniRing(frac, colour)}<span style="color:${colour}">${escapeHtml(name)}</span></span>
     ${cells}
   </div>`;
   // Today first, like the grid itself: "Oldest first" is off by default.
   return `<div class="hgrid intro-grid" style="--cols:4">
-    <div class="hg-head"><span></span><i class="now"><b>MON</b><em>15</em></i><i><b>SUN</b><em>14</em></i><i><b>SAT</b><em>13</em></i><i><b>FRI</b><em>12</em></i></div>
-    ${row('Run', 'var(--accent)',
+    <div class="hg-head"><span class="hg-name"></span><i class="now"><b>MON</b><em>15</em></i><i><b>SUN</b><em>14</em></i><i><b>SAT</b><em>13</em></i><i><b>FRI</b><em>12</em></i></div>
+    ${row('Run', RUN, 0.6,
       `<button class="hg-cell intro-tap" id="tapMe" aria-label="Mark today">${icon('check', 16)}</button>` +
-      cell('no', 'close') + cell('on', 'check', 'var(--accent)') + cell('on', 'check', 'var(--accent)'))}
-    ${row('Read', habits.hexOf('violet'), cell('') + cell('on', 'check', habits.hexOf('violet')) + cell('no', 'close') + cell('on', 'check', habits.hexOf('violet')))}
+      cell('no', 'close') + cell('on', 'check', RUN) + cell('on', 'check', RUN))}
+    ${row('Read', READ, 0.85, cell('on', 'check', READ) + cell('on', 'check', READ) + cell('no', 'close') + cell('on', 'check', READ))}
   </div>`;
 }
 
-/** One row per kind, and none of them a starter: the last page offers those. */
+/** One row per kind, and none of them a starter: page 7 offers those. */
 function kinds() {
   const sample = [
     { name: 'Cold shower', colour: 'mint', meta: 'every day' },
@@ -59,13 +63,14 @@ function kinds() {
   </div>`;
 }
 
-/** The fixture card, cut down to the two numbers and the gap between them. */
+/** The two scores and the gauge the Arena draws them on: your fill, and a mark
+ *  where the week you are chasing sits. */
 function fixture() {
   return `<div class="intro-fix">
     <span class="intro-fix-side"><b>68%</b><i>You</i></span>
-    <span class="intro-fix-vs">${icon('versus', 20)}</span>
+    <span class="intro-fix-vs">${icon('versus', 22)}</span>
     <span class="intro-fix-side"><b>74%</b><i>Your Nemesis</i></span>
-    <span class="intro-race"><u style="width:48%"></u></span>
+    <span class="intro-race" style="--w:68%;--at:74%"><i></i><u></u></span>
   </div>`;
 }
 
@@ -75,7 +80,7 @@ function ladder() {
   return `<ol class="intro-ladder">
     ${arena.DIVISIONS.map((d, i) => `<li>
       <span class="intro-rung">
-        <span class="intro-rung-crest">${crest(i, 30)}</span>
+        <span class="intro-rung-crest">${crest(i, 26)}</span>
         <span class="intro-rung-name">${escapeHtml(d.name)}</span>
         <span class="intro-rung-need">${pct(d.bar)}</span>
       </span>
@@ -107,7 +112,8 @@ function cabinetShow(mount) {
   });
 }
 
-function starters(picked) {
+/** Grey until picked, then the row wears the colour it will keep. */
+function starters({ picked }) {
   return `<div class="starter-list intro-starters">
     ${habits.STARTERS.map((h, i) => `<button class="starter ${picked.has(i) ? 'picked' : ''}" data-pick="${i}" style="--sc:${habits.hexOf(h.colour)}">
       <span class="starter-dot"></span>
@@ -118,19 +124,21 @@ function starters(picked) {
   </div>`;
 }
 
+const mark = (size) => `<span class="intro-logo">${logoMark(size)}</span>`;
+
 /* ---------------- the pages ---------------- */
 
 const PAGES = [
   {
     title: 'Habit Nemesis',
     line: '',
-    art: () => `<span class="intro-logo">${logoMark(76)}</span>`,
+    art: () => mark(160),
     next: 'Show me',
   },
   {
     title: 'Mark the day',
     line: 'One row per thing you keep, one column per day.',
-    done: 'The days behind are the record, and they can be edited too.',
+    done: 'The days behind can be marked too.',
     art: miniGrid,
     cta: 'Tap the cell',
     // Nothing here can be got wrong, and nothing can trap you: the button
@@ -144,36 +152,35 @@ const PAGES = [
   },
   {
     title: 'The week is a match',
-    line: 'Every week you play a week you already had. Your best is your Nemesis.',
+    line: 'Your opponent is your best week so far.',
     art: fixture,
   },
   {
     title: 'The ladder',
-    line: 'A month is the average of its weeks. Clear the next number to go up one, drop below yours to go down one.',
+    line: 'A month is the average of its weeks.',
     art: ladder,
-    tall: true,
   },
   {
     title: 'What you keep',
     // A function, not a string: PAGES is built at import time and the store is
     // not hydrated yet.
-    line: () => `Three cups a year, and ${counts().total} feats.`,
+    line: () => `Winter, spring and autumn, plus ${counts().total} feats.`,
     art: cabinet,
     onShow: cabinetShow,
   },
   {
     title: 'Start with these',
-    line: 'Tap the ones you want.',
-    art: null,
+    line: 'Any of them can be changed later.',
+    art: starters,
     cta: 'Start',
-    tall: true,
     starters: true,
   },
   // Last, so signing in has something to carry. Skipped with no service.
   {
     title: 'Keep the record',
     line: 'Your account holds the grid, the ladder and the cabinet.',
-    art: null,
+    // The tour opens and closes on the mark.
+    art: () => mark(64),
     account: true,
     only: configured,
   },
@@ -207,24 +214,21 @@ export function renderIntro(mount) {
     navigate('#/hub');
   };
 
+  /** What the button says. Starters count, a gate instructs, the last page ends. */
+  function label(page, last, locked) {
+    if (locked) return page.cta;
+    if (page.starters) {
+      if (!picked.size) return last ? page.cta : 'Next';
+      return last ? `Start with ${picked.size}` : `Add ${picked.size}`;
+    }
+    return page.next || 'Next';
+  }
+
   function draw() {
     clearTimeout(opener);
     const page = list[i];
     const last = i === list.length - 1;
     const locked = page.gate && !marked;
-    const cta = page.starters
-      ? picked.size
-        ? `Start with ${picked.size}`
-        : 'Start'
-      : locked
-        ? page.cta
-        : page.next || 'Next';
-
-    // A tall page leads with its heading: seven rungs above the title push it
-    // off the bottom of a phone.
-    const art = page.art ? `<div class="intro-art">${page.art()}</div>` : '';
-    const head = `<h1 class="intro-title">${escapeHtml(page.title)}</h1>
-      <p class="intro-line" id="line">${escapeHtml(lineOf(page, marked))}</p>`;
 
     mount.innerHTML = `
       <div class="screen intro">
@@ -236,12 +240,13 @@ export function renderIntro(mount) {
 
         <div class="step-bar">${list.map((_, n) => `<i class="${n < i ? 'done' : n === i ? 'on' : ''}"></i>`).join('')}</div>
 
-        <div class="intro-body ${page.tall ? 'tall' : ''}">
-          ${page.tall ? head + art : art + head}
-          ${page.starters ? starters(picked) : ''}
+        <div class="intro-body">
+          <div class="intro-art">${page.art({ picked })}</div>
+          <h1 class="intro-title">${escapeHtml(page.title)}</h1>
+          <p class="intro-line" id="line">${escapeHtml(lineOf(page, marked))}</p>
         </div>
 
-        ${page.account ? accountChoice() : `<button class="btn primary big" id="next" ${locked ? 'disabled' : ''}>${escapeHtml(cta)}</button>`}
+        ${page.account ? accountChoice() : `<button class="btn primary big ${locked ? 'intro-locked' : ''}" id="next" ${locked ? 'disabled' : ''}>${escapeHtml(label(page, last, locked))}</button>`}
       </div>`;
 
     if (locked) opener = setTimeout(open, 4000);
@@ -264,6 +269,7 @@ export function renderIntro(mount) {
     const btn = mount.querySelector('#next');
     if (!btn) return;
     btn.disabled = false;
+    btn.classList.remove('intro-locked');
     btn.textContent = 'Next';
   }
 
@@ -311,10 +317,10 @@ export function renderIntro(mount) {
       const cell = e.currentTarget;
       cell.classList.remove('intro-tap');
       cell.classList.add('on');
-      cell.style.color = 'var(--accent)';
+      cell.style.color = RUN;
       chime('mark');
       haptic('hit');
-      celebrate(cell, { count: 8, spread: 60 });
+      celebrate(cell, { count: 8, spread: 60, colour: RUN });
       mount.querySelector('#line').textContent = page.done;
       open();
     });

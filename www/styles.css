@@ -1591,26 +1591,29 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 html.reduce-motion .mo-card { opacity: 1; }
 
 /* ---------- the introduction ----------
-   One idea per page, mostly a picture. The art box has a floor under its height
-   so five pages do not put their headings at five different heights. */
+   One anatomy on every page: a stage, a title, a line, the button on the floor.
+   The stage is a fixed height, which is what puts eight titles on one eye-line. */
 
-/* Owns the whole window: no bottom bar and nothing to scroll to. Full height,
-   words centred in what is left, button on the floor. */
+/* Owns the whole window: no bottom bar and nothing to scroll to. */
 .screen.intro { min-height: 100dvh; display: flex; flex-direction: column; }
 .intro .screen-head { justify-content: space-between; margin-bottom: 12px; }
-.intro-body {
-  flex: 1;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  text-align: center; padding: 8px 0 26px;
-}
+.intro-body { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; }
+/* Clamped, not fixed: a short phone shortens the stage rather than scrolling. */
 .intro-art {
-  display: grid; place-items: center;
-  width: 100%; min-height: 190px; margin-bottom: 22px;
+  display: grid; place-items: center; align-content: center;
+  width: 100%; height: clamp(252px, 38dvh, 322px);
+  margin-top: clamp(16px, 10dvh, 84px);
 }
-.intro-title { font-size: var(--f-hero); line-height: 1.05; letter-spacing: -0.035em; margin: 0 0 10px; }
-.intro-line { max-width: 30ch; color: var(--muted); font-size: var(--f-body); margin: 0; }
-/* The first page has no line. The element stays for the pages that fill it in. */
-.intro-line:empty { display: none; }
+/* The review ceremony's headline size, so the tour and the week read as one. */
+.intro-title { font-size: var(--f-display); line-height: 1.1; letter-spacing: -0.03em; text-wrap: balance; margin: 26px 0 0; }
+/* Two lines are held whatever it says: page 1 has none and nothing shifts. */
+.intro-line { max-width: 30ch; min-height: 3em; text-wrap: balance; color: var(--muted); font-size: var(--f-body); margin: 8px 0 0; }
+/* The gate before it opens. An instruction, not a red button that does nothing.
+   An inset rule, not a border: a border would move the button by two pixels. */
+.screen.intro .intro-locked {
+  background: var(--surface); color: var(--muted);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
 
 .intro-logo { filter: drop-shadow(0 0 26px color-mix(in srgb, var(--accent) 30%, transparent)); }
 
@@ -1621,20 +1624,23 @@ html.reduce-motion .mo-card { opacity: 1; }
 .intro-grid .intro-tap { pointer-events: auto; }
 .intro-grid .hg-cell { min-height: 34px; }
 .intro-grid .hg-row { min-height: 44px; }
+.intro-grid .hg-row:last-child { border-bottom: 0; }
 /* Today's cell on the top row: the one the sentence is about. */
-.hg-cell.intro-tap {
+.intro-grid .intro-tap {
   opacity: 1; color: var(--accent);
   background: color-mix(in srgb, var(--accent) 14%, transparent);
   animation: intro-tap 1.9s var(--ease) infinite;
 }
+/* A 36px column is not a target. The pad reaches 44 without moving the cell. */
+.intro-grid .intro-tap::after { content: ''; position: absolute; inset: -5px -4px; }
 @keyframes intro-tap {
   0%, 62%, 100% { transform: scale(1); }
   70% { transform: scale(0.88); }
   80% { transform: scale(1.06); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .hg-cell.intro-tap { animation: none; }}
-html.reduce-motion .hg-cell.intro-tap { animation: none; }
+  .intro-grid .intro-tap { animation: none; }}
+html.reduce-motion .intro-grid .intro-tap { animation: none; }
 
 /* ---------- the quiet row at the foot of Settings ----------
    The smallest text on the page: it says what it is, it just does not ask to
@@ -2086,55 +2092,56 @@ html.reduce-motion .hg-cell.intro-tap { animation: none; }
 }
 
 /* ---------- the introduction, page by page ----------
-   Two of the seven are done rather than read. Everything else is one picture
-   and one line, and the picture is built from the screen it is about. */
-
-/* A tall page leads with its heading: seven rungs above the title push it off
-   the bottom of a phone. */
-.intro-body.tall { padding-top: 4px; }
-.intro-body.tall .intro-art { min-height: 0; margin: 16px 0 0; }
+   Every picture is built from the screen it is about, and the three that are
+   lists are the same list: rows on a hairline rule, a dot, a name, a target. */
 
 /* What a row can be. */
-.intro-kinds { display: grid; gap: 9px; width: 100%; }
+.intro-kinds { display: grid; width: 100%; }
 .intro-kind {
-  display: grid; grid-template-columns: 12px 1fr auto; align-items: center; gap: 11px;
-  padding: 13px 14px; border-radius: var(--r-card);
-  background: var(--surface); border: 1px solid var(--line);
-  text-align: left;
+  display: grid; grid-template-columns: 20px 1fr auto; align-items: center; gap: 10px;
+  min-height: 54px; padding: 2px; text-align: left;
+  border-bottom: 1px solid var(--line-soft);
 }
+.intro-kinds .intro-kind:last-child { border-bottom: 0; }
 .intro-dot {
-  width: 10px; height: 10px; border-radius: 50%; background: var(--kc);
+  width: 10px; height: 10px; border-radius: 50%; background: var(--kc); justify-self: center;
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--kc) 22%, transparent);
 }
 .intro-kind b { color: var(--kc); font-weight: var(--w-medium); font-size: var(--f-body); }
 .intro-kind em { font-style: normal; font-size: var(--f-fine); color: var(--muted); }
 
-/* The fixture, cut to the two numbers and the gap between them. */
+/* The fixture: the two scores, and the Arena's own gauge under them. Your fill,
+   and a mark where the week you are chasing sits. */
 .intro-fix {
-  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 14px;
-  width: 100%; padding: 20px 18px; border-radius: var(--r-card);
-  background: var(--surface); border: 1px solid var(--line);
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; justify-items: center;
+  gap: 16px; width: 100%;
 }
 .intro-fix-side { display: grid; gap: 2px; }
-.intro-fix-side b { font-size: var(--f-display); font-variant-numeric: tabular-nums; }
+.intro-fix-side b { font-size: var(--f-hero); line-height: 1.05; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
 .intro-fix-side i { font-size: var(--f-fine); color: var(--muted); font-style: normal; }
-.intro-fix-vs { color: var(--faint); }
-.intro-race { grid-column: 1 / -1; height: 6px; border-radius: var(--r-pill); background: var(--ash); overflow: hidden; }
-.intro-race u { display: block; height: 100%; background: var(--accent); text-decoration: none; animation: rv-fill 0.4s var(--ease) both; }
-
-/* The last page: three ways out, the third a link because it is the third. */
-.intro-account { display: grid; gap: 4px; }
-.intro-account .btn { margin: 4px 0 0; }
-.intro-account .tail-btn { justify-self: center; margin-top: 8px; }
-
-/* Every rung and what it costs. */
-.intro-ladder { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; gap: 2px; }
-.intro-rung {
-  display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 10px;
-  width: 100%; padding: 7px 8px; text-align: left;
+.intro-fix-vs { color: var(--faint); display: grid; place-items: center; }
+.intro-race {
+  grid-column: 1 / -1; position: relative; width: 100%; height: 8px;
+  margin-top: 10px; border-radius: var(--r-pill); background: var(--surface-2);
 }
-.intro-rung-crest { display: grid; place-items: center; opacity: 0.8; }
-.intro-rung-name { font-size: var(--f-small); color: var(--muted); }
+.intro-race i { display: block; height: 100%; width: var(--w); background: var(--accent); border-radius: inherit; animation: rv-fill 0.5s var(--ease) both; }
+.intro-race u { position: absolute; top: -4px; bottom: -4px; left: var(--at); width: 2px; background: var(--text); opacity: 0.5; }
+
+/* The last page: three ways out, the third a link because it is the third.
+   Bottom margin to match .btn.big, so the block ends where Next ends. */
+.intro-account { display: grid; gap: 4px; margin-bottom: 14px; }
+.intro-account .btn { margin: 4px 0 0; }
+.intro-account .tail-btn { justify-self: center; margin-top: 8px; padding: 13px 18px; }
+
+/* Every rung and what it costs. Nine of them, so the row is the crest's height
+   and nothing else. */
+.intro-ladder { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; }
+.intro-rung {
+  display: grid; grid-template-columns: 20px 1fr auto; align-items: center; gap: 10px;
+  width: 100%; min-height: 28px; padding: 0 2px; text-align: left;
+}
+.intro-rung-crest { display: grid; place-items: center; }
+.intro-rung-name { font-size: var(--f-small); }
 .intro-rung-need { font-size: var(--f-fine); color: var(--faint); font-variant-numeric: tabular-nums; }
 
 /* Cups and feats. */
@@ -2169,10 +2176,18 @@ html.reduce-motion .intro-cup,
 html.reduce-motion .intro-cup::before,
 html.reduce-motion .intro-cup::after { animation: none; opacity: 1; }
 
-/* The last page: the grid you leave on. */
-.intro-starters { width: 100%; margin-top: 18px; }
-.starter.picked { border-color: color-mix(in oklab, var(--sc) 55%, var(--line)); background: color-mix(in oklab, var(--sc) 10%, var(--surface)); }
-.starter.picked .starter-add { color: var(--sc); }
+/* The grid you leave on. Grey until picked, then the row wears the colour it
+   keeps: the state is the colour, not a box drawn round the row. */
+.intro-starters { width: 100%; }
+.intro-starters .starter-dot { width: 10px; height: 10px; border-radius: 50%; justify-self: center; background: var(--line); }
+.intro-starters .starter-name { color: var(--text); }
+.intro-starters .starter.picked .starter-dot {
+  background: var(--sc);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--sc) 22%, transparent);
+}
+.intro-starters .starter.picked .starter-name { color: var(--sc); }
+.intro-starters .starter.picked .starter-add { color: var(--sc); }
+
 /* ---------- the Arc, on the Arena ----------
    One row, the way the Nemesis row is one row: the cup, where it is up to,
    and the arrow that says there is more. */
