@@ -158,7 +158,8 @@ function whyLine(sum) {
   if (m.days < 7) return `${m.days} day${m.days === 1 ? '' : 's'} on the record.`;
   // One day is worth naming. More than one, the calendar shows which.
   const only = m.misses.length === 1 ? `, on ${WEEKDAYS[new Date(`${m.misses[0]}T00:00:00`).getDay()]}` : '';
-  const count = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven'][m.misses.length] || String(m.misses.length);
+  // A counted thing, so a numeral, the way the rest of the app counts.
+  const count = m.misses.length || 'No';
   if (m.delta < 0) return `Down ${points(-m.delta)} this week. ${count} miss${m.misses.length === 1 ? '' : 'es'}${only}.`;
   if (m.delta > 0) return `Up ${points(m.delta)} this week. ${m.kept} of 7 days kept.`;
   return `Level this week. ${m.kept} of 7 days kept.`;
