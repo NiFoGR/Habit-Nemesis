@@ -175,7 +175,7 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: var(--r-ch
 .card:last-child { margin-bottom: 0; }
 
 /* The exception: a thing you act on as one unit keeps a surface. */
-.card.raised, .card.danger, .acc-card, .nudge, .rs-detail, .rs-arc, .note-ask {
+.card.raised, .card.danger, .acc-card, .nudge, .note-ask {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-card);
@@ -1556,7 +1556,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 .gh-text { flex: 1; min-width: 0; }
 .gh-text h1,
 .gh-text p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.gh-text h1 { font-size: var(--f-title); letter-spacing: -0.02em; line-height: 1.15; }
+.gh-text h1 { font-size: var(--f-sub); letter-spacing: -0.02em; line-height: 1.15; }
 .gh-text p { margin: 2px 0 0; font-size: var(--f-fine); color: var(--muted); }
 .grid-head .head-actions { align-self: center; gap: 4px; }
 /* Reordering puts a button on this line rather than under it. */
@@ -1594,7 +1594,7 @@ body.has-tabs .screen { padding-bottom: calc(var(--safe-b) + 132px); }
 
 .cab-feat {
   display: flex; align-items: baseline; gap: 12px; width: 100%; text-align: left;
-  padding: 9px 0; border: 0; border-bottom: 1px solid var(--line-soft);
+  padding: 12px 0; min-height: 44px; border: 0; border-bottom: 1px solid var(--line-soft);
   background: none; color: inherit; font: inherit; cursor: pointer;
 }
 .cab-feat:active { opacity: 0.7; }
