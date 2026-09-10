@@ -1,43 +1,42 @@
-// The Arena screen, assembled. Nothing is drawn here: each block is a module,
-// in the order the questions get asked.
+// The Arena screen, assembled. Each block is a module, in the order the
+// questions get asked.
 //
-//   where do I stand   standing.js
-//   am I winning       fixture.js
-//   how have I been    fixture.js, the form strip
-//   is a cup on        arc.js
+//   who am I, what am I chasing   standing.js
+//   am I winning                  fixture.js
+//   how have I been               fixture.js, the form strip
+//   what stands in the way        the boss, below
+//   is a cup on                   arc.js
 
 import * as store from '../store.js';
 import * as arena from './program.js';
-import { face, faceAvatar } from './face.js';
+import { faceAvatar } from './face.js';
 import { standingHtml, rungOf } from './standing.js';
 import { fixtureHtml, wireFixture, formHtml } from './fixture.js';
 import { arcHtml } from './arc.js';
 import { wireWeeks } from './week-sheet.js';
 import { dailyLine } from './line.js';
 import { escapeHtml, pct } from '../ui.js';
-import { icon } from '../icons.js';
 
 export { openWeekSheet } from './week-sheet.js';
 export { renderFeats, wireFeatTiles } from './feats-screen.js';
 
-/** One sentence from the Nemesis, once a day. Nothing when nothing is true. */
-function lineHtml() {
-  const text = dailyLine();
-  if (!text) return '';
-  return `<p class="ar-line">${faceAvatar(28)}<span>${escapeHtml(text)}</span></p>`;
-}
-
-/** A line of his own, except on the weeks he is the fixture: the card above
- *  already carries the same face, the same week and the same score. */
-function nemesisLine() {
-  if (arena.fixtureFor(arena.currentWeek()).id === 'nemesis') return '';
-  const n = arena.nemesisWeek();
-  if (!n) return '';
-  return `<button class="ar-nemesis" data-week="${n.key}">
-    ${face() ? faceAvatar(36) : `<span class="ar-nico">${icon('flash', 16)}</span>`}
-    <span class="ar-nname"><b>Your Nemesis</b><i>${escapeHtml(arena.weekLabel(n.key))}</i></span>
-    <b class="ar-nscore">${pct(n.score)}</b>
-  </button>`;
+/** The boss: your best week, with his face on it and his line for the day.
+ *  On the weeks he is the fixture the duel already carries him, so the card
+ *  would be the same face, the same week and the same score twice. */
+function bossHtml() {
+  const said = dailyLine();
+  const opp = arena.fixtureFor(arena.currentWeek());
+  const playing = opp.id === 'nemesis' || opp.knockout === 'final';
+  const n = playing ? null : arena.nemesisWeek();
+  if (!n) return said ? `<p class="ar-said lone">${faceAvatar(32)}<span>${escapeHtml(said)}</span></p>` : '';
+  return `<div class="ar-boss">
+    <button class="ar-boss-who" data-week="${n.key}">
+      ${faceAvatar(48)}
+      <span class="ar-boss-name"><b>Your Nemesis</b><i>${escapeHtml(arena.weekLabel(n.key))} · your best week</i></span>
+      <b class="ar-boss-score">${pct(n.score)}</b>
+    </button>
+    ${said ? `<p class="ar-said">${escapeHtml(said)}</p>` : ''}
+  </div>`;
 }
 
 export function renderArena(mount) {
@@ -45,11 +44,9 @@ export function renderArena(mount) {
   mount.innerHTML = `
     <div class="screen arena" style="--lift:${rungOf()}">
       <header class="ar-head">${standingHtml()}</header>
-      ${lineHtml()}
-      <hr class="cut">
       ${fixtureHtml()}
       ${formHtml(store.get().arena.weeks)}
-      ${nemesisLine()}
+      ${bossHtml()}
       ${arcHtml()}
     </div>`;
 

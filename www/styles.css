@@ -1061,60 +1061,92 @@ span.hg-group-btn { cursor: default; }
 .sheet { animation: sheet-in var(--t-base) var(--ease); }
 @keyframes sheet-in { from { transform: translateY(12px); opacity: 0; } }
 
-/* ---------- where you stand, as the head of the page ----------
-   Not a card. The crest carries the personality, so it is paired with the
-   division's name rather than floating alone above an unlabelled row of pips.
-   The glow grows with the rung: same accent, more of it. */
+/* ---------- where you stand ----------
+   Two things, not five. The badge is who you are and the way into the ladder,
+   so the pips and the link under them are gone: "4th of 9" said it already.
+   The climb is one track from the rung you hold to the one above it.
+   The glow behind the crest grows with the rung: same accent, more of it. */
 
-.ar-head { position: relative; margin-bottom: var(--s-5); }
+.ar-head { position: relative; margin-bottom: var(--s-7); }
 .ar-head::before {
-  content: ''; position: absolute; left: 46px; top: -34px; transform: translateX(-50%);
-  width: 240px; height: 200px; pointer-events: none; z-index: -1;
+  content: ''; position: absolute; left: 34px; top: -34px; transform: translateX(-50%);
+  width: 230px; height: 190px; pointer-events: none; z-index: -1;
   background: radial-gradient(50% 50% at 50% 50%, var(--accent), transparent 70%);
-  opacity: calc(0.04 + var(--lift, 0) * 0.035);
+  opacity: calc(0.05 + var(--lift, 0) * 0.035);
 }
 
-.ar-standing { display: flex; align-items: center; gap: 14px; }
-.ar-standing.unranked { --lift: 0; }
-.ar-standing.unranked ~ .ar-ladder-link i { opacity: 0.3; }
-
-.ar-crest { flex: 0 0 auto; display: block; position: relative; }
-/* On Notice, on the crest: one amber dot. The rung line names it. */
-.ar-crest.notice::after {
-  content: ''; position: absolute; right: 4px; bottom: 8px;
-  width: 12px; height: 12px; border-radius: 50%;
-  background: var(--warn); box-shadow: 0 0 0 2px var(--bg);
+.ar-badge {
+  display: flex; align-items: center; gap: 14px;
+  padding: 2px 0; text-decoration: none; color: inherit;
 }
-.crest { display: block; object-fit: contain; -webkit-user-select: none; user-select: none; }
-/* Same rules as a crest: artwork, drawn at the size it is asked for. */
-.cup-img { display: block; object-fit: contain; -webkit-user-select: none; user-select: none; }
-.cup-img.cup-none { opacity: 0.35; }
-
-.ar-titles { min-width: 0; }
-.ar-titles h1 {
-  margin: 0; font-size: var(--f-sub); line-height: 1.05; letter-spacing: -0.03em;
-  overflow: hidden; text-overflow: ellipsis;
+.ar-badge-art { flex: 0 0 auto; display: block; transition: transform var(--t-fast) var(--ease); }
+.ar-badge:active .ar-badge-art { transform: scale(0.96); }
+.ar-badge-who { flex: 1; min-width: 0; }
+.ar-badge-who h1 {
+  line-height: 1.05; letter-spacing: -0.03em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.ar-rung { margin: 5px 0 0; font-size: var(--f-fine); color: var(--muted); }
-
-/* One pip per division, and the way into the full ladder. The control costs no
-   line of its own. */
-.ar-ladder-link {
-  display: grid; gap: 7px; margin: 10px 0 0; padding: 8px 0;
-  text-decoration: none; color: inherit;
-}
-.ar-pips { display: flex; gap: 4px; }
-.ar-pips i { flex: 1 1 0; height: 5px; border-radius: var(--r-pill); background: var(--line); }
-.ar-pips i.on { background: var(--accent); opacity: 0.42; }
-.ar-pips i.here { opacity: 1; box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 50%, transparent); }
-.ar-ladder-link span {
-  display: inline-flex; align-items: center; gap: 4px;
+.ar-badge-who i {
+  display: block; margin-top: 5px; font-style: normal;
   font-size: var(--f-fine); color: var(--muted);
 }
-.ar-ladder-link .ico { transform: rotate(180deg); }
-.ar-ladder-link:active span { color: var(--text); }
+.ar-badge-who em { font-style: normal; }
+/* One month below the bar. The only word on the badge allowed a colour. */
+.ar-badge-who em.notice { color: var(--warn); }
+.ar-badge-go { display: grid; place-items: center; color: var(--faint); transform: rotate(180deg); }
 
-.ar-progress { margin-top: 14px; }
+/* The climb: the month's number, the track, and the rung above at the end. */
+.ar-climb { margin-top: var(--s-5); }
+.ar-climb-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.ar-now { margin: 0; display: flex; align-items: baseline; gap: 8px; }
+.ar-now b {
+  font-size: var(--f-display); line-height: 1; letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.ar-now i { font-style: normal; font-size: var(--f-fine); color: var(--faint); }
+
+/* The rung above, as a destination: dark until the month has earned it. */
+.ar-goal { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ar-goal b {
+  font-size: var(--f-fine); color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.12em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ar-goal .crest {
+  filter: grayscale(1); opacity: 0.45;
+  transition: filter var(--t-base) var(--ease), opacity var(--t-base) var(--ease);
+}
+.ar-goal.lit .crest { filter: drop-shadow(0 0 9px color-mix(in srgb, var(--good) 45%, transparent)); opacity: 1; }
+.ar-goal.lit b { color: var(--text); }
+
+/* The one line a bar cannot draw: what the weeks left have to average. */
+.ar-pace { margin: 10px 0 0; font-size: var(--f-small); color: var(--muted); }
+.ar-pace.lone { margin-top: var(--s-5); }
+
+/* ---------- the one bar ----------
+   8px, because this and the duel are the two bars the screen is about. It
+   fills on arrival, and rests where it lands under reduced motion. */
+
+.ar-rail {
+  position: relative; display: block; height: 8px;
+  border-radius: var(--r-pill); background: var(--surface-2); border: 1px solid var(--line);
+}
+.ar-rail i {
+  display: block; height: 100%; border-radius: var(--r-pill);
+  background: var(--accent); animation: rail-in var(--t-slow) var(--ease);
+}
+@keyframes rail-in { from { width: 0; } }
+/* The rung above, already earned. The only glow the climb gets. */
+.ar-rail.up i { background: var(--good); box-shadow: 0 0 14px color-mix(in srgb, var(--good) 35%, transparent); }
+.ar-rail.down i { background: var(--warn); }
+/* The rival, standing on your scale. The ring is what keeps him legible once
+   your own fill has passed him. */
+.ar-rail u {
+  position: absolute; top: -4px; bottom: -4px; width: 3px; margin-left: -1.5px;
+  border-radius: var(--r-pill); background: var(--muted); box-shadow: 0 0 0 2px var(--bg);
+  animation: tick-in var(--t-base) var(--ease) var(--t-slow) backwards;
+}
+@keyframes tick-in { from { opacity: 0; } }
 
 /* ---------- every division ----------
    A rail with the crests standing on it. The crest is the only colour: the rail
@@ -1174,121 +1206,140 @@ span.hg-group-btn { cursor: default; }
   box-shadow: 0 0 22px 2px color-mix(in oklab, var(--dc) 32%, transparent);
 }
 
-/* The month inside its division: floor left, promotion right. A 0-100 bar put
-   every threshold within a few pixels of the last. */
+/* A plain bar, where a screen only needs a length. */
 .ar-bar {
   position: relative; height: 8px; border-radius: var(--r-pill);
   background: var(--surface-2); border: 1px solid var(--line);
-  /* Room above for the floating readout, which used to sit on the ladder. */
-  margin: var(--s-6) 0 6px;
+  margin: 14px 0 8px;
 }
-.ar-bar.plain { margin: 14px 0 8px; }
 .ar-bar-fill { height: 100%; border-radius: var(--r-pill); background: var(--accent); transition: width 0.6s var(--ease); }
-.ar-bar.down .ar-bar-fill { background: var(--warn); }
-.ar-bar.up .ar-bar-fill { background: var(--good); }
-/* Clamped: at 0% and 100% half the readout hung off the card. */
-.ar-bar-now {
-  position: absolute; top: -19px; transform: translateX(-50%);
-  font-size: var(--f-micro); color: var(--text); font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.ar-bar-ends { display: flex; justify-content: space-between; gap: 10px; font-size: var(--f-micro); color: var(--faint); }
 
-/* The one line on the hero allowed a colour: what the rest of the month has
-   to average. The bar above already says the same thing in its fill, so the
-   month line under it stays uncoloured. */
-.ar-need { margin: 10px 0 0; font-size: var(--f-small); color: var(--muted); }
+/* ---------- this week, as a duel ----------
+   One track, your fill on it, and a tick where the opponent stands. Two bars
+   made the reader compare two lengths; one track puts the gap on screen as a
+   distance, and the verdict is the only coloured thing in the block. */
 
-/* The daily line: the Nemesis, speaking. Once a day, from the record. */
-.ar-line { display: flex; align-items: center; gap: 10px; margin: 0; font-size: var(--f-small); }
-.ar-line span { font-style: italic; line-height: 1.4; }
-
-/* ---------- this week, as a race ----------
-   Two lanes on one scale. Two numbers in two boxes made the reader subtract;
-   a shared axis puts the gap on screen as a distance, and the verdict says it
-   in words so nobody has to. */
-
-/* A section, like every other. The verdict is the block's one colour. */
+.ar-sec { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: var(--s-4); }
+.ar-sec h2 { margin: 0; }
+.ar-sec span { font-size: var(--f-fine); color: var(--faint); font-variant-numeric: tabular-nums; }
 .ar-fx-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
 .ar-fx-head h2 { margin: 0; }
-.ar-fx-none { margin: 0; font-size: var(--f-small); color: var(--muted); }
-.ar-fixture .btn { margin-top: 14px; }
+.ar-none { margin: 0; font-size: var(--f-small); color: var(--muted); }
+.ar-week .btn { margin-top: 14px; }
 
-.ar-track { display: grid; gap: 10px; }
-.ar-lane {
-  display: grid; grid-template-columns: 1fr; gap: 7px;
-  width: 100%; padding: 0; text-align: left;
-  background: none; border: 0; color: inherit; font: inherit;
+.ar-duel { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 10px 12px; }
+.ar-you { margin: 0; display: flex; align-items: baseline; gap: 8px; }
+.ar-you b {
+  font-size: var(--f-hero); line-height: 1; letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
 }
-button.ar-lane { cursor: pointer; }
-button.ar-lane:active { opacity: 0.7; }
-
-.ar-lane-who {
-  display: flex; align-items: center; gap: 7px;
-  font-size: var(--f-fine); color: var(--muted); min-width: 0;
+.ar-you i {
+  font-style: normal; font-size: var(--f-fine); color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.12em;
 }
 
-.ar-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); flex: 0 0 auto; }
-.ar-lane.me .ar-dot { background: var(--accent); }
-
-/* The bar and the number share a row, so both lanes align on the same axis. */
-.ar-lane-bar {
-  grid-column: 1; grid-row: 2;
-  height: 8px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden;
-  /* Not rhythm: the width the percentage needs, reserved so both lanes end on
-     one axis however wide the number is. */
-  margin-right: var(--lane-num, 64px);
+/* The reward: the gap, once, as a mark rather than a sentence. */
+.ar-gap { margin: 0; justify-self: end; }
+.ar-gap b {
+  display: inline-block; padding: 5px 11px; border-radius: var(--r-pill);
+  font-size: var(--f-small); font-weight: var(--w-bold);
+  color: var(--muted); background: var(--surface);
+  animation: gap-in var(--t-base) var(--ease) 0.24s backwards;
 }
-.ar-lane-bar i {
-  display: block; height: 100%; border-radius: var(--r-pill);
-  background: var(--line); transition: width var(--t-slow) var(--ease);
+@keyframes gap-in { from { opacity: 0; transform: translateY(5px); } }
+.ar-week.ahead .ar-gap b {
+  color: var(--good); background: color-mix(in srgb, var(--good) 13%, transparent);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--good) 16%, transparent);
 }
-/* Yours is the accent whatever the score. */
-.ar-lane.me .ar-lane-bar i { background: var(--accent); }
-.ar-lane.them .ar-lane-bar i { background: var(--ash); }
+.ar-week.behind .ar-gap b { color: var(--warn); background: color-mix(in srgb, var(--warn) 13%, transparent); }
 
-.ar-lane b {
-  grid-column: 1; grid-row: 2; justify-self: end; align-self: center;
-  width: 58px; text-align: right;
-  font-size: var(--f-head); letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+.ar-duel .ar-rail { grid-column: 1 / -1; }
+
+.ar-rival {
+  display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 44px;
+  justify-self: start; padding: 0; margin: 0;
+  border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer;
 }
-.ar-lane.me b { color: var(--text); }
-.ar-lane.them b { color: var(--muted); }
-
-.ar-verdict {
-  display: flex; justify-content: space-between; gap: 10px;
-  margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--line-soft);
-  font-size: var(--f-small);
+.ar-rival:active { opacity: 0.65; }
+.ar-rival span {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: var(--f-small); color: var(--muted);
 }
-.ar-verdict i { font-style: normal; color: var(--muted); font-size: var(--f-fine); }
-.ar-fixture.ahead .ar-verdict b { color: var(--good); }
-.ar-fixture.behind .ar-verdict b { color: var(--warn); }
+.ar-rival b { font-size: var(--f-small); font-variant-numeric: tabular-nums; }
+/* The same mark as the tick on the track, so the two read as one rival. */
+.ar-tick { width: 3px; height: 14px; flex: 0 0 3px; border-radius: var(--r-pill); background: var(--muted); }
+.ar-left { align-self: center; text-align: right; font-size: var(--f-fine); color: var(--faint); }
 
-/* The same rows as the grid, in the same order, so the eye can map one onto
-   the other. What is new is the fraction. */
+/* ---------- the scoreboard ----------
+   The rows behind the score, in the grid's order, on a rule. The bar wears the
+   habit's own colour, which is how you find a row without reading it. */
+
+.ar-sb { margin-top: var(--s-5); border-top: 1px solid var(--line-soft); }
+.ar-sb-row {
+  display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 0;
+  border-bottom: 1px solid var(--line-soft); text-decoration: none; color: inherit;
+}
+.ar-sb-row:last-child { border-bottom: 0; }
+.ar-sb-row:active { opacity: 0.6; }
+.ar-sb-name {
+  flex: 1 1 40%; min-width: 0; font-size: var(--f-body);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ar-sb-bar { flex: 1 1 38%; height: 6px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; }
+.ar-sb-bar i { display: block; height: 100%; border-radius: var(--r-pill); animation: rail-in var(--t-slow) var(--ease); }
+/* Fixed, so a 10/12 row does not shorten its bar against a 5/6 one. */
+.ar-sb-row b {
+  flex: 0 0 42px; text-align: right; font-size: var(--f-small);
+  font-variant-numeric: tabular-nums; color: var(--muted);
+}
+.ar-sb-row.full b { color: var(--text); }
+
+/* The same rows, in a sheet and on the year. */
 .ar-rows { margin-top: 14px; }
 .ar-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: var(--f-small); }
 .ar-row-name { flex: 1 1 40%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ar-row-bar { flex: 1 1 40%; height: 6px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; }
 .ar-row-bar i { display: block; height: 100%; border-radius: var(--r-pill); background: var(--accent); transition: width var(--t-base) var(--ease); }
-/* Fixed, so a 10/12 row does not shorten its bar against a 5/6 one. */
 .ar-row b { flex: 0 0 46px; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 600; font-size: var(--f-fine); }
 
-/* ---------- form + the nemesis ---------- */
+/* ---------- form, and the boss ---------- */
 
 /* Six on one line at any width, each wide enough for a thumb. */
-.ar-form { display: flex; gap: 4px; margin-bottom: 12px; }
+.ar-form { display: flex; gap: 6px; margin-top: var(--s-6); }
 .ar-chip {
   flex: 1 1 0; min-width: 44px; min-height: 44px; padding: 7px 0; text-align: center;
   display: grid; place-content: center;
-  border: 1px solid var(--line); border-radius: var(--r-ctrl); background: var(--surface-2);
-  color: var(--muted); cursor: pointer;
+  border: 1px solid var(--line-soft); border-radius: var(--r-ctrl); background: none;
+  color: var(--faint); cursor: pointer;
 }
 .ar-chip b { display: block; font-size: var(--f-small); font-variant-numeric: tabular-nums; }
-.ar-chip.won { border-color: color-mix(in srgb, var(--good) 42%, transparent); color: var(--good); }
-.ar-chip.lost { border-color: var(--ash); color: var(--muted); }
+.ar-chip.won { border-color: color-mix(in srgb, var(--good) 34%, transparent); color: var(--good); }
+.ar-chip.lost { color: var(--muted); }
 .ar-chip:active { transform: scale(0.95); }
 
+/* Your best week, with your face on it. The one thing on the screen you are
+   actually up against, so it is the one block that gets a surface. */
+.ar-boss {
+  margin-top: var(--s-6); padding: 12px 14px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card);
+  box-shadow: 0 0 26px color-mix(in srgb, var(--accent) 7%, transparent);
+}
+.ar-boss-who {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px;
+  padding: 0; border: 0; background: none; color: inherit; font: inherit;
+  text-align: left; cursor: pointer;
+}
+.ar-boss-who:active { opacity: 0.7; }
+.ar-boss-name { flex: 1; min-width: 0; }
+.ar-boss-name b { display: block; letter-spacing: -0.01em; }
+.ar-boss-name i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted); }
+.ar-boss-score { font-size: var(--f-title); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+
+/* One line a day, from him. */
+.ar-said { margin: 10px 0 0; font-size: var(--f-small); font-style: italic; color: var(--muted); line-height: 1.45; }
+.ar-said.lone { display: flex; align-items: center; gap: 10px; margin-top: var(--s-6); }
+
+/* The best week of a year, on the Cabinet. */
 .ar-nemesis {
   display: flex; align-items: center; gap: 10px; width: 100%;
   margin: 0 0 14px; padding: 10px 12px;
@@ -1296,13 +1347,10 @@ button.ar-lane:active { opacity: 0.7; }
   color: inherit; font: inherit; text-align: left; cursor: pointer;
 }
 .ar-nemesis:active { transform: scale(0.99); }
-.ar-nico { display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 30px;
-  border-radius: var(--r-ctrl); background: var(--surface); color: var(--muted); }
 .ar-nname { flex: 1; min-width: 0; }
 .ar-nname b { display: block; font-size: var(--f-small); }
 .ar-nname i { display: block; font-style: normal; font-size: var(--f-fine); color: var(--muted);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* The icon on the left carries good or bad. The number stays a number. */
 .ar-nscore { font-size: var(--f-head); color: var(--text); font-variant-numeric: tabular-nums; }
 
 /* ---------- the arc ---------- */
