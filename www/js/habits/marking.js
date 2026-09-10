@@ -152,8 +152,9 @@ function openDayNote(mount, key, redraw) {
   haptic('press');
   const sheet = openSheet(`
     <h2>${escapeHtml(relDay(key))}</h2>
-    <p class="muted small">A line on the day. It comes back in the week's review.</p>
-    <div class="note-ask"><input type="text" id="dayNote" maxlength="140" autocomplete="off" placeholder="What happened" value="${escapeHtml(habits.noteOn(key))}"></div>
+    <p class="muted small">A line on the day, back in the week's review.</p>
+    <input class="hg-note" type="text" id="dayNote" maxlength="140" autocomplete="off"
+      placeholder="What happened" value="${escapeHtml(habits.noteOn(key))}">
     <div class="btn-row">
       <button class="btn ghost" data-close>Cancel</button>
       <button class="btn primary" id="noteSave">Save</button>
@@ -187,19 +188,31 @@ function patchCell(mount, habit, key, wasDone, wasOn, redraw) {
   crossing();
 }
 
-/** Keypad for a measurable habit, plus a button for each of the other states. */
+/** What it asks and which day. A floor is the bar's job, so only a ceiling,
+ *  which has no bar, is spelt out. */
+function askLine(habit, key) {
+  const ask = habit.question || `How many ${habit.unit || 'this day'}?`;
+  const ceiling = habit.target && habit.targetType === 'atmost' ? ` · under ${fmtNumber(habit.target)}` : '';
+  return `${ask} · ${relDay(key)}${ceiling}`;
+}
+
+/** Keypad for a measurable habit, plus a button for each of the other states.
+ *  The bar under the field is the target, so no line prints it as well. */
 export function openValueSheet(mount, habit, key, redraw) {
   const s = habits.settings();
+  const colour = rowColour(habit);
   const current = habits.valueOn(habit, key);
+  const bar = habit.target > 0 && habit.targetType !== 'atmost';
   const sheet = openSheet(`
-    <h2>${escapeHtml(habit.name)}</h2>
-    <p class="muted small">${escapeHtml(habit.question || `How many ${habit.unit || 'this day'}?`)} · ${escapeHtml(key)}</p>
-    <div class="measure-row">
+    <h2 style="color:${colour}">${escapeHtml(habit.name)}</h2>
+    <p class="muted small">${escapeHtml(askLine(habit, key))}</p>
+    <div class="hg-val">
       <input type="number" inputmode="decimal" step="any" min="0" id="val"
-        value="${typeof current === 'number' && current >= 0 ? current : ''}" placeholder="0">
-      <span>${escapeHtml(habit.unit || '')}</span>
+        value="${typeof current === 'number' && current >= 0 ? current : ''}" placeholder="0"
+        aria-label="${escapeHtml(habit.question || habit.name)}">
+      <span class="hg-val-unit">${escapeHtml(habit.unit || '')}</span>
     </div>
-    ${habit.target ? `<p class="fineprint">Target: ${habit.targetType === 'atmost' ? 'at most' : 'at least'} ${fmtNumber(habit.target)}${habit.unit ? ` ${escapeHtml(habit.unit)}` : ''}.</p>` : ''}
+    ${bar ? `<div class="hg-val-bar" style="--sc:${colour}"><i id="valBar"></i></div>` : ''}
     <div class="btn-row">
       <button class="btn" id="clear">Clear</button>
       ${s.skipDays ? '<button class="btn" id="skip">Skip</button>' : ''}
@@ -207,6 +220,14 @@ export function openValueSheet(mount, habit, key, redraw) {
     </div>`);
 
   const input = sheet.el.querySelector('#val');
+  const fill = sheet.el.querySelector('#valBar');
+  const draw = () => {
+    if (!fill) return;
+    const v = Number(input.value);
+    fill.style.width = `${Math.max(0, Math.min(Number.isFinite(v) ? v / habit.target : 0, 1)) * 100}%`;
+  };
+  input.addEventListener('input', draw);
+  draw();
   input.focus();
   const done = (value) => {
     // Same event as a cell tap, so it takes the same path: swap, nudge, no rebuild.
