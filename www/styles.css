@@ -2192,6 +2192,7 @@ html.reduce-motion .intro-grid .intro-tap { animation: none; }
 
 .acc-form { display: grid; gap: var(--s-4); }
 .acc-form > div { display: grid; gap: var(--s-4); }
+.acc-form > div[hidden], .acc-form .field[hidden] { display: none; }
 /* The label is the .field, so the caption inside it needs its own rule. */
 .acc-form .field { display: grid; gap: 6px; }
 .acc-form .field > span { font-size: var(--f-small); color: var(--muted); }
