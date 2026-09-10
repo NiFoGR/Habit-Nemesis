@@ -7,6 +7,7 @@ import { renderHabitDetail } from './habits/tracking.js';
 import { renderTimer, leaveTimer } from './habits/timer.js';
 import * as habitsProgram from './habits/program.js';
 import { renderArena } from './arena/home.js';
+import { renderArc } from './arena/arc.js';
 import { renderFeats } from './arena/feats-screen.js';
 import { renderDivisions } from './arena/divisions.js';
 import { renderCabinet } from './arena/cabinet.js';
@@ -49,6 +50,7 @@ const ROUTES = {
   '#/habits/archive': () => renderArchive(app),
   '#/habits/timer': (params) => renderTimer(app, params.get('id')),
   '#/arena': () => renderArena(app),
+  '#/arena/arc': () => renderArc(app),
   '#/arena/result': () => renderResult(app),
   '#/arena/moment': () => renderMoment(app),
   '#/arena/rank': () => renderRank(app),
@@ -67,7 +69,7 @@ const NAV = {
   hub: '#/hub', settings: '#/settings', account: '#/account',
   ...Object.fromEntries(SETTINGS_PAGES.map((p) => [`settings-${p}`, `#/settings/${p}`])),
   habits: '#/habits', 'habits-archive': '#/habits/archive',
-  arena: '#/arena', cabinet: '#/cabinet',
+  arena: '#/arena', 'arena-arc': '#/arena/arc', cabinet: '#/cabinet',
   'cabinet-feats': '#/cabinet/feats', 'cabinet-year': '#/cabinet/year',
   intro: '#/intro',
 };
@@ -114,6 +116,7 @@ document.addEventListener('click', (e) => {
   const nav = e.target.closest('[data-nav]');
   if (!nav) return;
   e.preventDefault();
+  haptic('press');
   navigate(NAV[nav.dataset.nav] || '#/hub');
 });
 
