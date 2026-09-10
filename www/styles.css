@@ -559,7 +559,9 @@ input[type="range"] {
 /* Name, clock and score share one baseline and one type, or the header reads
    as three unrelated things dropped on a line. */
 .hg-group {
-  display: flex; align-items: baseline; gap: 10px;
+  /* Centre, not baseline: the name sits in a flex button whose first child is
+     the caret, so a baseline row lines the clock up with the icon instead. */
+  display: flex; align-items: center; gap: 10px;
   margin: 22px 0 4px; padding: 0 2px;
 }
 .hg-group i {
