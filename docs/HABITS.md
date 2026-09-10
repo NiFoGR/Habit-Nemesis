@@ -128,12 +128,29 @@ the same day keys, so the boundary moves for both together.
 ## Protocols
 
 A curated block: rows created for you in a group of their own, a fixed span,
-and a feat in the Cabinet if you hold four in five of the cells it owed.
-Three ship, as data in `PROTOCOLS`: thirty days of discipline, an eight week
-lifting split, and a four week sleep protocol. A run is judged once, the day
-after it ends, from the same record everything else reads. The rows stay on
-the grid afterwards as ordinary rows: the protocol was the clock, not the
-habits.
+and a feat in the Cabinet if you hold four in five of the cells it owed. A run
+is judged once, the day after it ends, from the same record everything else
+reads. The rows stay on the grid afterwards as ordinary rows: the protocol was
+the clock, not the habits.
+
+Seven ship, as data in `PROTOCOLS`, meant to be run one at a time rather than
+at once:
+
+| Protocol | Span | Trains |
+|---|---|---|
+| Foundation | 30 days | wake time, morning light, steps, protein, bedtime |
+| Physical Development | 12 weeks | training, steps, protein, creatine, mobility |
+| Deep Work | 30 days | a 90 minute block, a phone-free session, learning, planning |
+| Digital Discipline | 30 days | five things not done |
+| Discipline | 30 days | doing what you said you would, on the day you said it |
+| Christian Life | 30 days | a morning and evening rule, Scripture, the Liturgy |
+| Character | 60 days | your word, the truth, no complaining, a useful thing |
+
+Every row asks an implementation intention, a cue and a behaviour, not a
+resolution: "Up within half an hour of your wake time?" rather than "Wake
+earlier?". A run of a protocol that has since left the table still settles and
+still keeps its feat if there is one: `settleProtocols()` reads the run, never
+the table.
 
 ## Reminders
 

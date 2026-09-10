@@ -43,19 +43,32 @@ export function openTypePicker() {
   });
 }
 
-/** Three curated blocks. Starting one builds its rows and starts its clock. */
+/** Curated blocks. Starting one builds its rows and starts its clock. */
 export function openProtocolSheet() {
   const runs = habits.protocolRuns();
+  const span = (d) => (d % 7 === 0 && d > 30 ? `${d / 7} weeks` : `${d} days`);
   const sheet = openSheet(`
     <h2>Protocols</h2>
     <p class="muted small">A block of rows with an end date. Hold four in five of its cells and it goes in the Cabinet.</p>
-    <div class="type-cards">${habits.PROTOCOLS.map((p) => {
-      const running = runs[p.id] && !runs[p.id].settled;
-      return `<button class="type-card" data-protocol="${p.id}" ${running ? 'disabled' : ''}>
-        <b>${escapeHtml(p.name)}</b>
-        <span>${escapeHtml(running ? 'Running now.' : `${p.days} days. ${p.rows.map((r) => r.name).join(', ')}.`)}</span>
+    <div class="proto-list">${habits.PROTOCOLS.map((p) => {
+      const run = runs[p.id];
+      const running = run && !run.settled;
+      return `<button class="proto" data-protocol="${p.id}" ${running ? 'disabled' : ''}>
+        <span class="proto-text">
+          <b>${escapeHtml(p.name)}</b>
+          <i>${escapeHtml(p.rows.map((r) => r.name).join(' · '))}</i>
+        </span>
+        <span class="proto-span">${escapeHtml(running ? 'Running' : run?.completed ? 'Kept' : span(p.days))}</span>
       </button>`;
-    }).join('')}</div>
+    }).join('')}
+      <div class="proto soon">
+        <span class="proto-text">
+          <b>Community protocols</b>
+          <i>Write your own and run someone else's. Being built.</i>
+        </span>
+        <span class="proto-span">Soon</span>
+      </div>
+    </div>
     <button class="btn ghost wide" data-close>Cancel</button>`);
   sheet.el.querySelectorAll('[data-protocol]').forEach((b) =>
     b.addEventListener('click', () => {

@@ -620,6 +620,28 @@ button.type-card { width: 100%; text-align: left; font: inherit; cursor: pointer
 
 /* ---------- choosing a kind, a colour, a frequency ---------- */
 
+/* A protocol is a row, like everything else that is a list in this app. Seven
+   bordered cards in a sheet was a wall. */
+.proto-list { display: grid; margin: 12px 0 6px; }
+.proto {
+  display: flex; align-items: baseline; gap: 12px; width: 100%;
+  padding: 12px 2px;
+  background: none; border: 0; border-bottom: 1px solid var(--line-soft);
+  color: var(--text); text-align: left; font: inherit; cursor: pointer;
+}
+.proto-list .proto:last-child { border-bottom: 0; }
+.proto-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.proto-text b { font-size: var(--f-body); }
+.proto-text i {
+  font-style: normal; font-size: var(--f-fine); color: var(--muted); line-height: 1.35;
+}
+.proto-span { flex: 0 0 auto; font-size: var(--f-fine); color: var(--faint); }
+.proto:disabled { cursor: default; }
+.proto:disabled .proto-span { color: var(--accent-ink); }
+/* Not built yet, and it does not pretend otherwise. */
+.proto.soon { cursor: default; }
+.proto.soon .proto-text b, .proto.soon .proto-text i { color: var(--faint); }
+
 .type-cards { display: grid; gap: 10px; margin: 14px 0 4px; }
 .type-card {
   display: block; text-decoration: none; color: inherit;
