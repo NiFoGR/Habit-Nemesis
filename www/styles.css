@@ -2048,6 +2048,8 @@ html.reduce-motion .intro-grid .intro-tap { animation: none; }
   border: 0; background: none; color: inherit; font: inherit; cursor: pointer;
 }
 .nem-hero:active { opacity: 0.7; }
+.kv b em.up { color: var(--good); }
+.kv b em.down { color: var(--muted); }
 .nem-empty { display: grid; place-items: center; gap: var(--s-4); margin-top: var(--s-8); }
 .nem-empty p { margin: 0; }
 .nem-hero b { font-size: var(--f-hero); letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
