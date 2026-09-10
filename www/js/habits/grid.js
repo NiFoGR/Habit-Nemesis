@@ -18,7 +18,7 @@ function detailOf(habit) {
 
 /** The small ring: the score in the habit's own colour. ringSvg is the 168px
  *  one and does not survive being shrunk to 26px. */
-function miniRing(frac, colour) {
+export function miniRing(frac, colour) {
   const r = 9;
   const c = 2 * Math.PI * r;
   const off = c * (1 - Math.max(0, Math.min(frac, 1)));
@@ -90,7 +90,7 @@ export function rowHtml(habit, days, s, { reorder = false, groupOptions = () => 
     <a class="hg-name" href="${href}">
       ${miniRing(sum.score, colour)}
       <span class="hg-label">
-        <b>${escapeHtml(habit.name)}</b>
+        <b style="color:${colour}">${escapeHtml(habit.name)}</b>
         ${detailOf(habit) ? `<i>${escapeHtml(detailOf(habit))}</i>` : ''}
       </span>
     </a>

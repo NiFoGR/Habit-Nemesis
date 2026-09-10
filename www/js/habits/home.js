@@ -15,7 +15,7 @@ import { escapeHtml, toast, openSheet, haptic, chime } from '../ui.js';
 import { icon } from '../icons.js';
 import { openTypePicker } from './edit.js';
 import * as arena from '../arena/program.js';
-import { headCell, rowHtml, dueHead, headRing } from './grid.js';
+import { headCell, rowHtml, dueHead, headRing, miniRing } from './grid.js';
 import { wireCells, openValueSheet } from './marking.js';
 import { announce } from '../arena/result.js';
 import { configured } from '../account/config.js';
@@ -35,10 +35,10 @@ const SEARCH_FROM = 12;
 function starterPack() {
   return `<section class="starters">
     <h2>Start with one of these</h2>
-    <p class="muted small">Tap to add. Everything about it can change later.</p>
+    <p class="muted small">Tap to add.</p>
     <div class="starter-list">
       ${habits.STARTERS.map((h, i) => `<button class="starter" data-starter="${i}" style="--sc:${habits.hexOf(h.colour)}">
-        <span class="starter-dot"></span>
+        ${miniRing(0, habits.hexOf(h.colour))}
         <span class="starter-name">${escapeHtml(h.name)}</span>
         <span class="starter-meta">${escapeHtml(habits.starterMeta(h))}</span>
         <span class="starter-add">${icon('plus', 15)}</span>
@@ -440,7 +440,7 @@ export function renderArchive(mount) {
               const sum = habits.summary(h);
               return `<div class="arch-row" data-id="${escapeHtml(h.id)}">
                 <span class="arch-text">
-                  <b>${escapeHtml(h.name)}</b>
+                  <b style="color:${habits.hexOf(h.colour)}">${escapeHtml(h.name)}</b>
                   <i>${escapeHtml(habits.freqLabel(h.freq))} · best ${sum.best} day${sum.best === 1 ? '' : 's'}</i>
                 </span>
                 <button class="row-act" data-restore>Restore</button>

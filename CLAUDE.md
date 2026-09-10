@@ -71,8 +71,9 @@ first thing anyone notices.
 - A list is rows on a hairline rule, the way Settings has always been.
 - A radius token by job, not by pixels: `--r-card` a thing you act on,
   `--r-ctrl` an input or a cell, `--r-chip` a small mark, `--r-pill` a bar.
-- Colour means state. A habit's own colour belongs on its ring and its marks,
-  never on its name: six coloured names in a column is a rainbow, not a system.
+- Colour means state, with one exception: a habit's own colour, which it wears
+  on its name, its ring and its marks. That is how you find a row without
+  reading it.
 
 ### One state colour per block
 

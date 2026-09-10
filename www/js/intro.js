@@ -111,7 +111,7 @@ function starters(picked) {
 const PAGES = [
   {
     title: 'Habit Nemesis',
-    line: 'You do not play other people. You play the best week you have ever had.',
+    line: '',
     art: () => `<span class="intro-logo">${logoMark(76)}</span>`,
     next: 'Show me',
   },

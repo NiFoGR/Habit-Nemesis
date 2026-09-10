@@ -494,9 +494,7 @@ input[type="range"] {
   padding: 6px 0;
 }
 .hg-name > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* The colour is on the ring and on the marks. On the name as well it made a
-   list of six habits read as six unrelated things. */
-.hg-name b { color: var(--text); font-weight: 600; }
+.hg-name b { font-weight: 600; }
 .hg-row { font-size: var(--f-body); }
 .hg-ring { width: 20px; height: 20px; flex: 0 0 20px; display: block; }
 
@@ -1614,6 +1612,8 @@ html.reduce-motion .mo-card { opacity: 1; }
 }
 .intro-title { font-size: var(--f-hero); line-height: 1.05; letter-spacing: -0.035em; margin: 0 0 10px; }
 .intro-line { max-width: 30ch; color: var(--muted); font-size: var(--f-body); margin: 0; }
+/* The first page has no line. The element stays for the pages that fill it in. */
+.intro-line:empty { display: none; }
 
 .intro-logo { filter: drop-shadow(0 0 26px color-mix(in srgb, var(--accent) 30%, transparent)); }
 
@@ -1860,30 +1860,29 @@ html.reduce-motion .hg-cell.intro-tap { animation: none; }
 /* ---------- the first five ----------
    Shown only on an empty grid. Each row wears the colour it will have, so
    tapping one is a preview rather than a promise. */
-.starters { margin-top: 18px; }
+/* A starter is the row it will become: the same ring, the same line, the same
+   height. It sat above the grid as a bordered card and read as another app. */
+.starters { margin-top: 22px; }
 .starters h2 { font-size: var(--f-head); margin: 0 0 2px; }
-.starters p { margin: 0 0 12px; }
-.starter-list { display: grid; gap: 8px; }
+.starters p { margin: 0 0 4px; }
+.starter-list { display: grid; }
 .starter {
   display: grid;
-  grid-template-columns: 12px 1fr auto 22px;
+  grid-template-columns: 20px 1fr auto 20px;
   align-items: center;
-  gap: 11px;
+  gap: 10px;
   width: 100%;
-  padding: 13px 14px;
-  border-radius: var(--r-card);
-  background: var(--surface);
-  border: 1px solid var(--line);
+  min-height: 54px;
+  padding: 2px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
   color: var(--text);
   text-align: left;
   font-size: var(--f-body);
 }
-.starter:active { transform: scale(0.985); }
-.starter-dot {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: var(--sc);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--sc) 22%, transparent);
-}
+.starter-list .starter:last-child { border-bottom: 0; }
+.starter:active .starter-name { opacity: 0.6; }
 .starter-name { font-weight: var(--w-medium); color: var(--sc); }
 .starter-meta { font-size: var(--f-fine); color: var(--muted); }
 .starter-add { color: var(--faint); display: grid; place-items: center; }

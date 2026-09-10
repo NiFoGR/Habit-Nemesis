@@ -77,9 +77,7 @@ function unranked() {
     </div>
   </div>
   <a class="ar-ladder-link" href="#/arena/divisions">${pips(null)}<span>See the nine divisions ${icon('back', 12)}</span></a>
-  <p class="ar-need${going ? ' up' : ''}">${going
-    ? `Marking stops here and you go in at ${escapeHtml(going.name)}.`
-    : 'Mark anything on the grid and this becomes a real number.'}</p>`;
+  ${going ? `<p class="ar-need up">Marking stops here and you go in at ${escapeHtml(going.name)}.</p>` : ''}`;
 }
 
 /** The head of the Arena. Crest, division, rung, ladder, and the month's bar. */
