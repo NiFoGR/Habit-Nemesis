@@ -61,7 +61,7 @@ file there is nothing else to do in the code.
 
 | Where | What |
 |---|---|
-| Cabinet, Feats, Year, Divisions, Archive, a habit's history | one banner at the foot |
+| The Arena, Cabinet, Feats, Year, Divisions, Archive, a habit's history | one banner at the foot |
 | Leaving the week's result screen | one full-screen ad, once a week |
 | Everywhere else | nothing |
 | First three days after install | nothing at all |
@@ -212,9 +212,13 @@ themselves when the field is filled.
 actually ships.
 
 - **Does your app collect or share any required user data?** Yes.
-- **Data types**, three:
+- **Data types**, four:
   - **Personal info > Email address.** Collected, not shared. Purpose: account
     management. Optional: the app works without an account.
+  - **Personal info > Phone number.** Collected, not shared. Purpose: account
+    management. Optional, and only for the sign-in route that sends a code by
+    text message. Declaring it is not optional once phone sign-in ships: Play
+    checks the answers against `www/legal/privacy.html`, which names it.
   - **App activity > Other user-generated content.** Collected, not shared.
     Purpose: app functionality. That is the record, one JSON document, held in
     the user's account so a new phone can receive it. Optional.

@@ -4,8 +4,8 @@ Everything in the app is written. Nothing works until a Supabase project exists,
 because the app has no server of its own and cannot make one for you.
 
 This page is the whole of what you have to do. It is about twenty minutes for
-email sign-in, another twenty for Google, and Apple is blocked on the $99
-developer account.
+email sign-in, another twenty for Google, twenty more for phone if you want it,
+and Apple is blocked on the $99 developer account.
 
 Until you do any of it the app runs exactly as it does now, local only, and the
 account screen says so rather than showing a form that cannot work.
@@ -92,7 +92,40 @@ half on the device. `tools/patch-deeplink.mjs` registers that scheme, and it
 runs on every build because `android/` is regenerated each time and would throw
 a hand-edited manifest away.
 
-## 4. Apple
+## 4. Phone, and the one bill that scales
+
+The sign-in screen has a **Phone** tab beside Email, and it does nothing until
+Supabase has an SMS provider. Unlike everything else here, this one has a
+running cost per person who signs in.
+
+1. **Authentication > Providers > Phone**, enable it.
+2. Pick a provider and paste its credentials. Twilio, MessageBird, Vonage and
+   Textlocal are the ones Supabase supports. Twilio is the usual answer: a
+   trial account sends only to numbers you have verified, so a paid account is
+   needed the day anyone else uses it.
+3. Set the message template to include the code. Supabase's default does.
+4. Keep the OTP expiry at its default. A longer one is a longer window for a
+   code read off a lock screen.
+
+**What it costs.** Roughly £0.04 an SMS in the UK, more to some countries, and
+you pay for the ones that fail as well. A hundred sign-ins a month is pennies;
+a hundred thousand is not, and SMS pumping fraud is a real thing where an
+attacker drives sign-ins to premium numbers they own. Two defences, both in the
+Supabase dashboard rather than in this app:
+
+- **Rate limits.** Authentication > Rate Limits caps SMS an hour for the whole
+  project. The default is low; raise it deliberately rather than by reflex.
+- **Country allow list.** Twilio's Geo Permissions turns off the countries you
+  do not serve, which is where the fraud comes from.
+
+**If you would rather not.** Delete the Phone tab from
+`www/js/account/screen.js` and the two functions from `session.js`, then remove
+the phone number from `www/legal/privacy.html` and the Data safety answers in
+`docs/STORE.md`. `npm run check:release` will tell you if you miss one: it fails
+when `session.js` can sign in by phone and either document has stopped saying
+so.
+
+## 5. Apple
 
 **Blocked until you pay the $99 a year.** Sign in with Apple needs a Services
 ID and a signing key, and both live behind Certificates, Identifiers & Profiles,
@@ -106,7 +139,7 @@ covered by the exception for your own account system. **So an iOS build with
 email only owes Apple nothing. Adding the Google button is what obliges you to
 add Apple's too.**
 
-## 5. Do not let a free project pause itself
+## 6. Do not let a free project pause itself
 
 This is the one that catches people, and it is worth reading twice.
 

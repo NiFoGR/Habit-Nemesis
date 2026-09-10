@@ -196,11 +196,50 @@ than a plan:
 | 10,000 daily users | £1,200 to £2,000 a month | £300 to £600 a month |
 | 50,000 daily users | £6,000 to £10,000 a month | £1,500 to £3,000 a month |
 
-Ads assume three impressions per user per day at a blended £1.50 to £2.50
-eCPM, which is realistic for a short-session utility and nothing like the
-figures quoted for games. Subscriptions assume 2% of monthly users converting
-at about £20 a year net of the store's cut, which is a normal rate for this
-category and a good one for a first app.
+Ads assume a blended £1.50 to £2.50 eCPM, which is realistic for a short-session
+utility and nothing like the figures quoted for games. The impressions are not
+an assumption: they come off the placement in `www/js/ads/program.js`.
+
+| | impressions per user per day | eCPM | pence per user per day |
+|---|---|---|---|
+| Banner, the Arena | ~1.0 | £1.60 | 0.16 |
+| Banner, the other seven browse screens | ~0.8 | £1.60 | 0.13 |
+| Interstitial, one a week | 0.14 | £8.00 | 0.11 |
+| | **1.9** | | **0.40** |
+
+That is the 1,000-user row above. Before the Arena joined the list the app
+delivered 0.94 impressions a day and about £73 a month at that size, so the
+table was describing an ad load the app did not have.
+
+Subscriptions assume 2% of monthly users converting at about £20 a year net of
+the store's cut, which is a normal rate for this category and a good one for a
+first app.
+
+### Why not more of them
+
+Revenue per user is `a · c · L(a)`: ad load, revenue per impression, and the
+lifetime that load leaves you. It is at its maximum where one per cent more load
+costs exactly one per cent of lifetime, and by that test **every placement in
+this app is a long way below the turn**. A banner on a browse screen costs one
+or two per cent of lifetime, an elasticity around −0.02, some thirty times short
+of it. On the arithmetic alone the grid should carry one too.
+
+The arithmetic is the wrong instrument there, and it is worth saying why rather
+than pretending the numbers forbid it. The model maximises revenue per user
+already acquired and has no term for rating. Ads on the screen a habit tracker
+is actually used on are a reliable one-star generator, Play ranks on rating and
+retention together, and the installs that costs are nowhere in `L(a)`.
+
+A second interstitial, on the way out of the month's rank screen, was considered
+and dropped. The result screen and the rank screen are adjacent in the same
+queue, so on the one week a month where both fire it would be two full-screen
+ads inside a minute: the worst ad experience the app could offer, in exchange
+for about five per cent more revenue.
+
+There is also no way to measure any of this. The app carries no analytics, on
+purpose. Play Console's retention cohorts and AdMob's revenue are the only
+instruments, which means changing one placement at a time and waiting four
+weeks. Anything faster is guessing with a table in front of it.
 
 Two things follow. Ads earn more than subscriptions at every size, which is not
 what most people expect. And **neither is a job until roughly 50,000 daily
@@ -233,8 +272,10 @@ habit would be the end of it: the entire value is that marking takes eight
 seconds, and an ad triples that.
 
 - **Yes:** a single banner or native unit at the foot of the browsing screens.
-  The Cabinet, the Year, the archive, a habit's own history. Screens people
-  scroll rather than screens people transact on.
+  The Arena, the Cabinet, the Year, the archive, a habit's own history. Screens
+  people read rather than screens people transact on. The Arena and the grid are
+  both root tabs and only one of them qualifies: the grid is where the day gets
+  marked in eight seconds.
 - **Yes, once a week:** one interstitial on the Monday result screen, which is
   a natural pause where you have just been told something. One a week, never
   two.

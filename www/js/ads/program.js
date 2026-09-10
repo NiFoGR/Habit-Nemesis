@@ -19,7 +19,12 @@ const plugin = () => window.Capacitor?.Plugins?.AdMob;
 
 // Screens people scroll, and nothing else. A path not on this list gets no
 // banner, which is the safe direction to be wrong in.
+//
+// The Arena belongs here and the grid never will. Both are root tabs, but the
+// grid is where the day gets marked in eight seconds and the Arena is where
+// you read what that came to.
 const BANNER_SCREENS = new Set([
+  '#/arena',
   '#/cabinet',
   '#/cabinet/feats',
   '#/cabinet/year',
@@ -33,6 +38,9 @@ const BANNER_SCREENS = new Set([
 let ready = false; // the SDK is up and this user can be served
 let bannerUp = false;
 let fullLoaded = false;
+// A week asked for before the SDK was up. The result screen is usually the
+// screen a launch lands on, and init() has not resolved by the time it renders.
+let wanted = '';
 
 const available = () => configured() && isNative() && !!plugin();
 
@@ -57,6 +65,11 @@ export async function init() {
     ready = true;
   } catch {
     ready = false;
+  }
+  if (ready && wanted) {
+    const week = wanted;
+    wanted = '';
+    prepareWeekly(week);
   }
 }
 
@@ -125,7 +138,11 @@ const due = (weekKey) => !!weekKey && store.get().ads.lastFull !== weekKey;
 /** Loaded while the result is being read, so the ad is ready by the time the
  *  screen is left and nobody waits at a blank one. */
 export async function prepareWeekly(weekKey) {
-  if (!ready || !pastGrace() || fullLoaded || !due(weekKey)) return;
+  if (!pastGrace() || fullLoaded || !due(weekKey)) return;
+  if (!ready) {
+    wanted = weekKey;
+    return;
+  }
   try {
     await plugin().prepareInterstitial({ adId: interstitialUnit(), isTesting: TESTING });
     fullLoaded = true;

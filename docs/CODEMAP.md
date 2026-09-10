@@ -191,6 +191,7 @@ Everything here is build-time and never ships in `www/`.
 | `tools/art.mjs` | Takes a dropped-in image, makes the WebP the app loads, updates `sw.js`. |
 | `tools/patch-signing.mjs` | Pins the debug signing key into the generated Gradle build. |
 | `tools/patch-backup.mjs` | Turns on Android's own backup, which is what carries the record off the device. |
+| `tools/check-release.mjs` | Refuses a push that ships a source map, a secret, live ad units or the wrong keystore. |
 | `tools/patch-deeplink.mjs` | Registers `com.habitnemesis.app://auth`, which sign-in returns through, and `://open`, which carries a route. |
 | `tools/patch-shortcuts.mjs` | The launcher shortcuts, Mark today and Arena, with their icons drawn from `icons.js`. |
 | `tools/patch-release-signing.mjs` | Release signing from CI secrets. Refuses the debug key and a debuggable config. |

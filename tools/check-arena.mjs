@@ -670,5 +670,42 @@ group('every line he says');
   is('and the rivalry above opens the ones it should', [...seen].sort(), ['deposed', 'reign', 'run', 'sinceWin']);
 }
 
+/* ---------------- a clock that moved ----------------
+   Moving the device clock forward closes the week you are in the middle of.
+   Moving it back used to leave that defeat on the record for ever, because
+   rescore only touches weeks nobody played. */
+group('a week that has not ended');
+{
+  st.reset();
+  const now = a.currentWeek();
+  st.update((s) => {
+    s.arena.backfilled = true;
+    s.arena.scoring = 1;
+    s.arena.division = 'menace';
+    s.arena.placed = true;
+    s.arena.weeks = { [now]: nwk(0.3, 'nemesis', 'lost', 0.8), [a.nextWeek(now)]: nwk(0.2, 'standard', 'lost') };
+    s.arena.months = { '2026-01': { score: 0.6, w: 3, l: 1, from: 'contender', to: 'menace', move: 'up' } };
+  });
+  a.sync();
+  const after = st.get().arena;
+  is('cannot hold a verdict, however the clock got there', Object.keys(after.weeks), []);
+  is('and the ladder is left where the settled months put it',
+    [after.division, Object.keys(after.months)], ['menace', ['2026-01']]);
+}
+{
+  // A backfilled week is a performance, not a result. Deleting one turned four
+  // of them into four played wins the moment a clock went back a month.
+  st.reset();
+  const now = a.currentWeek();
+  st.update((s) => {
+    s.arena.backfilled = true;
+    s.arena.scoring = 1;
+    s.arena.weeks = { [now]: { ...nwk(0.5, '', 'record'), oppScore: null } };
+  });
+  a.sync();
+  is('but a backfilled performance is not a verdict, so it stays',
+    st.get().arena.weeks[now] ? st.get().arena.weeks[now].result : null, 'record');
+}
+
 console.log(failed.length ? `\n${failed.length} FAILED: ${failed.join('; ')}` : `\nall ${passed} checks passed`);
 process.exit(failed.length ? 1 : 0);
