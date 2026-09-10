@@ -1,5 +1,6 @@
-// Every feat, and the sheet one opens into. The Cabinet shows the same tiles,
-// so the wiring is exported rather than living inside this screen.
+// Every feat, the sheet one opens into, and the progression grid any screen can
+// call. The Cabinet shows both, so the grid and the wiring are exported rather
+// than living inside this screen.
 
 import * as feats from './feats.js';
 import { escapeHtml, openSheet, haptic } from '../ui.js';
@@ -20,6 +21,30 @@ function tile(f) {
     <i class="ft-price">${escapeHtml(feats.priceOf(f.days))}</i>
   </button>`;
 }
+
+/* ---------------- the progression grid ---------------- */
+
+/** A tier of feats: a heading, its count, a bar and its cells. */
+export function tierGrid(tier) {
+  const done = tier.cells.filter((c) => c.state === 'earned').length;
+  const pc = tier.cells.length ? (done / tier.cells.length) * 100 : 0;
+  return `<section class="tier">
+    <div class="tier-head">
+      <h2>${escapeHtml(tier.name)}</h2>
+      <span class="pill ghost">${done} of ${tier.cells.length}</span>
+    </div>
+    <div class="tier-bar"><i style="width:${pc.toFixed(0)}%"></i></div>
+    <div class="tier-grid">${tier.cells.map(featCell).join('')}</div>
+  </section>`;
+}
+
+/** One cell, in one of three states: locked, current, earned. */
+export function featCell(cell) {
+  return `<button class="tier-cell ${cell.state}" data-feat="${escapeHtml(cell.id)}"
+    aria-label="${escapeHtml(cell.label)}">${icon(cell.icon, 18)}</button>`;
+}
+
+/* ---------------- the catalogue ---------------- */
 
 export function renderFeats(mount) {
   const sections = feats.bySection();

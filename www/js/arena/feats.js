@@ -405,6 +405,37 @@ export function bySection() {
   }));
 }
 
+/* ---------------- tiers ---------------- */
+
+// Named by what they cost, so a tier needs no heading beyond its name.
+const TIERS = [
+  { name: 'Years', min: 350 },
+  { name: 'Months', min: 60 },
+  { name: 'Weeks', min: 14 },
+  { name: 'Days', min: 0 },
+];
+
+/** The one you are nearest in a tier: furthest along, else the cheapest. */
+function nearestOf(items) {
+  const left = items.filter((f) => !f.earned);
+  if (!left.length) return null;
+  return left.reduce((a, b) => (b.frac > a.frac || (b.frac === a.frac && b.days < a.days) ? b : a)).id;
+}
+
+/** Feats by price, each carrying the state a progression cell reads. */
+export function byTier() {
+  const all = FEATS.map((f) => ({ ...f, ...progressOf(f) }));
+  return TIERS.map((t, i) => {
+    const hi = i ? TIERS[i - 1].min : Infinity;
+    const items = all.filter((f) => f.days >= t.min && f.days < hi);
+    const near = nearestOf(items);
+    return {
+      name: t.name,
+      items: items.map((f) => ({ ...f, state: f.earned ? 'earned' : f.id === near ? 'current' : 'locked' })),
+    };
+  }).filter((t) => t.items.length);
+}
+
 /* ---------------- what a feat costs ---------------- */
 
 /** A price in words. The number alone reads as noise at 728. */
@@ -434,6 +465,6 @@ export function counts() {
 export function closest(n = 3) {
   return FEATS.map((f) => ({ ...f, ...progressOf(f) }))
     .filter((f) => !f.earned && f.need)
-    .sort((a, b) => b.frac - a.frac)
+    .sort((a, b) => b.frac - a.frac || a.days - b.days)
     .slice(0, n);
 }
