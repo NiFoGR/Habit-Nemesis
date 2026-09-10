@@ -228,11 +228,12 @@ a.btn { text-decoration: none; }
 
 /* ---------- settings ---------- */
 
-.setting { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+/* The same row as .set-row, because a list is a list wherever it is. */
+.setting { display: flex; align-items: center; gap: 14px; min-height: 48px; padding: 9px 0; border-bottom: 1px solid var(--line-soft); }
 .setting:last-child { border-bottom: 0; }
-.setting span { flex: 1; }
-.setting b { display: block; font-size: var(--f-body); font-weight: 600; }
-.setting i { display: block; font-style: normal; color: var(--muted); font-size: var(--f-fine); margin-top: 2px; }
+.setting span { flex: 1; min-width: 0; }
+.setting b { display: block; font-size: var(--f-body); font-weight: var(--w-normal); }
+.setting i { display: block; font-style: normal; color: var(--muted); font-size: var(--f-fine); line-height: 1.35; margin-top: 2px; }
 .setting select, .setting input[type="time"], .set-row select, .set-row input[type="time"] {
   background: var(--surface-2); color: var(--text); border: 1px solid var(--line);
   border-radius: var(--r-ctrl); padding: 9px 10px; font-size: var(--f-body); min-width: 96px;
@@ -266,7 +267,7 @@ input[type="range"] {
 .measure-row span { color: var(--muted); font-size: var(--f-body); }
 .notes {
   width: 100%; background: var(--surface-2); border: 1px solid var(--line); color: var(--text);
-  border-radius: var(--r-ctrl); padding: 10px 12px; font: inherit; font-size: var(--f-body); resize: vertical; margin-top: 8px;
+  border-radius: var(--r-ctrl); padding: 12px; font: inherit; font-size: var(--f-body); resize: none;
 }
 .small-btn { flex: 0 0 auto; width: auto; padding: 13px 18px; }
 .good-text { color: var(--good); }
@@ -361,6 +362,18 @@ input[type="range"] {
    width for every control in a settings list: a ragged right edge is what a
    column of selects sized to their own text looks like. */
 .setting select, .setting input[type="time"], .set-row select, .set-row input[type="time"] { flex: 0 0 auto; min-width: 47%; max-width: 62%; }
+/* One share of the row, and one height, for every control in it: a select left
+   on the platform line box came out 4px short of the input above it. */
+.setting select,
+.setting input[type="time"],
+.setting input[type="text"],
+.setting input[type="number"] { flex: 0 0 46%; min-width: 0; max-width: 46%; min-height: 44px; }
+.setting select, .setting input[type="time"] { font: inherit; font-size: var(--f-body); }
+.setting input[type="text"],
+.setting input[type="number"] {
+  background: var(--surface-2); color: var(--text); border: 1px solid var(--line);
+  border-radius: var(--r-ctrl); padding: 9px 10px; font: inherit; font-size: var(--f-body); text-align: right;
+}
 .setting input[type="range"] { flex: 0 1 46%; min-width: 120px; accent-color: var(--accent); }
 .card .h-row + .setting { border-top: 0; }
 .card.danger .h-row .ico { color: var(--danger); }
@@ -578,8 +591,6 @@ input[type="range"] {
 }
 .hg-group-btn b { font-weight: 600; }
 .hg-group .ico { color: var(--muted); }
-.type-card:disabled { opacity: 0.5; }
-button.type-card { width: 100%; text-align: left; font: inherit; cursor: pointer; }
 .hg-rows { display: grid; }
 
 /* ---------- reordering ---------- */
@@ -627,49 +638,60 @@ button.type-card { width: 100%; text-align: left; font: inherit; cursor: pointer
 .proto-list { display: grid; margin: 12px 0 6px; }
 .proto {
   display: flex; align-items: baseline; gap: 12px; width: 100%;
-  padding: 12px 2px;
+  min-height: 48px; padding: 9px 0;
   background: none; border: 0; border-bottom: 1px solid var(--line-soft);
   color: var(--text); text-align: left; font: inherit; cursor: pointer;
 }
 .proto-list .proto:last-child { border-bottom: 0; }
 .proto-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
-.proto-text b { font-size: var(--f-body); }
+.proto-text b { font-size: var(--f-body); font-weight: var(--w-medium); }
+/* Two lines, then an ellipsis: a five-row protocol otherwise ran to three. */
 .proto-text i {
   font-style: normal; font-size: var(--f-fine); color: var(--muted); line-height: 1.35;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
 }
 .proto-span { flex: 0 0 auto; font-size: var(--f-fine); color: var(--faint); }
+.proto:active { color: var(--muted); }
 .proto:disabled { cursor: default; }
 .proto:disabled .proto-span { color: var(--accent-ink); }
-/* Not built yet, and it does not pretend otherwise. */
-.proto.soon { cursor: default; }
+/* Not built yet, and it does not pretend otherwise: a state, not a span. */
+.proto.soon { cursor: default; border-bottom: 0; }
 .proto.soon .proto-text b, .proto.soon .proto-text i { color: var(--faint); }
+.proto-soon { font-size: var(--f-micro); text-transform: uppercase; letter-spacing: 0.12em; }
 
-.type-cards { display: grid; gap: 10px; margin: 14px 0 4px; }
+/* Picking a kind is picking from a list, the same one the protocols are in. */
+.type-cards { display: grid; margin: 12px 0 6px; }
 .type-card {
-  display: block; text-decoration: none; color: inherit;
-  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-card);
-  padding: 16px;
+  display: grid; gap: 2px; width: 100%;
+  min-height: 48px; padding: 9px 0;
+  background: none; border: 0; border-bottom: 1px solid var(--line-soft);
+  color: var(--text); text-decoration: none; text-align: left; font: inherit; cursor: pointer;
 }
-.type-card:active { border-color: var(--accent); }
-.type-card b { display: block; font-size: var(--f-head); margin-bottom: 4px; }
-.type-card span { color: var(--muted); font-size: var(--f-small); }
+.type-cards .type-card:last-child { border-bottom: 0; }
+.type-card:active { color: var(--muted); }
+.type-card b { font-size: var(--f-body); font-weight: var(--w-medium); }
+.type-card span { color: var(--muted); font-size: var(--f-fine); line-height: 1.35; }
 
 .swatch {
-  width: 34px; height: 34px; border-radius: var(--r-ctrl); border: 2px solid transparent; cursor: pointer;
-  padding: 0;
+  width: 100%; max-width: 56px; aspect-ratio: 1;
+  border-radius: var(--r-ctrl); border: 2px solid transparent; cursor: pointer; padding: 0;
 }
 .swatch.on { border-color: var(--text); }
-.swatch.big { width: 46px; height: 46px; flex: 0 0 46px; border-radius: var(--r-ctrl); border-color: var(--line); }
+.swatch.big { width: 46px; max-width: none; aspect-ratio: auto; flex: 0 0 46px; align-self: stretch; border-color: var(--line); }
 .swatch-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-top: 14px; justify-items: center; }
+/* Six across leaves a 39px target on the narrowest phone. Four does not. */
+@media (max-width: 359px) { .swatch-grid { grid-template-columns: repeat(4, 1fr); } }
 
+/* One height for every row, with a blank in it or without. */
 .freq-row {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  padding: 11px 0; border-bottom: 1px solid var(--line); font-size: var(--f-body);
+  display: flex; align-items: center; gap: 8px;
+  min-height: 56px; padding: 4px 0; border-bottom: 1px solid var(--line-soft); font-size: var(--f-body);
 }
-.freq-row input[type="radio"] { width: 20px; height: 20px; accent-color: var(--accent); flex: 0 0 auto; }
+.freq-row:last-of-type { border-bottom: 0; }
+.freq-row input[type="radio"] { width: 20px; height: 20px; accent-color: var(--accent); flex: 0 0 auto; margin: 0; }
 .freq-num {
-  width: 62px; background: var(--surface-2); color: var(--text);
-  border: 1px solid var(--line); border-radius: var(--r-ctrl); padding: 8px; font-size: var(--f-body);
+  width: 58px; flex: 0 0 58px; min-height: 44px; background: var(--surface-2); color: var(--text);
+  border: 1px solid var(--line); border-radius: var(--r-ctrl); padding: 9px 6px; font-size: var(--f-body);
   text-align: center;
 }
 
@@ -695,12 +717,40 @@ button.type-card { width: 100%; text-align: left; font: inherit; cursor: pointer
   font-size: var(--f-body); font-family: inherit;
 }
 .screen.habits .field label { margin-bottom: 8px; }
-.screen.habits .notes { width: 100%; }
-.screen.habits .setting input[type="number"],
-.screen.habits .setting input[type="text"] {
-  background: var(--surface-2); color: var(--text); border: 1px solid var(--line);
-  border-radius: var(--r-ctrl); padding: 9px 10px; font-size: var(--f-body); width: 108px; text-align: right;
+
+/* ---------- the rows a form is made of ----------
+   Two shapes and no third: a value beside its label, or, where the control
+   needs the width, the label above it. */
+
+/* Label above, control under it. Not a row on a rule: the control's own
+   border already closes it. */
+.setting.setting-stack { display: block; min-height: 0; padding: 0; border-bottom: 0; margin-bottom: 16px; }
+.setting.setting-stack:last-child { margin-bottom: 0; }
+.setting-stack > label { display: block; margin-bottom: 8px; }
+.setting-stack input[type="text"],
+.setting-stack .notes { display: block; width: 100%; max-width: none; padding: 12px; text-align: left; }
+/* The name and its colour: one height, one corner, one right edge. */
+.setting-pair { display: flex; align-items: stretch; gap: 8px; }
+.setting-pair input[type="text"] { flex: 1 1 auto; min-width: 0; }
+
+/* A row you press: it opens a sheet, or it acts on the habit. */
+.setting-open, .setting-act {
+  width: 100%; border: 0; border-bottom: 1px solid var(--line-soft);
+  background: none; color: inherit; text-align: left; font: inherit; cursor: pointer;
 }
+.setting-open:last-child, .setting-act:last-child { border-bottom: 0; }
+.setting-open:active, .setting-act:active { color: var(--muted); }
+.setting-open .ico { color: var(--faint); transform: rotate(180deg); }
+/* Red text, never a red box. */
+.setting-act.danger { color: var(--danger); }
+/* The value a pressed row is currently set to. */
+.setting .setting-value {
+  flex: 0 1 auto; min-width: 0; max-width: 62%;
+  font-size: var(--f-small); color: var(--muted); text-align: right;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Seven across, and still a thumb's worth of height. */
+.setting-days .day-chip { min-height: 44px; }
 
 /* A settings-style row that opens something rather than setting it. */
 .rowbtn {
