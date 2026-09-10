@@ -222,6 +222,8 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: var(--r-ch
   margin-top: 8px;
 }
 a.btn { text-decoration: none; }
+/* A button you cannot press should not look like the one thing to press. */
+.btn:disabled { opacity: 0.45; cursor: default; }
 .btn:active { transform: scale(0.99); }
 .btn:has(.ico) { display: flex; align-items: center; justify-content: center; gap: 9px; }
 .btn.primary { background: var(--accent); color: var(--on-accent); border: 0; font-weight: 700; }
@@ -1855,6 +1857,9 @@ html.reduce-motion .mo-card { opacity: 1; }
   background: var(--surface); color: var(--muted);
   box-shadow: inset 0 0 0 1px var(--line);
 }
+/* The gate on the intro says it is shut with its own colour, so it does not
+   also want the dimming every other unpressable button gets. */
+.screen.intro .intro-locked:disabled { opacity: 1; }
 
 .intro-logo { filter: drop-shadow(0 0 26px color-mix(in srgb, var(--accent) 30%, transparent)); }
 
@@ -2206,14 +2211,23 @@ html.reduce-motion .intro-grid .intro-tap { animation: none; }
    rather than steps. One rhythm: the grid gap sets every gap, so no control
    carries a margin of its own. */
 
-/* Two ways in, one form. A tab, not two screens. */
-.acc-tabs { display: flex; gap: 6px; margin-bottom: var(--s-4); }
-.acc-tab {
-  flex: 1; min-height: var(--h-ctrl); padding: 0 var(--s-3);
-  background: none; border: 1px solid var(--line); border-radius: var(--r-ctrl);
-  color: var(--muted); font: inherit; font-size: var(--f-small); cursor: pointer;
+/* Signing in and creating an account are different things that used to differ
+   by one word on a tail button. The segment is the loudest control on the
+   screen because choosing the wrong one is the mistake this form invited. */
+.acc-seg {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+  padding: 4px; margin-bottom: var(--s-5);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-ctrl);
 }
-.acc-tab.on { border-color: var(--accent); color: var(--text); background: var(--surface); }
+.acc-seg[hidden] { display: none; }
+.acc-seg-b {
+  min-height: var(--h-ctrl); padding: 0 10px;
+  border: 0; border-radius: var(--r-chip); background: none;
+  color: var(--muted); font: inherit; font-size: var(--f-body); font-weight: var(--w-medium);
+  cursor: pointer;
+}
+.acc-seg-b.on { background: var(--accent); color: var(--on-accent); }
+.acc-seg-b:active { opacity: 0.8; }
 
 .acc-form { display: grid; gap: var(--s-4); }
 .acc-form > div { display: grid; gap: var(--s-4); }
@@ -2227,6 +2241,30 @@ html.reduce-motion .intro-grid .intro-tap { animation: none; }
   color: var(--text); font: inherit;
 }
 .acc-form input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* A password you can read back, because the alternative is typing it twice. */
+.pw {
+  /* The lane the Show button sits in: its own width plus the gutter it keeps. */
+  --pw-lane: 66px;
+  position: relative; display: block;
+}
+.pw input { padding-right: var(--pw-lane); }
+.pw-show {
+  position: absolute; right: 3px; top: 50%; transform: translateY(-50%);
+  min-width: 58px; height: var(--h-ctrl);
+  border: 0; border-radius: var(--r-chip); background: none;
+  color: var(--muted); font: inherit; font-size: var(--f-small); cursor: pointer;
+}
+.pw-show:active { color: var(--text); }
+
+/* Three bars and no words. A password only just long enough gets one of them,
+   which says more than a sentence about entropy would. */
+.pw-rail { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: -6px; }
+.pw-rail[hidden] { display: none; }
+.pw-rail i { height: 3px; border-radius: var(--r-pill); background: var(--line); }
+.pw-rail[data-at="1"] i:nth-child(1) { background: var(--warn); }
+.pw-rail[data-at="2"] i:nth-child(-n+2) { background: var(--warn); }
+.pw-rail[data-at="3"] i { background: var(--good); }
 .acc-form .btn { margin: 0; }
 .acc-form .warn-inline { margin: -6px 0 0; }
 .acc-alt { display: flex; justify-content: space-between; gap: 10px; margin-top: -8px; }
@@ -2236,6 +2274,23 @@ html.reduce-motion .intro-grid .intro-tap { animation: none; }
 
 .acc-providers { display: grid; gap: 10px; margin-bottom: var(--s-5); }
 .acc-providers .btn { margin: 0; }
+
+/* The confirmation mail, as a moment rather than a line under a form. */
+.acc-sent { display: grid; place-items: center; gap: var(--s-2); margin-bottom: var(--s-5); text-align: center; }
+.acc-sent h2, .acc-sent p { margin: 0; }
+.acc-sent-mark {
+  display: grid; place-items: center; width: 56px; height: 56px; margin-bottom: 6px;
+  border-radius: var(--r-pill); background: var(--surface-2); color: var(--accent-ink);
+}
+
+/* The moment after a sign-in, while the two copies settle behind it. */
+.acc-hello {
+  display: grid; place-items: center; align-content: center; gap: var(--s-3);
+  min-height: calc(100dvh - var(--safe-t) - var(--safe-b)); text-align: center;
+}
+.acc-hello h1 { margin: 0; font-size: var(--f-display); letter-spacing: -0.02em; }
+.acc-hello p { margin: 0; }
+.acc-hello-mark { color: var(--accent); }
 
 /* No global anchor rule in this app: every other link is a button or a row. */
 .fineprint a, .muted a { color: var(--accent-ink); text-underline-offset: 2px; }

@@ -158,6 +158,88 @@ Two ways out:
   scheduled workflows in a repo with no commits for 60 days, so this is a
   backstop, not a guarantee.
 
+## 7. The settings that are the actual security
+
+The app's sign-in screen counts wrong passwords and makes you wait. **That is a
+courtesy, not a defence.** The key that talks to Supabase ships inside the APK,
+so anyone who cares calls the auth endpoint directly and never sees the screen.
+Everything that actually holds is on this list, and all of it is dashboard work.
+
+### Confirm the address
+
+**Authentication > Providers > Email > Confirm email: on.** Off, anybody can
+create an account against anybody's address, and the first thing they get is a
+password reset route into it. It is on by default. Leave it.
+
+### The rate limits
+
+**Authentication > Rate Limits.** These are the brute-force control.
+
+| | why |
+|---|---|
+| Sign-ins per hour per IP | the one that stops guessing at a password |
+| Sign-ups per hour per IP | stops a script filling the user table |
+| Password reset emails per hour | a reset button is an email cannon pointed at whoever owns that address |
+| SMS per hour | section 4, and the only one with a bill attached |
+| Token refreshes per hour | leave it alone unless something breaks |
+
+Raise one deliberately, never by reflex, and never because a test you ran
+yourself hit it.
+
+### Passwords worth having
+
+**Authentication > Policies.**
+
+- **Minimum length.** The app asks for eight and will not send a shorter one.
+  Set the same number here, because the app's copy of the rule is advice and
+  this one is the rule.
+- **Leaked password protection.** Supabase checks a new password against Have I
+  Been Pwned's list of ones already in a breach, without sending the password.
+  It is off by default and it is the single most valuable switch on this page:
+  the passwords that get accounts taken are almost never guessed, they are
+  reused.
+
+### A captcha on the way in
+
+**Authentication > Attack Protection > Enable Captcha.** hCaptcha or Turnstile.
+Worth turning on the day the app is public rather than the day the user table
+fills with rubbish. Note that the app's own form does not render a captcha
+widget, so switching this on will break email sign-up until that is built: it is
+a decision, not a checkbox.
+
+### The redirect allow list
+
+**Authentication > URL Configuration > Redirect URLs.** A password reset and a
+provider sign-in both come back to a URL, and Supabase will only send them to
+one on this list. Add exactly two and nothing else:
+
+    com.habitnemesis.app://auth
+    https://nifogr.github.io/Habit-Nemesis/
+
+A wildcard here is how a reset token ends up on somebody else's page.
+
+### What cannot be fixed from a dashboard
+
+`com.habitnemesis.app://auth` is a custom scheme, and on Android **any other
+app can register the same one** and be handed the callback. This is why the
+flow uses PKCE: the code that travels through the link is useless without the
+verifier, which never leaves this app. The exposure is real and the damage is
+none. The proper fix is an App Link on a domain you own, which is a milestone
+rather than a setting.
+
+### What the app does, so you know what it does not
+
+| in the app | in the dashboard |
+|---|---|
+| Five wrong passwords, then a wait that doubles to fifteen minutes | the rate limit that holds when the screen is skipped |
+| A second count across every address, so typing a new one does not reset it | the same |
+| The same answer whether or not an address already has an account | Supabase hides it too, when confirmations are on |
+| Eight characters minimum | the minimum, and the breach list |
+| A minute between resend taps | the reset email limit |
+
+The app's half is in `www/js/account/gate.js`, and `npm run check:account`
+covers the arithmetic and the ways round it that were thought of.
+
 ---
 
 ## What sync does, and what it does not

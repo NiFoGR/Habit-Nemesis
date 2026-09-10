@@ -8,7 +8,7 @@
 //
 // In a browser none of that applies and a plain redirect is right.
 
-import { supabase, redirectTo } from './session.js';
+import { supabase, redirectTo, markArrived } from './session.js';
 import { isNative } from '../native.js';
 
 const plugin = (name) => window.Capacitor?.Plugins?.[name];
@@ -54,6 +54,7 @@ export function listenForReturn() {
     if (!code) return;
     plugin('Browser')?.close?.();
     const { error } = await sb.auth.exchangeCodeForSession(code);
-    if (error) console.warn('sign-in did not complete', error.message);
+    if (error) return console.warn('sign-in did not complete', error.message);
+    markArrived();
   });
 }

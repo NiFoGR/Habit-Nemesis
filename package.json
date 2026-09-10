@@ -15,9 +15,10 @@
     "check:arena": "node tools/check-arena.mjs",
     "art": "node tools/art.mjs",
     "check:ui": "node tools/check-ui.mjs",
-    "check": "npm run check:arena && npm run check:ui && npm run check:version && npm run check:release",
+    "check": "npm run check:arena && npm run check:account && npm run check:ui && npm run check:version && npm run check:release",
     "check:version": "node tools/check-version.mjs",
-    "check:release": "node tools/check-release.mjs"
+    "check:release": "node tools/check-release.mjs",
+    "check:account": "node tools/check-account.mjs"
   },
   "dependencies": {
     "@capacitor-community/admob": "^8.1.0",
