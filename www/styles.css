@@ -2539,8 +2539,8 @@ html.reduce-motion .intro-cup::after { animation: none; opacity: 1; }
 }
 /* The pool. Sized off the art, so it stays behind the cup and never the copy. */
 .arc-cup::before {
-  content: ''; position: absolute; left: 50%; top: 0;
-  width: 260px; height: 190px; transform: translateX(-50%);
+  content: ''; position: absolute; left: calc(50% - 130px); top: 0;
+  width: 260px; height: 190px;
   background: radial-gradient(closest-side, color-mix(in srgb, var(--warn) 13%, transparent), transparent);
   pointer-events: none;
 }
