@@ -4,11 +4,11 @@
 import * as store from '../store.js';
 import * as arena from './program.js';
 import * as feats from './feats.js';
-import { escapeHtml, haptic } from '../ui.js';
+import { escapeHtml, haptic, tierGrid } from '../ui.js';
 import { icon } from '../icons.js';
 import { cup } from './cup.js';
 import { openWeekSheet } from './week-sheet.js';
-import { tierGrid, wireFeatTiles } from './feats-screen.js';
+import { wireFeatTiles } from './feats-screen.js';
 
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 

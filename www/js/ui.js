@@ -1,6 +1,7 @@
 // Shared helpers: feedback, formatting, file saving, dependency-free SVG charts.
 
 import { isNative } from './native.js';
+import { icon } from './icons.js';
 
 let feedback = { haptics: true, sound: 'full', quiet: true, quietFrom: '22:00', quietTo: '07:00' };
 
@@ -229,6 +230,32 @@ export function celebrate(el, { colour = 'var(--accent)', count = 14, spread = 9
   }
   el.appendChild(wrap);
   setTimeout(() => wrap.remove(), 1200);
+}
+
+/* ---------------- the progression grid ----------------
+   One grid, one cell, three states, wherever progress is a set of things you
+   either have or do not. The count and the bar come off the cells, so a
+   heading can never disagree with what is under it. */
+
+/** A tier: a heading, its count, a bar and its cells. `key` names the data
+ *  attribute each cell carries, so a caller that is not feats can wire its own. */
+export function tierGrid({ name, cells, key = 'feat' }) {
+  const done = cells.filter((c) => c.state === 'earned').length;
+  const pc = cells.length ? (done / cells.length) * 100 : 0;
+  return `<section class="tier">
+    <div class="tier-head">
+      <h2>${escapeHtml(name)}</h2>
+      <span class="pill ghost">${done} of ${cells.length}</span>
+    </div>
+    <div class="tier-bar"><i style="width:${pc.toFixed(0)}%"></i></div>
+    <div class="tier-grid">${cells.map((c) => tierCell(c, key)).join('')}</div>
+  </section>`;
+}
+
+/** One cell: locked, current, or earned. */
+export function tierCell(cell, key = 'feat') {
+  return `<button class="tier-cell ${cell.state}" data-${key}="${escapeHtml(cell.id)}"
+    aria-label="${escapeHtml(cell.label)}">${icon(cell.icon, 18)}</button>`;
 }
 
 export const pct = (v) => `${Math.round((v || 0) * 100)}%`;
