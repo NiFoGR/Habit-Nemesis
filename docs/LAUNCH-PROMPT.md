@@ -45,18 +45,26 @@ tell me what you need:
 - Anything that says "this cannot be undone" or "this cannot be changed later".
 Take a screenshot before and after each irreversible click.
 
+ALREADY DONE, DO NOT REDO
+Three of the steps below have landed since this prompt was written. Verify them,
+never recreate them. Creating a second Supabase project would strand every
+account already made in the first.
+- Step 1. The project exists, the schema is applied, and
+  `www/js/account/config.js` holds the URL and the publishable key.
+- Step 6. The release key, the four secrets and RELEASE_SIGNING are set, and the
+  aab job has produced a signed bundle.
+- Step 7. The keep-alive reads the project off `config.js` and needs nothing
+  set. It is green. The only open question there is the $25 a month.
+
 THE ORDER
 Work these in order and report after each one. Do not skip ahead: later steps
 need ids from earlier ones.
 
-1. SUPABASE, and the two values.  docs/ACCOUNTS.md section 1.
-   Create the project in an EU region, this is not optional, the privacy policy
-   says the data is in the EU. Run all of `supabase/schema.sql` in the SQL
-   editor. Put the Project URL and the publishable key into
-   `www/js/account/config.js`. Commit that file on its own with the message
-   "The account has a project".
-   Verify: `npm run dev`, open the app, the introduction now has a Sign in page
-   that it did not have before. Create an account, sign out, sign back in.
+1. SUPABASE.  docs/ACCOUNTS.md section 1.  ALREADY DONE.
+   Confirm only, and change nothing: `www/js/account/config.js` names a project,
+   and `npm run dev` shows a Sign in page in the introduction that an
+   unconfigured build does not have. Create an account, sign out, sign back in.
+   If any of that fails, say so and stop. Do not create a second project.
 
 2. EMAIL THAT ACTUALLY SENDS.  docs/ACCOUNTS.md section 2.
    The built-in sender allows two emails an hour for the whole project. Set up
@@ -84,16 +92,16 @@ need ids from earlier ones.
    Settings row has nothing to open.
    Commit as "The ads have an account".
 
-6. THE RELEASE KEY AND THE FOUR SECRETS.  docs/STORE.md section 3.
-   The keystore must not enter the repo. Base64 it, put it and the three
-   passwords into GitHub Actions secrets, set the RELEASE_SIGNING variable to
-   true. Then push and confirm the aab job runs and produces a bundle.
+6. THE RELEASE KEY AND THE FOUR SECRETS.  docs/STORE.md section 3.  ALREADY DONE.
+   Confirm only: the aab job runs and its artifact is a signed bundle. The
+   keystore must never enter the repo, so if you cannot find it on this machine,
+   say so rather than cutting a new one. A new upload key means a new app.
 
-7. THE KEEP-ALIVE.  docs/ACCOUNTS.md section 6.
-   A free Supabase project pauses after seven days of no traffic, and a
-   reviewer opening a paused app sees every sign-in fail and rejects it. Either
-   set the three repository values for the keep-alive workflow, or tell me to
-   pay the $25 a month. Say which you did.
+7. THE KEEP-ALIVE.  docs/ACCOUNTS.md section 6.  ALREADY DONE.
+   It needs no secret and no variable: it reads the project off
+   `www/js/account/config.js`. Confirm the workflow is green. The one thing
+   still open is whether to pay the $25 a month instead, which kills the whole
+   question. Ask me.
 
 8. PLAY CONSOLE.  docs/STORE.md sections 1, 4, 5, 6, 7, 8.
    The listing, the icon, the 12 testers, the countries, and Data safety. The
