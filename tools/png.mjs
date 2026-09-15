@@ -117,6 +117,35 @@ export function encodePng(size, rgba) {
   ]);
 }
 
+/** 24-bit RGB, any size. Play refuses alpha on a store asset, and a screenshot
+ *  is already composited over the page, so the channel carries nothing. */
+export function encodeRgb(width, height, rgba) {
+  const stride = width * 3;
+  const raw = Buffer.alloc((stride + 1) * height);
+  for (let y = 0; y < height; y++) {
+    const row = y * (stride + 1);
+    raw[row] = 0;
+    for (let x = 0; x < width; x++) {
+      const s = (y * width + x) * 4;
+      const d = row + 1 + x * 3;
+      raw[d] = rgba[s];
+      raw[d + 1] = rgba[s + 1];
+      raw[d + 2] = rgba[s + 2];
+    }
+  }
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8;
+  ihdr[9] = 2; // truecolour, no alpha
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', ihdr),
+    chunk('IDAT', deflateSync(raw, { level: 9 })),
+    chunk('IEND', Buffer.alloc(0)),
+  ]);
+}
+
 /* ---------------- resize ---------------- */
 
 /** Box filter, premultiplied, padded to square.

@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "node tools/serve.mjs",
     "icons": "node tools/gen-icons.mjs",
+    "store": "node tools/gen-store.mjs",
     "android:add": "cap add android",
     "android:sync": "cap sync android",
     "android:apk": "cap sync android && node tools/patch-signing.mjs && node tools/patch-backup.mjs && node tools/patch-deeplink.mjs && node tools/patch-shortcuts.mjs && cd android && ./gradlew assembleDebug",

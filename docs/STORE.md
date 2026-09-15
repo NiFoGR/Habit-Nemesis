@@ -125,9 +125,47 @@ the first clause whole.
 
     Your only opponent is the best week you have ever had. Habit tracker, no subscription.
 
-**Full description.** 4000 characters. The first two lines show before "read
-more", so the Arena goes there. Say `No subscription, ever.` once, near the
-price. Name the timer: HabitNow charges for its equivalent.
+**Full description.** 4000 characters, and the first two lines show before
+"read more", so the Arena goes in them. Paste the block below. Play renders the
+full description as plain text, so it carries no markup.
+
+```
+Your only opponent is the best week you have ever had.
+
+Every week is a match. You play a score, your Nemesis plays the best week on
+your record, and one of you wins.
+
+THE ARENA
+Nine divisions. A month above the bar promotes you, two months below it send
+you down. Every quarter runs a cup: a group stage, then a quarter final, a semi
+and a final. Win it and the trophy stays in your Cabinet.
+
+YOUR NEMESIS
+He is your own best week. He remembers the head to head, the run either way,
+the last meeting and what it was decided by. Beat him and you become him, and
+the app tells you how long the week you just replaced had stood.
+
+THE GRID
+Every habit, seven days, one screen, one tap to mark a day. Three kinds: yes or
+no, a number with a target and a unit, and a timer for the ones you do for a
+length of time. Group them, colour them, reorder them.
+
+WHAT YOU KEEP
+A score for every habit, week, month and year.
+Streaks, and a calendar you can correct.
+59 feats, each earned once.
+Home screen widgets: today's grid, and this week's match.
+Reminders per habit, per day of the week.
+
+YOUR DATA
+It lives on your phone. An account is optional and only keeps a copy of it, so
+a second device can read the same record. No analytics. Export to CSV whenever
+you like, and delete the account and its rows from inside the app.
+
+THE PRICE
+Free, with ads on the screens you read rather than the one you tap. One payment
+removes them. No subscription, ever.
+```
 
 **Graphics.** All required before Play will let you publish.
 
@@ -137,18 +175,29 @@ price. Name the timer: HabitNow charges for its equivalent.
 | Feature graphic | 1024 x 500 PNG or JPEG | The mark, the cut, black ground, the one line. Play crops the edges and overlays the icon, so nothing important near them |
 | Phone screenshots | 2 minimum, 8 maximum | JPEG or 24-bit PNG, no alpha. 16:9 or 9:16, each side between 320px and 3840px |
 
-Take the screenshots from the app itself, not a mockup tool. Seven, in this
-order. The first two are the only ones most people see.
+**Taken, not drawn.** `npm run store` writes all eight files into `store/`: it
+drives the real app in a headless browser against a seeded record, at 1080 x
+1920 and 24-bit RGB, which is exactly what Play asks for. It also pins the
+clock to a Nemesis week, because a month ends with him and on any other day the
+fixture on screen is an undercard. Re-run it when a screen below changes.
 
-| | Screen | Caption |
-|---|---|---|
-| 1 | The Arena fixture. You versus your Nemesis, two numbers, the crest | The week is a match. You play your own best week. |
-| 2 | The grid, filled, red on black | Every commitment, one screen, one tap. |
-| 3 | The ladder | Nine divisions. Promotion, relegation, and a cup every quarter. |
-| 4 | The Cabinet | Cups, feats and the years behind you. |
-| 5 | A habit in full | Score, streaks and a calendar you can correct. |
-| 6 | The widgets | The match, on your home screen. |
-| 7 | The price | Free. One payment to remove ads. No subscription, ever. |
+Seven, in this order. The first two are the only ones most people see.
+
+| | File | Screen | Caption |
+|---|---|---|---|
+| 1 | `01-arena.png` | The Arena fixture. You versus your Nemesis, two numbers, the crest | The week is a match. You play your own best week. |
+| 2 | `02-grid.png` | The grid, filled, red on black | Every commitment, one screen, one tap. |
+| 3 | `03-divisions.png` | The ladder | Nine divisions. Promotion, relegation, and a cup every quarter. |
+| 4 | `04-cabinet.png` | The Cabinet | Cups, feats and the years behind you. |
+| 5 | `05-habit.png` | A habit in full | Score, streaks and a calendar you can correct. |
+| 6 | `06-arc.png` | The Arc: the cup, the group table, what qualifies | A cup every quarter. Qualify, then knock them out. |
+| 7 | `07-nemesis.png` | The record against him | He remembers every week you played him. |
+
+Two earlier entries are not here, and both for the same reason: there is no
+screen to photograph. **The widgets** are Android layouts and need an emulator
+or a device, not a browser. **The price** needs the billing screen, which lands
+with the billing integration. Play takes eight, so both have a slot when they
+exist.
 
 Every habit app leads with a grid. Leading with the fixture is the only reason
 anyone picks this one.
