@@ -89,13 +89,30 @@ better: every value that comes off disk is coerced to its type or dropped, so a
 truncated or hand-mangled record opens as a valid one rather than a broken app.
 A checksum here would be a thing to point at rather than a thing that works.
 
-## Why R8 is off
+## R8, and what it is and is not for
 
-Minifying obfuscates the Java layer. The app's logic is not in the Java layer,
-it is the JavaScript sitting in plain text beside it, so R8 protects nothing
-here. It would shrink the bundle, and Capacitor registers plugins reflectively,
-so turning it on needs a run on a real device rather than a green build. That is
-a size decision to make deliberately, not a security one to make now.
+R8 is on for the release bundle, and it is a size and speed decision rather than
+a security one. The reasoning that kept it off still holds on the security half:
+the app's logic is JavaScript sitting in plain text beside the Java, so renaming
+the Java protects nothing. What changed is that Play grades an unminified bundle
+"Low" on app optimisation, and the shrinking is worth having on its own.
+
+`tools/patch-r8.mjs` turns on `minifyEnabled`, `shrinkResources` and the
+optimising default rules, and writes the keep rules. Those rules are the whole
+risk. Capacitor finds plugins and their permissions by reading annotations
+reflectively and the bridge is reached by name from JavaScript, so R8 breaks a
+Capacitor app **at runtime, on the first plugin call**, not at build time. A
+green build proves nothing.
+
+The specific trap on this project's toolchain: R8 full mode drops annotation
+types nothing references statically, folds `getPluginAnnotation()` to null, and
+turns the first permission check into a thrown null. That is
+ionic-team/capacitor#8589, against AGP 8.13.0 and R8 8.13.6, which is exactly
+what Capacitor 8 generates here. The keep rules carry the fix.
+
+Because none of it can be proved by building, the release job also produces a
+release APK from the same minified code. An `.aab` does not sideload; that APK
+does. **Install it and open every screen before promoting a build.**
 
 ## The day this changes
 
