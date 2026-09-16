@@ -11,7 +11,7 @@
 // with them.
 
 // ca-app-pub-0000000000000000~0000000000, AdMob > Apps > App settings.
-export const APP_ID = '';
+export const APP_ID = 'ca-app-pub-9562034603540769~2117049911';
 
 // ca-app-pub-0000000000000000/0000000000, one per unit.
 export const BANNER_ID = 'ca-app-pub-9562034603540769/4090430965';
