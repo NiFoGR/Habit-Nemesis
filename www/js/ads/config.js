@@ -11,11 +11,11 @@
 // with them.
 
 // ca-app-pub-0000000000000000~0000000000, AdMob > Apps > App settings.
-export const APP_ID = '';
+export const APP_ID = 'ca-app-pub-9562034603540769~2117049911';
 
 // ca-app-pub-0000000000000000/0000000000, one per unit.
-export const BANNER_ID = '';
-export const INTERSTITIAL_ID = '';
+export const BANNER_ID = 'ca-app-pub-9562034603540769/4090430965';
+export const INTERSTITIAL_ID = 'ca-app-pub-9562034603540769/7179277089';
 
 // Google's own test units. Serving real ads to yourself is click fraud, and
 // AdMob closes the account rather than the build, so a debug APK uses these.

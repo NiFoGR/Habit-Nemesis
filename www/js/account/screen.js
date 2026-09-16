@@ -110,20 +110,12 @@ function signedOut(mount, by) {
         <span class="pw-rail" id="rail" hidden data-at="0"><i></i><i></i><i></i></span>
       </div>
 
-      <div id="byPhone" hidden>
-        <label class="field"><span>Phone</span>
-          <input type="tel" id="phone" autocomplete="tel" inputmode="tel" placeholder="+44 7700 900000"></label>
-        <label class="field" id="codeField" hidden><span>Code</span>
-          <input type="text" id="code" autocomplete="one-time-code" inputmode="numeric" maxlength="8"></label>
-      </div>
-
       <p class="warn-inline" id="err" hidden></p>
       <button class="btn primary wide" id="go" type="submit">Sign in</button>
     </form>
 
     <div class="acc-alt">
       <button class="tail-btn" type="button" id="forgot">Forgot password</button>
-      <button class="tail-btn" type="button" id="swap">Use a phone number</button>
     </div>
 
     <div class="acc-or"><span>or</span></div>
@@ -140,11 +132,9 @@ function signedOut(mount, by) {
   const err = el('err');
   const go = el('go');
   let creating = false;
-  let byPhone = false;
-  let codeSent = false;
   let timer = 0;
 
-  const label = () => (byPhone ? (codeSent ? 'Sign in' : 'Send code') : creating ? 'Create account' : 'Sign in');
+  const label = () => (creating ? 'Create account' : 'Sign in');
   const say = (msg) => {
     err.textContent = msg;
     err.hidden = !msg;
@@ -153,7 +143,7 @@ function signedOut(mount, by) {
     say(readable(msg));
     haptic('miss');
   };
-  const who = () => (byPhone ? el('phone').value.trim() : session.cleanEmail(el('email').value));
+  const who = () => session.cleanEmail(el('email').value);
 
   /* ---- the wait ---- */
 
@@ -200,19 +190,6 @@ function signedOut(mount, by) {
     rail();
   };
 
-  const setPhone = (on) => {
-    byPhone = on;
-    codeSent = false;
-    say('');
-    el('byEmail').hidden = on;
-    el('byPhone').hidden = !on;
-    el('codeField').hidden = true;
-    el('seg').hidden = on;
-    el('forgot').hidden = on || creating;
-    el('swap').textContent = on ? 'Use an email address' : 'Use a phone number';
-    go.textContent = label();
-  };
-
   /** The rail, and nothing else: a password that is only just long enough gets
    *  one bar rather than a sentence about entropy. */
   function rail() {
@@ -223,7 +200,6 @@ function signedOut(mount, by) {
 
   el('modeIn').addEventListener('click', () => setMode(false));
   el('modeUp').addEventListener('click', () => setMode(true));
-  el('swap').addEventListener('click', () => setPhone(!byPhone));
   el('password').addEventListener('input', rail);
 
   el('eye').addEventListener('click', () => {
@@ -235,10 +211,9 @@ function signedOut(mount, by) {
     field.focus();
   });
 
-  if (by === 'phone') setPhone(true);
-  else if (by === 'create') setMode(true);
+  if (by === 'create') setMode(true);
   // A remembered address means the password is the only thing left to type.
-  if (!byPhone && el('email').value) el('password').focus();
+  if (el('email').value) el('password').focus();
 
   /* ---- forgotten ---- */
 
@@ -262,8 +237,6 @@ function signedOut(mount, by) {
   el('form').addEventListener('submit', async (e) => {
     e.preventDefault();
     say('');
-    if (byPhone) return submitPhone();
-
     const address = session.cleanEmail(el('email').value);
     const password = el('password').value;
     if (!address) return fail('Put your email in first.');
@@ -310,39 +283,6 @@ function signedOut(mount, by) {
       }
     }
   });
-
-  async function submitPhone() {
-    const number = el('phone').value.trim();
-    if (!number) return fail('Put your number in first.');
-    if (owed()) return;
-    go.disabled = true;
-    try {
-      if (!codeSent) {
-        go.textContent = 'Sending';
-        await session.sendCode(number);
-        codeSent = true;
-        el('codeField').hidden = false;
-        el('code').focus();
-        go.disabled = false;
-        go.textContent = label();
-        return;
-      }
-      go.textContent = 'Signing in';
-      await session.verifyCode(number, el('code').value.trim());
-      gate.pass(number);
-      haptic('done');
-      render(mount);
-    } catch (e2) {
-      go.disabled = false;
-      go.textContent = label();
-      fail(e2.message);
-      // A code is six digits, so this is the one worth counting hardest.
-      if (codeSent) {
-        const wait = gate.fail(number);
-        if (wait > 0) hold(wait);
-      }
-    }
-  }
 
   mount.querySelectorAll('[data-provider]').forEach((b) =>
     b.addEventListener('click', async () => {

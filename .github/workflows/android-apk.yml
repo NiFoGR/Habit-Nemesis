@@ -224,9 +224,29 @@ jobs:
           cd android
           ./gradlew bundleRelease --no-daemon
 
+      - name: Name the bundle after the run
+        run: |
+          mkdir -p out
+          cp android/app/build/outputs/bundle/release/*.aab "out/habit-nemesis-${GITHUB_SHA::7}.aab"
+
       - uses: actions/upload-artifact@v4
         with:
           name: habit-nemesis-aab
-          path: android/app/build/outputs/bundle/release/*.aab
+          path: out/*.aab
           if-no-files-found: error
           retention-days: 90
+
+      - name: Publish the bundle as a release asset
+        # Same reason as the APK: an artifact is a zip behind a login that
+        # expires, and the file you upload to Play deserves a permanent URL.
+        # Create then upload, rather than view-then-branch: this job and the apk
+        # job race for the same tag, and create failing because the other got
+        # there first is the expected case, not an error.
+        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || inputs.release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SHORT="${GITHUB_SHA::7}"
+          gh release create "build-$SHORT" --title "Habit Nemesis $SHORT" \
+            --notes "Built from $GITHUB_SHA on ${GITHUB_REF#refs/heads/}." || true
+          gh release upload "build-$SHORT" "out/habit-nemesis-$SHORT.aab" --clobber
