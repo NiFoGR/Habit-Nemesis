@@ -301,15 +301,27 @@ app, or the whole Families policy lands on you.
 
 ## 9. The order
 
+Steps 3 and 4 are done: the release key and its four secrets are set, the aab
+job has produced a signed bundle, and `store/` holds the icon, the feature
+graphic and seven screenshots. `npm run check:store` measures all of it against
+Play's numbers, so a regression there is a red mark rather than a refused
+upload.
+
+What is left, in the order it has to happen:
+
 | When | What |
 |---|---|
-| Today | Steps 1 and 2. Both are waiting time |
+| Today | Step 1, the Play Console account. Identity verification is a day to a fortnight and blocks everything |
 | Today | Recruit 12 testers. Ask more than 12, some will not follow through |
-| Once identity clears | Step 3, then push and download the first AAB |
-| Same day | Step 6, closed track up, opt-in link out. The 14 days start now |
-| While it runs | Steps 4, 5, 7, 8 |
+| Once identity clears | Download the aab artifact from the latest green run and upload it |
+| Same day | Step 6, closed track up, opt-in link out. **The 14 days start here, not before** |
+| While it runs | Steps 2, 5, 7, 8, and the Google and SMS providers in `ACCOUNTS.md` |
 | Day 15 | Apply for production access |
 | Day 15 to 22 | Google reviews. Budget one rejection, everybody gets one |
+
+The 12 testers are the only item on this list that cannot be shortened, so the
+upload exists to start their clock. A first bundle with no ads and email sign-in
+only still starts it. Everything in the "while it runs" row lands in 1.0.1.
 
 ## 10. What it costs
 
@@ -331,6 +343,8 @@ time.
 **A paid tier.** There is no billing in the app and no entitlement to sell.
 `docs/RELEASE.md` has the arithmetic on whether it is worth building.
 
-**Accounts and sync.** The code is written and Supabase is unconfigured, so v1
-ships local-only and the account row is hidden. Two strings in
-`www/js/account/config.js` turn it on when there is a project to point at.
+**Ads.** `www/js/ads/config.js` has no AdMob ids, so `configured()` is false and
+the SDK is never initialised. The bundle is ad-free, which is a working build
+rather than a broken one: `patch-ads.mjs` writes Google's sample app id into the
+manifest so the SDK's ContentProvider can still start. Section 2 fills it in,
+and it can wait for 1.0.1.
