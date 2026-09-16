@@ -90,19 +90,46 @@ if (keys.length !== 1 || keys[0] !== 'signing/debug.keystore') {
   problems.push(`signing/: expected only signing/debug.keystore, found ${keys.join(', ') || 'nothing'}.`);
 }
 
-/* ---------------- one URL scheme, written in three places ---------------- */
-// A provider sign-in returns through a custom scheme, and the app, the manifest
-// patcher and Capacitor each name it separately. Drift is silent: sign-in opens
-// the browser, the browser returns to a scheme nothing is listening for, and the
-// user is left on a blank tab.
-const schemeOf = (path, re) => (re.exec(readFileSync(join(root, path), 'utf8')) || [])[1] || '';
+/* ---------------- the scheme, and the package, which are not the same ----------------
+   A provider sign-in returns through a custom scheme, and three files name it
+   separately. Drift is silent: sign-in opens the browser, the browser returns to
+   a scheme nothing is listening for, and the user is left on a blank tab.
+
+   The scheme is deliberately not the package id. RFC 3986 gives a scheme
+   letters, digits, plus, minus and dot, while an Android package may also carry
+   an underscore, so a package is not always a legal scheme. `new URL()` throws
+   on one that is not, and native.js parses every deep link with it. */
+const valueOf = (path, re) => (re.exec(readFileSync(join(root, path), 'utf8')) || [])[1] || '';
+
 const schemes = {
-  'www/js/account/config.js': schemeOf('www/js/account/config.js', /NATIVE_SCHEME = '([^']+)'/),
-  'tools/patch-deeplink.mjs': schemeOf('tools/patch-deeplink.mjs', /const SCHEME = '([^']+)'/),
-  'capacitor.config.json': schemeOf('capacitor.config.json', /"appId"\s*:\s*"([^"]+)"/),
+  'www/js/account/config.js': valueOf('www/js/account/config.js', /NATIVE_SCHEME = '([^']+)'/),
+  'tools/patch-deeplink.mjs': valueOf('tools/patch-deeplink.mjs', /const SCHEME = '([^']+)'/),
+  'tools/patch-shortcuts.mjs': valueOf('tools/patch-shortcuts.mjs', /const SCHEME = '([^']+)'/),
 };
 if (new Set(Object.values(schemes)).size !== 1) {
   problems.push(`the URL scheme disagrees: ${Object.entries(schemes).map(([f, v]) => `${f} says "${v}"`).join(', ')}`);
+}
+
+const scheme = schemes['www/js/account/config.js'];
+// Checked rather than assumed: this shipped once as the package id, and an
+// underscore in it takes out every deep link in the app at the same time.
+if (!/^[a-z][a-z0-9+.-]*$/i.test(scheme)) {
+  problems.push(`"${scheme}" is not a legal URL scheme, so new URL() throws and every deep link breaks. Letters, digits, plus, minus and dot only, starting with a letter.`);
+}
+
+const packages = {
+  'capacitor.config.json': valueOf('capacitor.config.json', /"appId"\s*:\s*"([^"]+)"/),
+  'tools/patch-shortcuts.mjs': valueOf('tools/patch-shortcuts.mjs', /const PACKAGE = '([^']+)'/),
+};
+if (new Set(Object.values(packages)).size !== 1) {
+  problems.push(`the package name disagrees: ${Object.entries(packages).map(([f, v]) => `${f} says "${v}"`).join(', ')}`);
+}
+
+const pkg = packages['capacitor.config.json'];
+// Play holds the first upload to this for ever, and it refuses a bundle whose
+// package does not match the listing.
+if (!/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/i.test(pkg)) {
+  problems.push(`"${pkg}" is not a valid Android package: two or more segments, each starting with a letter, letters digits and underscore only.`);
 }
 
 /* ---------------- the privacy page and the store answers agree ---------------- */
@@ -122,5 +149,5 @@ if (problems.length) {
 }
 console.log(`ok  ${files.length} shipped files, no source maps, no secret, ads on test units`);
 console.log('ok  one keystore and it is the debug one');
-console.log(`ok  one URL scheme in three places, "${schemes['capacitor.config.json']}"`);
+console.log(`ok  scheme "${scheme}" in three places, package "${pkg}" in two, both legal`);
 console.log('ok  the privacy page and the store answers name the same sign-in routes');

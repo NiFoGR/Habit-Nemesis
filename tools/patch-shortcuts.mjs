@@ -12,7 +12,9 @@ import { icon } from '../www/js/icons.js';
 
 const MANIFEST = 'android/app/src/main/AndroidManifest.xml';
 const RES = 'android/app/src/main/res';
-const PACKAGE = 'com.habitnemesis.app';
+// The package is what Play holds us to. The scheme is not the package: an
+// underscore is legal in one and illegal in the other.
+const PACKAGE = 'nifo_habit.nemesis';
 const SCHEME = 'com.habitnemesis.app';
 
 const SHORTCUTS = [
