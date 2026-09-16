@@ -214,7 +214,15 @@ jobs:
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: node tools/patch-release-signing.mjs
 
-      - name: Build the release bundle
+      - name: Turn R8 on
+        # Shrink, optimise and rename, with the keep rules that stop it breaking
+        # the Capacitor bridge. Play scores an unminified bundle "Low".
+        run: node tools/patch-r8.mjs
+
+      - name: Build the release bundle, and a release APK to test it with
+        # The APK is the same minified code as the bundle and is the only way to
+        # put R8 on a phone: an .aab does not sideload. R8 fails at runtime, not
+        # at build time, so a green build here proves nothing on its own.
         env:
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
@@ -222,7 +230,35 @@ jobs:
         run: |
           chmod +x android/gradlew
           cd android
-          ./gradlew bundleRelease --no-daemon
+          ./gradlew bundleRelease assembleRelease --no-daemon
+
+      - name: Prove R8 shrank the app without eating the bridge
+        # Two ways this goes wrong quietly. R8 keeps everything, and Play still
+        # scores the bundle Low. Or R8 renames something reflection finds by
+        # name, and the app dies on the first plugin call with a green build
+        # behind it. The mapping file answers both, so it is read rather than
+        # trusted.
+        run: |
+          MAP=android/app/build/outputs/mapping/release/mapping.txt
+          test -f "$MAP" || { echo "No mapping file: R8 did not run."; exit 1; }
+
+          renamed=$(grep -cE '^[^ ].* -> [a-z0-9.]+:$' "$MAP")
+          echo "classes renamed: $renamed"
+          # Under a thousand means the keep rules are swallowing the app.
+          [ "$renamed" -gt 1000 ] || { echo "Only $renamed classes renamed. R8 is being kept from working."; exit 1; }
+
+          # Each of these is found by a name that survives only because a keep
+          # rule says so. A rename here is the runtime crash.
+          for c in \
+            com.getcapacitor.annotation.CapacitorPlugin \
+            com.habitnemesis.widgets.HabitWidgetsPlugin \
+            com.habitnemesis.widgets.GridWidgetProvider \
+            com.habitnemesis.widgets.WidgetActionReceiver \
+            com.habitnemesis.systemui.SystemUiPlugin
+          do
+            grep -qF "$c -> $c:" "$MAP" || { echo "$c was renamed or dropped. A keep rule is missing."; exit 1; }
+            echo "  kept  $c"
+          done
 
       - name: Name the bundle after the run
         run: |
@@ -249,4 +285,6 @@ jobs:
           SHORT="${GITHUB_SHA::7}"
           gh release create "build-$SHORT" --title "Habit Nemesis $SHORT" \
             --notes "Built from $GITHUB_SHA on ${GITHUB_REF#refs/heads/}." || true
-          gh release upload "build-$SHORT" "out/habit-nemesis-$SHORT.aab" --clobber
+          cp android/app/build/outputs/apk/release/*.apk "out/habit-nemesis-$SHORT-release.apk"
+          gh release upload "build-$SHORT" "out/habit-nemesis-$SHORT.aab" \
+            "out/habit-nemesis-$SHORT-release.apk" --clobber
