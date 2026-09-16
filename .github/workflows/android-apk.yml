@@ -232,15 +232,33 @@ jobs:
           cd android
           ./gradlew bundleRelease assembleRelease --no-daemon
 
-      - name: Report what R8 actually did
-        # A build that quietly kept everything is the failure this catches.
+      - name: Prove R8 shrank the app without eating the bridge
+        # Two ways this goes wrong quietly. R8 keeps everything, and Play still
+        # scores the bundle Low. Or R8 renames something reflection finds by
+        # name, and the app dies on the first plugin call with a green build
+        # behind it. The mapping file answers both, so it is read rather than
+        # trusted.
         run: |
           MAP=android/app/build/outputs/mapping/release/mapping.txt
           test -f "$MAP" || { echo "No mapping file: R8 did not run."; exit 1; }
-          echo "mapping.txt $(wc -l < "$MAP") lines"
-          echo "classes renamed: $(grep -cE '^[^ ].* -> [a-z0-9.]+:$' "$MAP")"
-          echo "-- the bridge must still be readable --"
-          grep -E '^com\.getcapacitor\.Plugin |^com\.habitnemesis\.(widgets|systemui)\.' "$MAP" | head -5
+
+          renamed=$(grep -cE '^[^ ].* -> [a-z0-9.]+:$' "$MAP")
+          echo "classes renamed: $renamed"
+          # Under a thousand means the keep rules are swallowing the app.
+          [ "$renamed" -gt 1000 ] || { echo "Only $renamed classes renamed. R8 is being kept from working."; exit 1; }
+
+          # Each of these is found by a name that survives only because a keep
+          # rule says so. A rename here is the runtime crash.
+          for c in \
+            com.getcapacitor.annotation.CapacitorPlugin \
+            com.habitnemesis.widgets.HabitWidgetsPlugin \
+            com.habitnemesis.widgets.GridWidgetProvider \
+            com.habitnemesis.widgets.WidgetActionReceiver \
+            com.habitnemesis.systemui.SystemUiPlugin
+          do
+            grep -qF "$c -> $c:" "$MAP" || { echo "$c was renamed or dropped. A keep rule is missing."; exit 1; }
+            echo "  kept  $c"
+          done
 
       - name: Name the bundle after the run
         run: |
