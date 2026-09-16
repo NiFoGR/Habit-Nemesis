@@ -233,42 +233,29 @@ jobs:
           ./gradlew bundleRelease assembleRelease --no-daemon
 
       - name: Prove R8 shrank the app without eating the bridge
-        # Two ways this goes wrong quietly. R8 keeps everything, and Play still
-        # scores the bundle Low. Or R8 renames something reflection finds by
-        # name, and the app dies on the first plugin call with a green build
-        # behind it. The mapping file answers both, so it is read rather than
-        # trusted.
-        run: |
-          MAP=android/app/build/outputs/mapping/release/mapping.txt
-          test -f "$MAP" || { echo "No mapping file: R8 did not run."; exit 1; }
-
-          renamed=$(grep -cE '^[^ ].* -> [a-z0-9.]+:$' "$MAP")
-          echo "classes renamed: $renamed"
-          # Under a thousand means the keep rules are swallowing the app.
-          [ "$renamed" -gt 1000 ] || { echo "Only $renamed classes renamed. R8 is being kept from working."; exit 1; }
-
-          # Each of these is found by a name that survives only because a keep
-          # rule says so. A rename here is the runtime crash.
-          for c in \
-            com.getcapacitor.annotation.CapacitorPlugin \
-            com.habitnemesis.widgets.HabitWidgetsPlugin \
-            com.habitnemesis.widgets.GridWidgetProvider \
-            com.habitnemesis.widgets.WidgetActionReceiver \
-            com.habitnemesis.systemui.SystemUiPlugin
-          do
-            grep -qF "$c -> $c:" "$MAP" || { echo "$c was renamed or dropped. A keep rule is missing."; exit 1; }
-            echo "  kept  $c"
-          done
+        # Reads the mapping file rather than trusting that the keep rules
+        # matched. Every class Capacitor loads by name has to map to itself,
+        # and the list comes from capacitor.plugins.json so adding a plugin
+        # does not need this remembering.
+        run: node tools/check-r8.mjs
 
       - name: Name the bundle after the run
         run: |
           mkdir -p out
           cp android/app/build/outputs/bundle/release/*.aab "out/habit-nemesis-${GITHUB_SHA::7}.aab"
+          # Play reads this out of the bundle itself. The copy here is for
+          # reading a stack trace from a phone, where the names are the
+          # renamed ones and nothing else turns them back.
+          cp android/app/build/outputs/mapping/release/mapping.txt "out/mapping-${GITHUB_SHA::7}.txt"
+          cp android/app/build/outputs/apk/release/*.apk "out/habit-nemesis-${GITHUB_SHA::7}-release.apk"
 
       - uses: actions/upload-artifact@v4
         with:
           name: habit-nemesis-aab
-          path: out/*.aab
+          path: |
+            out/*.aab
+            out/*-release.apk
+            out/mapping-*.txt
           if-no-files-found: error
           retention-days: 90
 

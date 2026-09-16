@@ -127,45 +127,29 @@ price. It was 86 and would have been refused at upload.
     Your only opponent is the best week you have ever had. No subscription.
 
 **Full description.** 4000 characters, and the first two lines show before
-"read more", so the Arena goes in them. Paste the block below. Play renders the
-full description as plain text, so it carries no markup.
+"read more". Paste the block below. Play renders it as plain text: no markup,
+and **every line break is kept**, so a paragraph must be one long line or it
+arrives broken mid-sentence.
 
 ```
-Your only opponent is the best week you have ever had.
+Your only opponent is you.
 
-Every week is a match. You play a score, your Nemesis plays the best week on
-your record, and one of you wins.
+Every week is a match.
 
 THE ARENA
-Nine divisions. A month above the bar promotes you, two months below it send
-you down. Every quarter runs a cup: a group stage, then a quarter final, a semi
-and a final. Win it and the trophy stays in your Cabinet.
+Nine divisions. A month above the bar promotes you, two months below it send you down. Every quarter runs a cup: a group stage, then a quarter final, a semi and a final. Win it and the trophy stays in your Cabinet.
 
 YOUR NEMESIS
-He is your own best week. He remembers the head to head, the run either way,
-the last meeting and what it was decided by. Beat him and you become him, and
-the app tells you how long the week you just replaced had stood.
+He is your own best week. He remembers the head to head, the run either way, the last meeting and what it was decided by. Beat him and you become him, and the app tells you how long the week you just replaced had stood.
 
 THE GRID
-Every habit, seven days, one screen, one tap to mark a day. Three kinds: yes or
-no, a number with a target and a unit, and a timer for the ones you do for a
-length of time. Group them, colour them, reorder them.
-
-WHAT YOU KEEP
-A score for every habit, week, month and year.
-Streaks, and a calendar you can correct.
-59 feats, each earned once.
-Home screen widgets: today's grid, and this week's match.
-Reminders per habit, per day of the week.
+Every habit, seven days, one screen, one tap to mark a day. Three kinds: yes or no, a number with a target and a unit, and a timer for the ones you do for a length of time. Group them, colour them, reorder them.
 
 YOUR DATA
-It lives on your phone. An account is optional and only keeps a copy of it, so
-a second device can read the same record. No analytics. Export to CSV whenever
-you like, and delete the account and its rows from inside the app.
+It lives on your phone. An account is optional and only keeps a copy of it, so a second device can read the same record. No analytics. Export to CSV whenever you like, and delete the account and its rows from inside the app.
 
 THE PRICE
-Free, with ads on the screens you read rather than the one you tap. One payment
-removes them. No subscription, ever.
+Free, with ads on the screens you read rather than the one you tap. One payment removes them. No subscription, ever.
 ```
 
 **Graphics.** All required before Play will let you publish.
