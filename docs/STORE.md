@@ -120,10 +120,11 @@ description carries the one line the app is sold on.
 
     Habit Nemesis: Habit Tracker
 
-**Short description.** Under 80 characters. Trim from the end to fit, and keep
-the first clause whole.
+**Short description.** 80 characters, and `npm run check:store` counts them.
+The title already carries the keyword, so this carries the one line and the
+price. It was 86 and would have been refused at upload.
 
-    Your only opponent is the best week you have ever had. Habit tracker, no subscription.
+    Your only opponent is the best week you have ever had. No subscription.
 
 **Full description.** 4000 characters, and the first two lines show before
 "read more", so the Arena goes in them. Paste the block below. Play renders the
