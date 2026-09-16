@@ -35,6 +35,7 @@ make it a different app to Play forever.
   signed bundle.
 - The keep-alive. It reads the project off `config.js` and needs no secret and
   no variable. It is green.
+- Phone sign-in. Removed on purpose. Leave it removed and read step 8.
 - GitHub Pages. Live, and the privacy policy resolves at
   https://nifogr.github.io/Habit-Nemesis/legal/privacy.html
 - The store assets. `store/` holds the icon, the feature graphic and seven
@@ -156,17 +157,21 @@ THE ORDER
    Say so out loud when you get there, and remind me again after the upload.
    Verify: Google sign-in works in the browser build.
 
-8. PHONE SIGN-IN.  docs/ACCOUNTS.md section 4.
-   The only item with a bill that scales per person. Read the fraud section
-   before turning anything on, set the rate limit and the country allow list in
-   the same sitting, and stop and ask me before adding Twilio credit.
-   If I say no to phone, follow the "If you would rather not" paragraph in that
-   section exactly, and let `npm run check:release` prove you got all of it.
+8. PHONE SIGN-IN.  ALREADY DECIDED: there is none.
+   It was removed before 1.0. Do not enable Phone in Supabase, do not add Twilio
+   credit, and do not put the tab back. docs/ACCOUNTS.md section 4 says what it
+   would take if I ever change my mind, and I have not.
 
 9. EMAIL THAT ACTUALLY SENDS.  docs/ACCOUNTS.md section 2.
-   Supabase's built-in sender allows two emails an hour for the whole project,
-   which is fine for me and not fine for 12 testers. Set up custom SMTP before
-   the opt-in link goes out. Stop and ask me for the domain.
+   This is the one thing that will break a launch. Supabase's built-in sender
+   allows TWO emails an hour for the whole project, shared by sign-ups, password
+   resets and invites, so the 12 testers alone exhaust it on day one.
+   There is no custom domain and there is not going to be one, so use Gmail SMTP
+   with an app password: smtp.gmail.com, port 587, the app's own Gmail account.
+   It sends genuinely from Google, so SPF and DKIM pass, which a third-party
+   relay sending as a gmail.com address cannot do.
+   Then raise the limit: Authentication > Rate Limits. Custom SMTP starts you at
+   30 an hour whatever the provider allows.
 
 10. PRODUCTION.
     On day 15, Dashboard, Apply for production access. Three sections to fill

@@ -42,7 +42,7 @@ export const available = () => !!supabase();
 export const session = () => current;
 export const user = () => current?.user || null;
 export const signedIn = () => !!current;
-export const emailOf = () => current?.user?.email || current?.user?.phone || '';
+export const emailOf = () => current?.user?.email || '';
 
 /** Called once at boot. Safe to call when no project is configured. */
 export async function init() {
@@ -124,26 +124,6 @@ export async function sendReset(email) {
   const { error } = await sb.auth.resetPasswordForEmail(cleanEmail(email), { redirectTo: redirectTo() });
   if (error) throw error;
 }
-
-/* ---------------- phone ---------------- */
-// A code, not a password. A number has no address to send a reset to, so the
-// code is the whole of it: ask for one, then verify it.
-
-export async function sendCode(phone) {
-  const sb = need();
-  const { error } = await sb.auth.signInWithOtp({ phone });
-  if (error) throw error;
-}
-
-export async function verifyCode(phone, token) {
-  const sb = need();
-  const { error } = await sb.auth.verifyOtp({ phone, token, type: 'sms' });
-  if (error) throw error;
-  markArrived();
-}
-
-/** A signed-in user is named by whichever one they used. */
-export const phoneOf = () => current?.user?.phone || '';
 
 export async function signOut() {
   const sb = supabase();
