@@ -12,9 +12,9 @@
 // it goes on a public store listing.
 
 export const PUBLISHER = Object.freeze({
-  name: 'Nikiforos Nikolaidis', // the sole trader's own legal name
+  name: 'NiFo', // the developer name, as it appears under the app title
   trading: 'Habit Nemesis', // the trading name, if it differs from the above
-  email: 'nikiforosn2007@gmail.com', // reachable, and answered: users and both stores write to it
+  email: 'thefacelessartist07@gmail.com', // reachable, and answered: users and both stores write to it
   address: '', // one line, business, public
   country: 'United Kingdom',
   jurisdiction: 'England and Wales',
