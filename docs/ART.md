@@ -78,6 +78,13 @@ with the six real ones.** That is deliberate. Bottom G, Mentzer and Full are
 photographs in a frame and are supposed to look like a bit; the metal set climbs
 around them.
 
+**The photographs are unlicensed and stay that way.** All nine are photographs
+of identifiable people, and three carry more than a likeness: Prospect is a
+still from The Matrix, Top G is Andrew Tate, and Mentzer names Mike Mentzer in
+the artwork. Raised before the first store upload and decided: ship them, and
+redraw if it ever becomes a problem. Do not re-open it, and do not replace them
+without being asked.
+
 The progression has to be readable with the labels covered. Pick one thing that
 climbs and let it climb: metal (dull to bright), rim weight, how much of the rim
 is closed, or a count of marks inside. Do not change all four at once.

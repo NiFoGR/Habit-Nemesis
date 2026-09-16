@@ -42,6 +42,16 @@ const is = (name, got, want) => {
 };
 const group = (t) => console.log(`\n${t}`);
 
+const RealDate = Date;
+/** Freeze `new Date()` on a day. Returns the undo. */
+const pinClock = (day) => {
+  globalThis.Date = class extends RealDate {
+    constructor(...a) { super(...(a.length ? a : [`${day}T12:00`])); }
+    static now() { return new RealDate(`${day}T12:00`).getTime(); }
+  };
+  return () => { globalThis.Date = RealDate; };
+};
+
 /* ---------------- ISO weeks ---------------- */
 group('weeks');
 is('1 Jan 2026 falls in week 1', a.weekKey('2026-01-01'), '2026-W01');
@@ -657,6 +667,10 @@ group('the month ends with him');
 group('every line he says');
 {
   const line = await import('../www/js/arena/line.js');
+  // Pinned: some lines read the calendar rather than the record, so on a real
+  // clock the set opens and closes with the month. 2 March 2026 is five weeks
+  // past the seed, so the reign stands, and three off his next fixture.
+  const unpin = pinClock('2026-03-02');
   const bad = [];
   const seen = new Set();
   for (const seed of [() => st.reset(), seedRivalry]) {
@@ -666,6 +680,7 @@ group('every line he says');
       if (!l.say || /undefined|NaN|null/.test(l.say)) bad.push(`${l.id}: ${l.say}`);
     }
   }
+  unpin();
   is('none says undefined, NaN or nothing', bad, []);
   is('and the rivalry above opens the ones it should', [...seen].sort(), ['deposed', 'reign', 'run', 'sinceWin']);
 }

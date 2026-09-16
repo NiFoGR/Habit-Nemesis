@@ -220,13 +220,10 @@ function knockSection(st, state, arc) {
   </section>`;
 }
 
-/** What the final is worth. Nothing once this cup is out of reach: a prize you
- *  can no longer play for is a taunt. */
+/** Where the cup went, once there is one. What winning a final gets you does
+ *  not need saying: the cup is drawn at the end of the bracket. */
 function prize(state) {
-  if (state === 'out') return '';
-  return `<p class="arc-note">${state === 'won'
-    ? 'The cup is in the Cabinet.'
-    : 'Win the final and the cup goes in the Cabinet.'}</p>`;
+  return state === 'won' ? '<p class="arc-note">The cup is in the Cabinet.</p>' : '';
 }
 
 /** A scoreline once it is played, the score so far while it is on, and the

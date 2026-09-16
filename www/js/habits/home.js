@@ -24,8 +24,6 @@ import { signedIn } from '../account/session.js';
 /* ---------------- the grid ---------------- */
 
 let reorderMode = false;
-let query = '';
-const SEARCH_FROM = 12;
 
 /* ---------------- the first five ---------------- */
 // An empty grid is the worst first screen this app can show, and "New habit" on
@@ -84,27 +82,6 @@ export function renderHome(mount) {
   reorderMode = false;
   redraw(mount);
   if (habits.catchUpDue() && !document.querySelector('.sheet-scrim')) openCatchUp(mount);
-}
-
-/** Name and note, case blind. Rows that miss are hidden, not removed. */
-function filterRows(mount) {
-  const q = query.trim().toLowerCase();
-  mount.querySelectorAll('.hg-row[data-id]').forEach((row) => {
-    const h = habits.byId(row.dataset.id);
-    const hit = !q || `${h?.name || ''} ${h?.notes || ''}`.toLowerCase().includes(q);
-    row.classList.toggle('hidden', !hit);
-  });
-  // A group whose rows all missed is a heading over nothing.
-  mount.querySelectorAll('.hg-rows').forEach((box) => {
-    const gone = !box.querySelector('.hg-row:not(.hidden)');
-    box.classList.toggle('hidden', gone);
-    const head = box.previousElementSibling;
-    if (head?.classList.contains('hg-group')) head.classList.toggle('hidden', gone);
-  });
-  // Nothing left to head: the day columns go with the rows.
-  const empty = !mount.querySelector('.hg-row:not(.hidden)');
-  mount.querySelector('.hg-none')?.classList.toggle('hidden', !empty);
-  mount.querySelector('.hg-head')?.classList.toggle('hidden', empty);
 }
 
 /* ---------------- yesterday ---------------- */
@@ -230,23 +207,16 @@ function redraw(mount) {
   const due = habits.dueToday();
   const days = s.reverseDays ? habits.recentDays(s.columns) : habits.recentDays(s.columns).reverse();
 
-  // Past twelve rows a thumb cannot find one, so a field. Below that, none.
-  const search = list.length > SEARCH_FROM && !reorderMode
-    ? `<input type="search" class="hg-search" id="search" placeholder="Search" value="${escapeHtml(query)}" autocomplete="off">`
-    : '';
-
   const grid = `
       <div class="hgrid${reorderMode ? ' reordering' : ''}" style="--cols:${s.columns};--cell:${cellSize(s.columns)}px">
         ${reorderMode ? '' : `<div class="hg-head"><span class="hg-name"></span>${days.map(headCell).join('')}</div>`}
         ${sectionsHtml(days, s)}
-        ${search ? '<p class="hg-none hidden">Nothing matches.</p>' : ''}
       </div>`;
 
   mount.innerHTML = `
     <div class="screen home">
       ${reorderMode ? reorderHead() : gridHead(list, due)}
       ${reorderMode ? '' : reviewCta()}
-      ${search}
       ${list.length ? grid : starterPack()}
       ${reorderMode ? '' : accountNudge()}
       ${reorderMode ? '' : `<button class="btn ghost wide" id="addBtn2">${icon('plus', 16)}<span>New habit</span></button>`}
@@ -256,16 +226,6 @@ function redraw(mount) {
   mount.querySelectorAll('#addBtn, #addBtn2').forEach((b) => b.addEventListener('click', openTypePicker));
   mount.querySelectorAll('[data-starter]').forEach((b) =>
     b.addEventListener('click', () => addStarter(mount, Number(b.dataset.starter))));
-  const field = mount.querySelector('#search');
-  if (field) {
-    field.addEventListener('input', () => {
-      query = field.value;
-      filterRows(mount);
-    });
-    filterRows(mount);
-  } else {
-    query = '';
-  }
   mount.querySelector('#nudgeOff')?.addEventListener('click', () => {
     store.update((st) => {
       st.settings.nudges += 1;

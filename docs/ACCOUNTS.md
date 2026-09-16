@@ -167,10 +167,12 @@ Two ways out:
 - **Pay the $25 a month before you submit.** Paid projects are never paused.
   This is the answer if the app is real.
 - **Or run the keep-alive.** `.github/workflows/supabase-keepalive.yml` reads one
-  row a day. Set the repository variable `SUPABASE_CONFIGURED` to `true` and the
-  secrets `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`. GitHub disables
-  scheduled workflows in a repo with no commits for 60 days, so this is a
-  backstop, not a guarantee.
+  row a day and needs nothing set: it takes the project off
+  `www/js/account/config.js`, the same file the app reads, because both values
+  are public by design. It used to be gated on a repository variable and sat
+  skipped for fifteen runs, which is the failure mode this guards against.
+  GitHub disables scheduled workflows in a repo with no commits for 60 days, so
+  this is a backstop, not a guarantee.
 
 ## 7. The settings that are the actual security
 

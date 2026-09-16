@@ -8,6 +8,10 @@ name: Keep the account service awake
 # This makes one real database read a day. A ping to the hostname would not
 # count: the pause criterion is queries, not traffic.
 #
+# It ran fifteen times and skipped every one, because it was gated on a repo
+# variable nobody had set. It now reads the project out of the same file the app
+# does, so there is nothing to set.
+#
 # Delete this once the project is on a paid plan, where pausing does not apply.
 # GitHub also disables scheduled workflows in a repo with no activity for 60
 # days, so treat it as a backstop rather than a guarantee.
@@ -19,14 +23,15 @@ on:
 jobs:
   ping:
     runs-on: ubuntu-latest
-    # Skipped rather than failed when the secrets are not set yet.
-    if: vars.SUPABASE_CONFIGURED == 'true'
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Read one row through PostgREST
-        run: |
-          code=$(curl -s -o /dev/null -w '%{http_code}' \
-            -H "apikey: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}" \
-            "${{ secrets.SUPABASE_URL }}/rest/v1/keepalive?select=id&limit=1")
-          echo "HTTP $code"
-          [ "$code" = "200" ] || exit 1
+        # Reads the project out of www/js/account/config.js, so it needs no
+        # secret and no variable and cannot sit skipped. It exits 0 when no
+        # project is configured, which is the one case with nothing to do.
+        run: node tools/keepalive.mjs

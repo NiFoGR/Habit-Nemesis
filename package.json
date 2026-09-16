@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "node tools/serve.mjs",
     "icons": "node tools/gen-icons.mjs",
+    "store": "node tools/gen-store.mjs",
     "android:add": "cap add android",
     "android:sync": "cap sync android",
     "android:apk": "cap sync android && node tools/patch-signing.mjs && node tools/patch-backup.mjs && node tools/patch-deeplink.mjs && node tools/patch-shortcuts.mjs && cd android && ./gradlew assembleDebug",
@@ -15,9 +16,10 @@
     "check:arena": "node tools/check-arena.mjs",
     "art": "node tools/art.mjs",
     "check:ui": "node tools/check-ui.mjs",
-    "check": "npm run check:arena && npm run check:account && npm run check:ui && npm run check:version && npm run check:release",
+    "check": "npm run check:arena && npm run check:account && npm run check:ui && npm run check:version && npm run check:release && npm run check:store",
     "check:version": "node tools/check-version.mjs",
     "check:release": "node tools/check-release.mjs",
+    "check:store": "node tools/check-store.mjs",
     "check:account": "node tools/check-account.mjs"
   },
   "dependencies": {
