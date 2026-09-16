@@ -106,6 +106,12 @@ half on the device. `tools/patch-deeplink.mjs` registers that scheme, and it
 runs on every build because `android/` is regenerated each time and would throw
 a hand-edited manifest away.
 
+That scheme is not the package name, which is `nifo_habit.nemesis`. A URL scheme
+may not carry an underscore and an Android package may, so the two are held
+separately and `npm run check:release` proves each one legal. The Google OAuth
+**Android client** is keyed on the package, so it takes `nifo_habit.nemesis`.
+The redirect URL in Supabase is keyed on the scheme, so it stays as it is.
+
 ## 4. Phone: removed
 
 There is no phone sign-in. It was built, then taken out before 1.0: it is the

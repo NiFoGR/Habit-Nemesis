@@ -89,7 +89,8 @@ change once a store has it.
 
 | Decision | Where it is now | Why it is permanent |
 |---|---|---|
-| Package name | `com.habitnemesis.app` | Play never lets you change it. A new one is a new app with zero installs and zero reviews. |
+| Package name | `nifo_habit.nemesis` | Play never lets you change it. A new one is a new app with zero installs and zero reviews. |
+| Deep link scheme | `com.habitnemesis.app` | **Not the package.** RFC 3986 bars an underscore from a URL scheme, so the package is not a legal one. `check:release` proves both. |
 | Storage key | `habitnemesis.state.v1` | Changing it orphans every existing install's record. |
 | Display name | Habit Nemesis | Changeable, but it is the search term you spend a year building. |
 | Publisher | sole trader, no address | Set in `www/legal/publisher.js`. Changing the developer name on a live listing is slow and loses the reviews. |
